@@ -13,7 +13,7 @@ export default function UnauthorizedPage() {
           <div className="text-6xl mb-4">🚫</div>
           <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Unauthorized Access</h1>
           <p className="text-gray-600">
-            You don't have permission to access this page. Please contact your administrator if you
+            You don&apos;t have permission to access this page. Please contact your administrator if you
             believe this is an error.
           </p>
         </div>
