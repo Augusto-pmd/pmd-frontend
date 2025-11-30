@@ -75,19 +75,13 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed, logout user
         useAuthStore.getState().logout();
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
         return Promise.reject(refreshError);
       }
     }
 
-    // Handle 401 - redirect to login
+    // Handle 401 - logout user
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
     }
 
     // Normalize error response

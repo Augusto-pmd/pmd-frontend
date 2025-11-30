@@ -2,34 +2,14 @@
 
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
 
 export function Topbar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
-  const handleLogout = async () => {
-    try {
-      // Llamar a /auth/logout del backend si existe
-      await api.post("/auth/logout").catch(() => {
-        // Ignorar errores si el endpoint no existe
-      });
-    } catch (error) {
-      // Ignorar errores
-    } finally {
-      // Clear localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        localStorage.removeItem('pmd-auth-storage');
-      }
-      logout();
-      // Limpiar cookies
-      if (typeof document !== "undefined") {
-        document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      }
-      router.push("/login");
-    }
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
   };
 
   return (

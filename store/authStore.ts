@@ -31,20 +31,26 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       refreshToken: null,
       isAuthenticated: false,
-      login: (user, token, refreshToken) =>
+      login: (user, token, refreshToken) => {
+        // Normalize user.role before persisting
+        if (user?.role && typeof user.role === "object") {
+          user.role = user.role.name;
+        }
         set({
           user,
           token,
           refreshToken,
           isAuthenticated: true,
-        }),
+        });
+      },
       logout: () => {
-        // Clear localStorage
+        // Limpieza total
         if (typeof window !== 'undefined') {
+          localStorage.removeItem('pmd-auth-storage');
           localStorage.removeItem('user');
           localStorage.removeItem('token');
-          localStorage.removeItem('pmd-auth-storage');
         }
+        // Resetear Zustand
         set({
           user: null,
           token: null,
@@ -63,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
           const response = await apiClient.get<{ user: User }>("/auth/me");
           const { user } = response;
           
-          // Normalize user.role from object to string
+          // Normalize user.role from object to string before persisting
           if (user?.role && typeof user.role === 'object') {
             user.role = user.role.name;
           }
@@ -96,11 +102,19 @@ export const useAuthStore = create<AuthState>()(
           const response = await apiClient.post<{
             access_token: string;
             refresh_token: string;
+            user?: User;
           }>("/auth/refresh", { refreshToken });
-          const { access_token, refresh_token } = response;
+          const { access_token, refresh_token, user } = response;
+          
+          // Normalize user.role if user is returned in refresh response
+          if (user?.role && typeof user.role === "object") {
+            user.role = user.role.name;
+          }
+          
           set({
             token: access_token,
             refreshToken: refresh_token,
+            ...(user && { user }),
           });
         } catch (error) {
           // Si falla el refresh, hacer logout
