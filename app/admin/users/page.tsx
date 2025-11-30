@@ -135,12 +135,15 @@ function AdminUsersContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {users?.map((user: any) => (
+                    {users?.map((user: any) => {
+                      // Normalize user.role from object to string
+                      const userRole = user?.role ? (typeof user.role === 'object' ? user.role.name : user.role) : '';
+                      return (
                       <tr key={user.id}>
                         <td className="px-4 py-3 text-sm text-gray-900">{user.name}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">{user.email}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">
-                          <Badge variant="info">{user.role}</Badge>
+                          <Badge variant="info">{String(userRole)}</Badge>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">
                           <Badge variant={user.status === "active" ? "success" : "default"}>
@@ -167,7 +170,8 @@ function AdminUsersContent() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -24,13 +24,18 @@ export function LoginForm() {
         password,
       });
 
-      // Backend returns: { user, access_token }
+      // Backend returns: { user, access_token, refresh_token }
       // Cookie is automatically set by backend
-      const { user, access_token } = response.data;
+      const { user, access_token, refresh_token } = response.data;
+      
+      // Normalize user.role from object to string
+      if (user?.role && typeof user.role === 'object') {
+        user.role = user.role.name;
+      }
       
       // Store token in Zustand for axios interceptor (Bearer token in headers)
       // Cookie is already set by backend for middleware
-      login(user, access_token, access_token); // Using access_token as both token and refreshToken for now
+      login(user, access_token, refresh_token || access_token);
       
       router.push("/dashboard");
     } catch (err: any) {

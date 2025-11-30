@@ -16,15 +16,11 @@ export function ProtectedRoute({
   allowedRoles,
   redirectTo = "/login",
 }: ProtectedRouteProps) {
-  // ============================================
-  // TEMPORALMENTE DESACTIVADO - ACCESO LIBRE
-  // Para reactivar: descomentar el código abajo
-  // ============================================
-  return <>{children}</>;
-
-  /* ========== CÓDIGO ORIGINAL (COMENTADO) ==========
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
+
+  // Normalize user role to string
+  const userRole = user?.role ? (typeof user.role === 'object' ? user.role.name : user.role) : null;
 
   useEffect(() => {
     // Check authentication
@@ -34,11 +30,11 @@ export function ProtectedRoute({
     }
 
     // Check role-based access
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    if (allowedRoles && userRole && !allowedRoles.includes(userRole as UserRole)) {
       router.push("/unauthorized");
       return;
     }
-  }, [isAuthenticated, user, allowedRoles, router, redirectTo]);
+  }, [isAuthenticated, userRole, allowedRoles, router, redirectTo]);
 
   // Show loading while checking auth
   if (!isAuthenticated) {
@@ -50,7 +46,7 @@ export function ProtectedRoute({
   }
 
   // Check role access
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && userRole && !allowedRoles.includes(userRole as UserRole)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />
@@ -59,6 +55,5 @@ export function ProtectedRoute({
   }
 
   return <>{children}</>;
-  ========== FIN CÓDIGO ORIGINAL ========== */
 }
 

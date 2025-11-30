@@ -3,7 +3,7 @@ import { useAuthStore } from "@/store/authStore";
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,9 +24,26 @@ api.interceptors.request.use(
   }
 );
 
+// Helper function to normalize user.role from object to string
+const normalizeUserRole = (data: any): any => {
+  if (data?.user?.role && typeof data.user.role === 'object') {
+    data.user.role = data.user.role.name;
+  }
+  if (data?.role && typeof data.role === 'object') {
+    data.role = data.role.name;
+  }
+  return data;
+};
+
 // Response interceptor - Handle token refresh and errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Normalize user.role in all responses
+    if (response.data) {
+      response.data = normalizeUserRole(response.data);
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
@@ -41,7 +58,7 @@ api.interceptors.response.use(
         if (refreshToken) {
           // Attempt to refresh token
           const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api"}/auth/refresh`,
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
             { refreshToken },
             { withCredentials: true }
           );

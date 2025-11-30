@@ -6,8 +6,11 @@ export function useAuth() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const router = useRouter();
 
+  // Normalize user role to string
+  const userRole = user?.role ? (typeof user.role === 'object' ? user.role.name : user.role) : null;
+
   const checkRole = (allowedRoles: UserRole[]) => {
-    if (!user || !allowedRoles.includes(user.role)) {
+    if (!userRole || !allowedRoles.includes(userRole as UserRole)) {
       return false;
     }
     return true;

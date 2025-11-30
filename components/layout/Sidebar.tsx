@@ -47,26 +47,27 @@ const getAccessibleItems = (userRole: UserRole | undefined): NavItem[] => {
       return; // Skip this item
     }
 
-    // Operator: only sees Works, Expenses, Cashbox
+    // OPERATOR: ocultar Audit, Users (Admin section)
     if (userRole === "operator") {
-      const operatorAllowed = ["/works", "/expenses", "/cashbox"];
-      if (operatorAllowed.includes(item.href)) {
-        accessibleItems.push({ ...item, children: undefined });
+      if (item.href === "/audit" || item.href === "/admin" || item.href.startsWith("/admin/")) {
+        return; // Skip Audit and Admin sections
       }
+      accessibleItems.push({ ...item, children: undefined });
       return;
     }
 
-    // Supervisor: sees everything except Admin
-    if (userRole === "supervisor") {
-      if (item.href === "/admin" || item.href.startsWith("/admin/")) {
-        return; // Skip admin section
-      }
+    // AUDITOR: solo lectura (puede ver todo pero sin acciones de creación/edición)
+    if (userRole === "auditor") {
+      // Auditor puede ver todo pero sin acciones de CRUD
       accessibleItems.push(item);
       return;
     }
 
-    // Admin and other roles: see all
-    accessibleItems.push(item);
+    // ADMIN: acceso total
+    if (userRole === "admin") {
+      accessibleItems.push(item);
+      return;
+    }
   });
 
   return accessibleItems;
@@ -78,7 +79,9 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  const accessibleItems = getAccessibleItems(user?.role);
+  // Normalize user role to string
+  const userRole = user?.role ? (typeof user.role === 'object' ? user.role.name : user.role) : undefined;
+  const accessibleItems = getAccessibleItems(userRole as UserRole | undefined);
 
   const toggleExpand = (href: string) => {
     setExpandedItems((prev) =>
@@ -189,7 +192,7 @@ export function Sidebar() {
         <div className="p-4 border-t border-pmd-mediumBlue">
           <div className="text-sm text-gray-400">
             <p className="text-pmd-white font-medium">{user.name}</p>
-            <p className="text-xs capitalize">{user.role}</p>
+            <p className="text-xs capitalize">{String(user.role ?? '')}</p>
           </div>
         </div>
       )}
