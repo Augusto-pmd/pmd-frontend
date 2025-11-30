@@ -125,6 +125,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "pmd-auth-storage",
+      onRehydrateStorage: () => (state) => {
+        if (state?.user && typeof state.user.role === "object") {
+          state.user.role = state.user.role.name;
+        }
+      },
     }
   )
 );
