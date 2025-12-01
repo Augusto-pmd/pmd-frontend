@@ -11,14 +11,32 @@ export function middleware(req: NextRequest) {
     || req.nextUrl.pathname.startsWith("/suppliers")
     || req.nextUrl.pathname.startsWith("/accounting");
 
+  // Logs de depuración (solo en desarrollo)
+  if (process.env.NODE_ENV === "development") {
+    console.log("🔵 [MIDDLEWARE] Request:", req.nextUrl.pathname);
+    console.log("  - Token en cookie:", token ? "***PRESENT***" : "NULL");
+    console.log("  - isAuthPage:", isAuthPage);
+    console.log("  - isProtectedRoute:", isProtectedRoute);
+  }
+
   // Si NO hay token y es una ruta privada → mandar al login
   if (!token && isProtectedRoute) {
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔴 [MIDDLEWARE] No token found, redirecting to /login");
+    }
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
   // Si SÍ hay token y va al login → mandarlo al dashboard
   if (token && isAuthPage) {
+    if (process.env.NODE_ENV === "development") {
+      console.log("🟢 [MIDDLEWARE] Token found, redirecting to /dashboard");
+    }
     return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("🟢 [MIDDLEWARE] Allowing request to proceed");
   }
 
   return NextResponse.next();

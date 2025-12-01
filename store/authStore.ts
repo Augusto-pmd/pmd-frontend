@@ -79,6 +79,22 @@ export const useAuthStore = create<AuthState>()(
 
         set(newState);
         
+        // Guardar token en cookies para que el middleware pueda leerlo
+        if (typeof window !== "undefined") {
+          const cookieMaxAge = 60 * 60 * 24 * 7; // 7 días
+          document.cookie = `token=${token}; path=/; max-age=${cookieMaxAge}; SameSite=Lax`;
+          console.log("🟢 [COOKIE SET] token guardado en cookie");
+          console.log("  - Cookie max-age:", cookieMaxAge, "segundos (7 días)");
+          console.log("  - Cookie path:", "/");
+          console.log("  - Cookie SameSite:", "Lax");
+          
+          if (refreshToken) {
+            const refreshCookieMaxAge = 60 * 60 * 24 * 30; // 30 días
+            document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${refreshCookieMaxAge}; SameSite=Lax`;
+            console.log("🟢 [COOKIE SET] refreshToken guardado en cookie");
+          }
+        }
+        
         const stateAfter = get();
         console.log("🟢 [AUTH STORE AFTER] Estado DESPUÉS de login():");
         console.log("  - isAuthenticated:", stateAfter.isAuthenticated);
@@ -97,6 +113,11 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem("pmd-auth-storage");
           localStorage.removeItem("user");
           localStorage.removeItem("token");
+          
+          // Limpiar cookies
+          document.cookie = "token=; path=/; max-age=0";
+          document.cookie = "refreshToken=; path=/; max-age=0";
+          console.log("🟢 [COOKIE CLEAR] cookies eliminadas");
         }
         set({
           user: null,
@@ -154,6 +175,19 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: refresh_token ?? null,
             isAuthenticated: true,
           });
+        }
+        
+        // Actualizar cookies cuando se refresca el token
+        if (typeof window !== "undefined" && access_token) {
+          const cookieMaxAge = 60 * 60 * 24 * 7; // 7 días
+          document.cookie = `token=${access_token}; path=/; max-age=${cookieMaxAge}; SameSite=Lax`;
+          console.log("🟢 [COOKIE SET] token actualizado en cookie (refresh)");
+          
+          if (refresh_token) {
+            const refreshCookieMaxAge = 60 * 60 * 24 * 30; // 30 días
+            document.cookie = `refreshToken=${refresh_token}; path=/; max-age=${refreshCookieMaxAge}; SameSite=Lax`;
+            console.log("🟢 [COOKIE SET] refreshToken actualizado en cookie (refresh)");
+          }
         }
       },
     }),
