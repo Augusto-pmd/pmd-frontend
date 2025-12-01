@@ -16,23 +16,32 @@ export function ProtectedRoute({
   allowedRoles,
   redirectTo = "/login",
 }: ProtectedRouteProps) {
-  const { isAuthenticated } = useAuthStore();
-  const user = useAuthStore.getState().getUserSafe();
+  // Sincronización reactiva 100% con Zustand - elimina race conditions
+  const { user, isAuthenticated } = useAuthStore((state) => ({
+    user: state.user ? state.getUserSafe() : null,
+    isAuthenticated: state.isAuthenticated,
+  }));
   const router = useRouter();
 
-  // User role is already normalized by getUserSafe
   const userRole = user?.role ?? null;
 
+  // Guard: NO renderizar nada hasta que user esté normalizado
+  if (user === null || typeof user.role === "object") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loading size="lg" />
+      </div>
+    );
+  }
+
   useEffect(() => {
-    // Check authentication
     if (!isAuthenticated) {
-      router.push(redirectTo);
+      router.replace(redirectTo);
       return;
     }
 
-    // Check role-based access
     if (allowedRoles && userRole && !allowedRoles.includes(userRole as UserRole)) {
-      router.push("/unauthorized");
+      router.replace("/unauthorized");
       return;
     }
   }, [isAuthenticated, userRole, allowedRoles, router, redirectTo]);
