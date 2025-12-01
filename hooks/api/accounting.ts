@@ -67,6 +67,21 @@ export function useAccountingTransactions(params?: { startDate?: string; endDate
   };
 }
 
+export function useAccountingMonth(month: number | null, year: number | null) {
+  const { token } = useAuthStore();
+  const { data, error, isLoading, mutate } = useSWR(
+    token && month && year ? `${API_BASE}/month/${month}/${year}` : null,
+    () => apiClient.get(`${API_BASE}/month/${month}/${year}`)
+  );
+
+  return {
+    monthData: data?.data || data,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
 export const accountingApi = {
   create: (data: any) => apiClient.post(API_BASE, data),
   update: (id: string, data: any) => apiClient.put(`${API_BASE}/${id}`, data),
@@ -74,5 +89,6 @@ export const accountingApi = {
   generateReport: (params: any) => apiClient.post(`${API_BASE}/reports`, params),
   createTransaction: (data: any) => apiClient.post(`${API_BASE}/transactions`, data),
   getSummary: () => apiClient.get(`${API_BASE}/summary`),
+  getMonth: (month: number, year: number) => apiClient.get(`${API_BASE}/month/${month}/${year}`),
 };
 
