@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
@@ -12,6 +12,12 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
+
+  // protección adicional
+  const cleanState = useAuthStore((s) => s.logout);
+  useEffect(() => {
+    cleanState();
+  }, [cleanState]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
