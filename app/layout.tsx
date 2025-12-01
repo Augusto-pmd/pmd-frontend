@@ -1,5 +1,6 @@
 "use client";
 
+import "./globals.css";
 import { DebugErrorBoundary } from "@/components/DebugErrorBoundary";
 
 export default function RootLayout({
