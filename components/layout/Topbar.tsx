@@ -20,11 +20,11 @@ export function Topbar() {
         {user && (
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{user.name}</p>
+              <p className="text-sm font-medium text-gray-900">{user?.fullName || ""}</p>
               <p className="text-xs text-gray-500 capitalize">{String(user.role ?? '')}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-pmd-mediumBlue flex items-center justify-center text-pmd-white font-semibold">
-              {user.name.charAt(0).toUpperCase()}
+              {(user?.fullName?.charAt(0) || "").toUpperCase()}
             </div>
           </div>
         )}
