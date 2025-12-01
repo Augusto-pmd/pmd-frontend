@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SWRProvider } from "@/components/providers/SWRProvider";
+import { DebugErrorBoundary } from "@/components/DebugErrorBoundary";
 
 export const metadata: Metadata = {
   title: "PMD Management System",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SWRProvider>{children}</SWRProvider>
+        <DebugErrorBoundary>
+          <SWRProvider>{children}</SWRProvider>
+        </DebugErrorBoundary>
       </body>
     </html>
   );
