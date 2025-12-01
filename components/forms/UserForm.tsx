@@ -84,9 +84,7 @@ export function UserForm({ initialData, onSubmit, onCancel, isLoading }: UserFor
           className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
         >
           <option value="operator">Operator</option>
-          <option value="supervisor">Supervisor</option>
-          <option value="administration">Administration</option>
-          <option value="direction">Direction</option>
+          <option value="auditor">Auditor</option>
           <option value="admin">Admin</option>
         </select>
       </div>

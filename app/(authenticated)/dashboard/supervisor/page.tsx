@@ -8,7 +8,7 @@ export default function SupervisorDashboard() {
   const { requireRole } = useAuth();
 
   useEffect(() => {
-    requireRole(["supervisor"]);
+    requireRole(["operator"]);
   }, [requireRole]);
 
   return (

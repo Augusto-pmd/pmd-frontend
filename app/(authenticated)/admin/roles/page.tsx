@@ -113,9 +113,9 @@ function AdminRolesContent() {
                 </p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Supervisor</p>
+                <p className="text-sm text-gray-600 mb-1">Auditor</p>
                 <p className="text-2xl font-bold text-pmd-darkBlue">
-                  {roles?.filter((r: any) => r.name === "supervisor").length || 0}
+                  {roles?.filter((r: any) => r.name === "auditor").length || 0}
                 </p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">

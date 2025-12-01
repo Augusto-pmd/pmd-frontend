@@ -2,13 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  // ============================================
-  // TEMPORALMENTE DESACTIVADO - ACCESO LIBRE
-  // Para reactivar: descomentar el código abajo
-  // ============================================
-  return NextResponse.next();
-
-  /* ========== CÓDIGO ORIGINAL (COMENTADO) ==========
   const { pathname } = request.nextUrl;
 
   // Public routes that bypass authentication
@@ -24,6 +17,10 @@ export function middleware(request: NextRequest) {
   const protectedRoutes = [
     "/dashboard",
     "/works",
+    "/accounting",
+    "/audit",
+    "/contracts",
+    "/alerts",
     "/cashboxes",
     "/expenses",
     "/incomes",
@@ -52,7 +49,6 @@ export function middleware(request: NextRequest) {
 
   // Allow access for all other routes
   return NextResponse.next();
-  ========== FIN CÓDIGO ORIGINAL ========== */
 }
 
 export const config = {
