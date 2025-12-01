@@ -20,6 +20,7 @@ interface AuthState {
   login: (user: User, token: string, refreshToken: string) => void;
   logout: () => void;
   loadMe: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -77,6 +78,34 @@ export const useAuthStore = create<AuthState>()(
         }
 
         set({ user, isAuthenticated: true });
+      },
+
+      // --- REFRESH SESSION ---
+      refreshSession: async () => {
+        const { refreshToken } = get();
+        if (!refreshToken) throw new Error("No refresh token");
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+          credentials: "include",
+        });
+
+        const data = await response.json();
+        let user = data?.user;
+
+        // Normalize user.role before setting
+        if (user?.role && typeof user.role === "object") {
+          user = { ...user, role: user.role.name };
+        }
+
+        set({
+          token: data.access_token || data.token,
+          refreshToken: data.refresh_token || data.refreshToken,
+          ...(user && { user }),
+          isAuthenticated: true,
+        });
       },
     }),
     {
