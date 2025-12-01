@@ -79,6 +79,9 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
+  // Asegurar que NINGÚN componente del Dashboard se monte si user no está normalizado
+  if (!user || typeof user.role === "object") return null;
+
   // User role is already normalized by getUserSafe
   const userRole = user?.role as UserRole | undefined;
   const accessibleItems = getAccessibleItems(userRole);

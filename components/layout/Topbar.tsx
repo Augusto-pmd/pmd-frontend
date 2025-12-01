@@ -8,6 +8,9 @@ export function Topbar() {
   const logout = useAuthStore.getState().logout;
   const router = useRouter();
 
+  // Asegurar que NINGÚN componente del Dashboard se monte si user no está normalizado
+  if (!user || typeof user.role === "object") return null;
+
   const handleLogout = () => {
     logout();
     router.push("/login");
