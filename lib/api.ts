@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/authStore";
+import { normalizeUser } from "@/lib/normalizeUser";
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
@@ -24,23 +25,12 @@ api.interceptors.request.use(
   }
 );
 
-// Helper function to normalize user.role from object to string
-const normalizeUserRole = (data: any): any => {
-  if (data?.user?.role && typeof data.user.role === 'object') {
-    data.user.role = data.user.role.name;
-  }
-  if (data?.role && typeof data.role === 'object') {
-    data.role = data.role.name;
-  }
-  return data;
-};
-
 // Response interceptor - Handle token refresh and errors
 api.interceptors.response.use(
   (response) => {
-    // Normalize user.role in all responses
-    if (response.data) {
-      response.data = normalizeUserRole(response.data);
+    // Normalize user in all responses
+    if (response.data?.user) {
+      response.data.user = normalizeUser(response.data.user);
     }
     return response;
   },
@@ -63,8 +53,21 @@ api.interceptors.response.use(
             { withCredentials: true }
           );
 
-          const { token: newToken, refreshToken: newRefreshToken } = response.data;
-          useAuthStore.setState({ token: newToken, refreshToken: newRefreshToken });
+          const { user: rawUser, token: newToken, refreshToken: newRefreshToken } = response.data || {};
+          if (rawUser) {
+            const user = normalizeUser(rawUser);
+            useAuthStore.setState({
+              user,
+              token: newToken,
+              refreshToken: newRefreshToken,
+              isAuthenticated: true,
+            });
+          } else {
+            useAuthStore.setState({
+              token: newToken,
+              refreshToken: newRefreshToken,
+            });
+          }
 
           // Retry original request with new token
           if (originalRequest.headers) {
