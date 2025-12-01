@@ -13,12 +13,6 @@ export function LoginForm() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
 
-  // protección adicional
-  const cleanState = useAuthStore((s) => s.logout);
-  useEffect(() => {
-    cleanState();
-  }, [cleanState]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
