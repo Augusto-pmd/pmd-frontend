@@ -8,7 +8,7 @@ export function BotonVolver() {
   return (
     <button
       onClick={() => router.back()}
-      className="text-pmd-darkBlue hover:text-pmd-mediumBlue font-medium mb-4 transition-colors hover:underline"
+      className="cursor-pointer text-sm font-medium hover:text-blue-600 mb-4 transition-colors hover:underline"
     >
       ← Volver
     </button>
