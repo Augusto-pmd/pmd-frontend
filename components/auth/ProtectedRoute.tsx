@@ -16,24 +16,18 @@ export function ProtectedRoute({
   allowedRoles,
   redirectTo = "/login",
 }: ProtectedRouteProps) {
-  // Sincronización reactiva 100% con Zustand - elimina race conditions
+
+  // --- HOOKS SIEMPRE PRIMERO ---
   const { user, isAuthenticated } = useAuthStore((state) => ({
     user: state.user ? state.getUserSafe() : null,
     isAuthenticated: state.isAuthenticated,
   }));
+
   const router = useRouter();
 
   const userRole = user?.role ?? null;
 
-  // Guard: NO renderizar nada hasta que user esté normalizado
-  if (user === null || typeof user.role === "object") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loading size="lg" />
-      </div>
-    );
-  }
-
+  // --- useEffect: NO debe haber returns antes ---
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace(redirectTo);
@@ -46,17 +40,8 @@ export function ProtectedRoute({
     }
   }, [isAuthenticated, userRole, allowedRoles, router, redirectTo]);
 
-  // Show loading while checking auth
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loading size="lg" />
-      </div>
-    );
-  }
-
-  // Check role access
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole as UserRole)) {
+  // --- Guard DESPUÉS del efecto ---
+  if (user === null || typeof user.role === "object") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />
@@ -66,4 +51,3 @@ export function ProtectedRoute({
 
   return <>{children}</>;
 }
-
