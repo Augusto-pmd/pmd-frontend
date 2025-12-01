@@ -3,13 +3,18 @@ import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
 
 // Create axios instance
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "https://pmd-backend-l47d.onrender.com/api",
+  baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true, // Enable cookies
 });
+
+console.log("🔵 [API INIT] Axios instance created");
+console.log("  - baseURL:", baseURL);
+console.log("  - NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
 
 // Request interceptor - Add auth token
 api.interceptors.request.use(
@@ -48,6 +53,14 @@ api.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
+    // NO silenciar errores - loguear todo
+    console.error("🔴 [API RESPONSE ERROR]");
+    console.error("  - URL:", error.config?.url);
+    console.error("  - Method:", error.config?.method?.toUpperCase());
+    console.error("  - Status:", error.response?.status);
+    console.error("  - Status Text:", error.response?.statusText);
+    console.error("  - Response Data:", error.response?.data);
+    console.error("  - Error Message:", error.message);
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
@@ -102,7 +115,7 @@ api.interceptors.response.use(
       useAuthStore.getState().logout();
     }
 
-    // Normalize error response
+    // Normalize error response - NO silenciar, propagar completo
     const normalizedError = {
       message:
         (error.response?.data as { message?: string })?.message ||
@@ -111,8 +124,11 @@ api.interceptors.response.use(
         "An error occurred",
       status: error.response?.status || 500,
       data: error.response?.data,
+      originalError: error, // Mantener referencia al error original
     };
 
+    console.error("🔴 [API ERROR NORMALIZED]", normalizedError);
+    
     return Promise.reject(normalizedError);
   }
 );

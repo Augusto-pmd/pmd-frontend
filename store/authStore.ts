@@ -34,7 +34,28 @@ export const useAuthStore = create<AuthState>()(
 
       // --- LOGIN ---
       login: (userRaw: any, token: string, refreshToken?: string) => {
+        console.log("🔵 [AUTH STORE] login() called");
+        console.log("  - userRaw:", userRaw);
+        console.log("  - token:", token ? "***" : "MISSING");
+        console.log("  - refreshToken:", refreshToken ? "***" : "MISSING");
+        
+        if (!userRaw) {
+          console.error("🔴 [AUTH STORE] login() called without userRaw");
+          throw new Error("login: userRaw is required");
+        }
+        
+        if (!token) {
+          console.error("🔴 [AUTH STORE] login() called without token");
+          throw new Error("login: token is required");
+        }
+
         const user = normalizeUser(userRaw);
+        
+        console.log("🟢 [AUTH STORE] User normalized:", user);
+        console.log("  - user.id:", user.id);
+        console.log("  - user.email:", user.email);
+        console.log("  - user.fullName:", user.fullName);
+        console.log("  - user.role:", user.role, "(type:", typeof user.role, ")");
 
         set({
           user,
@@ -42,6 +63,11 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: refreshToken ?? null,
           isAuthenticated: true,
         });
+        
+        console.log("🟢 [AUTH STORE] State updated successfully");
+        console.log("  - isAuthenticated:", get().isAuthenticated);
+        console.log("  - user stored:", get().user ? "YES" : "NO");
+        console.log("  - token stored:", get().token ? "YES" : "NO");
       },
 
       // --- LOGOUT ---
