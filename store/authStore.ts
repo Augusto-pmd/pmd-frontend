@@ -81,17 +81,22 @@ export const useAuthStore = create<AuthState>()(
         
         // Guardar token en cookies para que el middleware pueda leerlo
         if (typeof window !== "undefined") {
-          const cookieMaxAge = 60 * 60 * 24 * 7; // 7 días
-          document.cookie = `token=${token}; path=/; max-age=${cookieMaxAge}; SameSite=Lax`;
+          document.cookie = `token=${token}; Path=/; Max-Age=604800; SameSite=None; Secure`;
           console.log("🟢 [COOKIE SET] token guardado en cookie");
-          console.log("  - Cookie max-age:", cookieMaxAge, "segundos (7 días)");
-          console.log("  - Cookie path:", "/");
-          console.log("  - Cookie SameSite:", "Lax");
+          console.log("  - Cookie Max-Age: 604800 segundos (7 días)");
+          console.log("  - Cookie Path: /");
+          console.log("  - Cookie SameSite: None");
+          console.log("  - Cookie Secure: true");
+          console.log("[COOKIE SET]", document.cookie);
           
           if (refreshToken) {
-            const refreshCookieMaxAge = 60 * 60 * 24 * 30; // 30 días
-            document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${refreshCookieMaxAge}; SameSite=Lax`;
+            document.cookie = `refreshToken=${refreshToken}; Path=/; Max-Age=2592000; SameSite=None; Secure`;
             console.log("🟢 [COOKIE SET] refreshToken guardado en cookie");
+            console.log("  - Cookie Max-Age: 2592000 segundos (30 días)");
+            console.log("  - Cookie Path: /");
+            console.log("  - Cookie SameSite: None");
+            console.log("  - Cookie Secure: true");
+            console.log("[COOKIE SET]", document.cookie);
           }
         }
         
@@ -115,9 +120,10 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem("token");
           
           // Limpiar cookies
-          document.cookie = "token=; path=/; max-age=0";
-          document.cookie = "refreshToken=; path=/; max-age=0";
+          document.cookie = "token=; Path=/; Max-Age=0; SameSite=None; Secure";
+          document.cookie = "refreshToken=; Path=/; Max-Age=0; SameSite=None; Secure";
           console.log("🟢 [COOKIE CLEAR] cookies eliminadas");
+          console.log("[COOKIE SET]", document.cookie);
         }
         set({
           user: null,
@@ -179,14 +185,14 @@ export const useAuthStore = create<AuthState>()(
         
         // Actualizar cookies cuando se refresca el token
         if (typeof window !== "undefined" && access_token) {
-          const cookieMaxAge = 60 * 60 * 24 * 7; // 7 días
-          document.cookie = `token=${access_token}; path=/; max-age=${cookieMaxAge}; SameSite=Lax`;
+          document.cookie = `token=${access_token}; Path=/; Max-Age=604800; SameSite=None; Secure`;
           console.log("🟢 [COOKIE SET] token actualizado en cookie (refresh)");
+          console.log("[COOKIE SET]", document.cookie);
           
           if (refresh_token) {
-            const refreshCookieMaxAge = 60 * 60 * 24 * 30; // 30 días
-            document.cookie = `refreshToken=${refresh_token}; path=/; max-age=${refreshCookieMaxAge}; SameSite=Lax`;
+            document.cookie = `refreshToken=${refresh_token}; Path=/; Max-Age=2592000; SameSite=None; Secure`;
             console.log("🟢 [COOKIE SET] refreshToken actualizado en cookie (refresh)");
+            console.log("[COOKIE SET]", document.cookie);
           }
         }
       },
