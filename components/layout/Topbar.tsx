@@ -4,7 +4,8 @@ import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 
 export function Topbar() {
-  const { user, logout } = useAuthStore();
+  const user = useAuthStore.getState().getNormalizedUser();
+  const logout = useAuthStore.getState().logout;
   const router = useRouter();
 
   const handleLogout = () => {

@@ -75,13 +75,13 @@ const getAccessibleItems = (userRole: UserRole | undefined): NavItem[] => {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore.getState().getNormalizedUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  // Normalize user role to string
-  const userRole = user?.role ? (typeof user.role === 'object' ? user.role.name : user.role) : undefined;
-  const accessibleItems = getAccessibleItems(userRole as UserRole | undefined);
+  // User role is already normalized by getNormalizedUser
+  const userRole = user?.role as UserRole | undefined;
+  const accessibleItems = getAccessibleItems(userRole);
 
   const toggleExpand = (href: string) => {
     setExpandedItems((prev) =>

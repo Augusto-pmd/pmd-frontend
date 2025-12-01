@@ -1,45 +1,24 @@
-import { useAuthStore, UserRole } from "@/store/authStore";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useAuthStore } from "@/store/authStore";
 
 export function useAuth() {
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const router = useRouter();
+  const { user, token, refreshToken, isAuthenticated, logout, loadMe } = useAuthStore();
 
-  // Normalize user role to string
-  const userRole = user?.role ? (typeof user.role === 'object' ? user.role.name : user.role) : null;
+  // *** Normalización global del usuario ***
+  let normalizedUser = user;
 
-  const checkRole = (allowedRoles: UserRole[]) => {
-    if (!userRole || !allowedRoles.includes(userRole as UserRole)) {
-      return false;
-    }
-    return true;
-  };
-
-  const requireAuth = () => {
-    if (!isAuthenticated) {
-      router.push("/auth/login");
-      return false;
-    }
-    return true;
-  };
-
-  const requireRole = (allowedRoles: UserRole[]) => {
-    if (!requireAuth()) return false;
-    if (!checkRole(allowedRoles)) {
-      router.push("/dashboard");
-      return false;
-    }
-    return true;
-  };
+  if (normalizedUser?.role && typeof normalizedUser.role === "object") {
+    normalizedUser = {
+      ...normalizedUser,
+      role: normalizedUser.role.name,
+    };
+  }
 
   return {
-    user,
+    user: normalizedUser,
+    token,
+    refreshToken,
     isAuthenticated,
     logout,
-    checkRole,
-    requireAuth,
-    requireRole,
+    loadMe,
   };
 }
-

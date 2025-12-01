@@ -22,6 +22,7 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void;
   loadMe: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  getNormalizedUser: () => User | null;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -121,6 +122,14 @@ export const useAuthStore = create<AuthState>()(
           get().logout();
           throw error;
         }
+      },
+      getNormalizedUser: () => {
+        const u = get().user;
+        if (!u) return null;
+        if (typeof u.role === "object") {
+          return { ...u, role: u.role.name };
+        }
+        return u;
       },
     }),
     {
