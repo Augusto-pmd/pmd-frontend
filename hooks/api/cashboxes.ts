@@ -60,6 +60,21 @@ export function useCashMovements(cashboxId?: string) {
   };
 }
 
+export function useCashMovement(id: string | null) {
+  const { token } = useAuthStore();
+  const { data, error, isLoading, mutate } = useSWR(
+    token && id ? `${CASH_MOVEMENTS_BASE}/${id}` : null,
+    () => apiClient.get(`${CASH_MOVEMENTS_BASE}/${id}`)
+  );
+
+  return {
+    movement: data?.data || data,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
 export const cashMovementApi = {
   create: (data: any) => apiClient.post(CASH_MOVEMENTS_BASE, data),
   update: (id: string, data: any) =>
