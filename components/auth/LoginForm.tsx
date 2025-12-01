@@ -52,7 +52,14 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pmd-darkBlue to-pmd-mediumBlue">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-lg shadow-pmd p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">PMD</h1>
+            <p className="text-gray-600">Management System</p>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd text-sm">
           {error}
@@ -97,6 +104,9 @@ export function LoginForm() {
         {loading ? "Signing in..." : "Sign In"}
       </button>
     </form>
+        </div>
+      </div>
+    </div>
   );
 }
 
