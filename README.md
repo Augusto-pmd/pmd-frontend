@@ -107,6 +107,25 @@ The frontend is configured to integrate with the PMD backend API. Update `NEXT_P
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run test:login` - Test login endpoint connectivity
+
+## Testing
+
+### Login Endpoint Test
+
+Para verificar que el endpoint de login funciona correctamente sin depender de la UI:
+
+```bash
+npm run test:login
+```
+
+Este script:
+- Lee la configuración de `NEXT_PUBLIC_API_URL` desde `.env.local` o variables de entorno
+- Hace una petición POST a `/api/auth/login` con credenciales de prueba
+- Muestra el status code y la respuesta del servidor
+- Indica si el endpoint está funcionando correctamente (200/201) o si hay problemas (404/500)
+
+**Nota**: El script usa credenciales de prueba (`test@example.com` / `password123`). Si estas credenciales no existen en tu base de datos, espera un 401 (Unauthorized), lo cual indica que el endpoint está funcionando pero las credenciales son inválidas.
 
 ## License
 

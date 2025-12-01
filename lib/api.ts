@@ -18,6 +18,19 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // 🔍 DEBUG: Log URL construction before request
+    const baseURL = config.baseURL || api.defaults.baseURL || '';
+    const url = config.url || '';
+    const finalURL = baseURL ? `${baseURL}${url.startsWith('/') ? '' : '/'}${url}` : url;
+    
+    console.log('🔍 [API Request Interceptor] URL Construction:');
+    console.log('  - baseURL:', baseURL);
+    console.log('  - config.url:', url);
+    console.log('  - finalURL:', finalURL);
+    console.log('  - method:', config.method?.toUpperCase());
+    console.log('  - stack trace:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
+    
     return config;
   },
   (error) => {
@@ -47,8 +60,10 @@ api.interceptors.response.use(
         const refreshToken = useAuthStore.getState().refreshToken;
         if (refreshToken) {
           // Attempt to refresh token
+          const refreshURL = `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`;
+          console.log('🔍 [Token Refresh] URL:', refreshURL);
           const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+            refreshURL,
             { refreshToken },
             { withCredentials: true }
           );
@@ -104,15 +119,26 @@ api.interceptors.response.use(
 
 // API helper functions
 export const apiClient = {
-  get: <T = any>(url: string, config?: any) => api.get<T>(url, config).then((res) => res.data),
-  post: <T = any>(url: string, data?: any, config?: any) =>
-    api.post<T>(url, data, config).then((res) => res.data),
-  put: <T = any>(url: string, data?: any, config?: any) =>
-    api.put<T>(url, data, config).then((res) => res.data),
-  patch: <T = any>(url: string, data?: any, config?: any) =>
-    api.patch<T>(url, data, config).then((res) => res.data),
-  delete: <T = any>(url: string, config?: any) =>
-    api.delete<T>(url, config).then((res) => res.data),
+  get: <T = any>(url: string, config?: any) => {
+    console.log('🔍 [apiClient.get] url:', url);
+    return api.get<T>(url, config).then((res) => res.data);
+  },
+  post: <T = any>(url: string, data?: any, config?: any) => {
+    console.log('🔍 [apiClient.post] url:', url);
+    return api.post<T>(url, data, config).then((res) => res.data);
+  },
+  put: <T = any>(url: string, data?: any, config?: any) => {
+    console.log('🔍 [apiClient.put] url:', url);
+    return api.put<T>(url, data, config).then((res) => res.data);
+  },
+  patch: <T = any>(url: string, data?: any, config?: any) => {
+    console.log('🔍 [apiClient.patch] url:', url);
+    return api.patch<T>(url, data, config).then((res) => res.data);
+  },
+  delete: <T = any>(url: string, config?: any) => {
+    console.log('🔍 [apiClient.delete] url:', url);
+    return api.delete<T>(url, config).then((res) => res.data);
+  },
 };
 
 export default api;

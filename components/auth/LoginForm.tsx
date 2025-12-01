@@ -19,7 +19,11 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/login", {
+      const loginEndpoint = "/auth/login";
+      console.log('🔍 [LoginForm] About to call:', loginEndpoint);
+      console.log('🔍 [LoginForm] baseURL from api:', (api as any).defaults?.baseURL);
+      console.log('🔍 [LoginForm] NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+      const response = await api.post(loginEndpoint, {
         email,
         password,
       });
