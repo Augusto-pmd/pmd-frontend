@@ -5,28 +5,16 @@ import { Topbar } from "./Topbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const user = useAuthStore.getState().getUserSafe();
   const router = useRouter();
-  const { loadMe } = useAuthStore();
-
-  // Protection: return null if user.role is still an object
-  if (user && typeof user.role === "object") {
-    return null;
-  }
 
   useEffect(() => {
-    // Cargar sesión al montar si no está autenticado
     if (!isAuthenticated) {
-      loadMe().catch(() => {
-        // Si falla, redirigir a login
-        router.push("/login");
-      });
+      router.push("/login");
     }
-  }, [isAuthenticated, loadMe, router]);
+  }, [isAuthenticated, router]);
 
   if (!isAuthenticated) {
     return null;

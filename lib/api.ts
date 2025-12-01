@@ -3,7 +3,7 @@ import { useAuthStore } from "@/store/authStore";
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "https://pmd-backend-l47d.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },

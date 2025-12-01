@@ -188,11 +188,11 @@ export function Sidebar() {
       </nav>
 
       {/* User Info */}
-      {user && !isCollapsed && !(typeof user?.role === "object") && (
+      {user && !isCollapsed && (
         <div className="p-4 border-t border-pmd-mediumBlue">
           <div className="text-sm text-gray-400">
-            <p className="text-pmd-white font-medium">{user?.fullName || ""}</p>
-            <p className="text-xs capitalize">{String(typeof user?.role === "object" ? user.role.name : user.role ?? '')}</p>
+            <p className="text-pmd-white font-medium">{user.fullName}</p>
+            <p className="text-xs capitalize">{String(user.role ?? "")}</p>
           </div>
         </div>
       )}

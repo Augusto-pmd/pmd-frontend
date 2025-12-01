@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
@@ -25,16 +25,9 @@ export function LoginForm() {
       });
 
       // Backend returns: { user, access_token, refresh_token }
-      // Cookie is automatically set by backend
       const { user, access_token, refresh_token } = response.data;
       
-      // Normalize user.role from object to string
-      if (user?.role && typeof user.role === 'object') {
-        user.role = user.role.name;
-      }
-      
-      // Store token in Zustand for axios interceptor (Bearer token in headers)
-      // Cookie is already set by backend for middleware
+      // login() ya normaliza el user internamente
       login(user, access_token, refresh_token || access_token);
       
       router.push("/dashboard");

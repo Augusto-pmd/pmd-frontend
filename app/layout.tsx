@@ -1,7 +1,6 @@
 "use client";
 
 import "./globals.css";
-import { DebugErrorBoundary } from "@/components/DebugErrorBoundary";
 
 export default function RootLayout({
   children,
@@ -10,11 +9,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <DebugErrorBoundary>
-          {children}
-        </DebugErrorBoundary>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

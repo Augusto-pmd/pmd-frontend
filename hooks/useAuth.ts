@@ -1,11 +1,25 @@
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore, UserRole } from "@/store/authStore";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 export function useAuth() {
   const getUserSafe = useAuthStore((s) => s.getUserSafe);
   const user = getUserSafe();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const logout = useAuthStore((s) => s.logout);
-  const loadMe = useAuthStore((s) => s.loadMe);
+  const refreshSession = useAuthStore((s) => s.refreshSession);
+  const router = useRouter();
 
-  return { user, isAuthenticated, logout, loadMe };
+  const requireRole = useCallback((allowedRoles: UserRole[]) => {
+    if (!isAuthenticated || !user) {
+      router.push("/login");
+      return;
+    }
+    if (!allowedRoles.includes(user.role as UserRole)) {
+      router.push("/unauthorized");
+      return;
+    }
+  }, [isAuthenticated, user, router]);
+
+  return { user, isAuthenticated, logout, refreshSession, requireRole };
 }

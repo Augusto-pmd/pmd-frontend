@@ -138,8 +138,6 @@ function AdminUsersContent() {
                     {users?.map((user: any) => {
                       // Normalize user.role from object to string
                       const userRole = user?.role ? (typeof user.role === 'object' ? user.role.name : user.role) : '';
-                      // Protection: skip if user.role is still an object
-                      if (typeof user?.role === "object") return null;
                       return (
                       <tr key={user.id}>
                         <td className="px-4 py-3 text-sm text-gray-900">{user?.fullName || user?.name || ""}</td>

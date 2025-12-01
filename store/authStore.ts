@@ -1,23 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { apiClient } from "@/lib/api";
+import { AuthUser, normalizeUser } from "@/lib/normalizeUser";
 
 export type UserRole = "admin" | "operator" | "auditor";
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-}
-
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  getUserSafe: () => User | null;
-  login: (user: User, token: string, refreshToken: string) => void;
+  getUserSafe: () => AuthUser | null;
+  login: (userRaw: any, token: string, refreshToken?: string) => void;
   logout: () => void;
   loadMe: () => Promise<void>;
   refreshSession: () => Promise<void>;
@@ -35,18 +28,20 @@ export const useAuthStore = create<AuthState>()(
       getUserSafe: () => {
         const u = get().user;
         if (!u) return null;
-        if (typeof u.role === "object") {
-          return { ...u, role: u.role.name };
-        }
-        return u;
+        // Ya debería venir normalizado, pero aseguramos por las dudas:
+        return normalizeUser(u);
       },
 
       // --- LOGIN ---
-      login: (user, token, refreshToken) => {
-        if (user?.role && typeof user.role === "object") {
-          user = { ...user, role: user.role.name };
-        }
-        set({ user, token, refreshToken, isAuthenticated: true });
+      login: (userRaw: any, token: string, refreshToken?: string) => {
+        const user = normalizeUser(userRaw);
+
+        set({
+          user,
+          token,
+          refreshToken: refreshToken ?? null,
+          isAuthenticated: true,
+        });
       },
 
       // --- LOGOUT ---
@@ -71,11 +66,11 @@ export const useAuthStore = create<AuthState>()(
 
         const response = await fetch("/api/auth/profile");
         const data = await response.json();
-        let user = data?.user;
+        const rawUser = data?.user;
 
-        if (user?.role && typeof user.role === "object") {
-          user = { ...user, role: user.role.name };
-        }
+        if (!rawUser) throw new Error("No user in response");
+
+        const user = normalizeUser(rawUser);
 
         set({ user, isAuthenticated: true });
       },
@@ -93,19 +88,26 @@ export const useAuthStore = create<AuthState>()(
         });
 
         const data = await response.json();
-        let user = data?.user;
+        const rawUser = data?.user;
+        const access_token = data.access_token || data.token;
+        const refresh_token = data.refresh_token || data.refreshToken;
 
-        // Normalize user.role before setting
-        if (user?.role && typeof user.role === "object") {
-          user = { ...user, role: user.role.name };
+        if (rawUser) {
+          const user = normalizeUser(rawUser);
+          set({
+            user,
+            token: access_token,
+            refreshToken: refresh_token ?? null,
+            isAuthenticated: true,
+          });
+        } else {
+          // Si no hay user, solo actualizamos tokens
+          set({
+            token: access_token,
+            refreshToken: refresh_token ?? null,
+            isAuthenticated: true,
+          });
         }
-
-        set({
-          token: data.access_token || data.token,
-          refreshToken: data.refresh_token || data.refreshToken,
-          ...(user && { user }),
-          isAuthenticated: true,
-        });
       },
     }),
     {
@@ -113,11 +115,16 @@ export const useAuthStore = create<AuthState>()(
 
       // --- REHIDRATACIÓN SEGURA ---
       onRehydrateStorage: () => (state) => {
-        if (state?.user && typeof state.user.role === "object") {
-          state.user.role = state.user.role.name;
+        if (state?.user) {
+          try {
+            state.user = normalizeUser(state.user);
+          } catch {
+            // Si falla la normalización, limpiamos el estado
+            state.user = null;
+            state.isAuthenticated = false;
+          }
         }
       },
     }
   )
 );
-
