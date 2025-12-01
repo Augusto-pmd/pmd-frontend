@@ -4,28 +4,22 @@ import { ModuleCard } from "./ModuleCard";
 
 const modules = [
   {
-    title: "Works",
+    title: "Obras",
     description: "Gestiona obras, proyectos y actividades de construcción",
     icon: "🔨",
     route: "/works",
   },
   {
-    title: "Suppliers",
+    title: "Proveedores",
     description: "Administra proveedores y sus contratos",
     icon: "🏢",
     route: "/suppliers",
   },
   {
-    title: "Accounting",
+    title: "Contabilidad",
     description: "Contabilidad, reportes financieros y análisis",
     icon: "📊",
     route: "/accounting",
-  },
-  {
-    title: "Users",
-    description: "Gestiona usuarios del sistema y sus permisos",
-    icon: "👥",
-    route: "/admin/users",
   },
   {
     title: "Roles",
@@ -34,35 +28,41 @@ const modules = [
     route: "/admin/roles",
   },
   {
-    title: "Alerts",
+    title: "Usuarios",
+    description: "Gestiona usuarios del sistema y sus permisos",
+    icon: "👥",
+    route: "/admin/users",
+  },
+  {
+    title: "Alertas",
     description: "Notificaciones y alertas del sistema",
     icon: "🔔",
     route: "/alerts",
   },
   {
-    title: "Audit",
-    description: "Registro de auditoría y actividad del sistema",
-    icon: "📋",
-    route: "/audit",
-  },
-  {
-    title: "Cashboxes",
+    title: "Caja",
     description: "Gestiona cajas de efectivo y saldos",
     icon: "💰",
     route: "/cashbox",
   },
   {
-    title: "Cash Movements",
+    title: "Movimientos de Caja",
     description: "Movimientos de efectivo y transacciones",
     icon: "💵",
     route: "/cash",
+  },
+  {
+    title: "Auditoría",
+    description: "Registro de auditoría y actividad del sistema",
+    icon: "📋",
+    route: "/audit",
   },
 ];
 
 export function DashboardModules() {
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-6 py-6">
+      <div className="px-1">
         <h2 className="text-2xl font-bold text-pmd-darkBlue mb-2">Módulos Principales</h2>
         <p className="text-gray-600">Accede a las funcionalidades principales del sistema</p>
       </div>

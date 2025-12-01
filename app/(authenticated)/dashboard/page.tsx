@@ -35,10 +35,10 @@ function DashboardContent() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Dashboard – PMD Backend Integration</h1>
-          <p className="text-gray-600">Overview and analytics dashboard</p>
+      <div className="space-y-8 py-6">
+        <div className="px-1">
+          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Dashboard</h1>
+          <p className="text-gray-600">Panel de control y acceso a módulos del sistema</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
