@@ -2,7 +2,7 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 
-const API_BASE = "/audit";
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/audit`;
 
 export function useAuditLogs(params?: { startDate?: string; endDate?: string }) {
   const { token } = useAuthStore();

@@ -2,7 +2,7 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 
-const API_BASE = "/cashboxes";
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/cashboxes`;
 
 export function useCashboxes() {
   const { token } = useAuthStore();
@@ -40,11 +40,13 @@ export const cashboxApi = {
   delete: (id: string) => apiClient.delete(`${API_BASE}/${id}`),
 };
 
+const CASH_MOVEMENTS_BASE = `${process.env.NEXT_PUBLIC_API_URL}/cash-movements`;
+
 export function useCashMovements(cashboxId?: string) {
   const { token } = useAuthStore();
   const endpoint = cashboxId
-    ? `/cash-movements?cashboxId=${cashboxId}`
-    : "/cash-movements";
+    ? `${CASH_MOVEMENTS_BASE}?cashboxId=${cashboxId}`
+    : CASH_MOVEMENTS_BASE;
   const { data, error, isLoading, mutate } = useSWR(
     token ? endpoint : null,
     () => apiClient.get(endpoint)
@@ -59,9 +61,9 @@ export function useCashMovements(cashboxId?: string) {
 }
 
 export const cashMovementApi = {
-  create: (data: any) => apiClient.post("/cash-movements", data),
+  create: (data: any) => apiClient.post(CASH_MOVEMENTS_BASE, data),
   update: (id: string, data: any) =>
-    apiClient.put(`/cash-movements/${id}`, data),
-  delete: (id: string) => apiClient.delete(`/cash-movements/${id}`),
+    apiClient.put(`${CASH_MOVEMENTS_BASE}/${id}`, data),
+  delete: (id: string) => apiClient.delete(`${CASH_MOVEMENTS_BASE}/${id}`),
 };
 

@@ -2,11 +2,13 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`;
+
 export function useDashboardStats() {
   const { token } = useAuthStore();
   const { data, error, isLoading, mutate } = useSWR(
-    token ? "/dashboard/stats" : null,
-    () => apiClient.get("/dashboard/stats")
+    token ? API_BASE : null,
+    () => apiClient.get(API_BASE)
   );
 
   return {

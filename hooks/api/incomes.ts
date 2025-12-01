@@ -2,7 +2,7 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 
-const API_BASE = "/incomes";
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/incomes`;
 
 export function useIncomes() {
   const { token } = useAuthStore();
