@@ -12,10 +12,10 @@ export default function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const logout = useAuthStore((s) => s.logout);
 
-  // Limpieza total al entrar al login
+  // Limpieza total al entrar al login - NUNCA montar user antes del submit
   useEffect(() => {
-    logout();  // fuerza estado limpio para evitar roles corruptos
-  }, [logout]);
+    useAuthStore.getState().logout();
+  }, []);
 
   // Redirección SOLO si el usuario ya está autenticado de forma real
   useEffect(() => {

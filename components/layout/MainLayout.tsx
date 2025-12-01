@@ -8,9 +8,15 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const user = useAuthStore.getState().getUserSafe();
   const router = useRouter();
   const { loadMe } = useAuthStore();
+
+  // Protection: return null if user.role is still an object
+  if (user && typeof user.role === "object") {
+    return null;
+  }
 
   useEffect(() => {
     // Cargar sesión al montar si no está autenticado

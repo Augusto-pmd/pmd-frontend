@@ -16,11 +16,17 @@ export function ProtectedRoute({
   allowedRoles,
   redirectTo = "/login",
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
+  const user = useAuthStore.getState().getUserSafe();
   const router = useRouter();
 
   // Normalize user role to string
   const userRole = user?.role ? (typeof user.role === 'object' ? user.role.name : user.role) : null;
+
+  // Protection: return null if user.role is still an object
+  if (user && typeof user.role === "object") {
+    return null;
+  }
 
   useEffect(() => {
     // Check authentication
