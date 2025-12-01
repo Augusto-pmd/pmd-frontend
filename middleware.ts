@@ -1,73 +1,36 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export function middleware(req: NextRequest) {
+  const token = req.cookies.get("token")?.value;
 
-  // Public routes that bypass authentication
-  const publicRoutes = ["/", "/login", "/register"];
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const isAuthPage = req.nextUrl.pathname.startsWith("/login");
+  const isProtectedRoute = req.nextUrl.pathname.startsWith("/dashboard")
+    || req.nextUrl.pathname.startsWith("/works")
+    || req.nextUrl.pathname.startsWith("/admin")
+    || req.nextUrl.pathname.startsWith("/suppliers")
+    || req.nextUrl.pathname.startsWith("/accounting");
 
-  // If it's a public route, allow access
-  if (isPublicRoute) {
-    return NextResponse.next();
+  // Si NO hay token y es una ruta privada → mandar al login
+  if (!token && isProtectedRoute) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Protected routes that require authentication
-  const protectedRoutes = [
-    "/dashboard",
-    "/works",
-    "/accounting",
-    "/audit",
-    "/contracts",
-    "/alerts",
-    "/cashboxes",
-    "/expenses",
-    "/incomes",
-    "/tasks",
-    "/suppliers",
-    "/schedule",
-    "/roles",
-    "/users",
-    "/storage",
-  ];
-
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-
-  // If it's a protected route, check for authentication token
-  if (isProtectedRoute) {
-    // Check for token cookie (set by backend NestJS)
-    const token = request.cookies.get("token")?.value;
-
-    // If no token found, redirect to login
-    if (!token) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  // Si SÍ hay token y va al login → mandarlo al dashboard
+  if (token && isAuthPage) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  // Allow access for all other routes
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - /login (public route)
-     * - /register (public route)
-     * - / (root route)
-     * 
-     * Using .+ instead of .* to require at least one character after /,
-     * which excludes the root path "/"
-     * The negative lookahead excludes paths that start with login or register
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|login|register).+)",
+    "/dashboard/:path*",
+    "/works/:path*",
+    "/admin/:path*",
+    "/suppliers/:path*",
+    "/accounting/:path*",
+    "/login",
   ],
 };
-
