@@ -1,12 +1,9 @@
 "use client";
 
+// Este layout no debe redefinir html/body
+// Solo devuelve children y permite que RootLayout se use correctamente
+
 export default function LoginLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body className="bg-gray-50">
-        {children}
-      </body>
-    </html>
-  );
+  return <>{children}</>;
 }
 
