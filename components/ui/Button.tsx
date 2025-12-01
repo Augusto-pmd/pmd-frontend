@@ -14,12 +14,14 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = "font-semibold rounded-pmd transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
-  
+  const baseStyles =
+    "font-semibold rounded-pmd transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pmd-gold";
+
   const variants = {
     primary: "bg-pmd-darkBlue text-pmd-white hover:bg-pmd-mediumBlue",
     secondary: "bg-pmd-gold text-pmd-darkBlue hover:bg-yellow-500",
-    outline: "border-2 border-pmd-darkBlue text-pmd-darkBlue hover:bg-pmd-darkBlue hover:text-pmd-white",
+    outline:
+      "border-2 border-pmd-darkBlue text-pmd-darkBlue hover:bg-pmd-darkBlue hover:text-pmd-white",
     ghost: "text-pmd-darkBlue hover:bg-gray-100",
   };
 
@@ -30,12 +32,10 @@ export function Button({
   };
 
   return (
-    <button
-      className={cn(baseStyles, variants[variant], sizes[size], className)}
-      {...props}
-    >
+    <button className={cn(baseStyles, variants[variant], sizes[size], className)} {...props}>
       {children}
     </button>
   );
 }
 
+export default Button;
