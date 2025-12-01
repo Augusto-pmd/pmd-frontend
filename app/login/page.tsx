@@ -2,27 +2,23 @@
 
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { useRouter } from "next/navigation";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function LoginPage() {
-  const router = useRouter();
 
-  // Leer estado seguro (sin user)
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const logout = useAuthStore((s) => s.logout);
-
-  // Limpieza total al entrar al login - NUNCA montar user antes del submit
+  // 🔥 FIX: limpiar estado ANTES del render
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("pmd-auth-storage");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    }
     useAuthStore.getState().logout();
   }, []);
 
-  // Redirección SOLO si el usuario ya está autenticado de forma real
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard");
-    }
-  }, [isAuthenticated, router]);
-
-  return <LoginForm />;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <LoginForm />
+    </div>
+  );
 }
