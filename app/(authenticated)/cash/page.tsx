@@ -12,8 +12,8 @@ export default function CashPage() {
       <div className="space-y-6">
         <div>
           <BotonVolver />
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Cashbox & Expenses</h1>
-          <p className="text-gray-600">Manage cash flow and expenses</p>
+          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Caja y Gastos</h1>
+          <p className="text-gray-600">Gestión de flujo de caja y gastos</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-pmd">
@@ -27,7 +27,7 @@ export default function CashPage() {
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
-                Cashbox
+                Caja
               </button>
               <button
                 onClick={() => setActiveTab("expenses")}
@@ -37,7 +37,7 @@ export default function CashPage() {
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
-                Expenses
+                Gastos
               </button>
             </div>
           </div>
@@ -46,19 +46,19 @@ export default function CashPage() {
             {activeTab === "cashbox" && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-pmd-darkBlue">Cashbox Balance</h2>
+                  <h2 className="text-xl font-semibold text-pmd-darkBlue">Saldo de Caja</h2>
                   <button className="px-4 py-2 bg-pmd-darkBlue text-pmd-white rounded-pmd hover:bg-pmd-mediumBlue transition-colors">
-                    Add Transaction
+                    Agregar Transacción
                   </button>
                 </div>
                 <div className="bg-gray-50 rounded-pmd p-6">
-                  <p className="text-sm text-gray-600 mb-2">Current Balance</p>
+                  <p className="text-sm text-gray-600 mb-2">Saldo Actual</p>
                   <p className="text-3xl font-bold text-pmd-darkBlue">$0.00</p>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-pmd-darkBlue mb-4">Recent Transactions</h3>
+                  <h3 className="text-lg font-semibold text-pmd-darkBlue mb-4">Transacciones Recientes</h3>
                   <div className="space-y-2">
-                    <p className="text-gray-500 text-sm">No transactions yet</p>
+                    <p className="text-gray-500 text-sm">No hay transacciones aún</p>
                   </div>
                 </div>
               </div>
@@ -67,13 +67,13 @@ export default function CashPage() {
             {activeTab === "expenses" && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-pmd-darkBlue">Expenses</h2>
+                  <h2 className="text-xl font-semibold text-pmd-darkBlue">Gastos</h2>
                   <button className="px-4 py-2 bg-pmd-darkBlue text-pmd-white rounded-pmd hover:bg-pmd-mediumBlue transition-colors">
-                    Add Expense
+                    Agregar Gasto
                   </button>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-gray-500 text-sm">No expenses recorded</p>
+                  <p className="text-gray-500 text-sm">No hay gastos registrados</p>
                 </div>
               </div>
             )}

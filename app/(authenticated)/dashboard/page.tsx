@@ -9,6 +9,7 @@ import { useContracts } from "@/hooks/api/contracts";
 import { useAlerts } from "@/hooks/api/alerts";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { DashboardModules } from "@/components/dashboard/DashboardModules";
+import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function DashboardContent() {
   const { works, isLoading: worksLoading } = useWorks();
@@ -23,7 +24,7 @@ function DashboardContent() {
   if (isLoading) {
     return (
       <MainLayout>
-        <LoadingState message="Loading dashboard..." />
+        <LoadingState message="Cargando panel de control…" />
       </MainLayout>
     );
   }
@@ -37,25 +38,26 @@ function DashboardContent() {
     <MainLayout>
       <div className="space-y-8 py-6">
         <div className="px-1">
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Dashboard</h1>
+          <BotonVolver />
+          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Panel de Control</h1>
           <p className="text-gray-600">Panel de control y acceso a módulos del sistema</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-lg shadow-pmd p-6 border-l-4 border-pmd-gold">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Total Revenue</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Ingresos Totales</h3>
             <p className="text-2xl font-bold text-pmd-darkBlue">${totalRevenue.toFixed(2)}</p>
           </div>
           <div className="bg-white rounded-lg shadow-pmd p-6 border-l-4 border-pmd-mediumBlue">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Active Contracts</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Contratos Activos</h3>
             <p className="text-2xl font-bold text-pmd-darkBlue">{activeContracts}</p>
           </div>
           <div className="bg-white rounded-lg shadow-pmd p-6 border-l-4 border-pmd-gold">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Pending Alerts</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Alertas Pendientes</h3>
             <p className="text-2xl font-bold text-pmd-darkBlue">{pendingAlerts}</p>
           </div>
           <div className="bg-white rounded-lg shadow-pmd p-6 border-l-4 border-pmd-mediumBlue">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Active Works</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Obras Activas</h3>
             <p className="text-2xl font-bold text-pmd-darkBlue">{activeWorks}</p>
           </div>
         </div>
@@ -64,7 +66,7 @@ function DashboardContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-pmd p-6">
-            <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Recent Activity</h2>
+            <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Actividad Reciente</h2>
             <div className="space-y-4">
               {works?.slice(0, 5).map((work: any) => (
                 <div key={work.id} className="flex justify-between items-center">
@@ -75,21 +77,21 @@ function DashboardContent() {
                 </div>
               ))}
               {(!works || works.length === 0) && (
-                <p className="text-gray-500 text-sm">No recent activity</p>
+                <p className="text-gray-500 text-sm">No hay actividad reciente</p>
               )}
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-pmd p-6">
-            <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Quick Actions</h2>
+            <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Acciones Rápidas</h2>
             <div className="space-y-2">
               <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-pmd transition-colors">
-                View Reports
+                Ver Reportes
               </button>
               <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-pmd transition-colors">
-                Manage Contracts
+                Gestionar Contratos
               </button>
               <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-pmd transition-colors">
-                Review Alerts
+                Revisar Alertas
               </button>
             </div>
           </div>

@@ -43,7 +43,7 @@ function AuditContent() {
   if (isLoading) {
     return (
       <MainLayout>
-        <LoadingState message="Loading audit logs..." />
+        <LoadingState message="Cargando registros de auditoría…" />
       </MainLayout>
     );
   }
@@ -52,7 +52,7 @@ function AuditContent() {
     return (
       <MainLayout>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error loading audit logs: {error.message || "Unknown error"}
+          Error al cargar los registros de auditoría: {error.message || "Error desconocido"}
         </div>
       </MainLayout>
     );
@@ -86,21 +86,21 @@ function AuditContent() {
         </div>
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Audit Log – PMD Backend Integration</h1>
-            <p className="text-gray-600">System activity and audit trail</p>
+            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Auditoría</h1>
+            <p className="text-gray-600">Actividad del sistema y registro de auditoría</p>
           </div>
           <div className="flex gap-2">
             {(["all", "today", "week", "month"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-pmd font-medium transition-colors capitalize ${
+                className={`px-4 py-2 rounded-pmd font-medium transition-colors ${
                   filter === f
                     ? "bg-pmd-darkBlue text-pmd-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
-                {f}
+                {f === "all" ? "Todas" : f === "today" ? "Hoy" : f === "week" ? "Esta Semana" : "Este Mes"}
               </button>
             ))}
           </div>
@@ -110,41 +110,41 @@ function AuditContent() {
           <div className="mb-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Total Events</p>
+                <p className="text-sm text-gray-600 mb-1">Total de Eventos</p>
                 <p className="text-2xl font-bold text-pmd-darkBlue">{logs?.length || 0}</p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Today</p>
+                <p className="text-sm text-gray-600 mb-1">Hoy</p>
                 <p className="text-2xl font-bold text-pmd-darkBlue">{todayCount}</p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">This Week</p>
+                <p className="text-sm text-gray-600 mb-1">Esta Semana</p>
                 <p className="text-2xl font-bold text-pmd-darkBlue">{weekCount}</p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">This Month</p>
+                <p className="text-sm text-gray-600 mb-1">Este Mes</p>
                 <p className="text-2xl font-bold text-pmd-darkBlue">{monthCount}</p>
               </div>
             </div>
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Audit Trail</h2>
+            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Registro de Auditoría</h2>
             {logs?.length === 0 ? (
               <EmptyState
-                title="No audit records found"
-                description="Audit logs will appear here as system activity occurs"
+                title="No se encontraron registros de auditoría"
+                description="Los registros de auditoría aparecerán aquí cuando haya actividad en el sistema"
               />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Timestamp</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">User</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Action</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Entity</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Details</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fecha y Hora</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Usuario</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acción</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Entidad</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Detalles</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -152,7 +152,7 @@ function AuditContent() {
                       <tr key={log.id}>
                         <td className="px-4 py-3 text-sm text-gray-900">
                           {log.timestamp || log.createdAt
-                            ? new Date(log.timestamp || log.createdAt).toLocaleString()
+                            ? new Date(log.timestamp || log.createdAt).toLocaleString("es-ES")
                             : "-"}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">

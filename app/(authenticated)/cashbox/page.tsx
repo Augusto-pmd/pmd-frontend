@@ -17,7 +17,7 @@ function CashboxContent() {
   if (isLoading) {
     return (
       <MainLayout>
-        <LoadingState message="Loading cashbox..." />
+        <LoadingState message="Cargando caja…" />
       </MainLayout>
     );
   }
@@ -26,7 +26,7 @@ function CashboxContent() {
     return (
       <MainLayout>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error loading cashbox: {error.message || "Unknown error"}
+          Error al cargar la caja: {error.message || "Error desconocido"}
         </div>
       </MainLayout>
     );
@@ -39,37 +39,37 @@ function CashboxContent() {
       <div className="space-y-6">
         <div>
           <BotonVolver />
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Cashbox – PMD Backend Integration</h1>
-          <p className="text-gray-600">Manage cashbox transactions and balances</p>
+          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Caja</h1>
+          <p className="text-gray-600">Gestión de transacciones y saldos de caja</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-pmd p-6">
           <div className="mb-6">
             <div className="bg-gray-50 rounded-pmd p-6">
-              <p className="text-sm text-gray-600 mb-2">Current Cashbox Balance</p>
+              <p className="text-sm text-gray-600 mb-2">Saldo Actual de Caja</p>
               <p className="text-3xl font-bold text-pmd-darkBlue">${balance.toFixed(2)}</p>
             </div>
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Recent Transactions</h2>
+            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Transacciones Recientes</h2>
             {movementsLoading ? (
-              <LoadingState message="Loading transactions..." />
+              <LoadingState message="Cargando transacciones…" />
             ) : movements?.length === 0 ? (
               <EmptyState
-                title="No transactions yet"
-                description="Transactions will appear here once you start recording cash movements"
+                title="No hay transacciones aún"
+                description="Las transacciones aparecerán aquí una vez que comiences a registrar movimientos de caja"
               />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Description</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Amount</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fecha</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Descripción</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Monto</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -80,7 +80,7 @@ function CashboxContent() {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">
                           <Badge variant={movement.type === "income" ? "success" : "error"}>
-                            {movement.type}
+                            {movement.type === "income" ? "Ingreso" : movement.type === "expense" ? "Egreso" : movement.type}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">{movement.description || "-"}</td>
@@ -89,7 +89,7 @@ function CashboxContent() {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">
                           <Badge variant={movement.status === "completed" ? "success" : "warning"}>
-                            {movement.status}
+                            {movement.status === "completed" ? "Completado" : movement.status === "pending" ? "Pendiente" : movement.status}
                           </Badge>
                         </td>
                       </tr>
