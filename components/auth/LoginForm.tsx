@@ -40,24 +40,60 @@ export function LoginForm() {
       console.log("  - Headers:", response.headers);
 
       // Backend returns: { user, access_token, refresh_token }
-      const { user, access_token, refresh_token } = response.data;
+      const responseData = response.data;
+      console.log("🔵 [LOGIN EXTRACT] Extrayendo datos de response.data:");
+      console.log("  - response.data keys:", Object.keys(responseData));
+      console.log("  - response.data.access_token exists:", !!responseData.access_token);
+      console.log("  - response.data.token exists:", !!responseData.token);
+      console.log("  - response.data.user exists:", !!responseData.user);
       
-      if (!user || !access_token) {
-        throw new Error("Invalid response: missing user or token");
+      // Intentar extraer access_token o token (el backend puede usar cualquiera)
+      const access_token = responseData.access_token || responseData.token;
+      const user = responseData.user;
+      const refresh_token = responseData.refresh_token || responseData.refreshToken;
+      
+      console.log("🔵 [LOGIN EXTRACT] Datos extraídos:");
+      console.log("  - access_token:", access_token ? "***PRESENT***" : "MISSING");
+      console.log("  - user:", user ? "PRESENT" : "MISSING");
+      console.log("  - refresh_token:", refresh_token ? "***PRESENT***" : "MISSING");
+      
+      if (!user) {
+        console.error("🔴 [LOGIN ERROR] Missing user in response");
+        throw new Error("Invalid response: missing user");
+      }
+      
+      if (!access_token) {
+        console.error("🔴 [LOGIN ERROR] Missing access_token in response");
+        console.error("  - Available keys:", Object.keys(responseData));
+        throw new Error("Invalid response: missing access_token or token");
       }
 
-      console.log("🔵 [LOGIN STORE] Guardando en store:");
+      console.log("🔵 [LOGIN STORE] Llamando login() con:");
       console.log("  - User:", user);
-      console.log("  - Token:", access_token ? "***" : "MISSING");
-      console.log("  - RefreshToken:", refresh_token ? "***" : "MISSING");
+      console.log("  - Access Token:", access_token ? "***" : "MISSING");
+      console.log("  - Refresh Token:", refresh_token ? "***" : "MISSING");
       
       // login() ya normaliza el user internamente
       login(user, access_token, refresh_token || access_token);
       
-      console.log("🟢 [LOGIN SUCCESS] Redirigiendo a /dashboard");
+      // Verificar que se guardó correctamente
+      const storeState = useAuthStore.getState();
+      console.log("🟢 [LOGIN VERIFY] Estado después de login():");
+      console.log("  - isAuthenticated:", storeState.isAuthenticated);
+      console.log("  - user stored:", storeState.user ? "YES" : "NO");
+      console.log("  - token stored:", storeState.token ? "YES" : "NO");
+      
+      if (!storeState.isAuthenticated || !storeState.token) {
+        console.error("🔴 [LOGIN ERROR] Store no se actualizó correctamente");
+        throw new Error("Failed to save authentication state");
+      }
+      
+      console.log("🟢 [LOGIN SUCCESS] Estado guardado correctamente, redirigiendo a /dashboard");
       
       // Usar replace para evitar que el usuario pueda volver atrás
       router.replace("/dashboard");
+      
+      console.log("🟢 [LOGIN SUCCESS] router.replace('/dashboard') ejecutado");
     } catch (err: any) {
       console.error("🔴 [LOGIN ERROR]");
       console.error("  - Error:", err);

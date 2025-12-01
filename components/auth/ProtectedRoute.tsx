@@ -24,6 +24,14 @@ export function ProtectedRoute({
   }));
 
   const router = useRouter();
+  
+  // Logs de depuración
+  const storeState = useAuthStore.getState();
+  console.log("🔵 [AUTH PROTECTED ROUTE] Estado del store:");
+  console.log("  - isAuthenticated:", isAuthenticated);
+  console.log("  - user:", user ? "PRESENT" : "NULL");
+  console.log("  - token:", storeState.token ? "***PRESENT***" : "NULL");
+  console.log("  - user.role:", user?.role, "(type:", typeof user?.role, ")");
 
   const userRole = user?.role ?? null;
 

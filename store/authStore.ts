@@ -34,6 +34,12 @@ export const useAuthStore = create<AuthState>()(
 
       // --- LOGIN ---
       login: (userRaw: any, token: string, refreshToken?: string) => {
+        console.log("🔵 [AUTH STORE BEFORE] Estado ANTES de login():");
+        const stateBefore = get();
+        console.log("  - isAuthenticated:", stateBefore.isAuthenticated);
+        console.log("  - user:", stateBefore.user ? "PRESENT" : "NULL");
+        console.log("  - token:", stateBefore.token ? "PRESENT" : "NULL");
+        
         console.log("🔵 [AUTH STORE] login() called");
         console.log("  - userRaw:", userRaw);
         console.log("  - token:", token ? "***" : "MISSING");
@@ -56,18 +62,33 @@ export const useAuthStore = create<AuthState>()(
         console.log("  - user.email:", user.email);
         console.log("  - user.fullName:", user.fullName);
         console.log("  - user.role:", user.role, "(type:", typeof user.role, ")");
+        console.log("  - user.role is string:", typeof user.role === "string");
 
-        set({
+        const newState = {
           user,
-          token,
+          token, // Guardamos como 'token' en el store (estándar interno)
           refreshToken: refreshToken ?? null,
           isAuthenticated: true,
-        });
+        };
         
-        console.log("🟢 [AUTH STORE] State updated successfully");
-        console.log("  - isAuthenticated:", get().isAuthenticated);
-        console.log("  - user stored:", get().user ? "YES" : "NO");
-        console.log("  - token stored:", get().token ? "YES" : "NO");
+        console.log("🔵 [AUTH STORE] Actualizando estado con:");
+        console.log("  - user:", newState.user ? "PRESENT" : "NULL");
+        console.log("  - token:", newState.token ? "***PRESENT***" : "NULL");
+        console.log("  - refreshToken:", newState.refreshToken ? "***PRESENT***" : "NULL");
+        console.log("  - isAuthenticated:", newState.isAuthenticated);
+
+        set(newState);
+        
+        const stateAfter = get();
+        console.log("🟢 [AUTH STORE AFTER] Estado DESPUÉS de login():");
+        console.log("  - isAuthenticated:", stateAfter.isAuthenticated);
+        console.log("  - user stored:", stateAfter.user ? "YES" : "NO");
+        console.log("  - token stored:", stateAfter.token ? "YES" : "NO");
+        console.log("  - refreshToken stored:", stateAfter.refreshToken ? "YES" : "NO");
+        
+        if (stateAfter.user) {
+          console.log("  - user.role:", stateAfter.user.role, "(type:", typeof stateAfter.user.role, ")");
+        }
       },
 
       // --- LOGOUT ---
