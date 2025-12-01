@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAccounting } from "@/hooks/api/accounting";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function AccountingContent() {
   const { accounting, isLoading, error } = useAccounting();
@@ -31,6 +32,7 @@ function AccountingContent() {
     <MainLayout>
       <div className="space-y-6">
         <div>
+          <BotonVolver />
           <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Accounting – PMD Backend Integration</h1>
           <p className="text-gray-600">Financial accounting and reporting</p>
         </div>

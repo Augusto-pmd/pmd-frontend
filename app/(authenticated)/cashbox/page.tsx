@@ -7,6 +7,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function CashboxContent() {
   const { cashboxes, isLoading, error } = useCashboxes();
@@ -37,6 +38,7 @@ function CashboxContent() {
     <MainLayout>
       <div className="space-y-6">
         <div>
+          <BotonVolver />
           <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Cashbox – PMD Backend Integration</h1>
           <p className="text-gray-600">Manage cashbox transactions and balances</p>
         </div>

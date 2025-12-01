@@ -90,10 +90,10 @@ export function LoginForm() {
       
       console.log("🟢 [LOGIN SUCCESS] Estado guardado correctamente, redirigiendo a /dashboard");
       
-      // Usar replace para evitar que el usuario pueda volver atrás
-      router.replace("/dashboard");
+      // Usar push para mantener el historial y permitir navegación con botón Volver
+      router.push("/dashboard");
       
-      console.log("🟢 [LOGIN SUCCESS] router.replace('/dashboard') ejecutado");
+      console.log("🟢 [LOGIN SUCCESS] router.push('/dashboard') ejecutado");
     } catch (err: any) {
       console.error("🔴 [LOGIN ERROR]");
       console.error("  - Error:", err);

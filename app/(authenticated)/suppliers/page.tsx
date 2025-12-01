@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useSWRConfig } from "swr";
+import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function SuppliersContent() {
   const { suppliers, isLoading, error, mutate } = useSuppliers();
@@ -84,6 +85,9 @@ function SuppliersContent() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <div>
+          <BotonVolver />
+        </div>
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Suppliers – PMD Backend Integration</h1>

@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useWorks } from "@/hooks/api/works";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { WorksList } from "@/components/works/WorksList";
+import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function WorksContent() {
   const { works, isLoading, error } = useWorks();
@@ -31,6 +32,7 @@ function WorksContent() {
     <MainLayout>
       <div className="space-y-6 py-6">
         <div className="px-1">
+          <BotonVolver />
           <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Obras</h1>
           <p className="text-gray-600">Listado de obras registradas en el sistema PMD</p>
         </div>

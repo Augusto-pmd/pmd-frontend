@@ -6,6 +6,7 @@ import { useAuditLogs } from "@/hooks/api/audit";
 import { useState } from "react";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function AuditContent() {
   const [filter, setFilter] = useState<"all" | "today" | "week" | "month">("all");
@@ -80,6 +81,9 @@ function AuditContent() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <div>
+          <BotonVolver />
+        </div>
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Audit Log – PMD Backend Integration</h1>

@@ -8,6 +8,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function WorkDetailContent() {
   const params = useParams();
@@ -101,6 +102,9 @@ function WorkDetailContent() {
   return (
     <MainLayout>
       <div className="space-y-6 py-6">
+        <div className="px-1">
+          <BotonVolver />
+        </div>
         <div className="flex items-center justify-between px-1">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Detalle de la obra</h1>
