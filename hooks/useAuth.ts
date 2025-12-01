@@ -1,24 +1,11 @@
 import { useAuthStore } from "@/store/authStore";
 
 export function useAuth() {
-  const { user, token, refreshToken, isAuthenticated, logout, loadMe } = useAuthStore();
+  const getUserSafe = useAuthStore((s) => s.getUserSafe);
+  const user = getUserSafe();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const logout = useAuthStore((s) => s.logout);
+  const loadMe = useAuthStore((s) => s.loadMe);
 
-  // *** Normalización global del usuario ***
-  let normalizedUser = user;
-
-  if (normalizedUser?.role && typeof normalizedUser.role === "object") {
-    normalizedUser = {
-      ...normalizedUser,
-      role: normalizedUser.role.name,
-    };
-  }
-
-  return {
-    user: normalizedUser,
-    token,
-    refreshToken,
-    isAuthenticated,
-    logout,
-    loadMe,
-  };
+  return { user, isAuthenticated, logout, loadMe };
 }

@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 
 export function Topbar() {
-  const user = useAuthStore.getState().getNormalizedUser();
+  const user = useAuthStore.getState().getUserSafe();
   const logout = useAuthStore.getState().logout;
   const router = useRouter();
 

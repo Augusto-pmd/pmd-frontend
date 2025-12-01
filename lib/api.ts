@@ -64,7 +64,7 @@ api.interceptors.response.use(
           );
 
           const { token: newToken, refreshToken: newRefreshToken } = response.data;
-          useAuthStore.getState().setTokens(newToken, newRefreshToken);
+          useAuthStore.setState({ token: newToken, refreshToken: newRefreshToken });
 
           // Retry original request with new token
           if (originalRequest.headers) {

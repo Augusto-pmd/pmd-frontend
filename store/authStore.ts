@@ -16,13 +16,10 @@ interface AuthState {
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  getUserSafe: () => User | null;
   login: (user: User, token: string, refreshToken: string) => void;
   logout: () => void;
-  setTokens: (token: string, refreshToken: string) => void;
-  updateUser: (user: Partial<User>) => void;
   loadMe: () => Promise<void>;
-  refreshSession: () => Promise<void>;
-  getNormalizedUser: () => User | null;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -32,98 +29,9 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       refreshToken: null,
       isAuthenticated: false,
-      login: (user, token, refreshToken) => {
-        // Normalize user.role before persisting
-        if (user?.role && typeof user.role === "object") {
-          user.role = user.role.name;
-        }
-        set({
-          user,
-          token,
-          refreshToken,
-          isAuthenticated: true,
-        });
-      },
-      logout: () => {
-        // Limpieza total
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('pmd-auth-storage');
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
-        }
-        // Resetear Zustand
-        set({
-          user: null,
-          token: null,
-          refreshToken: null,
-          isAuthenticated: false,
-        });
-      },
-      setTokens: (token, refreshToken) =>
-        set({ token, refreshToken }),
-      updateUser: (userData) =>
-        set((state) => ({
-          user: state.user ? { ...state.user, ...userData } : null,
-        })),
-      loadMe: async () => {
-        try {
-          const response = await apiClient.get<{ user: User }>("/auth/me");
-          const { user } = response;
-          
-          // Normalize user.role from object to string before persisting
-          if (user?.role && typeof user.role === 'object') {
-            user.role = user.role.name;
-          }
-          
-          const currentState = get();
-          set({
-            user,
-            isAuthenticated: true,
-            // Mantener tokens existentes si ya están
-            token: currentState.token,
-            refreshToken: currentState.refreshToken,
-          });
-        } catch (error) {
-          // Si falla, limpiar estado
-          set({
-            user: null,
-            token: null,
-            refreshToken: null,
-            isAuthenticated: false,
-          });
-          throw error;
-        }
-      },
-      refreshSession: async () => {
-        try {
-          const { refreshToken } = get();
-          if (!refreshToken) {
-            throw new Error("No refresh token available");
-          }
-          const response = await apiClient.post<{
-            access_token: string;
-            refresh_token: string;
-            user?: User;
-          }>("/auth/refresh", { refreshToken });
-          const { access_token, refresh_token, user } = response;
-          
-          // Normalize user.role if user is returned in refresh response
-          if (user?.role && typeof user.role === "object") {
-            user.role = user.role.name;
-          }
-          
-          set({
-            token: access_token,
-            refreshToken: refresh_token,
-            ...(user && { user }),
-          });
-        } catch (error) {
-          // Si falla el refresh, hacer logout
-          get().logout();
-          throw error;
-        }
-      },
-      getNormalizedUser: () => {
+
+      // --- SELECTOR SEGURO ---
+      getUserSafe: () => {
         const u = get().user;
         if (!u) return null;
         if (typeof u.role === "object") {
@@ -131,9 +39,50 @@ export const useAuthStore = create<AuthState>()(
         }
         return u;
       },
+
+      // --- LOGIN ---
+      login: (user, token, refreshToken) => {
+        if (user?.role && typeof user.role === "object") {
+          user = { ...user, role: user.role.name };
+        }
+        set({ user, token, refreshToken, isAuthenticated: true });
+      },
+
+      // --- LOGOUT ---
+      logout: () => {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("pmd-auth-storage");
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+        }
+        set({
+          user: null,
+          token: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        });
+      },
+
+      // --- LOAD ME ---
+      loadMe: async () => {
+        const token = get().token;
+        if (!token) throw new Error("No token");
+
+        const response = await fetch("/api/auth/profile");
+        const data = await response.json();
+        let user = data?.user;
+
+        if (user?.role && typeof user.role === "object") {
+          user = { ...user, role: user.role.name };
+        }
+
+        set({ user, isAuthenticated: true });
+      },
     }),
     {
       name: "pmd-auth-storage",
+
+      // --- REHIDRATACIÓN SEGURA ---
       onRehydrateStorage: () => (state) => {
         if (state?.user && typeof state.user.role === "object") {
           state.user.role = state.user.role.name;
