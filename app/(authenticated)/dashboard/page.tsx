@@ -8,6 +8,7 @@ import { useIncomes } from "@/hooks/api/incomes";
 import { useContracts } from "@/hooks/api/contracts";
 import { useAlerts } from "@/hooks/api/alerts";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { DashboardModules } from "@/components/dashboard/DashboardModules";
 
 function DashboardContent() {
   const { works, isLoading: worksLoading } = useWorks();
@@ -58,6 +59,8 @@ function DashboardContent() {
             <p className="text-2xl font-bold text-pmd-darkBlue">{activeWorks}</p>
           </div>
         </div>
+
+        <DashboardModules />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-pmd p-6">
