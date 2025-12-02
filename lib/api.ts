@@ -1,9 +1,20 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { isValidApiUrl, getApiBaseUrl } from "@/lib/safeApi";
 
-// Create axios instance
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
+// Obtener URL base de forma segura
+const defaultBaseURL = "https://pmd-backend-l47d.onrender.com/api";
+const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const baseURL = envApiUrl && isValidApiUrl(envApiUrl) 
+  ? envApiUrl 
+  : defaultBaseURL;
+
+// Validar que la URL base sea válida
+if (!isValidApiUrl(baseURL)) {
+  console.error("🔴 [API INIT] URL base inválida, usando default:", defaultBaseURL);
+}
+
 const api: AxiosInstance = axios.create({
   baseURL: baseURL,
   headers: {
@@ -14,9 +25,10 @@ const api: AxiosInstance = axios.create({
 
 console.log("🔵 [API INIT] Axios instance created");
 console.log("  - baseURL:", baseURL);
-console.log("  - NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
+console.log("  - NEXT_PUBLIC_API_URL:", envApiUrl || "NOT SET (using default)");
+console.log("  - isValidApiUrl:", isValidApiUrl(baseURL));
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token and validate URLs
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = useAuthStore.getState().token;
@@ -25,16 +37,30 @@ api.interceptors.request.use(
     }
     
     // 🔍 DEBUG: Log URL construction before request
-    const baseURL = config.baseURL || api.defaults.baseURL || '';
+    const requestBaseURL = config.baseURL || api.defaults.baseURL || '';
     const url = config.url || '';
-    const finalURL = baseURL ? `${baseURL}${url.startsWith('/') ? '' : '/'}${url}` : url;
+    const finalURL = requestBaseURL ? `${requestBaseURL}${url.startsWith('/') ? '' : '/'}${url}` : url;
+    
+    // ⚠️ VALIDACIÓN CRÍTICA: Detectar URLs con undefined/null
+    if (!isValidApiUrl(finalURL)) {
+      console.error("🔴 [API Request Interceptor] URL INVÁLIDA detectada:");
+      console.error("  - baseURL:", requestBaseURL);
+      console.error("  - config.url:", url);
+      console.error("  - finalURL:", finalURL);
+      console.error("  - method:", config.method?.toUpperCase());
+      console.error("  - stack trace:", new Error().stack?.split('\n').slice(1, 6).join('\n'));
+      
+      // Rechazar la petición con un error descriptivo
+      return Promise.reject(
+        new Error(`URL inválida detectada: ${finalURL}. Verifica que todos los parámetros estén definidos.`)
+      ) as any;
+    }
     
     console.log('🔍 [API Request Interceptor] URL Construction:');
-    console.log('  - baseURL:', baseURL);
+    console.log('  - baseURL:', requestBaseURL);
     console.log('  - config.url:', url);
     console.log('  - finalURL:', finalURL);
     console.log('  - method:', config.method?.toUpperCase());
-    console.log('  - stack trace:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
     
     return config;
   },
@@ -73,7 +99,15 @@ api.interceptors.response.use(
         const refreshToken = useAuthStore.getState().refreshToken;
         if (refreshToken) {
           // Attempt to refresh token
-          const refreshURL = `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`;
+          const apiBase = getApiBaseUrl() || baseURL;
+          const refreshURL = `${apiBase}/auth/refresh`;
+          
+          if (!isValidApiUrl(refreshURL)) {
+            console.error("🔴 [Token Refresh] URL inválida:", refreshURL);
+            useAuthStore.getState().logout();
+            return Promise.reject(new Error("URL de refresh inválida"));
+          }
+          
           console.log('🔍 [Token Refresh] URL:', refreshURL);
           const response = await axios.post(
             refreshURL,

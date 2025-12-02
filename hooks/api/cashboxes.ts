@@ -1,14 +1,26 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { safeApiUrl, safeApiUrlWithParams, isValidApiUrl } from "@/lib/safeApi";
 
-const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/cashboxes`;
+// Construir API_BASE de forma segura
+const API_BASE = safeApiUrl("/cashboxes");
 
 export function useCashboxes() {
   const { token } = useAuthStore();
+  
+  if (!API_BASE) {
+    console.error("🔴 [useCashboxes] API_BASE es inválido");
+  }
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token ? API_BASE : null,
-    () => apiClient.get(API_BASE)
+    token && API_BASE ? API_BASE : null,
+    () => {
+      if (!API_BASE) {
+        throw new Error("API_BASE no está definido correctamente");
+      }
+      return apiClient.get(API_BASE);
+    }
   );
 
   return {
@@ -35,21 +47,53 @@ export function useCashbox(id: string | null) {
 }
 
 export const cashboxApi = {
-  create: (data: any) => apiClient.post(API_BASE, data),
-  update: (id: string, data: any) => apiClient.put(`${API_BASE}/${id}`, data),
-  delete: (id: string) => apiClient.delete(`${API_BASE}/${id}`),
+  create: (data: any) => {
+    if (!API_BASE) throw new Error("API_BASE no está definido");
+    return apiClient.post(API_BASE, data);
+  },
+  update: (id: string, data: any) => {
+    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
+    const url = safeApiUrlWithParams("/cashboxes", id);
+    if (!url) throw new Error("URL de actualización inválida");
+    return apiClient.put(url, data);
+  },
+  delete: (id: string) => {
+    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
+    const url = safeApiUrlWithParams("/cashboxes", id);
+    if (!url) throw new Error("URL de eliminación inválida");
+    return apiClient.delete(url);
+  },
 };
 
-const CASH_MOVEMENTS_BASE = `${process.env.NEXT_PUBLIC_API_URL}/cash-movements`;
+const CASH_MOVEMENTS_BASE = safeApiUrl("/cash-movements");
 
 export function useCashMovements(cashboxId?: string) {
   const { token } = useAuthStore();
-  const endpoint = cashboxId
-    ? `${CASH_MOVEMENTS_BASE}?cashboxId=${cashboxId}`
-    : CASH_MOVEMENTS_BASE;
+  
+  // Construir endpoint de forma segura
+  let endpoint: string | null = null;
+  if (CASH_MOVEMENTS_BASE) {
+    if (cashboxId && cashboxId.trim()) {
+      const baseUrl = CASH_MOVEMENTS_BASE;
+      endpoint = `${baseUrl}?cashboxId=${encodeURIComponent(cashboxId)}`;
+    } else {
+      endpoint = CASH_MOVEMENTS_BASE;
+    }
+  }
+  
+  if (endpoint && !isValidApiUrl(endpoint)) {
+    console.error("🔴 [useCashMovements] Endpoint inválido:", endpoint);
+    endpoint = null;
+  }
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token ? endpoint : null,
-    () => apiClient.get(endpoint)
+    token && endpoint ? endpoint : null,
+    () => {
+      if (!endpoint) {
+        throw new Error("Endpoint de movimientos inválido");
+      }
+      return apiClient.get(endpoint);
+    }
   );
 
   return {
@@ -76,9 +120,21 @@ export function useCashMovement(id: string | null) {
 }
 
 export const cashMovementApi = {
-  create: (data: any) => apiClient.post(CASH_MOVEMENTS_BASE, data),
-  update: (id: string, data: any) =>
-    apiClient.put(`${CASH_MOVEMENTS_BASE}/${id}`, data),
-  delete: (id: string) => apiClient.delete(`${CASH_MOVEMENTS_BASE}/${id}`),
+  create: (data: any) => {
+    if (!CASH_MOVEMENTS_BASE) throw new Error("CASH_MOVEMENTS_BASE no está definido");
+    return apiClient.post(CASH_MOVEMENTS_BASE, data);
+  },
+  update: (id: string, data: any) => {
+    if (!CASH_MOVEMENTS_BASE || !id) throw new Error("CASH_MOVEMENTS_BASE o id no está definido");
+    const url = safeApiUrlWithParams("/cash-movements", id);
+    if (!url) throw new Error("URL de actualización inválida");
+    return apiClient.put(url, data);
+  },
+  delete: (id: string) => {
+    if (!CASH_MOVEMENTS_BASE || !id) throw new Error("CASH_MOVEMENTS_BASE o id no está definido");
+    const url = safeApiUrlWithParams("/cash-movements", id);
+    if (!url) throw new Error("URL de eliminación inválida");
+    return apiClient.delete(url);
+  },
 };
 

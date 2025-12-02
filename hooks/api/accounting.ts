@@ -1,14 +1,26 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
 
-const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/accounting`;
+// Construir API_BASE de forma segura
+const API_BASE = safeApiUrl("/accounting");
 
 export function useAccounting() {
   const { token } = useAuthStore();
+  
+  if (!API_BASE) {
+    console.error("🔴 [useAccounting] API_BASE es inválido");
+  }
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token ? API_BASE : null,
-    () => apiClient.get(API_BASE)
+    token && API_BASE ? API_BASE : null,
+    () => {
+      if (!API_BASE) {
+        throw new Error("API_BASE no está definido correctamente");
+      }
+      return apiClient.get(API_BASE);
+    }
   );
 
   return {
@@ -21,9 +33,17 @@ export function useAccounting() {
 
 export function useAccountingReport(id: string | null) {
   const { token } = useAuthStore();
+  
+  const reportUrl = id && API_BASE ? safeApiUrlWithParams("/accounting", id) : null;
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token && id ? `${API_BASE}/${id}` : null,
-    () => apiClient.get(`${API_BASE}/${id}`)
+    token && reportUrl ? reportUrl : null,
+    () => {
+      if (!reportUrl) {
+        throw new Error("URL de reporte contable inválida");
+      }
+      return apiClient.get(reportUrl);
+    }
   );
 
   return {
@@ -36,9 +56,17 @@ export function useAccountingReport(id: string | null) {
 
 export function useAccountingSummary() {
   const { token } = useAuthStore();
+  
+  const summaryUrl = API_BASE ? safeApiUrl("/accounting/summary") : null;
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token ? `${API_BASE}/summary` : null,
-    () => apiClient.get(`${API_BASE}/summary`)
+    token && summaryUrl ? summaryUrl : null,
+    () => {
+      if (!summaryUrl) {
+        throw new Error("URL de resumen contable inválida");
+      }
+      return apiClient.get(summaryUrl);
+    }
   );
 
   return {
@@ -51,12 +79,21 @@ export function useAccountingSummary() {
 
 export function useAccountingTransactions(params?: { startDate?: string; endDate?: string }) {
   const { token } = useAuthStore();
+  
   const queryString = params
     ? `?${new URLSearchParams(params as any).toString()}`
     : "";
+  
+  const transactionsUrl = API_BASE ? `${safeApiUrl("/accounting/transactions")}${queryString}` : null;
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token ? `${API_BASE}/transactions${queryString}` : null,
-    () => apiClient.get(`${API_BASE}/transactions${queryString}`)
+    token && transactionsUrl ? transactionsUrl : null,
+    () => {
+      if (!transactionsUrl) {
+        throw new Error("URL de transacciones contables inválida");
+      }
+      return apiClient.get(transactionsUrl);
+    }
   );
 
   return {
@@ -69,9 +106,19 @@ export function useAccountingTransactions(params?: { startDate?: string; endDate
 
 export function useAccountingMonth(month: number | null, year: number | null) {
   const { token } = useAuthStore();
+  
+  const monthUrl = token && month && year && API_BASE 
+    ? safeApiUrlWithParams("/accounting/month", String(month), String(year))
+    : null;
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token && month && year ? `${API_BASE}/month/${month}/${year}` : null,
-    () => apiClient.get(`${API_BASE}/month/${month}/${year}`)
+    monthUrl,
+    () => {
+      if (!monthUrl) {
+        throw new Error("URL de mes contable inválida");
+      }
+      return apiClient.get(monthUrl);
+    }
   );
 
   return {
@@ -83,12 +130,45 @@ export function useAccountingMonth(month: number | null, year: number | null) {
 }
 
 export const accountingApi = {
-  create: (data: any) => apiClient.post(API_BASE, data),
-  update: (id: string, data: any) => apiClient.put(`${API_BASE}/${id}`, data),
-  delete: (id: string) => apiClient.delete(`${API_BASE}/${id}`),
-  generateReport: (params: any) => apiClient.post(`${API_BASE}/reports`, params),
-  createTransaction: (data: any) => apiClient.post(`${API_BASE}/transactions`, data),
-  getSummary: () => apiClient.get(`${API_BASE}/summary`),
-  getMonth: (month: number, year: number) => apiClient.get(`${API_BASE}/month/${month}/${year}`),
+  create: (data: any) => {
+    if (!API_BASE) throw new Error("API_BASE no está definido");
+    return apiClient.post(API_BASE, data);
+  },
+  update: (id: string, data: any) => {
+    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
+    const url = safeApiUrlWithParams("/accounting", id);
+    if (!url) throw new Error("URL de actualización inválida");
+    return apiClient.put(url, data);
+  },
+  delete: (id: string) => {
+    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
+    const url = safeApiUrlWithParams("/accounting", id);
+    if (!url) throw new Error("URL de eliminación inválida");
+    return apiClient.delete(url);
+  },
+  generateReport: (params: any) => {
+    if (!API_BASE) throw new Error("API_BASE no está definido");
+    const url = safeApiUrl("/accounting/reports");
+    if (!url) throw new Error("URL de reporte inválida");
+    return apiClient.post(url, params);
+  },
+  createTransaction: (data: any) => {
+    if (!API_BASE) throw new Error("API_BASE no está definido");
+    const url = safeApiUrl("/accounting/transactions");
+    if (!url) throw new Error("URL de transacción inválida");
+    return apiClient.post(url, data);
+  },
+  getSummary: () => {
+    if (!API_BASE) throw new Error("API_BASE no está definido");
+    const url = safeApiUrl("/accounting/summary");
+    if (!url) throw new Error("URL de resumen inválida");
+    return apiClient.get(url);
+  },
+  getMonth: (month: number, year: number) => {
+    if (!API_BASE) throw new Error("API_BASE no está definido");
+    const url = safeApiUrlWithParams("/accounting/month", String(month), String(year));
+    if (!url) throw new Error("URL de mes contable inválida");
+    return apiClient.get(url);
+  },
 };
 
