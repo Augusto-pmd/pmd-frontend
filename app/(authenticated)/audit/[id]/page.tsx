@@ -1,130 +1,28 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useAuditLog } from "@/hooks/api/audit";
+import { useAuditStore } from "@/store/auditStore";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Shield, User, Calendar, FileText, ArrowRight } from "lucide-react";
 
 function AuditDetailContent() {
   const params = useParams();
-  const router = useRouter();
-  const id = params.id as string;
-  const { log, isLoading, error } = useAuditLog(id);
+  const logId = params.id as string;
+  const { logs, fetchLogs } = useAuditStore();
 
-  const getActionType = (action: string | undefined): "success" | "warning" | "error" | "info" => {
-    if (!action) return "info";
-    const actionLower = action.toLowerCase();
-    
-    if (
-      actionLower.includes("create") ||
-      actionLower.includes("crear") ||
-      actionLower.includes("login") ||
-      actionLower.includes("approve") ||
-      actionLower.includes("aprobar")
-    ) {
-      return "success";
-    }
-    
-    if (
-      actionLower.includes("delete") ||
-      actionLower.includes("eliminar") ||
-      actionLower.includes("reject") ||
-      actionLower.includes("rechazar")
-    ) {
-      return "error";
-    }
-    
-    if (
-      actionLower.includes("update") ||
-      actionLower.includes("actualizar") ||
-      actionLower.includes("modify") ||
-      actionLower.includes("modificar")
-    ) {
-      return "warning";
-    }
-    
-    return "info";
-  };
+  useEffect(() => {
+    fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const translateAction = (action: string | undefined): string => {
-    if (!action) return "Acción desconocida";
-    const actionLower = action.toLowerCase();
-    
-    const translations: Record<string, string> = {
-      create: "Crear",
-      crear: "Crear",
-      update: "Actualizar",
-      actualizar: "Actualizar",
-      delete: "Eliminar",
-      eliminar: "Eliminar",
-      login: "Inicio de sesión",
-      approve: "Aprobar",
-      aprobar: "Aprobar",
-      reject: "Rechazar",
-      rechazar: "Rechazar",
-    };
-    
-    for (const [key, value] of Object.entries(translations)) {
-      if (actionLower.includes(key)) {
-        return value;
-      }
-    }
-    
-    return action;
-  };
+  const log = logs.find((l) => l.id === logId);
 
-  const translateModule = (module: string | undefined): string => {
-    if (!module) return "Sistema";
-    const moduleLower = module.toLowerCase();
-    
-    const translations: Record<string, string> = {
-      works: "Obras",
-      obras: "Obras",
-      suppliers: "Proveedores",
-      proveedores: "Proveedores",
-      accounting: "Contabilidad",
-      contabilidad: "Contabilidad",
-      users: "Usuarios",
-      usuarios: "Usuarios",
-      roles: "Roles",
-      cashboxes: "Cajas",
-      cajas: "Cajas",
-      "cash-movements": "Movimientos de Caja",
-      audit: "Auditoría",
-      auditoria: "Auditoría",
-    };
-    
-    for (const [key, value] of Object.entries(translations)) {
-      if (moduleLower.includes(key)) {
-        return value;
-      }
-    }
-    
-    return module;
-  };
-
-  const formatDate = (dateString: string | undefined): string => {
-    if (!dateString) return "No especificada";
-    try {
-      return new Date(dateString).toLocaleString("es-ES", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  if (isLoading) {
+  if (!log) {
     return (
       <MainLayout>
         <LoadingState message="Cargando registro de auditoría…" />
@@ -132,185 +30,148 @@ function AuditDetailContent() {
     );
   }
 
-  if (error) {
-    return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error al cargar el registro de auditoría: {error.message || "Error desconocido"}
-        </div>
-        <div className="mt-4">
-          <Button onClick={() => router.push("/audit")}>Volver a Auditoría</Button>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (!log) {
-    return (
-      <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
-          Registro de auditoría no encontrado
-        </div>
-        <div className="mt-4">
-          <Button onClick={() => router.push("/audit")}>Volver a Auditoría</Button>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  const action = log.accion || log.action || "";
-  const actionType = getActionType(action);
-  const moduleName = log.modulo || log.entity || log.entityType || "";
-  const userName = log.usuario || log.userName || log.userId || "Usuario desconocido";
-  const date = log.fecha || log.timestamp || log.createdAt;
-  const entityId = log.entityId || log.id;
-
-  const renderField = (label: string, value: any, formatter?: (val: any) => string) => {
-    if (value === null || value === undefined || value === "") return null;
-    return (
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">{label}</h3>
-        <p className="text-gray-900">{formatter ? formatter(value) : String(value)}</p>
-      </div>
-    );
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString("es-AR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
+
+  const hasChanges = log.before || log.after;
 
   return (
     <MainLayout>
       <div className="space-y-6 py-6">
         <div className="px-1">
           <BotonVolver />
-        </div>
-        <div className="flex items-center justify-between px-1">
-          <div>
-            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Detalle de auditoría</h1>
-            <p className="text-gray-600">Información completa del registro de auditoría seleccionado</p>
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Detalle de Auditoría</h1>
+            <p className="text-gray-600">Información completa del registro</p>
           </div>
-          <Button variant="outline" onClick={() => router.push("/audit")}>
-            Volver a Auditoría
-          </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">Registro de Auditoría</CardTitle>
-              <Badge variant={actionType}>{translateAction(action)}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField("Usuario", userName)}
-              {renderField("Acción", translateAction(action))}
-              {renderField("Módulo", translateModule(moduleName))}
-              {renderField("Fecha", date, formatDate)}
-              {entityId && renderField("ID del objeto afectado", entityId)}
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Información Principal */}
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Información General</h2>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Usuario</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {log.userName || log.user}
+                    </p>
+                    {log.userId && log.userId !== log.user && (
+                      <p className="text-xs text-gray-500 mt-1">ID: {log.userId}</p>
+                    )}
+                  </div>
+                </div>
 
-            {(log.descripcion || log.details) && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Descripción</h3>
-                <p className="text-gray-900">{log.descripcion || log.details}</p>
-              </div>
-            )}
+                <div className="flex items-start gap-3">
+                  <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Módulo</p>
+                    <p className="text-base font-medium text-gray-900">{log.module}</p>
+                  </div>
+                </div>
 
-            {log.oldData && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Datos anteriores</h3>
-                <pre className="bg-gray-50 p-4 rounded-pmd text-sm overflow-x-auto">
-                  {JSON.stringify(log.oldData, null, 2)}
-                </pre>
-              </div>
-            )}
+                <div className="flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Acción</p>
+                    <p className="text-base font-medium text-gray-900">{log.action}</p>
+                    {log.details && (
+                      <p className="text-sm text-gray-600 mt-1">{log.details}</p>
+                    )}
+                  </div>
+                </div>
 
-            {log.newData && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Datos nuevos</h3>
-                <pre className="bg-gray-50 p-4 rounded-pmd text-sm overflow-x-auto">
-                  {JSON.stringify(log.newData, null, 2)}
-                </pre>
-              </div>
-            )}
-
-            {/* Mostrar campos adicionales si existen */}
-            {Object.keys(log).some(
-              (key) =>
-                ![
-                  "id",
-                  "accion",
-                  "action",
-                  "usuario",
-                  "userName",
-                  "userId",
-                  "modulo",
-                  "entity",
-                  "entityType",
-                  "entityId",
-                  "fecha",
-                  "timestamp",
-                  "createdAt",
-                  "descripcion",
-                  "details",
-                  "oldData",
-                  "newData",
-                ].includes(key) &&
-                log[key] !== null &&
-                log[key] !== undefined &&
-                log[key] !== ""
-            ) && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Información adicional</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {Object.keys(log)
-                    .filter(
-                      (key) =>
-                        ![
-                          "id",
-                          "accion",
-                          "action",
-                          "usuario",
-                          "userName",
-                          "userId",
-                          "modulo",
-                          "entity",
-                          "entityType",
-                          "entityId",
-                          "fecha",
-                          "timestamp",
-                          "createdAt",
-                          "descripcion",
-                          "details",
-                          "oldData",
-                          "newData",
-                        ].includes(key) &&
-                        log[key] !== null &&
-                        log[key] !== undefined &&
-                        log[key] !== ""
-                    )
-                    .map((key) => (
-                      <div key={key}>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                          {key.charAt(0).toUpperCase() + key.slice(1)}
-                        </h3>
-                        <p className="text-gray-900">
-                          {typeof log[key] === "object"
-                            ? JSON.stringify(log[key], null, 2)
-                            : String(log[key])}
-                        </p>
-                      </div>
-                    ))}
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Fecha & Hora</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {formatTimestamp(log.timestamp)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
+            </CardContent>
+          </Card>
 
-            {log.id && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">ID del registro</h3>
-                <p className="text-gray-600 font-mono text-sm">{log.id}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {/* Cambios (si existen) */}
+          {hasChanges && (
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Cambios Realizados</h2>
+                <div className="space-y-4">
+                  {log.before && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Estado Anterior</p>
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                          {JSON.stringify(log.before, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+
+                  {log.after && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Estado Posterior</p>
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                          {JSON.stringify(log.after, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+
+                  {log.before && log.after && (
+                    <div className="flex items-center justify-center pt-2">
+                      <ArrowRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Si no hay cambios, mostrar información adicional */}
+          {!hasChanges && (
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Información Adicional</h2>
+                <div className="space-y-4">
+                  {log.entity && (
+                    <div>
+                      <p className="text-sm text-gray-500">Entidad</p>
+                      <p className="text-base font-medium text-gray-900">{log.entity}</p>
+                    </div>
+                  )}
+                  {log.entityId && (
+                    <div>
+                      <p className="text-sm text-gray-500">ID de Entidad</p>
+                      <p className="text-base font-medium text-gray-900">{log.entityId}</p>
+                    </div>
+                  )}
+                  {log.details && (
+                    <div>
+                      <p className="text-sm text-gray-500">Detalles</p>
+                      <p className="text-base text-gray-700">{log.details}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </MainLayout>
   );
@@ -323,4 +184,3 @@ export default function AuditDetailPage() {
     </ProtectedRoute>
   );
 }
-

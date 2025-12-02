@@ -76,7 +76,7 @@ function WorkDocumentsContent() {
   if (!workId) {
     return (
       <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           ID de obra no válido
         </div>
       </MainLayout>
@@ -94,7 +94,7 @@ function WorkDocumentsContent() {
   if (error) {
     return (
       <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           Error al cargar los documentos: {error}
         </div>
       </MainLayout>
@@ -108,7 +108,7 @@ function WorkDocumentsContent() {
           <BotonVolver />
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">
                 Documentos - {workName}
               </h1>
               <p className="text-gray-600">Documentación asociada a esta obra</p>
@@ -125,7 +125,7 @@ function WorkDocumentsContent() {
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-pmd p-4 space-y-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-4">
           <div className="flex gap-4 items-center">
             <Button
               variant="outline"
@@ -157,7 +157,7 @@ function WorkDocumentsContent() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
                 >
                   <option value="all">Todos</option>
                   {documentTypes.map((type) => (
@@ -172,7 +172,7 @@ function WorkDocumentsContent() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
                 >
                   <option value="all">Todos</option>
                   <option value="pendiente">Pendiente</option>

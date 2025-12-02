@@ -87,7 +87,7 @@ function ClientDetailContent() {
           <BotonVolver />
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">{client.name}</h1>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">{client.name}</h1>
               <p className="text-gray-600">Información completa del cliente</p>
             </div>
             <div className="flex gap-2">
@@ -115,7 +115,7 @@ function ClientDetailContent() {
           {/* Información Principal */}
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Información General</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Información General</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Building2 className="h-5 w-5 text-gray-400 mt-0.5" />
@@ -171,7 +171,7 @@ function ClientDetailContent() {
           {/* Obras Asociadas */}
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Obras Asociadas</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Obras Asociadas</h2>
               {client.projects && client.projects.length > 0 ? (
                 <div className="space-y-2">
                   {client.projects.map((projectId) => (
@@ -197,7 +197,7 @@ function ClientDetailContent() {
                 <div className="flex items-start gap-3">
                   <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div className="flex-1">
-                    <h2 className="text-xl font-semibold text-pmd-darkBlue mb-2">Notas Internas</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-2">Notas Internas</h2>
                     <p className="text-gray-700 whitespace-pre-wrap">{client.notes}</p>
                   </div>
                 </div>
@@ -208,7 +208,7 @@ function ClientDetailContent() {
           {/* Documentación (Placeholder) */}
           <Card className="lg:col-span-2">
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Documentación</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Documentación</h2>
               <p className="text-gray-500 text-sm italic">Documentación del cliente (próximamente)</p>
             </CardContent>
           </Card>

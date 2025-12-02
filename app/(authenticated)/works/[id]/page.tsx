@@ -40,7 +40,7 @@ function WorkDetailContent() {
   if (error) {
     return (
       <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           Error al cargar la obra: {error.message || "Error desconocido"}
         </div>
         <div className="mt-4">
@@ -53,7 +53,7 @@ function WorkDetailContent() {
   if (!work) {
     return (
       <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
           Obra no encontrada
         </div>
         <div className="mt-4">
@@ -187,7 +187,7 @@ function WorkDetailContent() {
         </div>
         <div className="flex items-center justify-between px-1">
           <div>
-            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Detalle de la obra</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Detalle de la obra</h1>
             <p className="text-gray-600">Información completa de la obra seleccionada</p>
           </div>
           <div className="flex gap-2">
@@ -299,7 +299,7 @@ function WorkDetailContent() {
                   const nombre = emp.nombre || emp.fullName || emp.name || "Sin nombre";
                   const puesto = emp.puesto || emp.position || "";
                   return (
-                    <div key={emp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-pmd">
+                    <div key={emp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">{nombre}</p>
                         {puesto && <p className="text-sm text-gray-500">{puesto}</p>}
@@ -337,7 +337,7 @@ function WorkDetailContent() {
                   const nombre = sup.nombre || sup.name || "Sin nombre";
                   const estado = sup.estado || sup.status || "";
                   return (
-                    <div key={sup.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-pmd">
+                    <div key={sup.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">{nombre}</p>
                         {sup.email && <p className="text-sm text-gray-500">{sup.email}</p>}
@@ -355,20 +355,114 @@ function WorkDetailContent() {
           </CardContent>
         </Card>
 
-        {/* Documentos de Obra (Placeholder) */}
+        {/* Documentos de Obra */}
         <Card>
           <CardHeader>
-            <CardTitle>Documentos de la Obra</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Documentos de la Obra</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/works/${id}/documents`)}
+              >
+                Ver todos los documentos
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-500">No hay documentos registrados</p>
+            <p className="text-gray-500 text-sm mb-4">
+              Gestiona la documentación relacionada con esta obra
+            </p>
             <Button
               variant="outline"
               size="sm"
-              className="mt-4"
-              onClick={() => toast.info("Funcionalidad de documentos próximamente disponible")}
+              onClick={() => router.push(`/works/${id}/documents`)}
             >
-              Subir Documento
+              Ver Documentos
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Alertas de la Obra */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Alertas de la Obra</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/alerts?workId=${id}`)}
+              >
+                Ver todas las alertas
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500 text-sm mb-4">
+              Revisa las alertas y notificaciones relacionadas con esta obra
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/alerts?workId=${id}`)}
+            >
+              Ver Alertas
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Contabilidad de la Obra */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Contabilidad de la Obra</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/accounting?workId=${id}`)}
+              >
+                Ver movimientos
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500 text-sm mb-4">
+              Revisa los movimientos contables relacionados con esta obra
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/accounting?workId=${id}`)}
+            >
+              Ver Contabilidad
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Cajas de la Obra */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Cajas de la Obra</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/cashbox?workId=${id}`)}
+              >
+                Ver cajas
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500 text-sm mb-4">
+              Gestiona las cajas de efectivo relacionadas con esta obra
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/cashbox?workId=${id}`)}
+            >
+              Ver Cajas
             </Button>
           </CardContent>
         </Card>
@@ -380,17 +474,17 @@ function WorkDetailContent() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 rounded-pmd">
+              <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-gray-600">Presupuesto</p>
-                <p className="text-2xl font-bold text-pmd-darkBlue">
+                <p className="text-2xl font-semibold text-gray-900">
                   {formatCurrency(work.presupuesto || work.budget)}
                 </p>
               </div>
-              <div className="p-4 bg-green-50 rounded-pmd">
+              <div className="p-4 bg-green-50 rounded-lg">
                 <p className="text-sm text-gray-600">Personal Asignado</p>
                 <p className="text-2xl font-bold text-green-700">{assignedEmployees.length}</p>
               </div>
-              <div className="p-4 bg-yellow-50 rounded-pmd">
+              <div className="p-4 bg-yellow-50 rounded-lg">
                 <p className="text-sm text-gray-600">Proveedores</p>
                 <p className="text-2xl font-bold text-yellow-700">{assignedSuppliers.length}</p>
               </div>

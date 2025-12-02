@@ -1,44 +1,43 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useAuditLogs } from "@/hooks/api/audit";
-import { useState } from "react";
+import { useAuditStore } from "@/store/auditStore";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { AuditList } from "@/components/audit/AuditList";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { Input } from "@/components/ui/Input";
+import { Search, Filter, X, Shield } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { Button } from "@/components/ui/Button";
 
 function AuditContent() {
-  const [filter, setFilter] = useState<"all" | "today" | "week" | "month">("all");
-  
-  const getDateRange = () => {
-    const now = new Date();
-    switch (filter) {
-      case "today":
-        return {
-          startDate: new Date(now.setHours(0, 0, 0, 0)).toISOString(),
-          endDate: new Date().toISOString(),
-        };
-      case "week":
-        const weekAgo = new Date(now);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return {
-          startDate: weekAgo.toISOString(),
-          endDate: new Date().toISOString(),
-        };
-      case "month":
-        const monthAgo = new Date(now);
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
-        return {
-          startDate: monthAgo.toISOString(),
-          endDate: new Date().toISOString(),
-        };
-      default:
-        return undefined;
-    }
-  };
+  const { logs, isLoading, error, fetchLogs } = useAuditStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
-  const { logs, isLoading, error } = useAuditLogs(getDateRange());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [moduleFilter, setModuleFilter] = useState("all");
+  const [userFilter, setUserFilter] = useState("all");
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    if (organizationId) {
+      fetchLogs();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId]);
+
+  if (!organizationId) {
+    return (
+      <MainLayout>
+        <LoadingState message="Cargando organización..." />
+      </MainLayout>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -51,88 +50,135 @@ function AuditContent() {
   if (error) {
     return (
       <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error al cargar los registros de auditoría: {error.message || "Error desconocido"}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          Error al cargar los registros de auditoría: {error}
         </div>
       </MainLayout>
     );
   }
 
-  const todayCount = logs?.filter((log: any) => {
-    const logDate = new Date(log.timestamp || log.createdAt);
-    const today = new Date();
-    return logDate.toDateString() === today.toDateString();
-  }).length || 0;
-
-  const weekCount = logs?.filter((log: any) => {
-    const logDate = new Date(log.timestamp || log.createdAt);
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    return logDate >= weekAgo;
-  }).length || 0;
-
-  const monthCount = logs?.filter((log: any) => {
-    const logDate = new Date(log.timestamp || log.createdAt);
-    const monthAgo = new Date();
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
-    return logDate >= monthAgo;
-  }).length || 0;
+  // Obtener módulos y usuarios únicos
+  const modules = Array.from(new Set(logs.map((log) => log.module).filter(Boolean))) as string[];
+  const users = Array.from(
+    new Set(
+      logs
+        .map((log) => log.userName || log.user)
+        .filter(Boolean)
+    )
+  ) as string[];
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 py-6">
         <div className="px-1">
           <BotonVolver />
-        </div>
-        <div className="flex justify-between items-center px-1">
-          <div>
-            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Auditoría</h1>
-            <p className="text-gray-600">Registro de acciones del sistema PMD</p>
-          </div>
-          <div className="flex gap-2">
-            {(["all", "today", "week", "month"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-pmd font-medium transition-colors ${
-                  filter === f
-                    ? "bg-pmd-darkBlue text-pmd-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {f === "all" ? "Todas" : f === "today" ? "Hoy" : f === "week" ? "Esta Semana" : "Este Mes"}
-              </button>
-            ))}
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Auditoría</h1>
+            <p className="text-gray-600">Registro de actividad del sistema PMD</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-pmd p-6">
-          <div className="mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Total de Eventos</p>
-                <p className="text-2xl font-bold text-pmd-darkBlue">{logs?.length || 0}</p>
+        {/* Búsqueda y Filtros */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-4">
+          <div className="flex gap-4 items-center">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                placeholder="Buscar por usuario, módulo o palabra clave..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Filtros
+            </Button>
+            {(searchQuery || moduleFilter !== "all" || userFilter !== "all" || startDateFilter || endDateFilter) && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSearchQuery("");
+                  setModuleFilter("all");
+                  setUserFilter("all");
+                  setStartDateFilter("");
+                  setEndDateFilter("");
+                }}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Limpiar
+              </Button>
+            )}
+          </div>
+
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Módulo</label>
+                <select
+                  value={moduleFilter}
+                  onChange={(e) => setModuleFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+                >
+                  <option value="all">Todos</option>
+                  {modules.map((module) => (
+                    <option key={module} value={module}>
+                      {module}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Hoy</p>
-                <p className="text-2xl font-bold text-pmd-darkBlue">{todayCount}</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+                <select
+                  value={userFilter}
+                  onChange={(e) => setUserFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+                >
+                  <option value="all">Todos</option>
+                  {users.map((user) => (
+                    <option key={user} value={user}>
+                      {user}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Esta Semana</p>
-                <p className="text-2xl font-bold text-pmd-darkBlue">{weekCount}</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha desde</label>
+                <input
+                  type="date"
+                  value={startDateFilter}
+                  onChange={(e) => setStartDateFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+                />
               </div>
-              <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Este Mes</p>
-                <p className="text-2xl font-bold text-pmd-darkBlue">{monthCount}</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha hasta</label>
+                <input
+                  type="date"
+                  value={endDateFilter}
+                  onChange={(e) => setEndDateFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+                />
               </div>
             </div>
-          </div>
-
-          <div>
-            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Registro de Auditoría</h2>
-            <AuditList logs={logs || []} />
-          </div>
+          )}
         </div>
+
+        <AuditList
+          logs={logs || []}
+          onRefresh={fetchLogs}
+          searchQuery={searchQuery}
+          moduleFilter={moduleFilter}
+          userFilter={userFilter}
+          startDateFilter={startDateFilter}
+          endDateFilter={endDateFilter}
+        />
       </div>
     </MainLayout>
   );

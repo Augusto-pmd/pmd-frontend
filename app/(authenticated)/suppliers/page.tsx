@@ -45,7 +45,7 @@ function SuppliersContent() {
   if (error) {
     return (
       <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           Error al cargar los proveedores: {error.message || "Error desconocido"}
         </div>
       </MainLayout>
@@ -59,7 +59,7 @@ function SuppliersContent() {
           <BotonVolver />
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Proveedores</h1>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">Proveedores</h1>
               <p className="text-gray-600">Listado de proveedores registrados en PMD</p>
             </div>
             <Button

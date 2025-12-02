@@ -32,7 +32,8 @@ function CashboxContent() {
     if (organizationId) {
       fetchCashboxes();
     }
-  }, [organizationId, fetchCashboxes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId]);
 
   if (!organizationId) {
     return (
@@ -95,7 +96,7 @@ function CashboxContent() {
           <BotonVolver />
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Cajas</h1>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">Cajas</h1>
               <p className="text-gray-600">Gestión de flujo de efectivo y cajas del sistema PMD</p>
             </div>
             <Button
@@ -126,7 +127,7 @@ function CashboxContent() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
@@ -148,7 +149,7 @@ function CashboxContent() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="bg-white rounded-lg shadow-pmd overflow-hidden">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50">

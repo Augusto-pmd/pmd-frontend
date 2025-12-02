@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useAuthStore, UserRole } from "@/store/authStore";
+import { usePathname } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
+import { useAlertsStore } from "@/store/alertsStore";
+import { useDocumentsStore } from "@/store/documentsStore";
+import { useCashboxStore } from "@/store/cashboxStore";
+import { useCan, can } from "@/lib/acl";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useSidebar } from "./SidebarContext";
 import {
   LayoutDashboard,
   Building2,
-  List,
   Plus,
   Truck,
   Users,
@@ -20,178 +23,199 @@ import {
   FileText,
   Upload,
   Bell,
-  AlertTriangle,
-  Clock,
   Shield,
   Settings,
-  ChevronRight,
   ChevronDown,
   X,
+  UserCog,
 } from "lucide-react";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles?: UserRole[];
-  children?: NavItem[];
+  permission?: string;
+  badge?: {
+    count: number;
+    variant: "error" | "warning" | "info";
+  };
 }
 
 interface NavGroup {
   title: string;
   items: NavItem[];
+  permission?: string;
 }
-
-const navGroups: NavGroup[] = [
-  {
-    title: "Dashboard",
-    items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: "Obras",
-    items: [
-      { label: "Listado", href: "/works", icon: List },
-    ],
-  },
-  {
-    title: "Proveedores",
-    items: [
-      { label: "Listado", href: "/suppliers", icon: List },
-    ],
-  },
-  {
-    title: "RRHH",
-    items: [
-      { label: "Empleados", href: "/rrhh", icon: Users },
-      { label: "Organigrama", href: "/organigrama", icon: Network },
-    ],
-  },
-  {
-    title: "Contabilidad",
-    items: [
-      { label: "Movimientos", href: "/accounting", icon: Calculator },
-    ],
-  },
-  {
-    title: "Cajas",
-    items: [
-      { label: "Cajas abiertas", href: "/cashbox", icon: Wallet },
-      { label: "Movimientos", href: "/cash-movements", icon: FileText },
-    ],
-  },
-  {
-    title: "Documentación",
-    items: [
-      { label: "Documentos", href: "/documents", icon: FileText },
-    ],
-  },
-  {
-    title: "Alertas",
-    items: [
-      { label: "Todas", href: "/alerts", icon: Bell },
-    ],
-  },
-  {
-    title: "Auditoría",
-    items: [
-      { label: "Cambios del sistema", href: "/audit", icon: Shield },
-    ],
-  },
-  {
-    title: "Configuración",
-    items: [
-      { label: "Configuración", href: "/settings", icon: Settings },
-      {
-        label: "Usuarios",
-        href: "/admin/users",
-        icon: Users,
-        roles: ["admin"],
-      },
-      {
-        label: "Roles",
-        href: "/admin/roles",
-        icon: Shield,
-        roles: ["admin"],
-      },
-    ],
-  },
-];
-
-// Role-based access rules
-const getAccessibleGroups = (userRole: UserRole | undefined): NavGroup[] => {
-  if (!userRole) return [];
-
-  const accessibleGroups: NavGroup[] = [];
-
-  navGroups.forEach((group) => {
-    const accessibleItems: NavItem[] = [];
-
-    group.items.forEach((item) => {
-      // Check if item has role restrictions
-      if (item.roles && !item.roles.includes(userRole)) {
-        return; // Skip this item
-      }
-
-      // OPERATOR: ocultar Audit, Users (Admin section)
-      if (userRole === "operator") {
-        if (
-          item.href === "/audit" ||
-          item.href.startsWith("/admin/") ||
-          group.title === "Auditoría"
-        ) {
-          return; // Skip Audit and Admin sections
-        }
-        accessibleItems.push(item);
-        return;
-      }
-
-      // AUDITOR: puede ver todo pero sin acciones de creación/edición
-      if (userRole === "auditor") {
-        accessibleItems.push(item);
-        return;
-      }
-
-      // ADMIN: acceso total
-      if (userRole === "admin") {
-        accessibleItems.push(item);
-        return;
-      }
-    });
-
-    // Solo agregar el grupo si tiene items accesibles
-    if (accessibleItems.length > 0) {
-      accessibleGroups.push({
-        ...group,
-        items: accessibleItems,
-      });
-    }
-  });
-
-  return accessibleGroups;
-};
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const user = useAuthStore.getState().getUserSafe();
   const { isMobileOpen, setIsMobileOpen } = useSidebar();
+  const { alerts, fetchAlerts } = useAlertsStore();
+  const { documents, fetchDocuments } = useDocumentsStore();
+  const { cashboxes, fetchCashboxes } = useCashboxStore();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     new Set(["Dashboard", "Obras", "Contabilidad"])
   );
+
+  const user = useAuthStore.getState().getUserSafe();
+
+  // Cargar datos para badges
+  useEffect(() => {
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    if (organizationId) {
+      fetchAlerts();
+      fetchDocuments();
+      fetchCashboxes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Cerrar sidebar en mobile cuando cambia la ruta
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname, setIsMobileOpen]);
 
-  // Asegurar que NINGÚN componente del Dashboard se monte si user no está normalizado
   if (!user || typeof user.role === "object") return null;
 
-  // User role is already normalized by getUserSafe
-  const userRole = user?.role as UserRole | undefined;
-  const accessibleGroups = getAccessibleGroups(userRole);
+  // Calcular badges
+  const highAlertsCount = alerts.filter((a) => !a.read && a.severity === "alta").length;
+  const mediumAlertsCount = alerts.filter((a) => !a.read && a.severity === "media").length;
+  const pendingDocsCount = documents.filter((d) => d.status === "pendiente").length;
+  const reviewDocsCount = documents.filter((d) => d.status === "en revisión").length;
+  const openCashboxesCount = cashboxes.filter((c) => !c.isClosed).length;
+
+  // Estructura completa del sidebar con permisos
+  const allNavGroups: NavGroup[] = [
+    {
+      title: "Dashboard",
+      items: [
+        { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      ],
+    },
+    {
+      title: "Obras",
+      permission: "works.read",
+      items: [
+        { label: "Listado", href: "/works", icon: Building2 },
+        { label: "Nueva Obra", href: "/works/new", icon: Plus, permission: "works.create" },
+      ],
+    },
+    {
+      title: "Proveedores",
+      permission: "suppliers.read",
+      items: [
+        { label: "Listado", href: "/suppliers", icon: Truck },
+      ],
+    },
+    {
+      title: "RRHH",
+      permission: "staff.read",
+      items: [
+        { label: "Empleados", href: "/rrhh", icon: Users },
+        { label: "Organigrama", href: "/organigrama", icon: Network },
+      ],
+    },
+    {
+      title: "Contabilidad",
+      permission: "accounting.read",
+      items: [
+        { label: "Movimientos", href: "/accounting", icon: Calculator },
+        { label: "Resumen", href: "/accounting/resumen", icon: TrendingUp },
+      ],
+    },
+    {
+      title: "Cajas",
+      permission: "cashbox.read",
+      items: [
+        {
+          label: "Cajas Abiertas",
+          href: "/cashbox",
+          icon: Wallet,
+          badge: openCashboxesCount > 0 ? { count: openCashboxesCount, variant: "info" } : undefined,
+        },
+        { label: "Abrir Caja", href: "/cashbox/open", icon: Plus, permission: "cashbox.create" },
+        { label: "Movimientos", href: "/cashbox/movements", icon: FileText },
+      ],
+    },
+    {
+      title: "Clientes",
+      permission: "clients.read",
+      items: [
+        { label: "CRM", href: "/clients", icon: Users },
+      ],
+    },
+    {
+      title: "Documentación",
+      permission: "documents.read",
+      items: [
+        {
+          label: "Documentos",
+          href: "/documents",
+          icon: FileText,
+          badge:
+            pendingDocsCount > 0
+              ? { count: pendingDocsCount, variant: "warning" }
+              : reviewDocsCount > 0
+              ? { count: reviewDocsCount, variant: "info" }
+              : undefined,
+        },
+        { label: "Subir Documento", href: "/documents/upload", icon: Upload, permission: "documents.create" },
+      ],
+    },
+    {
+      title: "Alertas",
+      permission: "alerts.read",
+      items: [
+        {
+          label: "Todas",
+          href: "/alerts",
+          icon: Bell,
+          badge:
+            highAlertsCount > 0
+              ? { count: highAlertsCount, variant: "error" }
+              : mediumAlertsCount > 0
+              ? { count: mediumAlertsCount, variant: "warning" }
+              : undefined,
+        },
+      ],
+    },
+    {
+      title: "Auditoría",
+      permission: "audit.read",
+      items: [
+        { label: "Cambios del sistema", href: "/audit", icon: Shield },
+      ],
+    },
+    {
+      title: "Configuración",
+      permission: "settings.read",
+      items: [
+        { label: "Configuración", href: "/settings", icon: Settings },
+        { label: "Roles", href: "/roles", icon: Shield },
+        { label: "Usuarios", href: "/users", icon: UserCog },
+      ],
+    },
+  ];
+
+  // Filtrar grupos e items por permisos
+  const accessibleGroups = allNavGroups
+    .filter((group) => {
+      if (group.permission) {
+        return can(group.permission as any);
+      }
+      return true;
+    })
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (item.permission) {
+          return can(item.permission as any);
+        }
+        return true;
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const toggleGroup = (groupTitle: string) => {
     setExpandedGroups((prev) => {
@@ -213,10 +237,15 @@ export function Sidebar() {
   };
 
   const handleLinkClick = () => {
-    // Cerrar sidebar en mobile al hacer click
     if (window.innerWidth < 1024) {
       setIsMobileOpen(false);
     }
+  };
+
+  const getBadgeClass = (variant: "error" | "warning" | "info") => {
+    if (variant === "error") return "bg-red-500 text-white";
+    if (variant === "warning") return "bg-yellow-500 text-white";
+    return "bg-blue-500 text-white";
   };
 
   const sidebarContent = (
@@ -249,29 +278,27 @@ export function Sidebar() {
 
           return (
             <div key={group.title} className="mb-1">
-              {/* Group Header - Acordeón */}
+              {/* Group Header */}
               <button
                 onClick={() => toggleGroup(group.title)}
                 className={cn(
-                  "w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 transition-colors",
-                  "lg:py-2"
+                  "w-full flex items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 transition-all duration-150",
+                  "lg:py-1.5"
                 )}
               >
                 <span>{group.title}</span>
-                <div
+                <ChevronDown
                   className={cn(
-                    "transition-transform duration-200 ease-out",
+                    "h-3 w-3 transition-transform duration-150",
                     isGroupExpanded ? "rotate-0" : "-rotate-90"
                   )}
-                >
-                  <ChevronDown className="h-3 w-3 lg:h-3 lg:w-3" />
-                </div>
+                />
               </button>
 
-              {/* Group Items - Animación suave */}
+              {/* Group Items */}
               <div
                 className={cn(
-                  "overflow-hidden transition-all duration-300 ease-out",
+                  "overflow-hidden transition-all duration-150 ease-out",
                   isGroupExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                 )}
               >
@@ -286,7 +313,7 @@ export function Sidebar() {
                         href={item.href}
                         onClick={handleLinkClick}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-3 text-sm text-gray-700 rounded transition-colors",
+                          "flex items-center gap-3 px-4 py-3 text-sm text-gray-700 rounded transition-all duration-150",
                           "hover:bg-gray-100",
                           "lg:px-3 lg:py-2",
                           isItemActive &&
@@ -295,11 +322,21 @@ export function Sidebar() {
                       >
                         <Icon
                           className={cn(
-                            "flex-shrink-0 h-6 w-6 lg:h-4 lg:w-4 transition-colors",
+                            "flex-shrink-0 h-5 w-5 lg:h-4 lg:w-4 transition-colors",
                             isItemActive ? "text-[#162F7F]" : "text-gray-500"
                           )}
                         />
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate flex-1">{item.label}</span>
+                        {item.badge && (
+                          <span
+                            className={cn(
+                              "flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center",
+                              getBadgeClass(item.badge.variant)
+                            )}
+                          >
+                            {item.badge.count > 99 ? "99+" : item.badge.count}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -314,7 +351,7 @@ export function Sidebar() {
       {user && (
         <div className="px-4 py-3 border-t border-gray-200 lg:px-3 lg:py-2">
           <div className="text-xs">
-            <p className="text-gray-900 font-medium truncate">{user.fullName}</p>
+            <p className="text-gray-900 font-medium truncate">{user.fullName || user.email}</p>
             <p className="text-gray-500 capitalize">{String(user.role ?? "")}</p>
           </div>
         </div>
@@ -324,7 +361,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Overlay con backdrop blur */}
+      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
@@ -339,9 +376,7 @@ export function Sidebar() {
           "lg:static lg:translate-x-0 lg:shadow-none",
           "fixed left-0 top-0 w-64 shadow-xl",
           "transition-all duration-300 ease-out",
-          isMobileOpen
-            ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0"
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {sidebarContent}

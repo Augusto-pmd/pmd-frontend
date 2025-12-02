@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useDocumentsStore } from "@/store/documentsStore";
+import { useAlertsStore } from "@/store/alertsStore";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -13,33 +13,31 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { Edit, Trash2, Download, FileText, Building2, User, Calendar, Tag } from "lucide-react";
+import { Check, Trash2, Bell, Building2, User, Calendar, Tag, AlertTriangle } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { DocumentForm } from "../components/DocumentForm";
 
-function DocumentDetailContent() {
+function AlertDetailContent() {
   const params = useParams();
   const router = useRouter();
-  const documentId = params.id as string;
-  const { documents, fetchDocuments, updateDocument, deleteDocument } = useDocumentsStore();
+  const alertId = params.id as string;
+  const { alerts, fetchAlerts, markAsRead, deleteAlert } = useAlertsStore();
   const { works } = useWorks();
   const { users } = useUsers();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
-    fetchDocuments();
+    fetchAlerts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const document = documents.find((d) => d.id === documentId);
+  const alert = alerts.find((a) => a.id === alertId);
 
-  if (!document) {
+  if (!alert) {
     return (
       <MainLayout>
-        <LoadingState message="Cargando documento…" />
+        <LoadingState message="Cargando alerta…" />
       </MainLayout>
     );
   }
@@ -58,36 +56,36 @@ function DocumentDetailContent() {
     return user.fullName || user.name || user.nombre || userId;
   };
 
-  const getStatusVariant = (status?: string) => {
-    if (!status) return "default";
-    const statusLower = status.toLowerCase();
-    if (statusLower === "aprobado") return "success";
-    if (statusLower === "pendiente") return "warning";
-    if (statusLower === "en revisión" || statusLower === "en revision") return "info";
-    if (statusLower === "rechazado") return "error";
-    return "default";
+  const getSeverityVariant = (severity: "alta" | "media" | "baja") => {
+    if (severity === "alta") return "error";
+    if (severity === "media") return "warning";
+    return "info";
   };
 
-  const getStatusLabel = (status?: string) => {
-    if (!status) return "Sin estado";
-    const statusLower = status.toLowerCase();
-    if (statusLower === "aprobado") return "Aprobado";
-    if (statusLower === "pendiente") return "Pendiente";
-    if (statusLower === "en revisión" || statusLower === "en revision") return "En Revisión";
-    if (statusLower === "rechazado") return "Rechazado";
-    return status;
+  const getSeverityLabel = (severity: "alta" | "media" | "baja") => {
+    return severity.charAt(0).toUpperCase() + severity.slice(1);
   };
 
-  const handleUpdate = async (data: any) => {
+  const getTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      seguro: "Seguro",
+      documentacion: "Documentación",
+      obra: "Obra",
+      contable: "Contable",
+      general: "General",
+    };
+    return labels[type] || type;
+  };
+
+  const handleMarkAsRead = async () => {
     setIsSubmitting(true);
     try {
-      await updateDocument(documentId, data);
-      await fetchDocuments();
-      toast.success("Documento actualizado correctamente");
-      setIsEditModalOpen(false);
+      await markAsRead(alertId);
+      await fetchAlerts();
+      toast.success("Alerta marcada como leída");
     } catch (err: any) {
-      console.error("Error al actualizar documento:", err);
-      toast.error(err.message || "Error al actualizar el documento");
+      console.error("Error al marcar alerta:", err);
+      toast.error(err.message || "Error al marcar la alerta");
     } finally {
       setIsSubmitting(false);
     }
@@ -96,12 +94,12 @@ function DocumentDetailContent() {
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
-      await deleteDocument(documentId);
-      toast.success("Documento eliminado correctamente");
-      router.push("/documents");
+      await deleteAlert(alertId);
+      toast.success("Alerta eliminada correctamente");
+      router.push("/alerts");
     } catch (err: any) {
-      console.error("Error al eliminar documento:", err);
-      toast.error(err.message || "Error al eliminar el documento");
+      console.error("Error al eliminar alerta:", err);
+      toast.error(err.message || "Error al eliminar la alerta");
     } finally {
       setIsSubmitting(false);
     }
@@ -114,28 +112,23 @@ function DocumentDetailContent() {
           <BotonVolver />
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900 mb-2">{document.name}</h1>
-              <p className="text-gray-600">Información completa del documento</p>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+                {alert.title || "Detalle de Alerta"}
+              </h1>
+              <p className="text-gray-600">Información completa de la alerta</p>
             </div>
             <div className="flex gap-2">
-              {document.url && (
+              {!alert.read && (
                 <Button
                   variant="outline"
-                  onClick={() => window.open(document.url, "_blank")}
+                  onClick={handleMarkAsRead}
+                  disabled={isSubmitting}
                   className="flex items-center gap-2"
                 >
-                  <Download className="h-4 w-4" />
-                  Descargar
+                  <Check className="h-4 w-4" />
+                  Marcar como leída
                 </Button>
               )}
-              <Button
-                variant="outline"
-                onClick={() => setIsEditModalOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Editar
-              </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsDeleteModalOpen(true)}
@@ -155,10 +148,10 @@ function DocumentDetailContent() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Información General</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <Bell className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Nombre</p>
-                    <p className="text-base font-medium text-gray-900">{document.name}</p>
+                    <p className="text-sm text-gray-500">Mensaje</p>
+                    <p className="text-base font-medium text-gray-900">{alert.message}</p>
                   </div>
                 </div>
 
@@ -166,25 +159,17 @@ function DocumentDetailContent() {
                   <Tag className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500">Tipo</p>
-                    <p className="text-base font-medium text-gray-900">{document.type}</p>
+                    <p className="text-base font-medium text-gray-900">{getTypeLabel(alert.type)}</p>
                   </div>
                 </div>
 
-                {document.version && (
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 mt-0.5" />
-                    <div>
-                      <p className="text-sm text-gray-500">Versión</p>
-                      <p className="text-base font-medium text-gray-900">{document.version}</p>
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex items-start gap-3">
-                  <Building2 className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <AlertTriangle className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Obra</p>
-                    <p className="text-base font-medium text-gray-900">{getWorkName(document.workId)}</p>
+                    <p className="text-sm text-gray-500">Severidad</p>
+                    <Badge variant={getSeverityVariant(alert.severity)}>
+                      {getSeverityLabel(alert.severity)}
+                    </Badge>
                   </div>
                 </div>
 
@@ -192,8 +177,8 @@ function DocumentDetailContent() {
                   <div className="h-5 w-5 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500">Estado</p>
-                    <Badge variant={getStatusVariant(document.status)}>
-                      {getStatusLabel(document.status)}
+                    <Badge variant={alert.read ? "default" : "info"}>
+                      {alert.read ? "Leída" : "No leída"}
                     </Badge>
                   </div>
                 </div>
@@ -201,21 +186,17 @@ function DocumentDetailContent() {
             </CardContent>
           </Card>
 
-          {/* Metadatos */}
+          {/* Relaciones */}
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Metadatos</h2>
+              <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Relaciones</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <Building2 className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Fecha de carga</p>
+                    <p className="text-sm text-gray-500">Obra asociada</p>
                     <p className="text-base font-medium text-gray-900">
-                      {new Date(document.uploadedAt).toLocaleDateString("es-AR", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {alert.workId ? getWorkName(alert.workId) : "-"}
                     </p>
                   </div>
                 </div>
@@ -223,9 +204,23 @@ function DocumentDetailContent() {
                 <div className="flex items-start gap-3">
                   <User className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Responsable</p>
+                    <p className="text-sm text-gray-500">Personal involucrado</p>
                     <p className="text-base font-medium text-gray-900">
-                      {getUserName(document.uploadedBy)}
+                      {alert.personId ? getUserName(alert.personId) : "-"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Fecha</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {new Date(alert.date).toLocaleDateString("es-AR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
                     </p>
                   </div>
                 </div>
@@ -235,20 +230,6 @@ function DocumentDetailContent() {
         </div>
 
         <Modal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          title="Editar Documento"
-          size="lg"
-        >
-          <DocumentForm
-            initialData={document}
-            onSubmit={handleUpdate}
-            onCancel={() => setIsEditModalOpen(false)}
-            isLoading={isSubmitting}
-          />
-        </Modal>
-
-        <Modal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
           title="Confirmar Eliminación"
@@ -256,8 +237,9 @@ function DocumentDetailContent() {
         >
           <div className="space-y-4">
             <p className="text-gray-700">
-              ¿Estás seguro de que deseas eliminar el documento <strong>{document.name}</strong>?
+              ¿Estás seguro de que deseas eliminar esta alerta?
             </p>
+            <p className="text-sm text-gray-500 font-medium">{alert.message}</p>
             <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
             <div className="flex gap-3 justify-end pt-4">
               <Button
@@ -283,10 +265,11 @@ function DocumentDetailContent() {
   );
 }
 
-export default function DocumentDetailPage() {
+export default function AlertDetailPage() {
   return (
     <ProtectedRoute>
-      <DocumentDetailContent />
+      <AlertDetailContent />
     </ProtectedRoute>
   );
 }
+

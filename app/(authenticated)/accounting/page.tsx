@@ -95,7 +95,7 @@ function AccountingContent() {
       "Error desconocido";
     return (
       <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           Error al cargar los datos de contabilidad: {errorMessage}
         </div>
       </MainLayout>
@@ -119,7 +119,7 @@ function AccountingContent() {
           <BotonVolver />
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Contabilidad</h1>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">Contabilidad</h1>
               <p className="text-gray-600">Resumen financiero y movimientos contables del sistema PMD</p>
             </div>
             <Button
@@ -145,7 +145,7 @@ function AccountingContent() {
         <CierresMensuales cierres={Array.isArray(cierres) ? cierres : []} />
 
         <div>
-          <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Movimientos Contables</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Movimientos Contables</h2>
           <AccountingFilters
             filters={filters}
             onFiltersChange={handleFiltersChange}
