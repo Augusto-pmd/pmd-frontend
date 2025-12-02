@@ -4,6 +4,11 @@ import { AuthUser, normalizeUser } from "@/lib/normalizeUser";
 
 export type UserRole = "admin" | "operator" | "auditor";
 
+// SUPER ADMIN TEMPORAL - FALLBACK
+// Activar esto si necesitas acceso total cuando no tienes rol asignado
+// Una vez que tengas tu rol real asignado, desactivar poniendo: const SUPER_ADMIN_FALLBACK = false;
+const SUPER_ADMIN_FALLBACK = true;
+
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
@@ -28,8 +33,27 @@ export const useAuthStore = create<AuthState>()(
       getUserSafe: () => {
         const u = get().user;
         if (!u) return null;
+        
         // Ya debería venir normalizado, pero aseguramos por las dudas:
-        return normalizeUser(u);
+        let normalizedUser = normalizeUser(u);
+        
+        // SUPER ADMIN FALLBACK - Solo aplicar si está activo y el usuario no tiene rol válido
+        if (SUPER_ADMIN_FALLBACK) {
+          const hasValidRole = normalizedUser.role && 
+            (normalizedUser.role === "admin" || 
+             normalizedUser.role === "operator" || 
+             normalizedUser.role === "auditor");
+          
+          if (!hasValidRole) {
+            console.log("🟡 [SUPER ADMIN FALLBACK] Usuario sin rol válido, aplicando fallback 'admin'");
+            normalizedUser = {
+              ...normalizedUser,
+              role: "admin", // "admin" tiene todos los permisos en el ACL
+            };
+          }
+        }
+        
+        return normalizedUser;
       },
 
       // --- LOGIN ---
