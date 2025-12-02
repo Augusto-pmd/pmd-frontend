@@ -28,19 +28,17 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
     >
       <div
         className={cn(
-          "bg-white/40 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto apple-transition",
+          "bg-white/30 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto apple-transition",
           sizes[size]
         )}
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          mixBlendMode: 'luminosity',
-        }}
+        style={{ mixBlendMode: 'luminosity' }}
       >
         <div className="sticky top-0 bg-white/30 backdrop-blur-md border-b border-white/20 px-6 py-4 flex justify-between items-center rounded-t-3xl">
-          <h2 className="text-base font-semibold text-gray-800">{title}</h2>
+          <h2 className="text-base font-semibold text-[#1C1C1E]">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 hover:bg-white/40 text-xl leading-none w-7 h-7 flex items-center justify-center rounded-xl apple-transition backdrop-blur-sm"
+            className="text-[#636366] hover:text-[#1C1C1E] hover:bg-white/40 text-xl leading-none w-7 h-7 flex items-center justify-center rounded-xl apple-transition backdrop-blur-sm"
           >
             ×
           </button>

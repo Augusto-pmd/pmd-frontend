@@ -22,7 +22,7 @@ export function ModuleCard({ title, description, icon, route, className }: Modul
     <div
       onClick={handleClick}
       className={cn(
-        "cursor-pointer rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5 hover:bg-white/15 transition-all",
+        "cursor-pointer rounded-2xl border border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 hover:bg-white/60 apple-transition",
         className
       )}
     >
@@ -31,10 +31,10 @@ export function ModuleCard({ title, description, icon, route, className }: Modul
           {icon}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-gray-900 mb-1.5">
+          <h3 className="text-sm font-medium text-[#1C1C1E] mb-1.5">
             {title}
           </h3>
-          <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{description}</p>
+          <p className="text-xs text-[#636366] line-clamp-2 leading-relaxed">{description}</p>
         </div>
       </div>
     </div>

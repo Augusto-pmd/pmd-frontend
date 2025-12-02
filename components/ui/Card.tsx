@@ -10,7 +10,7 @@ interface CardProps {
 export function Card({ children, className, depth = 2 }: CardProps) {
   const depthClasses = {
     1: "bg-white",
-    2: "bg-white/60 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.04)]",
+    2: "bg-white/50 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)]",
     3: "bg-white/70 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)]",
   };
 
@@ -28,7 +28,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className }: CardHeaderProps) {
   return (
-    <div className={cn("px-6 py-4 border-b border-gray-200/30", className)}>
+    <div className={cn("px-6 py-4 border-b border-white/20", className)}>
       {children}
     </div>
   );
@@ -41,7 +41,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className }: CardTitleProps) {
   return (
-    <h3 className={cn("text-base font-semibold text-gray-800", className)}>
+    <h3 className={cn("text-base font-semibold text-[#1C1C1E]", className)}>
       {children}
     </h3>
   );

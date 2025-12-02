@@ -10,14 +10,14 @@ export function Input({ label, error, className, ...props }: InputProps) {
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+        <label className="block text-xs font-medium text-[#3A3A3C] mb-1.5">
           {label}
         </label>
       )}
       <input
         className={cn(
-          "w-full px-3 py-2 text-sm bg-white/70 backdrop-blur-md border border-gray-300/50 rounded-xl text-gray-900 placeholder:text-gray-500 shadow-inner",
-          "focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600/50 outline-none transition",
+          "w-full px-3 py-2 text-sm bg-white/70 border-gray-300/40 rounded-xl text-[#1C1C1E] placeholder:text-[#AEAEB2] shadow-inner",
+          "focus:ring-2 focus:ring-[#0A84FF]/40 focus:border-[#0A84FF]/50 outline-none apple-transition",
           error && "border-red-500/60 focus:ring-red-500/40 focus:border-red-500/60",
           className
         )}

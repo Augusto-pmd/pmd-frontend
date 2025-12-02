@@ -115,9 +115,9 @@ export function AuditList({
 
   if (filteredLogs.length === 0) {
     return (
-      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-12 text-center">
-        <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="currentColor" fillOpacity={0.3} />
-        <p className="text-gray-600 text-lg">
+      <div className="rounded-2xl border border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-12 text-center">
+        <Shield className="h-12 w-12 text-[#636366] mx-auto mb-4" />
+        <p className="text-[#636366] text-lg">
           {logs.length === 0
             ? "No hay registros de auditoría"
             : "No se encontraron registros con los filtros aplicados"}
@@ -141,21 +141,21 @@ export function AuditList({
         </div>
       )}
 
-      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] overflow-hidden">
+      <div className="rounded-2xl border border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#636366] uppercase tracking-wider">
                   Usuario
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#636366] uppercase tracking-wider">
                   Módulo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#636366] uppercase tracking-wider">
                   Acción
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#636366] uppercase tracking-wider">
                   Fecha & Hora
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -168,33 +168,33 @@ export function AuditList({
                 <tr key={log.id} className={`hover:bg-white/5 transition-colors ${index % 2 === 0 ? 'bg-white/5' : ''}`}>
                   <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" fill="currentColor" fillOpacity={0.3} />
+                      <User className="h-4 w-4 text-[#636366]" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-[#1C1C1E]">
                           {log.userName || log.user}
                         </div>
                         {log.userId && log.userId !== log.user && (
-                          <div className="text-xs text-gray-500">{log.userId}</div>
+                          <div className="text-xs text-[#636366]">{log.userId}</div>
                         )}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-gray-500" fill="currentColor" fillOpacity={0.3} />
-                      <div className="text-sm text-gray-900">{log.module}</div>
+                      <FileText className="h-4 w-4 text-[#636366]" />
+                      <div className="text-sm text-[#1C1C1E]">{log.module}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 border-b border-white/5">
-                    <div className="text-sm text-gray-900">{log.action}</div>
+                    <div className="text-sm text-[#1C1C1E]">{log.action}</div>
                     {log.details && (
-                      <div className="text-xs text-gray-500 mt-1">{log.details}</div>
+                      <div className="text-xs text-[#636366] mt-1">{log.details}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" fill="currentColor" fillOpacity={0.3} />
-                      <div className="text-sm text-gray-600">{formatTimestamp(log.timestamp)}</div>
+                      <Calendar className="h-4 w-4 text-[#636366]" />
+                      <div className="text-sm text-[#636366]">{formatTimestamp(log.timestamp)}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-b border-white/5">
@@ -203,9 +203,9 @@ export function AuditList({
                         variant="ghost"
                         size="sm"
                         onClick={() => router.push(`/audit/${log.id}`)}
-                        className="text-[#162F7F] hover:opacity-70"
+                        className="text-[#0A84FF] hover:opacity-70"
                       >
-                        <Eye className="h-4 w-4" fill="currentColor" fillOpacity={0.6} />
+                        <Eye className="h-4 w-4" />
                       </Button>
                       {isAdmin && (
                         <Button
@@ -240,11 +240,11 @@ export function AuditList({
           size="md"
         >
           <div className="space-y-4">
-            <p className="text-gray-700">
+            <p className="text-[#3A3A3C]">
               ¿Estás seguro de que deseas eliminar este registro de auditoría?
             </p>
-            <p className="text-sm text-gray-500 font-medium">{selectedLog.action}</p>
-            <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+            <p className="text-sm text-[#636366] font-medium">{selectedLog.action}</p>
+            <p className="text-sm text-[#636366]">Esta acción no se puede deshacer.</p>
             <div className="flex gap-3 justify-end pt-4">
               <Button
                 variant="outline"

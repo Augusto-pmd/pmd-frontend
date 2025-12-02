@@ -245,7 +245,7 @@ export function Sidebar() {
   const getBadgeClass = (variant: "error" | "warning" | "info") => {
     if (variant === "error") return "bg-red-500/90 text-white";
     if (variant === "warning") return "bg-yellow-500/90 text-white";
-    return "bg-blue-500/90 text-white";
+    return "bg-[#0A84FF]/90 text-white";
   };
 
   const sidebarContent = (
@@ -253,17 +253,17 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-4 py-4 border-b border-white/20 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-blue-600/80 backdrop-blur-xl rounded-lg flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+          <div className="w-8 h-8 bg-gradient-to-r from-[#162F7F] to-[#0A84FF] backdrop-blur-xl rounded-lg flex items-center justify-center shadow-[0_4px_20px_rgba(22,47,127,0.25)]">
             <span className="text-white text-xs font-semibold">PMD</span>
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-gray-900">PMD</h1>
-            <p className="text-xs text-gray-600">Management</p>
+            <h1 className="text-sm font-semibold text-[#1C1C1E]">PMD</h1>
+            <p className="text-xs text-[#636366]">Management</p>
           </div>
         </div>
         <button
           onClick={() => setIsMobileOpen(false)}
-          className="lg:hidden text-gray-600 hover:text-gray-900 hover:bg-white/50 p-2 -mr-2 rounded-xl apple-transition backdrop-blur-sm"
+          className="lg:hidden text-[#636366] hover:text-[#1C1C1E] hover:bg-white/40 p-2 -mr-2 rounded-xl apple-transition backdrop-blur-sm"
           aria-label="Cerrar sidebar"
         >
           <X className="h-5 w-5" />
@@ -282,7 +282,7 @@ export function Sidebar() {
               <button
                 onClick={() => toggleGroup(group.title)}
                 className={cn(
-                  "w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium tracking-wide text-gray-500 hover:text-gray-700 apple-transition"
+                  "w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium tracking-wide text-[#636366] hover:text-[#3A3A3C] apple-transition"
                 )}
               >
                 <span>{group.title}</span>
@@ -312,16 +312,16 @@ export function Sidebar() {
                         href={item.href}
                         onClick={handleLinkClick}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-900 rounded-xl apple-transition",
-                          "hover:bg-white/50",
+                          "flex items-center gap-3 px-4 py-2.5 text-sm text-[#1C1C1E] rounded-xl apple-transition",
+                          "hover:bg-white/40",
                           isItemActive &&
-                            "bg-white/60 border-l-4 border-blue-600/60 text-gray-900 font-medium"
+                            "bg-white/40 border-l-4 border-[#0A84FF]/60 text-[#1C1C1E] font-medium"
                         )}
                       >
                         <Icon
                           className={cn(
                             "flex-shrink-0 h-4 w-4",
-                            isItemActive ? "text-gray-900" : "text-gray-600"
+                            isItemActive ? "text-[#1C1C1E]" : "text-[#636366]"
                           )}
                         />
                         <span className="truncate flex-1">{item.label}</span>
@@ -349,8 +349,8 @@ export function Sidebar() {
       {user && (
         <div className="px-4 py-3 border-t border-white/20">
           <div className="text-xs">
-            <p className="text-gray-900 font-medium truncate">{user.fullName || user.email}</p>
-            <p className="text-gray-600 capitalize">{String(user.role ?? "")}</p>
+            <p className="text-[#1C1C1E] font-medium truncate">{user.fullName || user.email}</p>
+            <p className="text-[#636366] capitalize">{String(user.role ?? "")}</p>
           </div>
         </div>
       )}
@@ -370,9 +370,9 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-white/40 backdrop-blur-2xl border-r border-white/20 min-h-screen flex flex-col z-50 rounded-r-2xl",
+          "bg-white/30 backdrop-blur-2xl border-r border-white/20 min-h-screen flex flex-col z-50 rounded-r-2xl",
           "lg:static lg:translate-x-0 lg:shadow-none",
-          "fixed left-0 top-0 w-64 shadow-[0_4px_20px_rgba(0,0,0,0.05)]",
+          "fixed left-0 top-0 w-64 shadow-[0_4px_20px_rgba(0,0,0,0.06)]",
           "apple-transition",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}

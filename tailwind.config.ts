@@ -18,6 +18,23 @@ const config: Config = {
           gold: "#d4af37",
           white: "#ffffff",
         },
+        apple: {
+          silver: {
+            light: "#F5F5F7",
+            medium: "#EBEBF0",
+            dark: "#DADADA",
+          },
+          text: {
+            primary: "#1C1C1E",
+            secondary: "#3A3A3C",
+            tertiary: "#636366",
+            placeholder: "#AEAEB2",
+          },
+          blue: {
+            pmd: "#162F7F",
+            system: "#0A84FF",
+          },
+        },
       },
       fontFamily: {
         sans: ["Inter", "Manrope", "system-ui", "sans-serif"],
@@ -27,9 +44,9 @@ const config: Config = {
       },
       boxShadow: {
         pmd: "0 2px 8px rgba(0, 0, 0, 0.1)",
-        "glass": "0 4px 20px rgba(0, 0, 0, 0.08)",
-        "pmd-glow": "0 0 15px rgba(22, 47, 127, 0.4)",
-        "depth-2": "0 4px 20px rgba(0, 0, 0, 0.04)",
+        "glass": "0 4px 20px rgba(0, 0, 0, 0.06)",
+        "pmd-glow": "0 4px 20px rgba(22, 47, 127, 0.25)",
+        "depth-2": "0 8px 30px rgba(0, 0, 0, 0.06)",
         "depth-3": "0 10px 40px rgba(0, 0, 0, 0.12)",
       },
       backdropBlur: {

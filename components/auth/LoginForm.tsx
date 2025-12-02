@@ -122,10 +122,10 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md px-4">
-      <div className="bg-white/40 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8">
+      <div className="bg-white/30 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8" style={{ mixBlendMode: 'luminosity' }}>
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-gray-800 mb-1">PMD</h1>
-          <p className="text-sm text-gray-600">Management System</p>
+          <h1 className="text-2xl font-semibold text-[#1C1C1E] mb-1">PMD</h1>
+          <p className="text-sm text-[#636366]">Management System</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
@@ -135,7 +135,7 @@ export function LoginForm() {
       )}
 
       <div>
-        <label htmlFor="email" className="block text-xs font-medium text-gray-600 mb-1.5">
+        <label htmlFor="email" className="block text-xs font-medium text-[#3A3A3C] mb-1.5">
           Email
         </label>
         <input
@@ -144,13 +144,13 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full px-3 py-2 text-sm bg-white/70 backdrop-blur-md border border-gray-300/50 rounded-xl text-gray-900 placeholder:text-gray-500 shadow-inner focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600/50 outline-none transition"
+          className="w-full px-3 py-2 text-sm bg-white/70 border-gray-300/40 rounded-xl text-[#1C1C1E] placeholder:text-[#AEAEB2] shadow-inner focus:ring-2 focus:ring-[#0A84FF]/40 focus:border-[#0A84FF]/50 outline-none apple-transition"
           placeholder="your.email@example.com"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-xs font-medium text-gray-600 mb-1.5">
+        <label htmlFor="password" className="block text-xs font-medium text-[#3A3A3C] mb-1.5">
           Password
         </label>
         <input
@@ -159,7 +159,7 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full px-3 py-2 text-sm bg-white/70 backdrop-blur-md border border-gray-300/50 rounded-xl text-gray-900 placeholder:text-gray-500 shadow-inner focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600/50 outline-none transition"
+          className="w-full px-3 py-2 text-sm bg-white/70 border-gray-300/40 rounded-xl text-[#1C1C1E] placeholder:text-[#AEAEB2] shadow-inner focus:ring-2 focus:ring-[#0A84FF]/40 focus:border-[#0A84FF]/50 outline-none apple-transition"
           placeholder="••••••••"
         />
       </div>
@@ -167,7 +167,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600/80 text-white backdrop-blur-xl rounded-xl px-4 py-2 hover:bg-blue-600 transition shadow-[0_0_10px_rgba(0,0,0,0.08)] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-gradient-to-r from-[#162F7F] to-[#0A84FF] text-white backdrop-blur-xl rounded-xl px-4 py-2 hover:opacity-90 apple-transition shadow-[0_4px_20px_rgba(22,47,127,0.25)] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Signing in..." : "Sign In"}
       </button>
@@ -176,4 +176,3 @@ export function LoginForm() {
     </div>
   );
 }
-
