@@ -122,12 +122,12 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md px-4">
-      <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-8">
+      <div className="bg-white/40 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#162F7F] mb-2">PMD</h1>
-          <p className="text-gray-600">Management System</p>
+          <h1 className="text-2xl font-semibold text-gray-800 mb-1">PMD</h1>
+          <p className="text-sm text-gray-600">Management System</p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
         <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-700 px-4 py-3 rounded-xl text-sm">
           {error}
@@ -135,7 +135,7 @@ export function LoginForm() {
       )}
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
+        <label htmlFor="email" className="block text-xs font-medium text-gray-600 mb-1.5">
           Email
         </label>
         <input
@@ -144,13 +144,13 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-gray-900 placeholder:text-gray-500 focus:ring-[#162F7F]/40 focus:border-[#162F7F]/40 outline-none transition-all"
+          className="w-full px-3 py-2 text-sm bg-white/70 backdrop-blur-md border border-gray-300/50 rounded-xl text-gray-900 placeholder:text-gray-500 shadow-inner focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600/50 outline-none transition"
           placeholder="your.email@example.com"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
+        <label htmlFor="password" className="block text-xs font-medium text-gray-600 mb-1.5">
           Password
         </label>
         <input
@@ -159,7 +159,7 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-gray-900 placeholder:text-gray-500 focus:ring-[#162F7F]/40 focus:border-[#162F7F]/40 outline-none transition-all"
+          className="w-full px-3 py-2 text-sm bg-white/70 backdrop-blur-md border border-gray-300/50 rounded-xl text-gray-900 placeholder:text-gray-500 shadow-inner focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600/50 outline-none transition"
           placeholder="••••••••"
         />
       </div>
@@ -167,7 +167,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#162F7F]/70 backdrop-blur-md border border-white/20 rounded-xl text-white shadow-[0_0_15px_rgba(22,47,127,0.4)] hover:bg-[#162F7F]/80 transition-all py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-blue-600/80 text-white backdrop-blur-xl rounded-xl px-4 py-2 hover:bg-blue-600 transition shadow-[0_0_10px_rgba(0,0,0,0.08)] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Signing in..." : "Sign In"}
       </button>

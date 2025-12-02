@@ -243,27 +243,27 @@ export function Sidebar() {
   };
 
   const getBadgeClass = (variant: "error" | "warning" | "info") => {
-    if (variant === "error") return "bg-red-500/80 backdrop-blur-sm text-white border border-white/20";
-    if (variant === "warning") return "bg-yellow-500/80 backdrop-blur-sm text-white border border-white/20";
-    return "bg-blue-500/80 backdrop-blur-sm text-white border border-white/20";
+    if (variant === "error") return "bg-red-500/90 text-white";
+    if (variant === "warning") return "bg-yellow-500/90 text-white";
+    return "bg-blue-500/90 text-white";
   };
 
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="px-4 py-4 border-b border-white/10 flex items-center justify-between">
+      <div className="px-4 py-4 border-b border-white/20 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-[#162F7F]/80 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(22,47,127,0.3)]">
-            <span className="text-white text-xs font-bold">PMD</span>
+          <div className="w-8 h-8 bg-blue-600/80 backdrop-blur-xl rounded-lg flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+            <span className="text-white text-xs font-semibold">PMD</span>
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white/90">PMD</h1>
-            <p className="text-xs text-white/60">Management</p>
+            <h1 className="text-sm font-semibold text-gray-900">PMD</h1>
+            <p className="text-xs text-gray-600">Management</p>
           </div>
         </div>
         <button
           onClick={() => setIsMobileOpen(false)}
-          className="lg:hidden text-white/70 hover:text-white hover:bg-white/10 p-2 -mr-2 rounded-lg transition-all"
+          className="lg:hidden text-gray-600 hover:text-gray-900 hover:bg-white/50 p-2 -mr-2 rounded-xl apple-transition backdrop-blur-sm"
           aria-label="Cerrar sidebar"
         >
           <X className="h-5 w-5" />
@@ -282,14 +282,13 @@ export function Sidebar() {
               <button
                 onClick={() => toggleGroup(group.title)}
                 className={cn(
-                  "w-full flex items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/60 hover:text-white/80 transition-all duration-150",
-                  "lg:py-1.5"
+                  "w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium tracking-wide text-gray-500 hover:text-gray-700 apple-transition"
                 )}
               >
                 <span>{group.title}</span>
                 <ChevronDown
                   className={cn(
-                    "h-3 w-3 transition-transform duration-150",
+                    "h-3.5 w-3.5 apple-transition",
                     isGroupExpanded ? "rotate-0" : "-rotate-90"
                   )}
                 />
@@ -298,11 +297,11 @@ export function Sidebar() {
               {/* Group Items */}
               <div
                 className={cn(
-                  "overflow-hidden transition-all duration-150 ease-out",
+                  "overflow-hidden apple-transition",
                   isGroupExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                 )}
               >
-                <div className="space-y-1 pb-1">
+                <div className="space-y-0.5 pb-1">
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isItemActive = isActive(item.href);
@@ -313,24 +312,23 @@ export function Sidebar() {
                         href={item.href}
                         onClick={handleLinkClick}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 rounded-lg transition-all duration-150",
-                          "hover:bg-white/10",
-                          "lg:px-3 lg:py-2",
+                          "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-900 rounded-xl apple-transition",
+                          "hover:bg-white/50",
                           isItemActive &&
-                            "bg-white/15 border-l-2 border-white/40 text-white font-medium"
+                            "bg-white/60 border-l-4 border-blue-600/60 text-gray-900 font-medium"
                         )}
                       >
                         <Icon
                           className={cn(
-                            "flex-shrink-0 h-5 w-5 lg:h-5 lg:w-5 transition-colors",
-                            isItemActive ? "text-white" : "text-white/70"
+                            "flex-shrink-0 h-4 w-4",
+                            isItemActive ? "text-gray-900" : "text-gray-600"
                           )}
                         />
                         <span className="truncate flex-1">{item.label}</span>
                         {item.badge && (
                           <span
                             className={cn(
-                              "flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center backdrop-blur-sm",
+                              "flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
                               getBadgeClass(item.badge.variant)
                             )}
                           >
@@ -349,10 +347,10 @@ export function Sidebar() {
 
       {/* User Info */}
       {user && (
-        <div className="px-4 py-3 border-t border-white/10 lg:px-3 lg:py-2">
+        <div className="px-4 py-3 border-t border-white/20">
           <div className="text-xs">
-            <p className="text-white/90 font-medium truncate">{user.fullName || user.email}</p>
-            <p className="text-white/60 capitalize">{String(user.role ?? "")}</p>
+            <p className="text-gray-900 font-medium truncate">{user.fullName || user.email}</p>
+            <p className="text-gray-600 capitalize">{String(user.role ?? "")}</p>
           </div>
         </div>
       )}
@@ -364,7 +362,7 @@ export function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40 apple-transition"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -372,12 +370,13 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-[#162F7F]/30 backdrop-blur-xl border-r border-white/10 min-h-screen flex flex-col z-50",
+          "bg-white/40 backdrop-blur-2xl border-r border-white/20 min-h-screen flex flex-col z-50 rounded-r-2xl",
           "lg:static lg:translate-x-0 lg:shadow-none",
-          "fixed left-0 top-0 w-64 shadow-2xl",
-          "transition-all duration-300 ease-out",
+          "fixed left-0 top-0 w-64 shadow-[0_4px_20px_rgba(0,0,0,0.05)]",
+          "apple-transition",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
+        style={{ mixBlendMode: 'luminosity' }}
       >
         {sidebarContent}
       </aside>

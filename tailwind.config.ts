@@ -6,6 +6,8 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  // Force light mode only
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -27,9 +29,17 @@ const config: Config = {
         pmd: "0 2px 8px rgba(0, 0, 0, 0.1)",
         "glass": "0 4px 20px rgba(0, 0, 0, 0.08)",
         "pmd-glow": "0 0 15px rgba(22, 47, 127, 0.4)",
+        "depth-2": "0 4px 20px rgba(0, 0, 0, 0.04)",
+        "depth-3": "0 10px 40px rgba(0, 0, 0, 0.12)",
       },
       backdropBlur: {
         xs: "2px",
+      },
+      transitionTimingFunction: {
+        'apple': 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+      },
+      transitionDuration: {
+        'apple': '300ms',
       },
     },
   },
@@ -37,4 +47,3 @@ const config: Config = {
 };
 
 export default config;
-

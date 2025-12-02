@@ -20,14 +20,14 @@ export function Topbar() {
   };
 
   return (
-    <header className="h-16 bg-white/20 backdrop-blur-md border-b border-white/20 flex items-center justify-between px-4 lg:px-6">
+    <header className="h-16 bg-white/70 backdrop-blur-xl border-b border-white/20 flex items-center justify-between px-4 lg:px-6 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
       {/* Mobile Menu Button */}
       <button
         onClick={toggleMobile}
-        className="lg:hidden p-2 text-gray-700 hover:text-gray-900 hover:bg-white/20 rounded-lg transition-all backdrop-blur-sm"
+        className="lg:hidden p-2 text-gray-700 hover:text-gray-900 hover:bg-white/50 rounded-xl transition-all backdrop-blur-sm"
         aria-label="Abrir menú"
       >
-        <Menu className="h-6 w-6" />
+        <Menu className="h-5 w-5" />
       </button>
 
       {/* Desktop Spacer */}
@@ -40,14 +40,14 @@ export function Topbar() {
               <p className="text-sm font-medium text-gray-900">{user.fullName}</p>
               <p className="text-xs text-gray-600 capitalize">{String(user.role ?? "")}</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-[#162F7F]/70 backdrop-blur-sm flex items-center justify-center text-white font-semibold border border-white/20 shadow-[0_0_10px_rgba(22,47,127,0.3)]">
+            <div className="w-9 h-9 rounded-full bg-blue-600/80 backdrop-blur-xl flex items-center justify-center text-white font-semibold border border-white/20 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
               {(user.fullName?.charAt(0) || "").toUpperCase()}
             </div>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white/20 rounded-xl transition-all backdrop-blur-sm border border-white/20"
+          className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white/50 rounded-xl transition-all backdrop-blur-sm border border-white/30"
         >
           Logout
         </button>

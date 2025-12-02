@@ -1,15 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* Force light mode - disable dark mode */
+  :root {
+    color-scheme: light;
+  }
+  
+  html {
+    @apply bg-white;
+  }
+  
   body {
-    @apply bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-white text-gray-900;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "kern" 1;
+    text-rendering: optimizeLegibility;
+  }
+  
+  * {
+    @apply border-white/20;
+  }
+  
+  /* Apple-like transitions */
+  * {
+    transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
   }
 }
 
@@ -18,24 +38,71 @@
     text-wrap: balance;
   }
   
-  /* Glass effect utilities */
-  .glass-card {
-    @apply rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)];
+  /* Apple Vibrancy Effects */
+  .apple-vibrancy {
+    @apply bg-white/40 backdrop-blur-xl border-white/20;
+    mix-blend-mode: luminosity;
   }
   
-  .glass-panel {
-    @apply bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl;
+  .apple-vibrancy-overlay {
+    mix-blend-mode: overlay;
   }
   
-  .glass-input {
-    @apply bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-gray-900 placeholder:text-gray-500 focus:ring-[#162F7F]/40 focus:border-[#162F7F]/40;
+  /* Depth Hierarchy - Level 1: Background */
+  .depth-1 {
+    @apply bg-white;
   }
   
-  .pmd-button-primary {
-    @apply bg-[#162F7F]/70 backdrop-blur-md border border-white/20 rounded-xl text-white shadow-[0_0_15px_rgba(22,47,127,0.4)] hover:bg-[#162F7F]/80 transition-all;
+  /* Depth Hierarchy - Level 2: Panels */
+  .depth-2 {
+    @apply bg-white/60 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.04)];
   }
   
-  .pmd-button-secondary {
-    @apply bg-white/10 border border-white/30 rounded-xl text-gray-200 hover:bg-white/20 transition-all;
+  /* Depth Hierarchy - Level 3: Floating Elements */
+  .depth-3 {
+    @apply bg-white/70 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)];
+  }
+  
+  /* Apple Glass utilities */
+  .apple-glass {
+    @apply bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)];
+  }
+  
+  .apple-glass-strong {
+    @apply bg-white/70 backdrop-blur-2xl border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.06)];
+  }
+  
+  .apple-sidebar {
+    @apply bg-white/40 backdrop-blur-2xl border-r border-white/20 text-gray-900;
+    mix-blend-mode: luminosity;
+  }
+  
+  .apple-card {
+    @apply bg-white/60 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)];
+  }
+  
+  .apple-button-primary {
+    @apply bg-blue-600/80 text-white backdrop-blur-xl rounded-xl px-4 py-2 hover:bg-blue-600 shadow-[0_0_10px_rgba(0,0,0,0.08)];
+    transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  
+  .apple-button-secondary {
+    @apply bg-white/40 backdrop-blur-xl border border-white/30 text-gray-700 rounded-xl px-4 py-2 hover:bg-white/60;
+    transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  
+  .apple-input {
+    @apply bg-white/70 backdrop-blur-md border border-gray-300/50 rounded-xl px-3 py-2 shadow-inner focus:ring-2 focus:ring-blue-600/30 outline-none;
+    transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  
+  /* Apple-like animations */
+  .apple-transition {
+    transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  
+  /* Icon wrapper for filled minimal style */
+  .apple-icon {
+    @apply text-gray-600;
   }
 }

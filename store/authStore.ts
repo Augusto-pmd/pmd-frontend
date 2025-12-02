@@ -87,6 +87,16 @@ export const useAuthStore = create<AuthState>()(
         console.log("  - user.fullName:", user.fullName);
         console.log("  - user.role:", user.role, "(type:", typeof user.role, ")");
         console.log("  - user.role is string:", typeof user.role === "string");
+        console.log("  - user.organizationId:", user.organizationId);
+        console.log("  - user.organization:", user.organization);
+        
+        // Validación específica de organizationId
+        console.log("🔵 [ORGANIZATION] Usuario cargado:", user);
+        if (user.organizationId) {
+          console.log("✅ [ORGANIZATION] organizationId presente:", user.organizationId);
+        } else {
+          console.warn("⚠️ [ORGANIZATION] organizationId NO está presente en el usuario normalizado");
+        }
 
         const newState = {
           user,
@@ -169,6 +179,7 @@ export const useAuthStore = create<AuthState>()(
         if (!rawUser) throw new Error("No user in response");
 
         const user = normalizeUser(rawUser);
+        console.log("🔵 [ORGANIZATION] Usuario cargado (loadMe):", user);
 
         set({ user, isAuthenticated: true });
       },
@@ -192,6 +203,12 @@ export const useAuthStore = create<AuthState>()(
 
         if (rawUser) {
           const user = normalizeUser(rawUser);
+          console.log("🔵 [ORGANIZATION] Usuario cargado (refresh):", user);
+          if (user.organizationId) {
+            console.log("✅ [ORGANIZATION] organizationId presente (refresh):", user.organizationId);
+          } else {
+            console.warn("⚠️ [ORGANIZATION] organizationId NO está presente en el usuario normalizado (refresh)");
+          }
           set({
             user,
             token: access_token,

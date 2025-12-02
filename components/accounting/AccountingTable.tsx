@@ -113,9 +113,9 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-12 text-center">
-        <p className="text-gray-600 text-lg">No hay movimientos registrados</p>
-        <p className="text-gray-500 text-sm mt-2">
+      <div className="bg-white/60 border border-white/20 backdrop-blur-xl rounded-2xl p-12 text-center shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
+        <p className="text-gray-800 text-sm">No hay movimientos registrados</p>
+        <p className="text-gray-600 text-xs mt-2">
           Los movimientos contables aparecerán aquí cuando se registren
         </p>
       </div>
@@ -124,64 +124,64 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
 
   return (
     <>
-      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] overflow-hidden">
+      <div className="bg-white/60 border border-white/20 backdrop-blur-xl rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5 border-b border-white/10">
+            <thead className="bg-white/30 border-b border-gray-200/30">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Fecha
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Obra
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Proveedor
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Tipo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Monto
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Categoría
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Notas
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-gray-200/20">
               {entries.map((entry, index) => (
-                <tr key={entry.id} className={`hover:bg-white/5 transition-colors ${index % 2 === 0 ? 'bg-white/5' : ''}`}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-b border-white/5">
+                <tr key={entry.id} className="hover:bg-white/40 backdrop-blur-sm transition-colors">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800 border-b border-gray-200/10">
                     {formatDate(entry.date || entry.fecha)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-b border-white/5">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800 border-b border-gray-200/10">
                     {getWorkName(entry.workId || entry.obraId || undefined)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-b border-white/5">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800 border-b border-gray-200/10">
                     {getSupplierName(entry.supplierId || entry.proveedorId || undefined)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
+                  <td className="px-4 py-3 whitespace-nowrap border-b border-gray-200/10">
                     <Badge variant={getTypeVariant(entry.type || entry.tipo || "")}>
                       {getTypeLabel(entry.type || entry.tipo || "")}
                     </Badge>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 border-b border-white/5">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800 border-b border-gray-200/10">
                     {formatCurrency(entry.amount || entry.monto || 0)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-white/5">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200/10">
                     {entry.category || entry.categoria || "-"}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate border-b border-white/5">
+                  <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate border-b border-gray-200/10">
                     {entry.notes || entry.notas || entry.description || entry.descripcion || "-"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-b border-white/5">
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium border-b border-gray-200/10">
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="outline"
