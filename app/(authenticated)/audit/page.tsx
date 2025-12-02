@@ -5,7 +5,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuditLogs } from "@/hooks/api/audit";
 import { useState } from "react";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { AuditList } from "@/components/audit/AuditList";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function AuditContent() {
@@ -81,13 +81,13 @@ function AuditContent() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
+        <div className="px-1">
           <BotonVolver />
         </div>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center px-1">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Auditoría</h1>
-            <p className="text-gray-600">Actividad del sistema y registro de auditoría</p>
+            <p className="text-gray-600">Registro de acciones del sistema PMD</p>
           </div>
           <div className="flex gap-2">
             {(["all", "today", "week", "month"] as const).map((f) => (
@@ -130,45 +130,7 @@ function AuditContent() {
 
           <div>
             <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Registro de Auditoría</h2>
-            {logs?.length === 0 ? (
-              <EmptyState
-                title="No se encontraron registros de auditoría"
-                description="Los registros de auditoría aparecerán aquí cuando haya actividad en el sistema"
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fecha y Hora</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Usuario</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acción</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Entidad</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Detalles</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {logs?.map((log: any) => (
-                      <tr key={log.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {log.timestamp || log.createdAt
-                            ? new Date(log.timestamp || log.createdAt).toLocaleString("es-ES")
-                            : "-"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {log.userName || log.userId || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{log.action || "-"}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{log.entity || log.entityType || "-"}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {log.details || log.description || "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <AuditList logs={logs || []} />
           </div>
         </div>
       </div>

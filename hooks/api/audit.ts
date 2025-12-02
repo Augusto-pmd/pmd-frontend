@@ -22,3 +22,18 @@ export function useAuditLogs(params?: { startDate?: string; endDate?: string }) 
   };
 }
 
+export function useAuditLog(id: string | null) {
+  const { token } = useAuthStore();
+  const { data, error, isLoading, mutate } = useSWR(
+    token && id ? `${API_BASE}/${id}` : null,
+    () => apiClient.get(`${API_BASE}/${id}`)
+  );
+
+  return {
+    log: data?.data || data,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
