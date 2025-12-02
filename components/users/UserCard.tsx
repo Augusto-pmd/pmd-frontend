@@ -78,7 +78,7 @@ export function UserCard({ user }: UserCardProps) {
   };
 
   return (
-    <Card className="border-l-4 border-pmd-gold hover:shadow-lg transition-shadow">
+    <Card className="border-l-4 border-[#162F7F]/40 hover:bg-white/15 transition-all">
       <CardContent className="p-6">
         <div className="space-y-4">
           <div>

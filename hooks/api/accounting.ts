@@ -1,25 +1,25 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
-
-// Construir API_BASE de forma segura
-const API_BASE = safeApiUrl("/accounting");
+import { safeApiUrlWithParams } from "@/lib/safeApi";
 
 export function useAccounting() {
   const { token } = useAuthStore();
-  
-  if (!API_BASE) {
-    console.error("🔴 [useAccounting] API_BASE es inválido");
-  }
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && API_BASE ? API_BASE : null,
+    token && organizationId ? "accounting" : null,
     () => {
-      if (!API_BASE) {
-        throw new Error("API_BASE no está definido correctamente");
+      if (!organizationId || !organizationId.trim()) {
+        console.warn("❗ [useAccounting] organizationId no está definido");
+        throw new Error("No hay organización seleccionada");
       }
-      return apiClient.get(API_BASE);
+      const url = safeApiUrlWithParams("/", organizationId, "accounting");
+      if (!url) {
+        throw new Error("URL de API inválida");
+      }
+      return apiClient.get(url);
     }
   );
 
@@ -33,8 +33,20 @@ export function useAccounting() {
 
 export function useAccountingReport(id: string | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
-  const reportUrl = id && API_BASE ? safeApiUrlWithParams("/accounting", id) : null;
+  if (!id) {
+    console.warn("❗ [useAccountingReport] id no está definido");
+    return { report: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useAccountingReport] organizationId no está definido");
+    return { report: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const reportUrl = safeApiUrlWithParams("/", organizationId, "accounting", id);
   
   const { data, error, isLoading, mutate } = useSWR(
     token && reportUrl ? reportUrl : null,
@@ -56,8 +68,15 @@ export function useAccountingReport(id: string | null) {
 
 export function useAccountingSummary() {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
-  const summaryUrl = API_BASE ? safeApiUrl("/accounting/summary") : null;
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useAccountingSummary] organizationId no está definido");
+    return { summary: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const summaryUrl = safeApiUrlWithParams("/", organizationId, "accounting", "summary");
   
   const { data, error, isLoading, mutate } = useSWR(
     token && summaryUrl ? summaryUrl : null,
@@ -79,12 +98,23 @@ export function useAccountingSummary() {
 
 export function useAccountingTransactions(params?: { startDate?: string; endDate?: string }) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useAccountingTransactions] organizationId no está definido");
+    return { transactions: [], error: null, isLoading: false, mutate: async () => {} };
+  }
   
   const queryString = params
     ? `?${new URLSearchParams(params as any).toString()}`
     : "";
   
-  const transactionsUrl = API_BASE ? `${safeApiUrl("/accounting/transactions")}${queryString}` : null;
+  const baseUrl = safeApiUrlWithParams("/", organizationId, "accounting", "transactions");
+  if (!baseUrl) {
+    return { transactions: [], error: new Error("URL de API inválida"), isLoading: false, mutate: async () => {} };
+  }
+  const transactionsUrl = `${baseUrl}${queryString}`;
   
   const { data, error, isLoading, mutate } = useSWR(
     token && transactionsUrl ? transactionsUrl : null,
@@ -106,13 +136,28 @@ export function useAccountingTransactions(params?: { startDate?: string; endDate
 
 export function useAccountingMonth(month: number | null, year: number | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
-  const monthUrl = token && month && year && API_BASE 
-    ? safeApiUrlWithParams("/accounting/month", String(month), String(year))
-    : null;
+  if (!month || !year) {
+    console.warn("❗ [useAccountingMonth] month o year no está definido");
+    return { monthData: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useAccountingMonth] organizationId no está definido");
+    return { monthData: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const monthUrl = safeApiUrlWithParams("/", organizationId, "accounting", "month", String(month), String(year));
+  
+  if (!monthUrl) {
+    console.error("🔴 [useAccountingMonth] URL inválida");
+    return { monthData: null, error: new Error("URL de mes contable inválida"), isLoading: false, mutate: async () => {} };
+  }
   
   const { data, error, isLoading, mutate } = useSWR(
-    monthUrl,
+    token && monthUrl ? monthUrl : null,
     () => {
       if (!monthUrl) {
         throw new Error("URL de mes contable inválida");
@@ -131,44 +176,104 @@ export function useAccountingMonth(month: number | null, year: number | null) {
 
 export const accountingApi = {
   create: (data: any) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    return apiClient.post(API_BASE, data);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [accountingApi.create] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "accounting");
+    if (!url) throw new Error("URL de API inválida");
+    return apiClient.post(url, data);
   },
   update: (id: string, data: any) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/accounting", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [accountingApi.update] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [accountingApi.update] id no está definido");
+      throw new Error("ID de movimiento contable no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "accounting", id);
     if (!url) throw new Error("URL de actualización inválida");
     return apiClient.put(url, data);
   },
   delete: (id: string) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/accounting", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [accountingApi.delete] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [accountingApi.delete] id no está definido");
+      throw new Error("ID de movimiento contable no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "accounting", id);
     if (!url) throw new Error("URL de eliminación inválida");
     return apiClient.delete(url);
   },
   generateReport: (params: any) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    const url = safeApiUrl("/accounting/reports");
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [accountingApi.generateReport] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "accounting", "reports");
     if (!url) throw new Error("URL de reporte inválida");
     return apiClient.post(url, params);
   },
   createTransaction: (data: any) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    const url = safeApiUrl("/accounting/transactions");
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [accountingApi.createTransaction] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "accounting", "transactions");
     if (!url) throw new Error("URL de transacción inválida");
     return apiClient.post(url, data);
   },
   getSummary: () => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    const url = safeApiUrl("/accounting/summary");
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [accountingApi.getSummary] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "accounting", "summary");
     if (!url) throw new Error("URL de resumen inválida");
     return apiClient.get(url);
   },
   getMonth: (month: number, year: number) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    const url = safeApiUrlWithParams("/accounting/month", String(month), String(year));
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [accountingApi.getMonth] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "accounting", "month", String(month), String(year));
     if (!url) throw new Error("URL de mes contable inválida");
     return apiClient.get(url);
   },
 };
-

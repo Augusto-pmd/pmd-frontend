@@ -44,7 +44,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [clientsStore] organizationId vacío. Cancelando fetch.");
+      console.warn("❗ [clientsStore] organizationId no está definido");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -67,11 +67,16 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
   },
 
   async createClient(payload) {
+    if (!payload) {
+      console.warn("❗ [clientsStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [clientsStore] organizationId vacío. Cancelando creación.");
+      console.warn("❗ [clientsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -90,16 +95,22 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
   },
 
   async updateClient(id, payload) {
+    if (!id) {
+      console.warn("❗ [clientsStore] id no está definido");
+      throw new Error("ID de cliente no está definido");
+    }
+
+    if (!payload) {
+      console.warn("❗ [clientsStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [clientsStore] organizationId vacío. Cancelando actualización.");
+      console.warn("❗ [clientsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de cliente no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "clients", id);
@@ -117,16 +128,17 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
   },
 
   async deleteClient(id) {
+    if (!id) {
+      console.warn("❗ [clientsStore] id no está definido");
+      throw new Error("ID de cliente no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [clientsStore] organizationId vacío. Cancelando eliminación.");
+      console.warn("❗ [clientsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de cliente no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "clients", id);

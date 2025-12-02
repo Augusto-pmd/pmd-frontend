@@ -132,7 +132,7 @@ export function EmployeeCard({ employee, onRefresh }: EmployeeCardProps) {
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-pmd-darkBlue">
+      <Card className="hover:bg-white/15 transition-all border-l-4 border-l-[#162F7F]/40">
         <CardContent className="p-6">
           <div className="space-y-4">
             <div className="flex items-start gap-4">

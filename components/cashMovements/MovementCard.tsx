@@ -85,8 +85,8 @@ export function MovementCard({ movement }: MovementCardProps) {
 
   return (
     <Card
-      className={`border-l-4 hover:shadow-lg transition-shadow ${
-        isIncome ? "border-green-500" : "border-red-500"
+      className={`border-l-4 hover:bg-white/15 transition-all ${
+        isIncome ? "border-green-500/60" : "border-red-500/60"
       }`}
     >
       <CardContent className="p-6">

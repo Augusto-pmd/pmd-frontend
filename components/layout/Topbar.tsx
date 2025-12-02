@@ -20,11 +20,11 @@ export function Topbar() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
+    <header className="h-16 bg-white/20 backdrop-blur-md border-b border-white/20 flex items-center justify-between px-4 lg:px-6">
       {/* Mobile Menu Button */}
       <button
         onClick={toggleMobile}
-        className="lg:hidden p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+        className="lg:hidden p-2 text-gray-700 hover:text-gray-900 hover:bg-white/20 rounded-lg transition-all backdrop-blur-sm"
         aria-label="Abrir menú"
       >
         <Menu className="h-6 w-6" />
@@ -38,16 +38,16 @@ export function Topbar() {
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-gray-900">{user.fullName}</p>
-              <p className="text-xs text-gray-500 capitalize">{String(user.role ?? "")}</p>
+              <p className="text-xs text-gray-600 capitalize">{String(user.role ?? "")}</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-pmd-mediumBlue flex items-center justify-center text-pmd-white font-semibold">
+            <div className="w-10 h-10 rounded-full bg-[#162F7F]/70 backdrop-blur-sm flex items-center justify-center text-white font-semibold border border-white/20 shadow-[0_0_10px_rgba(22,47,127,0.3)]">
               {(user.fullName?.charAt(0) || "").toUpperCase()}
             </div>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-pmd transition-colors"
+          className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white/20 rounded-xl transition-all backdrop-blur-sm border border-white/20"
         >
           Logout
         </button>

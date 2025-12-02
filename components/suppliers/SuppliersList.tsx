@@ -15,7 +15,7 @@ interface SuppliersListProps {
 export function SuppliersList({ suppliers, onRefresh }: SuppliersListProps) {
   if (suppliers.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-pmd p-12 text-center">
+      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-12 text-center">
         <p className="text-gray-600 text-lg">No hay proveedores registrados</p>
         <p className="text-gray-500 text-sm mt-2">
           Haz clic en &quot;Nuevo Proveedor&quot; para agregar uno

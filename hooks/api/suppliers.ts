@@ -1,31 +1,31 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { safeApiUrlWithParams } from "@/lib/safeApi";
 import { SIMULATION_MODE, SIMULATED_SUPPLIERS } from "@/lib/useSimulation";
-
-// Construir API_BASE de forma segura
-const API_BASE = safeApiUrl("/suppliers");
 
 export function useSuppliers() {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
   // Si está en modo simulación, usar un fetcher que retorna datos dummy
   const fetcher = SIMULATION_MODE
     ? () => Promise.resolve({ data: SIMULATED_SUPPLIERS })
     : () => {
-        if (!API_BASE) {
-          throw new Error("API_BASE no está definido correctamente");
+        if (!organizationId || !organizationId.trim()) {
+          console.warn("❗ [useSuppliers] organizationId no está definido");
+          throw new Error("No hay organización seleccionada");
         }
-        return apiClient.get(API_BASE);
+        const url = safeApiUrlWithParams("/", organizationId, "suppliers");
+        if (!url) {
+          throw new Error("URL de API inválida");
+        }
+        return apiClient.get(url);
       };
   
-  if (!API_BASE && !SIMULATION_MODE) {
-    console.error("🔴 [useSuppliers] API_BASE es inválido");
-  }
-  
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && API_BASE) ? "suppliers" : null,
+    SIMULATION_MODE || (token && organizationId) ? "suppliers" : null,
     fetcher
   );
 
@@ -39,8 +39,20 @@ export function useSuppliers() {
 
 export function useSupplier(id: string | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
-  const supplierUrl = id && API_BASE ? safeApiUrlWithParams("/suppliers", id) : null;
+  if (!id) {
+    console.warn("❗ [useSupplier] id no está definido");
+    return { supplier: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useSupplier] organizationId no está definido");
+    return { supplier: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const supplierUrl = safeApiUrlWithParams("/", organizationId, "suppliers", id);
   
   const { data, error, isLoading, mutate } = useSWR(
     token && supplierUrl ? supplierUrl : null,
@@ -62,18 +74,51 @@ export function useSupplier(id: string | null) {
 
 export const supplierApi = {
   create: (data: any) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    return apiClient.post(API_BASE, data);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [supplierApi.create] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "suppliers");
+    if (!url) throw new Error("URL de API inválida");
+    return apiClient.post(url, data);
   },
   update: (id: string, data: any) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/suppliers", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [supplierApi.update] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [supplierApi.update] id no está definido");
+      throw new Error("ID de proveedor no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "suppliers", id);
     if (!url) throw new Error("URL de actualización inválida");
     return apiClient.put(url, data);
   },
   delete: (id: string) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/suppliers", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [supplierApi.delete] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [supplierApi.delete] id no está definido");
+      throw new Error("ID de proveedor no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "suppliers", id);
     if (!url) throw new Error("URL de eliminación inválida");
     return apiClient.delete(url);
   },

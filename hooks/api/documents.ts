@@ -1,13 +1,13 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { safeApiUrlWithParams } from "@/lib/safeApi";
 import { SIMULATION_MODE, SIMULATED_DOCUMENTS } from "@/lib/useSimulation";
-
-const API_BASE = safeApiUrl("/documents");
 
 export function useDocuments(workId?: string) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
   // Si está en modo simulación, usar un fetcher que retorna datos dummy
   const fetcher = SIMULATION_MODE
@@ -19,11 +19,16 @@ export function useDocuments(workId?: string) {
         return Promise.resolve({ data: filteredDocuments });
       }
     : async () => {
-        if (!API_BASE) {
-          throw new Error("API_BASE no está definido correctamente");
+        if (!organizationId || !organizationId.trim()) {
+          console.warn("❗ [useDocuments] organizationId no está definido");
+          throw new Error("No hay organización seleccionada");
         }
         try {
-          const url = workId ? `${API_BASE}?workId=${workId}` : API_BASE;
+          const baseUrl = safeApiUrlWithParams("/", organizationId, "documents");
+          if (!baseUrl) {
+            throw new Error("URL de API inválida");
+          }
+          const url = workId ? `${baseUrl}?workId=${workId}` : baseUrl;
           return await apiClient.get(url);
         } catch (err: any) {
           // Si el endpoint no existe, retornar array vacío
@@ -34,12 +39,8 @@ export function useDocuments(workId?: string) {
         }
       };
   
-  if (!API_BASE && !SIMULATION_MODE) {
-    console.error("🔴 [useDocuments] API_BASE es inválido");
-  }
-  
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && API_BASE) ? `documents${workId ? `-${workId}` : ""}` : null,
+    SIMULATION_MODE || (token && organizationId) ? `documents${workId ? `-${workId}` : ""}` : null,
     fetcher
   );
 
@@ -53,8 +54,20 @@ export function useDocuments(workId?: string) {
 
 export function useDocument(id: string | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
-  const documentUrl = id && API_BASE ? safeApiUrlWithParams("/documents", id) : null;
+  if (!id) {
+    console.warn("❗ [useDocument] id no está definido");
+    return { document: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useDocument] organizationId no está definido");
+    return { document: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const documentUrl = safeApiUrlWithParams("/", organizationId, "documents", id);
   
   const { data, error, isLoading, mutate } = useSWR(
     token && documentUrl ? documentUrl : null,
@@ -76,25 +89,69 @@ export function useDocument(id: string | null) {
 
 export const documentApi = {
   create: (data: any) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    return apiClient.post(API_BASE, data);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [documentApi.create] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "documents");
+    if (!url) throw new Error("URL de API inválida");
+    return apiClient.post(url, data);
   },
   update: (id: string, data: any) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/documents", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [documentApi.update] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [documentApi.update] id no está definido");
+      throw new Error("ID de documento no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "documents", id);
     if (!url) throw new Error("URL de actualización inválida");
     return apiClient.put(url, data);
   },
   delete: (id: string) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/documents", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [documentApi.delete] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [documentApi.delete] id no está definido");
+      throw new Error("ID de documento no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "documents", id);
     if (!url) throw new Error("URL de eliminación inválida");
     return apiClient.delete(url);
   },
   download: (id: string) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/documents", id, "download");
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [documentApi.download] organizationId no está definido");
+      return null;
+    }
+    
+    if (!id) {
+      console.warn("❗ [documentApi.download] id no está definido");
+      return null;
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "documents", id, "download");
     return url || null;
   },
 };
-

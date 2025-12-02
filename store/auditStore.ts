@@ -79,7 +79,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [auditStore] organizationId vacío. Cancelando fetch.");
+      console.warn("❗ [auditStore] organizationId no está definido");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -111,11 +111,16 @@ export const useAuditStore = create<AuditState>((set, get) => ({
   },
 
   async createAuditEntry(payload) {
+    if (!payload) {
+      console.warn("❗ [auditStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [auditStore] organizationId vacío. Cancelando creación.");
+      console.warn("❗ [auditStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -156,16 +161,17 @@ export const useAuditStore = create<AuditState>((set, get) => ({
   },
 
   async clearAuditEntry(id) {
+    if (!id) {
+      console.warn("❗ [auditStore] id no está definido");
+      throw new Error("ID de entrada no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [auditStore] organizationId vacío. Cancelando eliminación.");
+      console.warn("❗ [auditStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de entrada no está definido");
     }
 
     // En modo simulación, solo actualizar el estado local
@@ -195,7 +201,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [auditStore] organizationId vacío. Cancelando limpieza.");
+      console.warn("❗ [auditStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 

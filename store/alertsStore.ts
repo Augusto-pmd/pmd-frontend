@@ -46,7 +46,7 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [alertsStore] organizationId vacío. Cancelando fetch.");
+      console.warn("❗ [alertsStore] organizationId no está definido");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -69,16 +69,17 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   },
 
   async markAsRead(id) {
+    if (!id) {
+      console.warn("❗ [alertsStore] id no está definido");
+      throw new Error("ID de alerta no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [alertsStore] organizationId vacío. Cancelando markAsRead.");
+      console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de alerta no está definido");
     }
 
     // En modo simulación, solo actualizar el estado local
@@ -106,11 +107,16 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   },
 
   async createAlert(payload) {
+    if (!payload) {
+      console.warn("❗ [alertsStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [alertsStore] organizationId vacío. Cancelando creación.");
+      console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -149,16 +155,22 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   },
 
   async updateAlert(id, payload) {
+    if (!id) {
+      console.warn("❗ [alertsStore] id no está definido");
+      throw new Error("ID de alerta no está definido");
+    }
+
+    if (!payload) {
+      console.warn("❗ [alertsStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [alertsStore] organizationId vacío. Cancelando actualización.");
+      console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de alerta no está definido");
     }
 
     // En modo simulación, solo actualizar el estado local
@@ -186,16 +198,17 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   },
 
   async deleteAlert(id) {
+    if (!id) {
+      console.warn("❗ [alertsStore] id no está definido");
+      throw new Error("ID de alerta no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [alertsStore] organizationId vacío. Cancelando eliminación.");
+      console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de alerta no está definido");
     }
 
     // En modo simulación, solo actualizar el estado local
@@ -225,7 +238,7 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [alertsStore] organizationId vacío. Cancelando markAllAsRead.");
+      console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 

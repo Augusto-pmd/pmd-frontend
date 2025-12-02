@@ -51,7 +51,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [documentsStore] organizationId vacío. Cancelando fetch.");
+      console.warn("❗ [documentsStore] organizationId no está definido");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -63,7 +63,11 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       return;
     }
 
-    const url = workId ? `${baseUrl}?workId=${workId}` : baseUrl;
+    // Construir URL con query string de forma segura
+    let url = baseUrl;
+    if (workId && workId.trim()) {
+      url = `${baseUrl}?workId=${encodeURIComponent(workId)}`;
+    }
 
     try {
       set({ isLoading: true, error: null });
@@ -76,11 +80,16 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   },
 
   async createDocument(payload) {
+    if (!payload) {
+      console.warn("❗ [documentsStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [documentsStore] organizationId vacío. Cancelando creación.");
+      console.warn("❗ [documentsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -99,16 +108,22 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   },
 
   async updateDocument(id, payload) {
+    if (!id) {
+      console.warn("❗ [documentsStore] id no está definido");
+      throw new Error("ID de documento no está definido");
+    }
+
+    if (!payload) {
+      console.warn("❗ [documentsStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [documentsStore] organizationId vacío. Cancelando actualización.");
+      console.warn("❗ [documentsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de documento no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "documents", id);
@@ -126,16 +141,17 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   },
 
   async deleteDocument(id) {
+    if (!id) {
+      console.warn("❗ [documentsStore] id no está definido");
+      throw new Error("ID de documento no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [documentsStore] organizationId vacío. Cancelando eliminación.");
+      console.warn("❗ [documentsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de documento no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "documents", id);

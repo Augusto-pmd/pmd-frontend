@@ -122,20 +122,20 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md px-4">
-      <div className="bg-white rounded-xl shadow-2xl p-8">
+      <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">PMD</h1>
+          <h1 className="text-3xl font-bold text-[#162F7F] mb-2">PMD</h1>
           <p className="text-gray-600">Management System</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd text-sm">
+        <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-700 px-4 py-3 rounded-xl text-sm">
           {error}
         </div>
       )}
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
           Email
         </label>
         <input
@@ -144,13 +144,13 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none transition-colors"
+          className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-gray-900 placeholder:text-gray-500 focus:ring-[#162F7F]/40 focus:border-[#162F7F]/40 outline-none transition-all"
           placeholder="your.email@example.com"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
           Password
         </label>
         <input
@@ -159,7 +159,7 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none transition-colors"
+          className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-gray-900 placeholder:text-gray-500 focus:ring-[#162F7F]/40 focus:border-[#162F7F]/40 outline-none transition-all"
           placeholder="••••••••"
         />
       </div>
@@ -167,7 +167,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-pmd-darkBlue text-pmd-white py-3 rounded-pmd font-semibold hover:bg-pmd-mediumBlue transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-[#162F7F]/70 backdrop-blur-md border border-white/20 rounded-xl text-white shadow-[0_0_15px_rgba(22,47,127,0.4)] hover:bg-[#162F7F]/80 transition-all py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Signing in..." : "Sign In"}
       </button>

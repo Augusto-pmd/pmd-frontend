@@ -1,24 +1,25 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl } from "@/lib/safeApi";
-
-const API_BASE = safeApiUrl("/dashboard/stats");
+import { safeApiUrlWithParams } from "@/lib/safeApi";
 
 export function useDashboardStats() {
   const { token } = useAuthStore();
-  
-  if (!API_BASE) {
-    console.error("🔴 [useDashboardStats] API_BASE es inválido");
-  }
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && API_BASE ? API_BASE : null,
+    token && organizationId ? "dashboard-stats" : null,
     () => {
-      if (!API_BASE) {
-        throw new Error("API_BASE no está definido correctamente");
+      if (!organizationId || !organizationId.trim()) {
+        console.warn("❗ [useDashboardStats] organizationId no está definido");
+        throw new Error("No hay organización seleccionada");
       }
-      return apiClient.get(API_BASE);
+      const url = safeApiUrlWithParams("/", organizationId, "dashboard", "stats");
+      if (!url) {
+        throw new Error("URL de API inválida");
+      }
+      return apiClient.get(url);
     }
   );
 
@@ -29,4 +30,3 @@ export function useDashboardStats() {
     mutate,
   };
 }
-

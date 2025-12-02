@@ -1,25 +1,25 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams, isValidApiUrl } from "@/lib/safeApi";
-
-// Construir API_BASE de forma segura
-const API_BASE = safeApiUrl("/cashboxes");
+import { safeApiUrlWithParams, isValidApiUrl } from "@/lib/safeApi";
 
 export function useCashboxes() {
   const { token } = useAuthStore();
-  
-  if (!API_BASE) {
-    console.error("🔴 [useCashboxes] API_BASE es inválido");
-  }
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && API_BASE ? API_BASE : null,
+    token && organizationId ? "cashboxes" : null,
     () => {
-      if (!API_BASE) {
-        throw new Error("API_BASE no está definido correctamente");
+      if (!organizationId || !organizationId.trim()) {
+        console.warn("❗ [useCashboxes] organizationId no está definido");
+        throw new Error("No hay organización seleccionada");
       }
-      return apiClient.get(API_BASE);
+      const url = safeApiUrlWithParams("/", organizationId, "cashboxes");
+      if (!url) {
+        throw new Error("URL de API inválida");
+      }
+      return apiClient.get(url);
     }
   );
 
@@ -33,9 +33,29 @@ export function useCashboxes() {
 
 export function useCashbox(id: string | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  
+  if (!id) {
+    console.warn("❗ [useCashbox] id no está definido");
+    return { cashbox: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useCashbox] organizationId no está definido");
+    return { cashbox: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const cashboxUrl = safeApiUrlWithParams("/", organizationId, "cashboxes", id);
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token && id ? `${API_BASE}/${id}` : null,
-    () => apiClient.get(`${API_BASE}/${id}`)
+    token && cashboxUrl ? cashboxUrl : null,
+    () => {
+      if (!cashboxUrl) {
+        throw new Error("URL de caja inválida");
+      }
+      return apiClient.get(cashboxUrl);
+    }
   );
 
   return {
@@ -48,42 +68,83 @@ export function useCashbox(id: string | null) {
 
 export const cashboxApi = {
   create: (data: any) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    return apiClient.post(API_BASE, data);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [cashboxApi.create] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes");
+    if (!url) throw new Error("URL de API inválida");
+    return apiClient.post(url, data);
   },
   update: (id: string, data: any) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/cashboxes", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [cashboxApi.update] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [cashboxApi.update] id no está definido");
+      throw new Error("ID de caja no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", id);
     if (!url) throw new Error("URL de actualización inválida");
     return apiClient.put(url, data);
   },
   delete: (id: string) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/cashboxes", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [cashboxApi.delete] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [cashboxApi.delete] id no está definido");
+      throw new Error("ID de caja no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", id);
     if (!url) throw new Error("URL de eliminación inválida");
     return apiClient.delete(url);
   },
 };
 
-const CASH_MOVEMENTS_BASE = safeApiUrl("/cash-movements");
-
 export function useCashMovements(cashboxId?: string) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
-  // Construir endpoint de forma segura
-  let endpoint: string | null = null;
-  if (CASH_MOVEMENTS_BASE) {
-    if (cashboxId && cashboxId.trim()) {
-      const baseUrl = CASH_MOVEMENTS_BASE;
-      endpoint = `${baseUrl}?cashboxId=${encodeURIComponent(cashboxId)}`;
-    } else {
-      endpoint = CASH_MOVEMENTS_BASE;
-    }
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useCashMovements] organizationId no está definido");
+    return { movements: [], error: null, isLoading: false, mutate: async () => {} };
   }
   
-  if (endpoint && !isValidApiUrl(endpoint)) {
+  // Construir endpoint de forma segura
+  const baseUrl = safeApiUrlWithParams("/", organizationId, "cash-movements");
+  if (!baseUrl) {
+    console.error("🔴 [useCashMovements] URL inválida");
+    return { movements: [], error: new Error("URL de API inválida"), isLoading: false, mutate: async () => {} };
+  }
+  
+  let endpoint: string;
+  if (cashboxId && cashboxId.trim()) {
+    endpoint = `${baseUrl}?cashboxId=${encodeURIComponent(cashboxId)}`;
+  } else {
+    endpoint = baseUrl;
+  }
+  
+  if (!isValidApiUrl(endpoint)) {
     console.error("🔴 [useCashMovements] Endpoint inválido:", endpoint);
-    endpoint = null;
+    return { movements: [], error: new Error("Endpoint inválido"), isLoading: false, mutate: async () => {} };
   }
   
   const { data, error, isLoading, mutate } = useSWR(
@@ -106,9 +167,29 @@ export function useCashMovements(cashboxId?: string) {
 
 export function useCashMovement(id: string | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  
+  if (!id) {
+    console.warn("❗ [useCashMovement] id no está definido");
+    return { movement: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useCashMovement] organizationId no está definido");
+    return { movement: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const movementUrl = safeApiUrlWithParams("/", organizationId, "cash-movements", id);
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token && id ? `${CASH_MOVEMENTS_BASE}/${id}` : null,
-    () => apiClient.get(`${CASH_MOVEMENTS_BASE}/${id}`)
+    token && movementUrl ? movementUrl : null,
+    () => {
+      if (!movementUrl) {
+        throw new Error("URL de movimiento inválida");
+      }
+      return apiClient.get(movementUrl);
+    }
   );
 
   return {
@@ -121,20 +202,52 @@ export function useCashMovement(id: string | null) {
 
 export const cashMovementApi = {
   create: (data: any) => {
-    if (!CASH_MOVEMENTS_BASE) throw new Error("CASH_MOVEMENTS_BASE no está definido");
-    return apiClient.post(CASH_MOVEMENTS_BASE, data);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [cashMovementApi.create] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "cash-movements");
+    if (!url) throw new Error("URL de API inválida");
+    return apiClient.post(url, data);
   },
   update: (id: string, data: any) => {
-    if (!CASH_MOVEMENTS_BASE || !id) throw new Error("CASH_MOVEMENTS_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/cash-movements", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [cashMovementApi.update] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [cashMovementApi.update] id no está definido");
+      throw new Error("ID de movimiento no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "cash-movements", id);
     if (!url) throw new Error("URL de actualización inválida");
     return apiClient.put(url, data);
   },
   delete: (id: string) => {
-    if (!CASH_MOVEMENTS_BASE || !id) throw new Error("CASH_MOVEMENTS_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/cash-movements", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [cashMovementApi.delete] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [cashMovementApi.delete] id no está definido");
+      throw new Error("ID de movimiento no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "cash-movements", id);
     if (!url) throw new Error("URL de eliminación inválida");
     return apiClient.delete(url);
   },
 };
-

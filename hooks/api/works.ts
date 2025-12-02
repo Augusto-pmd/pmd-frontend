@@ -1,32 +1,31 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { safeApiUrlWithParams } from "@/lib/safeApi";
 import { SIMULATION_MODE, SIMULATED_WORKS } from "@/lib/useSimulation";
-
-// Construir API_BASE de forma segura
-const API_BASE = safeApiUrl("/works");
 
 export function useWorks() {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
   // Si está en modo simulación, usar un fetcher que retorna datos dummy
   const fetcher = SIMULATION_MODE
     ? () => Promise.resolve({ data: SIMULATED_WORKS })
     : () => {
-        if (!API_BASE) {
-          throw new Error("API_BASE no está definido correctamente");
+        if (!organizationId || !organizationId.trim()) {
+          console.warn("❗ [useWorks] organizationId no está definido");
+          throw new Error("No hay organización seleccionada");
         }
-        return apiClient.get(API_BASE);
+        const url = safeApiUrlWithParams("/", organizationId, "works");
+        if (!url) {
+          throw new Error("URL de API inválida");
+        }
+        return apiClient.get(url);
       };
   
-  // Validar que API_BASE sea válido antes de hacer el fetch
-  if (!API_BASE && !SIMULATION_MODE) {
-    console.error("🔴 [useWorks] API_BASE es inválido");
-  }
-  
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && API_BASE) ? "works" : null,
+    SIMULATION_MODE || (token && organizationId) ? "works" : null,
     fetcher
   );
 
@@ -40,9 +39,21 @@ export function useWorks() {
 
 export function useWork(id: string | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  
+  if (!id) {
+    console.warn("❗ [useWork] id no está definido");
+    return { work: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useWork] organizationId no está definido");
+    return { work: null, error: null, isLoading: false, mutate: async () => {} };
+  }
   
   // Construir URL de forma segura
-  const workUrl = id && API_BASE ? safeApiUrlWithParams("/works", id) : null;
+  const workUrl = safeApiUrlWithParams("/", organizationId, "works", id);
   
   const { data, error, isLoading, mutate } = useSWR(
     token && workUrl ? workUrl : null,
@@ -64,18 +75,51 @@ export function useWork(id: string | null) {
 
 export const workApi = {
   create: (data: any) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    return apiClient.post(API_BASE, data);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [workApi.create] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "works");
+    if (!url) throw new Error("URL de API inválida");
+    return apiClient.post(url, data);
   },
   update: (id: string, data: any) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/works", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [workApi.update] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [workApi.update] id no está definido");
+      throw new Error("ID de obra no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "works", id);
     if (!url) throw new Error("URL de actualización inválida");
     return apiClient.put(url, data);
   },
   delete: (id: string) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/works", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [workApi.delete] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [workApi.delete] id no está definido");
+      throw new Error("ID de obra no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "works", id);
     if (!url) throw new Error("URL de eliminación inválida");
     return apiClient.delete(url);
   },

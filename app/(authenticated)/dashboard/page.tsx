@@ -114,56 +114,56 @@ function DashboardContent() {
         {/* Header */}
         <div className="px-1">
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">Dashboard PMD</h1>
-          <p className="text-sm text-gray-500">Resumen ejecutivo del sistema</p>
+          <p className="text-sm text-gray-600">Resumen ejecutivo del sistema</p>
         </div>
 
         {/* KPIs Grid - Primera Fila */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Obras Activas */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Obras</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Obras</p>
                 <p className="text-2xl font-semibold text-gray-900">{activeWorks}</p>
-                <p className="text-xs text-gray-400 mt-0.5">de {totalWorks} totales</p>
+                <p className="text-xs text-gray-500 mt-0.5">de {totalWorks} totales</p>
               </div>
-              <Building2 className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <Building2 className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
 
           {/* Ingresos Contabilidad */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Ingresos</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Ingresos</p>
                 <p className="text-2xl font-semibold text-gray-900">{formatCurrency(accountingIngresos || totalRevenue)}</p>
               </div>
-              <DollarSign className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <DollarSign className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
 
           {/* Egresos Contabilidad */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Egresos</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Egresos</p>
                 <p className="text-2xl font-semibold text-gray-900">{formatCurrency(accountingEgresos || totalExpenses)}</p>
               </div>
-              <TrendingUp className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <TrendingUp className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
 
           {/* Alertas Activas */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Alertas</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Alertas</p>
                 <p className="text-2xl font-semibold text-gray-900">{pendingAlerts}</p>
                 {highSeverityAlerts > 0 && (
                   <p className="text-xs text-red-500 mt-0.5">{highSeverityAlerts} alta severidad</p>
                 )}
               </div>
-              <Bell className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <Bell className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
         </div>
@@ -171,50 +171,50 @@ function DashboardContent() {
         {/* KPIs Grid - Segunda Fila */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Staff */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">RRHH</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">RRHH</p>
                 <p className="text-2xl font-semibold text-gray-900">{activeEmployees}</p>
-                <p className="text-xs text-gray-400 mt-0.5">de {totalEmployees} totales</p>
+                <p className="text-xs text-gray-500 mt-0.5">de {totalEmployees} totales</p>
               </div>
-              <Users className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <Users className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
 
           {/* Proveedores */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Proveedores</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Proveedores</p>
                 <p className="text-2xl font-semibold text-gray-900">{activeSuppliers}</p>
-                <p className="text-xs text-gray-400 mt-0.5">de {totalSuppliers} totales</p>
+                <p className="text-xs text-gray-500 mt-0.5">de {totalSuppliers} totales</p>
               </div>
-              <Truck className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <Truck className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
 
           {/* Clientes */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Clientes</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Clientes</p>
                 <p className="text-2xl font-semibold text-gray-900">{activeClients}</p>
-                <p className="text-xs text-gray-400 mt-0.5">de {totalClients} totales</p>
+                <p className="text-xs text-gray-500 mt-0.5">de {totalClients} totales</p>
               </div>
-              <UserRound className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <UserRound className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
 
           {/* Cajas */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Cajas</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Cajas</p>
                 <p className="text-2xl font-semibold text-gray-900">{openCashboxes}</p>
-                <p className="text-xs text-gray-400 mt-0.5">de {totalCashboxes} totales</p>
+                <p className="text-xs text-gray-500 mt-0.5">de {totalCashboxes} totales</p>
               </div>
-              <Wallet className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <Wallet className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
         </div>
@@ -222,46 +222,46 @@ function DashboardContent() {
         {/* KPIs Grid - Tercera Fila */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Documentos */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Documentos</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Documentos</p>
                 <p className="text-2xl font-semibold text-gray-900">{totalDocuments}</p>
                 {pendingDocuments > 0 && (
-                  <p className="text-xs text-yellow-500 mt-0.5">{pendingDocuments} pendientes</p>
+                  <p className="text-xs text-yellow-600 mt-0.5">{pendingDocuments} pendientes</p>
                 )}
               </div>
-              <FolderOpen className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <FolderOpen className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
 
           {/* Balance Neto */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Balance Neto</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Balance Neto</p>
                 <p className={`text-2xl font-semibold ${netBalance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
                   {formatCurrency(netBalance)}
                 </p>
               </div>
-              <TrendingUp className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <TrendingUp className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
 
           {/* Contratos */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Contratos</p>
+                <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide">Contratos</p>
                 <p className="text-2xl font-semibold text-gray-900">{activeContracts}</p>
               </div>
-              <Briefcase className="h-[18px] w-[18px] text-gray-400 flex-shrink-0 mt-0.5" />
+              <Briefcase className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
             </div>
           </div>
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-200"></div>
+        <div className="border-t border-white/10"></div>
 
         {/* Módulos Principales */}
         <div>
@@ -270,49 +270,49 @@ function DashboardContent() {
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-200"></div>
+        <div className="border-t border-white/10"></div>
 
         {/* Actividad y Acciones */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Actividad Reciente */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-6">
             <div className="flex items-center gap-2 mb-5">
-              <Activity className="h-4 w-4 text-gray-400" />
+              <Activity className="h-5 w-5 text-gray-500" fill="currentColor" fillOpacity={0.3} />
               <h2 className="text-base font-semibold text-gray-900">Actividad Reciente</h2>
             </div>
             <div className="space-y-4">
               {works?.slice(0, 5).map((work: any) => (
-                <div key={work.id} className="flex justify-between items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                <div key={work.id} className="flex justify-between items-start pb-4 border-b border-white/10 last:border-0 last:pb-0">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {work.name || work.title || work.nombre}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                    <p className="text-xs text-gray-600 mt-0.5 capitalize">
                       {work.status || "Sin estado"}
                     </p>
                   </div>
                 </div>
               ))}
               {(!works || works.length === 0) && (
-                <p className="text-xs text-gray-400 text-center py-4">No hay actividad reciente</p>
+                <p className="text-xs text-gray-500 text-center py-4">No hay actividad reciente</p>
               )}
             </div>
           </div>
 
           {/* Acciones Rápidas */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-6">
             <div className="flex items-center gap-2 mb-5">
-              <FileText className="h-4 w-4 text-gray-400" />
+              <FileText className="h-5 w-5 text-gray-500" fill="currentColor" fillOpacity={0.3} />
               <h2 className="text-base font-semibold text-gray-900">Acciones Rápidas</h2>
             </div>
             <div className="space-y-2">
-              <button className="w-full text-left px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors text-sm text-gray-700">
+              <button className="w-full text-left px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all text-sm text-gray-700 backdrop-blur-sm">
                 Ver Reportes
               </button>
-              <button className="w-full text-left px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors text-sm text-gray-700">
+              <button className="w-full text-left px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all text-sm text-gray-700 backdrop-blur-sm">
                 Gestionar Contratos
               </button>
-              <button className="w-full text-left px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors text-sm text-gray-700">
+              <button className="w-full text-left px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all text-sm text-gray-700 backdrop-blur-sm">
                 Revisar Alertas
               </button>
             </div>

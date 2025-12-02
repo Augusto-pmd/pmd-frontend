@@ -74,8 +74,8 @@ export function CashboxCard({ cashbox }: CashboxCardProps) {
 
   return (
     <Card
-      className={`border-l-4 hover:shadow-lg transition-shadow ${
-        isOpen ? "border-green-500" : "border-gray-400"
+      className={`border-l-4 hover:bg-white/15 transition-all ${
+        isOpen ? "border-green-500/60" : "border-gray-400/60"
       }`}
     >
       <CardContent className="p-6">

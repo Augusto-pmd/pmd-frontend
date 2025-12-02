@@ -100,7 +100,7 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [accountingStore] organizationId vacío. Cancelando fetch contable.");
+      console.warn("❗ [accountingStore] organizationId no está definido");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -118,11 +118,11 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       if (filters.category) queryParams.append("category", filters.category);
 
       const queryString = queryParams.toString();
-      const baseUrl = safeApiUrlWithParams("/", organizationId, "accounting");
+      const baseUrl = safeApiUrlWithParams("/", organizationId, "accounting", "transactions");
       if (!baseUrl) {
         throw new Error("URL de API inválida");
       }
-      const url = queryString ? `${baseUrl}/transactions?${queryString}` : `${baseUrl}/transactions`;
+      const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
 
       const data = await apiClient.get(url);
       set({ entries: data?.data || data || [], isLoading: false });
@@ -133,21 +133,25 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
   },
 
   async createEntry(payload) {
+    if (!payload) {
+      console.warn("❗ [accountingStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [accountingStore] organizationId vacío. Cancelando creación.");
+      console.warn("❗ [accountingStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    const baseUrl = safeApiUrlWithParams("/", organizationId, "accounting");
-    if (!baseUrl) {
+    const url = safeApiUrlWithParams("/", organizationId, "accounting", "transactions");
+    if (!url) {
       throw new Error("URL de API inválida");
     }
 
     try {
-      const url = `${baseUrl}/transactions`;
       await apiClient.post(url, payload);
       await get().fetchEntries();
     } catch (error: any) {
@@ -157,16 +161,22 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
   },
 
   async updateEntry(id, payload) {
+    if (!id) {
+      console.warn("❗ [accountingStore] id no está definido");
+      throw new Error("ID de movimiento no está definido");
+    }
+
+    if (!payload) {
+      console.warn("❗ [accountingStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [accountingStore] organizationId vacío. Cancelando actualización.");
+      console.warn("❗ [accountingStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de movimiento no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "accounting", "transactions", id);
@@ -184,16 +194,17 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
   },
 
   async deleteEntry(id) {
+    if (!id) {
+      console.warn("❗ [accountingStore] id no está definido");
+      throw new Error("ID de movimiento no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [accountingStore] organizationId vacío. Cancelando eliminación.");
+      console.warn("❗ [accountingStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de movimiento no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "accounting", "transactions", id);

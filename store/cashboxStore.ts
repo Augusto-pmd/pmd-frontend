@@ -63,7 +63,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [cashboxStore] organizationId vacío. Cancelando fetch.");
+      console.warn("❗ [cashboxStore] organizationId no está definido");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -86,11 +86,16 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async createCashbox(payload) {
+    if (!payload) {
+      console.warn("❗ [cashboxStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [cashboxStore] organizationId vacío. Cancelando creación.");
+      console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -110,16 +115,22 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async updateCashbox(id, payload) {
+    if (!id) {
+      console.warn("❗ [cashboxStore] id no está definido");
+      throw new Error("ID de caja no está definido");
+    }
+
+    if (!payload) {
+      console.warn("❗ [cashboxStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [cashboxStore] organizationId vacío. Cancelando actualización.");
+      console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de caja no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "cashbox", id);
@@ -137,16 +148,17 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async closeCashbox(id) {
+    if (!id) {
+      console.warn("❗ [cashboxStore] id no está definido");
+      throw new Error("ID de caja no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [cashboxStore] organizationId vacío. Cancelando cierre.");
+      console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de caja no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "cashbox", id);
@@ -179,7 +191,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [cashboxStore] organizationId vacío. Cancelando fetch de movimientos.");
+      console.warn("❗ [cashboxStore] organizationId no está definido");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -213,16 +225,22 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async createMovement(cashboxId, payload) {
+    if (!cashboxId) {
+      console.warn("❗ [cashboxStore] cashboxId no está definido");
+      throw new Error("ID de caja no está definido");
+    }
+
+    if (!payload) {
+      console.warn("❗ [cashboxStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [cashboxStore] organizationId vacío. Cancelando creación de movimiento.");
+      console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!cashboxId) {
-      throw new Error("ID de caja no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "cashbox", cashboxId, "movements");
@@ -245,16 +263,27 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async updateMovement(cashboxId, id, payload) {
+    if (!cashboxId) {
+      console.warn("❗ [cashboxStore] cashboxId no está definido");
+      throw new Error("ID de caja no está definido");
+    }
+
+    if (!id) {
+      console.warn("❗ [cashboxStore] id no está definido");
+      throw new Error("ID de movimiento no está definido");
+    }
+
+    if (!payload) {
+      console.warn("❗ [cashboxStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [cashboxStore] organizationId vacío. Cancelando actualización de movimiento.");
+      console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!cashboxId || !id) {
-      throw new Error("ID de caja o movimiento no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "cashbox", cashboxId, "movements", id);
@@ -277,16 +306,22 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async deleteMovement(cashboxId, id) {
+    if (!cashboxId) {
+      console.warn("❗ [cashboxStore] cashboxId no está definido");
+      throw new Error("ID de caja no está definido");
+    }
+
+    if (!id) {
+      console.warn("❗ [cashboxStore] id no está definido");
+      throw new Error("ID de movimiento no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [cashboxStore] organizationId vacío. Cancelando eliminación de movimiento.");
+      console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!cashboxId || !id) {
-      throw new Error("ID de caja o movimiento no está definido");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "cashbox", cashboxId, "movements", id);

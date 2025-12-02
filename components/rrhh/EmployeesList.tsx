@@ -16,7 +16,7 @@ interface EmployeesListProps {
 export function EmployeesList({ employees, onRefresh }: EmployeesListProps) {
   if (employees.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-pmd p-12">
+      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-12">
         <EmptyState
           icon="👥"
           title="No hay empleados registrados"

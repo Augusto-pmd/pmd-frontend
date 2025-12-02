@@ -1,24 +1,25 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
-
-const API_BASE = safeApiUrl("/roles");
+import { safeApiUrlWithParams } from "@/lib/safeApi";
 
 export function useRoles() {
   const { token } = useAuthStore();
-  
-  if (!API_BASE) {
-    console.error("🔴 [useRoles] API_BASE es inválido");
-  }
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && API_BASE ? API_BASE : null,
+    token && organizationId ? "roles" : null,
     () => {
-      if (!API_BASE) {
-        throw new Error("API_BASE no está definido correctamente");
+      if (!organizationId || !organizationId.trim()) {
+        console.warn("❗ [useRoles] organizationId no está definido");
+        throw new Error("No hay organización seleccionada");
       }
-      return apiClient.get(API_BASE);
+      const url = safeApiUrlWithParams("/", organizationId, "roles");
+      if (!url) {
+        throw new Error("URL de API inválida");
+      }
+      return apiClient.get(url);
     }
   );
 
@@ -32,8 +33,20 @@ export function useRoles() {
 
 export function useRole(id: string | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
-  const roleUrl = id && API_BASE ? safeApiUrlWithParams("/roles", id) : null;
+  if (!id) {
+    console.warn("❗ [useRole] id no está definido");
+    return { role: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useRole] organizationId no está definido");
+    return { role: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const roleUrl = safeApiUrlWithParams("/", organizationId, "roles", id);
   
   const { data, error, isLoading, mutate } = useSWR(
     token && roleUrl ? roleUrl : null,
@@ -55,18 +68,51 @@ export function useRole(id: string | null) {
 
 export const roleApi = {
   create: (data: any) => {
-    if (!API_BASE) throw new Error("API_BASE no está definido");
-    return apiClient.post(API_BASE, data);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [roleApi.create] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "roles");
+    if (!url) throw new Error("URL de API inválida");
+    return apiClient.post(url, data);
   },
   update: (id: string, data: any) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/roles", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [roleApi.update] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [roleApi.update] id no está definido");
+      throw new Error("ID de rol no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "roles", id);
     if (!url) throw new Error("URL de actualización inválida");
     return apiClient.put(url, data);
   },
   delete: (id: string) => {
-    if (!API_BASE || !id) throw new Error("API_BASE o id no está definido");
-    const url = safeApiUrlWithParams("/roles", id);
+    const authState = useAuthStore.getState();
+    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [roleApi.delete] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    
+    if (!id) {
+      console.warn("❗ [roleApi.delete] id no está definido");
+      throw new Error("ID de rol no está definido");
+    }
+    
+    const url = safeApiUrlWithParams("/", organizationId, "roles", id);
     if (!url) throw new Error("URL de eliminación inválida");
     return apiClient.delete(url);
   },

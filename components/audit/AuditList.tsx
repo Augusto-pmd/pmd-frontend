@@ -115,8 +115,8 @@ export function AuditList({
 
   if (filteredLogs.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-pmd p-12 text-center">
-        <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-12 text-center">
+        <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="currentColor" fillOpacity={0.3} />
         <p className="text-gray-600 text-lg">
           {logs.length === 0
             ? "No hay registros de auditoría"
@@ -141,34 +141,34 @@ export function AuditList({
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-pmd overflow-hidden">
+      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.08)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-white/5 border-b border-white/10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                   Usuario
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                   Módulo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                   Acción
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                   Fecha & Hora
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+            <tbody className="divide-y divide-white/10">
+              {filteredLogs.map((log, index) => (
+                <tr key={log.id} className={`hover:bg-white/5 transition-colors ${index % 2 === 0 ? 'bg-white/5' : ''}`}>
+                  <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-400" />
+                      <User className="h-4 w-4 text-gray-500" fill="currentColor" fillOpacity={0.3} />
                       <div>
                         <div className="text-sm font-medium text-gray-900">
                           {log.userName || log.user}
@@ -179,33 +179,33 @@ export function AuditList({
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-gray-400" />
+                      <FileText className="h-4 w-4 text-gray-500" fill="currentColor" fillOpacity={0.3} />
                       <div className="text-sm text-gray-900">{log.module}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 border-b border-white/5">
                     <div className="text-sm text-gray-900">{log.action}</div>
                     {log.details && (
                       <div className="text-xs text-gray-500 mt-1">{log.details}</div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <Calendar className="h-4 w-4 text-gray-500" fill="currentColor" fillOpacity={0.3} />
                       <div className="text-sm text-gray-600">{formatTimestamp(log.timestamp)}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-b border-white/5">
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => router.push(`/audit/${log.id}`)}
-                        className="text-pmd-darkBlue hover:text-pmd-mediumBlue"
+                        className="text-[#162F7F] hover:opacity-70"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4" fill="currentColor" fillOpacity={0.6} />
                       </Button>
                       {isAdmin && (
                         <Button

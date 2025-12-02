@@ -49,7 +49,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [usersStore] organizationId vacío. Cancelando fetch.");
+      console.warn("❗ [usersStore] organizationId no está definido");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -72,11 +72,16 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   async createUser(payload) {
+    if (!payload) {
+      console.warn("❗ [usersStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [usersStore] organizationId vacío. Cancelando creación.");
+      console.warn("❗ [usersStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -112,16 +117,22 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   async updateUser(id, payload) {
+    if (!id) {
+      console.warn("❗ [usersStore] id no está definido");
+      throw new Error("ID de usuario no está definido");
+    }
+
+    if (!payload) {
+      console.warn("❗ [usersStore] payload no está definido");
+      throw new Error("Payload no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [usersStore] organizationId vacío. Cancelando actualización.");
+      console.warn("❗ [usersStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de usuario no está definido");
     }
 
     // En modo simulación, solo actualizar el estado local
@@ -149,16 +160,17 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   async deleteUser(id) {
+    if (!id) {
+      console.warn("❗ [usersStore] id no está definido");
+      throw new Error("ID de usuario no está definido");
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
     if (!organizationId || !organizationId.trim()) {
-      console.warn("⚠️ [usersStore] organizationId vacío. Cancelando eliminación.");
+      console.warn("❗ [usersStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    if (!id) {
-      throw new Error("ID de usuario no está definido");
     }
 
     // En modo simulación, solo actualizar el estado local
@@ -184,14 +196,34 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   async changeUserRole(id, roleId) {
+    if (!id) {
+      console.warn("❗ [usersStore] id no está definido");
+      throw new Error("ID de usuario no está definido");
+    }
+
+    if (!roleId) {
+      console.warn("❗ [usersStore] roleId no está definido");
+      throw new Error("ID de rol no está definido");
+    }
+
     await get().updateUser(id, { roleId });
   },
 
   async deactivateUser(id) {
+    if (!id) {
+      console.warn("❗ [usersStore] id no está definido");
+      throw new Error("ID de usuario no está definido");
+    }
+
     await get().updateUser(id, { isActive: false });
   },
 
   async activateUser(id) {
+    if (!id) {
+      console.warn("❗ [usersStore] id no está definido");
+      throw new Error("ID de usuario no está definido");
+    }
+
     await get().updateUser(id, { isActive: true });
   },
 }));

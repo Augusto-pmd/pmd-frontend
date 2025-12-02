@@ -107,7 +107,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
   const uploadedBy = document.usuario || document.uploadedBy || document.userId || "Usuario desconocido";
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:bg-white/15 transition-all">
       <CardContent className="p-6">
         <div className="space-y-4">
           <div className="flex items-start justify-between">

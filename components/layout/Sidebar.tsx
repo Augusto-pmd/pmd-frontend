@@ -243,27 +243,27 @@ export function Sidebar() {
   };
 
   const getBadgeClass = (variant: "error" | "warning" | "info") => {
-    if (variant === "error") return "bg-red-500 text-white";
-    if (variant === "warning") return "bg-yellow-500 text-white";
-    return "bg-blue-500 text-white";
+    if (variant === "error") return "bg-red-500/80 backdrop-blur-sm text-white border border-white/20";
+    if (variant === "warning") return "bg-yellow-500/80 backdrop-blur-sm text-white border border-white/20";
+    return "bg-blue-500/80 backdrop-blur-sm text-white border border-white/20";
   };
 
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#162F7F] rounded flex items-center justify-center">
+      <div className="px-4 py-4 border-b border-white/10 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-[#162F7F]/80 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(22,47,127,0.3)]">
             <span className="text-white text-xs font-bold">PMD</span>
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-gray-900">PMD</h1>
-            <p className="text-xs text-gray-500">Management</p>
+            <h1 className="text-sm font-semibold text-white/90">PMD</h1>
+            <p className="text-xs text-white/60">Management</p>
           </div>
         </div>
         <button
           onClick={() => setIsMobileOpen(false)}
-          className="lg:hidden text-gray-500 hover:text-gray-700 p-2 -mr-2"
+          className="lg:hidden text-white/70 hover:text-white hover:bg-white/10 p-2 -mr-2 rounded-lg transition-all"
           aria-label="Cerrar sidebar"
         >
           <X className="h-5 w-5" />
@@ -271,18 +271,18 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav className="flex-1 overflow-y-auto py-3">
         {accessibleGroups.map((group) => {
           const isGroupExpanded = expandedGroups.has(group.title);
           const hasActiveChild = group.items.some((item) => isActive(item.href));
 
           return (
-            <div key={group.title} className="mb-1">
+            <div key={group.title} className="mb-2">
               {/* Group Header */}
               <button
                 onClick={() => toggleGroup(group.title)}
                 className={cn(
-                  "w-full flex items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 transition-all duration-150",
+                  "w-full flex items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/60 hover:text-white/80 transition-all duration-150",
                   "lg:py-1.5"
                 )}
               >
@@ -302,7 +302,7 @@ export function Sidebar() {
                   isGroupExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                 )}
               >
-                <div className="space-y-0.5 pb-1">
+                <div className="space-y-1 pb-1">
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isItemActive = isActive(item.href);
@@ -313,24 +313,24 @@ export function Sidebar() {
                         href={item.href}
                         onClick={handleLinkClick}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-3 text-sm text-gray-700 rounded transition-all duration-150",
-                          "hover:bg-gray-100",
+                          "flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 rounded-lg transition-all duration-150",
+                          "hover:bg-white/10",
                           "lg:px-3 lg:py-2",
                           isItemActive &&
-                            "bg-gray-50 border-l-2 border-[#162F7F] text-[#162F7F] font-medium"
+                            "bg-white/15 border-l-2 border-white/40 text-white font-medium"
                         )}
                       >
                         <Icon
                           className={cn(
-                            "flex-shrink-0 h-5 w-5 lg:h-4 lg:w-4 transition-colors",
-                            isItemActive ? "text-[#162F7F]" : "text-gray-500"
+                            "flex-shrink-0 h-5 w-5 lg:h-5 lg:w-5 transition-colors",
+                            isItemActive ? "text-white" : "text-white/70"
                           )}
                         />
                         <span className="truncate flex-1">{item.label}</span>
                         {item.badge && (
                           <span
                             className={cn(
-                              "flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center",
+                              "flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center backdrop-blur-sm",
                               getBadgeClass(item.badge.variant)
                             )}
                           >
@@ -349,10 +349,10 @@ export function Sidebar() {
 
       {/* User Info */}
       {user && (
-        <div className="px-4 py-3 border-t border-gray-200 lg:px-3 lg:py-2">
+        <div className="px-4 py-3 border-t border-white/10 lg:px-3 lg:py-2">
           <div className="text-xs">
-            <p className="text-gray-900 font-medium truncate">{user.fullName || user.email}</p>
-            <p className="text-gray-500 capitalize">{String(user.role ?? "")}</p>
+            <p className="text-white/90 font-medium truncate">{user.fullName || user.email}</p>
+            <p className="text-white/60 capitalize">{String(user.role ?? "")}</p>
           </div>
         </div>
       )}
@@ -372,9 +372,9 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-white border-r border-gray-200 min-h-screen flex flex-col z-50",
+          "bg-[#162F7F]/30 backdrop-blur-xl border-r border-white/10 min-h-screen flex flex-col z-50",
           "lg:static lg:translate-x-0 lg:shadow-none",
-          "fixed left-0 top-0 w-64 shadow-xl",
+          "fixed left-0 top-0 w-64 shadow-2xl",
           "transition-all duration-300 ease-out",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}

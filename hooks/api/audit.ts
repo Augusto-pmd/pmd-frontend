@@ -1,13 +1,13 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { safeApiUrlWithParams } from "@/lib/safeApi";
 import { SIMULATION_MODE, SIMULATED_AUDIT_LOGS } from "@/lib/useSimulation";
-
-const API_BASE = safeApiUrl("/audit");
 
 export function useAuditLogs(params?: { startDate?: string; endDate?: string }) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
   // Si está en modo simulación, usar un fetcher que retorna datos dummy
   const fetcher = SIMULATION_MODE
@@ -34,28 +34,27 @@ export function useAuditLogs(params?: { startDate?: string; endDate?: string }) 
         return Promise.resolve({ data: filteredLogs });
       }
     : () => {
-        if (!API_BASE) {
-          throw new Error("API_BASE no está definido correctamente");
+        if (!organizationId || !organizationId.trim()) {
+          console.warn("❗ [useAuditLogs] organizationId no está definido");
+          throw new Error("No hay organización seleccionada");
+        }
+        const baseUrl = safeApiUrlWithParams("/", organizationId, "audit");
+        if (!baseUrl) {
+          throw new Error("URL de API inválida");
         }
         const queryString = params
           ? `?${new URLSearchParams(params as any).toString()}`
           : "";
-        const auditUrl = `${API_BASE}${queryString}`;
+        const auditUrl = `${baseUrl}${queryString}`;
         return apiClient.get(auditUrl);
       };
-  
-  if (!API_BASE && !SIMULATION_MODE) {
-    console.error("🔴 [useAuditLogs] API_BASE es inválido");
-  }
   
   const queryString = params
     ? `?${new URLSearchParams(params as any).toString()}`
     : "";
-  
-  const auditUrl = API_BASE ? `${API_BASE}${queryString}` : null;
-  
+
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && auditUrl) ? `audit${queryString}` : null,
+    SIMULATION_MODE || (token && organizationId) ? `audit${queryString}` : null,
     fetcher
   );
 
@@ -69,8 +68,20 @@ export function useAuditLogs(params?: { startDate?: string; endDate?: string }) 
 
 export function useAuditLog(id: string | null) {
   const { token } = useAuthStore();
+  const authState = useAuthStore.getState();
+  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
   
-  const logUrl = id && API_BASE ? safeApiUrlWithParams("/audit", id) : null;
+  if (!id) {
+    console.warn("❗ [useAuditLog] id no está definido");
+    return { log: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  if (!organizationId || !organizationId.trim()) {
+    console.warn("❗ [useAuditLog] organizationId no está definido");
+    return { log: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const logUrl = safeApiUrlWithParams("/", organizationId, "audit", id);
   
   const { data, error, isLoading, mutate } = useSWR(
     token && logUrl ? logUrl : null,
@@ -89,4 +100,3 @@ export function useAuditLog(id: string | null) {
     mutate,
   };
 }
-
