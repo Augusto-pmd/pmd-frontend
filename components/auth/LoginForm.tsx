@@ -49,15 +49,15 @@ export function LoginForm() {
       
       // Intentar extraer access_token o token (el backend puede usar cualquiera)
       const access_token = responseData.access_token || responseData.token;
-      const user = responseData.user;
+      const userRaw = responseData.user;
       const refresh_token = responseData.refresh_token || responseData.refreshToken;
       
       console.log("🔵 [LOGIN EXTRACT] Datos extraídos:");
       console.log("  - access_token:", access_token ? "***PRESENT***" : "MISSING");
-      console.log("  - user:", user ? "PRESENT" : "MISSING");
+      console.log("  - user:", userRaw ? "PRESENT" : "MISSING");
       console.log("  - refresh_token:", refresh_token ? "***PRESENT***" : "MISSING");
       
-      if (!user) {
+      if (!userRaw) {
         console.error("🔴 [LOGIN ERROR] Missing user in response");
         throw new Error("Invalid response: missing user");
       }
@@ -68,12 +68,21 @@ export function LoginForm() {
         throw new Error("Invalid response: missing access_token or token");
       }
 
+      // Asegurar que organizationId y organization estén en el user object
+      const user = {
+        ...userRaw,
+        organizationId: userRaw.organizationId || userRaw.organization?.id || undefined,
+        organization: userRaw.organization || undefined,
+      };
+
       console.log("🔵 [LOGIN STORE] Llamando login() con:");
       console.log("  - User:", user);
+      console.log("  - User.organizationId:", user.organizationId);
+      console.log("  - User.organization:", user.organization);
       console.log("  - Access Token:", access_token ? "***" : "MISSING");
       console.log("  - Refresh Token:", refresh_token ? "***" : "MISSING");
       
-      // login() ya normaliza el user internamente
+      // login() ya normaliza el user internamente y preserva organizationId/organization
       login(user, access_token, refresh_token || access_token);
       
       // Verificar que se guardó correctamente

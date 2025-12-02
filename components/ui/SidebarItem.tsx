@@ -31,17 +31,18 @@ export function SidebarItem({ href, icon: Icon, label, isActive = false, badge, 
 
   const activeStyle: React.CSSProperties = {
     ...baseStyle,
-    backgroundColor: "rgba(0,0,0,0.06)",
-    borderLeft: "3px solid var(--apple-blue)",
+    backgroundColor: "var(--pmd-accent-light)",
+    borderLeft: "3px solid var(--pmd-accent)",
     paddingLeft: "9px", // 12px - 3px border
   };
 
   const hoverStyle: React.CSSProperties = {
     backgroundColor: "rgba(0,0,0,0.04)",
+    color: "var(--pmd-accent)",
   };
 
   const activeHoverStyle: React.CSSProperties = {
-    backgroundColor: "rgba(0,0,0,0.06)",
+    backgroundColor: "var(--pmd-accent-light)",
     transform: "translateX(1px)",
   };
 
@@ -57,23 +58,33 @@ export function SidebarItem({ href, icon: Icon, label, isActive = false, badge, 
           Object.assign(e.currentTarget.style, { ...currentStyle, ...activeHoverStyle });
         } else {
           Object.assign(e.currentTarget.style, { ...currentStyle, ...hoverStyle });
+          // Update text color on hover
+          e.currentTarget.style.color = "var(--pmd-accent)";
         }
       }}
       onMouseLeave={(e) => {
         Object.assign(e.currentTarget.style, currentStyle);
+        // Reset text color on leave
+        if (!isActive) {
+          e.currentTarget.style.color = "var(--apple-text-primary)";
+        }
       }}
     >
       <Icon
         className="w-5 h-5 flex-shrink-0"
         style={{
-          color: "var(--apple-text-primary)",
-          transition: "opacity var(--apple-duration-fast) var(--apple-ease)",
+          color: isActive ? "var(--pmd-accent)" : "var(--apple-text-primary)",
+          transition: "opacity var(--apple-duration-fast) var(--apple-ease), color var(--apple-duration-fast) var(--apple-ease)",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.opacity = "0.8";
+          if (!isActive) {
+            e.currentTarget.style.color = "var(--pmd-accent)";
+          }
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.opacity = "1";
+          e.currentTarget.style.color = isActive ? "var(--pmd-accent)" : "var(--apple-text-primary)";
         }}
       />
       <span

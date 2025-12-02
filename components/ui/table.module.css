@@ -65,12 +65,12 @@
 }
 
 .selected {
-  background-color: rgba(0, 122, 255, 0.08);
-  border-left: 3px solid var(--apple-blue);
+  background-color: var(--pmd-accent-light);
+  border-left: 3px solid var(--pmd-accent);
 }
 
 .selected:hover {
-  background-color: rgba(0, 122, 255, 0.12);
+  background-color: var(--pmd-accent-light);
 }
 
 .cell {

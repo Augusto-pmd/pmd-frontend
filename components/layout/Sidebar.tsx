@@ -8,7 +8,6 @@ import { useDocumentsStore } from "@/store/documentsStore";
 import { useCashboxStore } from "@/store/cashboxStore";
 import { useCan, can } from "@/lib/acl";
 import { useState, useEffect } from "react";
-import { useSidebar } from "./SidebarContext";
 import { SidebarItem } from "@/components/ui/SidebarItem";
 import {
   LayoutDashboard,
@@ -26,7 +25,6 @@ import {
   Shield,
   Settings,
   ChevronDown,
-  X,
   UserCog,
 } from "lucide-react";
 
@@ -49,7 +47,6 @@ interface NavGroup {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { isMobileOpen, setIsMobileOpen } = useSidebar();
   const { alerts, fetchAlerts } = useAlertsStore();
   const { documents, fetchDocuments } = useDocumentsStore();
   const { cashboxes, fetchCashboxes } = useCashboxStore();
@@ -69,10 +66,6 @@ export function Sidebar() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    setIsMobileOpen(false);
-  }, [pathname, setIsMobileOpen]);
 
   if (!user || typeof user.role === "object") return null;
 
@@ -231,23 +224,23 @@ export function Sidebar() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  const handleLinkClick = () => {
-    if (window.innerWidth < 1024) {
-      setIsMobileOpen(false);
-    }
-  };
 
-  // Apple Sidebar Styles
+  // Apple Sidebar Styles - Always visible, fixed position
   const sidebarStyle: React.CSSProperties = {
     width: "240px",
     backgroundColor: "var(--apple-surface)",
     borderRight: "1px solid var(--apple-border)",
-    minHeight: "100vh",
+    height: "100vh",
     display: "flex",
     flexDirection: "column",
     padding: "var(--space-lg) var(--space-md)",
     gap: "var(--space-sm)",
     fontFamily: "Inter, system-ui, sans-serif",
+    position: "fixed",
+    left: 0,
+    top: 0,
+    zIndex: 10,
+    overflowY: "auto",
   };
 
   const logoSectionStyle: React.CSSProperties = {
@@ -341,64 +334,16 @@ export function Sidebar() {
     textTransform: "capitalize",
   };
 
-  const closeButtonStyle: React.CSSProperties = {
-    padding: "8px",
-    border: "none",
-    background: "transparent",
-    color: "var(--apple-text-secondary)",
-    cursor: "pointer",
-    borderRadius: "var(--radius-md)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "background-color 200ms ease",
-  };
-
   return (
-    <>
-      {/* Mobile Overlay */}
-      {isMobileOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0,0,0,0.2)",
-            backdropFilter: "blur(4px)",
-            zIndex: 40,
-          }}
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:static left-0 top-0 z-50 ${
-          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
-        style={sidebarStyle}
-      >
-        {/* Logo Section */}
-        <div style={logoSectionStyle}>
-          <div style={logoBoxStyle}>PMD</div>
-          <div style={logoTextStyle}>
-            <h1 style={logoTitleStyle}>PMD</h1>
-            <p style={logoSubtitleStyle}>Management</p>
-          </div>
-          <button
-            onClick={() => setIsMobileOpen(false)}
-            className="lg:hidden ml-auto"
-            style={closeButtonStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--apple-hover)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-            }}
-            aria-label="Cerrar sidebar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <aside style={sidebarStyle}>
+      {/* Logo Section */}
+      <div style={logoSectionStyle}>
+        <div style={logoBoxStyle}>PMD</div>
+        <div style={logoTextStyle}>
+          <h1 style={logoTitleStyle}>PMD</h1>
+          <p style={logoSubtitleStyle}>Management</p>
         </div>
+      </div>
 
         {/* Navigation */}
         <nav style={navStyle}>
@@ -427,7 +372,6 @@ export function Sidebar() {
                       label={item.label}
                       isActive={itemIsActive}
                       badge={badgeCount}
-                      onClick={handleLinkClick}
                     />
                   );
                 })}
@@ -443,7 +387,6 @@ export function Sidebar() {
             <p style={userRoleStyle}>{String(user.role ?? "")}</p>
           </div>
         )}
-      </aside>
-    </>
+    </aside>
   );
 }

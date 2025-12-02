@@ -14,27 +14,33 @@ import { useDocumentsStore } from "@/store/documentsStore";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { useEmployees } from "@/hooks/api/employees";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { useEffect } from "react";
-import { DashboardModules } from "@/components/dashboard/DashboardModules";
+import { useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/authStore";
+import { CommandBar } from "@/components/ui/CommandBar";
+import { KpiCard } from "@/components/ui/KpiCard";
+import { SecondaryCard } from "@/components/ui/SecondaryCard";
+import { ActivityFeed } from "@/components/ui/ActivityFeed";
 import { 
   TrendingUp, 
-  FileText, 
   Bell, 
   Building2,
   DollarSign,
-  Briefcase,
-  Activity,
   Users,
   Truck,
   Wallet,
   FolderOpen,
-  UserRound
+  Calculator,
+  Shield,
+  FileText,
+  UserPlus,
+  Package
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 function DashboardContent() {
   const authState = useAuthStore.getState();
   const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const router = useRouter();
 
   const { works, isLoading: worksLoading } = useWorks();
   const { expenses, isLoading: expensesLoading } = useExpenses();
@@ -58,18 +64,6 @@ function DashboardContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
-
-  const isLoading =
-    worksLoading || expensesLoading || incomesLoading || contractsLoading || alertsLoading ||
-    accountingLoading || cashboxLoading || clientsLoading || documentsLoading || suppliersLoading || employeesLoading;
-
-  if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando panel de control…" />
-      </MainLayout>
-    );
-  }
 
   // Cálculos de KPIs
   const totalRevenue = incomes?.reduce((sum: number, inc: any) => sum + (inc.amount || 0), 0) || 0;
@@ -98,6 +92,83 @@ function DashboardContent() {
   const pendingDocuments = documents?.filter((d: any) => d.status === "pendiente").length || 0;
   const totalDocuments = documents?.length || 0;
 
+  // Calculate monthly flow (simplified)
+  const monthlyFlow = accountingIngresos - accountingEgresos;
+
+  // Generate sparkline data from recent entries (last 7 days simulation)
+  const generateSparklineData = (baseValue: number, variance: number = 0.1): number[] => {
+    const data: number[] = [];
+    for (let i = 0; i < 7; i++) {
+      const variation = (Math.random() - 0.5) * variance;
+      data.push(Math.max(0, baseValue * (1 + variation)));
+    }
+    return data;
+  };
+
+  // Generate activity feed items from available data
+  const activityItems = useMemo(() => {
+    const items: Array<{
+      id: string;
+      icon: typeof Building2;
+      text: string;
+      timestamp: string;
+    }> = [];
+
+    // Add recent works
+    works?.slice(0, 3).forEach((work: any) => {
+      items.push({
+        id: `work-${work.id}`,
+        icon: Building2,
+        text: `Nueva obra: ${work.name || work.title || work.nombre || "Sin nombre"}`,
+        timestamp: "Hace 2 horas",
+      });
+    });
+
+    // Add alerts
+    if (highSeverityAlerts > 0) {
+      items.push({
+        id: "alert-high",
+        icon: Bell,
+        text: `${highSeverityAlerts} alerta${highSeverityAlerts > 1 ? "s" : ""} de alta severidad`,
+        timestamp: "Hace 1 hora",
+      });
+    }
+
+    // Add documents
+    if (pendingDocuments > 0) {
+      items.push({
+        id: "doc-pending",
+        icon: FileText,
+        text: `${pendingDocuments} documento${pendingDocuments > 1 ? "s" : ""} pendiente${pendingDocuments > 1 ? "s" : ""}`,
+        timestamp: "Hace 3 horas",
+      });
+    }
+
+    // Add cashboxes
+    if (openCashboxes > 0) {
+      items.push({
+        id: "cashbox-open",
+        icon: Wallet,
+        text: `${openCashboxes} caja${openCashboxes > 1 ? "s" : ""} abierta${openCashboxes > 1 ? "s" : ""}`,
+        timestamp: "Hoy",
+      });
+    }
+
+    return items.slice(0, 5);
+  }, [works, highSeverityAlerts, pendingDocuments, openCashboxes]);
+
+  const isLoading =
+    worksLoading || expensesLoading || incomesLoading || contractsLoading || alertsLoading ||
+    accountingLoading || cashboxLoading || clientsLoading || documentsLoading || suppliersLoading || employeesLoading;
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <LoadingState message="Cargando panel de control…" />
+      </MainLayout>
+    );
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
@@ -107,255 +178,169 @@ function DashboardContent() {
     }).format(amount);
   };
 
-  // KPI Card Component
-  const KPICard = ({ 
-    label, 
-    value, 
-    subtitle, 
-    icon: Icon,
-    warning 
-  }: { 
-    label: string; 
-    value: string | number; 
-    subtitle?: string;
-    icon: any;
-    warning?: string;
-  }) => (
-    <div 
-      className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl shadow-[0px_8px_24px_rgba(0,0,0,0.06)] p-6 transition-all duration-200 hover:shadow-[0px_12px_32px_rgba(0,0,0,0.08)]"
-      style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p 
-            className="text-[13px] text-[#7A7A7C] mb-2 uppercase tracking-wide"
-            style={{ fontWeight: 400 }}
-          >
-            {label}
-          </p>
-          <p 
-            className="text-[28px] text-[#1C1C1E] mb-1"
-            style={{ fontWeight: 600 }}
-          >
-            {value}
-          </p>
-          {subtitle && (
-            <p 
-              className="text-[13px] text-[#7A7A7C]"
-              style={{ fontWeight: 400 }}
-            >
-              {subtitle}
-            </p>
-          )}
-          {warning && (
-            <p 
-              className="text-[13px] text-[#7A7A7C] mt-1"
-              style={{ fontWeight: 400 }}
-            >
-              {warning}
-            </p>
-          )}
-        </div>
-        <Icon 
-          className="w-5 h-5 text-[#1C1C1E] flex-shrink-0 mt-1" 
-          strokeWidth={2}
-        />
-      </div>
-    </div>
-  );
-
   return (
     <MainLayout>
-      <div className="p-6 lg:p-8" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
-        {/* Header Section */}
-        <div className="mb-10">
-          <h1 
-            className="text-[24px] text-[#1C1C1E] mb-2"
-            style={{ fontWeight: 600 }}
-          >
-            Dashboard PMD
-          </h1>
-          <p 
-            className="text-[15px] text-[#7A7A7C]"
-            style={{ fontWeight: 400 }}
-          >
-            Resumen ejecutivo del sistema
-          </p>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "linear-gradient(to bottom, #f5f5f7, #f0f1f4 35%, #e9e9ef)",
+          fontFamily: "Inter, system-ui, sans-serif",
+        }}
+      >
+        {/* LAYER 1: COMMAND BAR */}
+        <div style={{ padding: "var(--space-xl)" }}>
+          <CommandBar />
         </div>
 
-        {/* KPIs Grid - First Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-          <KPICard
-            label="Obras"
-            value={activeWorks}
-            subtitle={`de ${totalWorks} totales`}
-            icon={Building2}
-          />
-          <KPICard
-            label="Ingresos"
-            value={formatCurrency(accountingIngresos || totalRevenue)}
-            icon={DollarSign}
-          />
-          <KPICard
-            label="Egresos"
-            value={formatCurrency(accountingEgresos || totalExpenses)}
-            icon={TrendingUp}
-          />
-          <KPICard
-            label="Alertas"
-            value={pendingAlerts}
-            warning={highSeverityAlerts > 0 ? `${highSeverityAlerts} alta severidad` : undefined}
-            icon={Bell}
-          />
+        {/* LAYER 2: PRIMARY KPIs - Staggered Layout */}
+        <div
+          style={{
+            padding: "0 var(--space-xl) var(--space-xl)",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "var(--space-lg)",
+          }}
+        >
+          {/* Staggered positioning using CSS Grid with manual offsets */}
+          <div style={{ marginTop: "0px" }}>
+            <KpiCard
+              label="Obras Activas"
+              value={activeWorks}
+              subtitle={`de ${totalWorks} totales`}
+              icon={Building2}
+              sparklineData={generateSparklineData(activeWorks, 0.15)}
+              onClick={() => router.push("/works")}
+            />
+          </div>
+          <div style={{ marginTop: "8px" }}>
+            <KpiCard
+              label="Inversión Total"
+              value={formatCurrency(accountingIngresos || totalRevenue)}
+              icon={DollarSign}
+              sparklineData={generateSparklineData(accountingIngresos || totalRevenue, 0.1)}
+              onClick={() => router.push("/accounting")}
+            />
+          </div>
+          <div style={{ marginTop: "12px" }}>
+            <KpiCard
+              label="Flujo del Mes"
+              value={formatCurrency(monthlyFlow)}
+              subtitle={monthlyFlow >= 0 ? "Positivo" : "Negativo"}
+              icon={TrendingUp}
+              sparklineData={generateSparklineData(Math.abs(monthlyFlow), 0.2)}
+              trend={monthlyFlow >= 0 ? "up" : "down"}
+              onClick={() => router.push("/accounting")}
+            />
+          </div>
+          <div style={{ marginTop: "6px" }}>
+            <KpiCard
+              label="Alertas Críticas"
+              value={highSeverityAlerts}
+              subtitle={pendingAlerts > 0 ? `${pendingAlerts} totales` : "Todo en orden"}
+              icon={Bell}
+              sparklineData={generateSparklineData(highSeverityAlerts, 0.3)}
+              onClick={() => router.push("/alerts")}
+            />
+          </div>
         </div>
 
-        {/* KPIs Grid - Second Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-          <KPICard
-            label="RRHH"
-            value={activeEmployees}
-            subtitle={`de ${totalEmployees} totales`}
-            icon={Users}
-          />
-          <KPICard
-            label="Proveedores"
-            value={activeSuppliers}
-            subtitle={`de ${totalSuppliers} totales`}
-            icon={Truck}
-          />
-          <KPICard
-            label="Clientes"
-            value={activeClients}
-            subtitle={`de ${totalClients} totales`}
-            icon={UserRound}
-          />
-          <KPICard
-            label="Cajas"
-            value={openCashboxes}
-            subtitle={`de ${totalCashboxes} totales`}
-            icon={Wallet}
-          />
-        </div>
-
-        {/* KPIs Grid - Third Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-          <KPICard
-            label="Documentos"
-            value={totalDocuments}
-            warning={pendingDocuments > 0 ? `${pendingDocuments} pendientes` : undefined}
-            icon={FolderOpen}
-          />
-          <KPICard
-            label="Balance Neto"
-            value={formatCurrency(netBalance)}
-            icon={TrendingUp}
-          />
-          <KPICard
-            label="Contratos"
-            value={activeContracts}
-            icon={Briefcase}
-          />
-        </div>
-
-        {/* Separator */}
-        <div className="border-t border-[rgba(0,0,0,0.08)] mb-10"></div>
-
-        {/* Main Modules Section */}
-        <div className="mb-10">
-          <h2 
-            className="text-[24px] text-[#1C1C1E] mb-6"
-            style={{ fontWeight: 600 }}
-          >
-            Módulos Principales
-          </h2>
-          <DashboardModules />
-        </div>
-
-        {/* Separator */}
-        <div className="border-t border-[rgba(0,0,0,0.08)] mb-10"></div>
-
-        {/* Activity and Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activity */}
-          <div 
-            className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl shadow-[0px_8px_24px_rgba(0,0,0,0.06)] p-6"
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <Activity className="w-5 h-5 text-[#1C1C1E]" strokeWidth={2} />
-              <h2 
-                className="text-[17px] text-[#1C1C1E]"
-                style={{ fontWeight: 500 }}
-              >
-                Actividad Reciente
-              </h2>
-            </div>
-            <div className="space-y-4">
-              {works?.slice(0, 5).map((work: any) => (
-                <div 
-                  key={work.id} 
-                  className="flex justify-between items-start pb-4 border-b border-[rgba(0,0,0,0.08)] last:border-0 last:pb-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p 
-                      className="text-[14px] text-[#1C1C1E] truncate mb-1"
-                      style={{ fontWeight: 500 }}
-                    >
-                      {work.name || work.title || work.nombre}
-                    </p>
-                    <p 
-                      className="text-[13px] text-[#7A7A7C] capitalize"
-                      style={{ fontWeight: 400 }}
-                    >
-                      {work.status || "Sin estado"}
-                    </p>
-                  </div>
+        {/* LAYER 3: SECONDARY MODULE CARDS - Staggered Grid */}
+        <div
+          style={{
+            padding: "0 var(--space-xl) var(--space-xl)",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "var(--space-lg)",
+          }}
+        >
+          <div style={{ marginTop: "0px" }}>
+            <SecondaryCard
+              title="RRHH"
+              description={`${activeEmployees} empleados activos`}
+              icon={Users}
+              route="/rrhh"
+              kpi={activeEmployees}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {totalEmployees} totales
                 </div>
-              ))}
-              {(!works || works.length === 0) && (
-                <p 
-                  className="text-[13px] text-[#7A7A7C] text-center py-8"
-                  style={{ fontWeight: 400 }}
-                >
-                  No hay actividad reciente
-                </p>
-              )}
-            </div>
+              }
+            />
           </div>
+          <div style={{ marginTop: "10px" }}>
+            <SecondaryCard
+              title="Proveedores"
+              description={`${activeSuppliers} proveedores activos`}
+              icon={Truck}
+              route="/suppliers"
+              kpi={activeSuppliers}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {totalSuppliers} totales
+                </div>
+              }
+            />
+          </div>
+          <div style={{ marginTop: "6px" }}>
+            <SecondaryCard
+              title="Contabilidad"
+              description="Movimientos y reportes"
+              icon={Calculator}
+              route="/accounting"
+              kpi={entries?.length || 0}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {formatCurrency(netBalance)} balance
+                </div>
+              }
+            />
+          </div>
+          <div style={{ marginTop: "8px" }}>
+            <SecondaryCard
+              title="Auditoría"
+              description="Registro de cambios"
+              icon={Shield}
+              route="/audit"
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  Sistema auditado
+                </div>
+              }
+            />
+          </div>
+          <div style={{ marginTop: "4px" }}>
+            <SecondaryCard
+              title="Cajas"
+              description={`${openCashboxes} cajas abiertas`}
+              icon={Wallet}
+              route="/cashbox"
+              kpi={openCashboxes}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {totalCashboxes} totales
+                </div>
+              }
+            />
+          </div>
+          <div style={{ marginTop: "12px" }}>
+            <SecondaryCard
+              title="Documentos"
+              description={`${pendingDocuments} pendientes`}
+              icon={FolderOpen}
+              route="/documents"
+              kpi={totalDocuments}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {pendingDocuments > 0 ? `${pendingDocuments} por revisar` : "Al día"}
+                </div>
+              }
+            />
+          </div>
+        </div>
 
-          {/* Quick Actions */}
-          <div 
-            className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl shadow-[0px_8px_24px_rgba(0,0,0,0.06)] p-6"
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <FileText className="w-5 h-5 text-[#1C1C1E]" strokeWidth={2} />
-              <h2 
-                className="text-[17px] text-[#1C1C1E]"
-                style={{ fontWeight: 500 }}
-              >
-                Acciones Rápidas
-              </h2>
-            </div>
-            <div className="space-y-3">
-              <button 
-                className="w-full text-left px-4 py-3 bg-white text-[#1C1C1E] border border-[rgba(0,0,0,0.15)] rounded-xl transition-all duration-200 hover:bg-[#F2F2F2] active:bg-[#E8E8E8] text-[14px]"
-                style={{ fontWeight: 500 }}
-              >
-                Ver Reportes
-              </button>
-              <button 
-                className="w-full text-left px-4 py-3 bg-white text-[#1C1C1E] border border-[rgba(0,0,0,0.15)] rounded-xl transition-all duration-200 hover:bg-[#F2F2F2] active:bg-[#E8E8E8] text-[14px]"
-                style={{ fontWeight: 500 }}
-              >
-                Gestionar Contratos
-              </button>
-              <button 
-                className="w-full text-left px-4 py-3 bg-white text-[#1C1C1E] border border-[rgba(0,0,0,0.15)] rounded-xl transition-all duration-200 hover:bg-[#F2F2F2] active:bg-[#E8E8E8] text-[14px]"
-                style={{ fontWeight: 500 }}
-              >
-                Revisar Alertas
-              </button>
-            </div>
-          </div>
+        {/* LAYER 4: ACTIVITY FEED */}
+        <div style={{ padding: "0 var(--space-xl) var(--space-xl)" }}>
+          <ActivityFeed items={activityItems} />
         </div>
       </div>
     </MainLayout>

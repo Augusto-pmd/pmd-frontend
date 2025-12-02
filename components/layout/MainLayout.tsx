@@ -2,18 +2,39 @@
 
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
-import { SidebarProvider } from "./SidebarContext";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <div className="flex h-screen bg-[#F5F5F7]">
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Topbar />
-          <main className="flex-1 overflow-y-auto">{children}</main>
-        </div>
+    <div style={{ 
+      display: "flex", 
+      height: "100vh", 
+      backgroundColor: "var(--apple-canvas)",
+      fontFamily: "Inter, system-ui, sans-serif"
+    }}>
+      {/* Sidebar - Always visible, fixed position */}
+      <Sidebar />
+      
+      {/* Content Area - Fixed to right of sidebar */}
+      <div style={{ 
+        flex: 1, 
+        display: "flex", 
+        flexDirection: "column", 
+        overflow: "hidden",
+        marginLeft: "240px", // Sidebar width
+        minWidth: 0, // Allow content to shrink
+      }}>
+        {/* Header - Fixed to top of content area */}
+        <Topbar />
+        
+        {/* Main Content - Scrollable */}
+        <main style={{ 
+          flex: 1, 
+          overflowY: "auto",
+          overflowX: "hidden"
+        }}>
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }

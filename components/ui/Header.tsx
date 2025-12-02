@@ -2,8 +2,7 @@
 
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
-import { useSidebar } from "@/components/layout/SidebarContext";
-import { Menu, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "./Button";
 
 interface HeaderProps {
@@ -14,7 +13,6 @@ export function Header({ title }: HeaderProps) {
   const user = useAuthStore.getState().getUserSafe();
   const logout = useAuthStore.getState().logout;
   const router = useRouter();
-  const { toggleMobile } = useSidebar();
 
   if (!user || typeof user.role === "object") return null;
 
@@ -59,18 +57,6 @@ export function Header({ title }: HeaderProps) {
     gap: "16px",
   };
 
-  const mobileMenuButtonStyle: React.CSSProperties = {
-    padding: "8px",
-    border: "none",
-    background: "transparent",
-    color: "var(--apple-text-primary)",
-    cursor: "pointer",
-    borderRadius: "var(--radius-md)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "background-color var(--apple-duration-fast) var(--apple-ease)",
-  };
 
   const userInfoStyle: React.CSSProperties = {
     display: "flex",
@@ -120,33 +106,6 @@ export function Header({ title }: HeaderProps) {
     <header style={headerStyle}>
       {/* Left Section */}
       <div style={leftSectionStyle}>
-        {/* Mobile Menu Button */}
-        <button
-          onClick={toggleMobile}
-          className="lg:hidden"
-          style={mobileMenuButtonStyle}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--apple-hover)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-          }}
-          aria-label="Abrir menú"
-        >
-          <Menu 
-            className="w-5 h-5" 
-            style={{
-              transition: "opacity var(--apple-duration-fast) var(--apple-ease)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = "0.8";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = "1";
-            }}
-          />
-        </button>
-
         {/* Title */}
         {title && <h1 style={titleStyle}>{title}</h1>}
       </div>

@@ -79,7 +79,15 @@ export const useAuthStore = create<AuthState>()(
           throw new Error("login: token is required");
         }
 
-        const user = normalizeUser(userRaw);
+        // Normalizar el usuario y asegurar que organizationId y organization estén presentes
+        const normalizedUser = normalizeUser(userRaw);
+        
+        // Asegurar que organizationId y organization estén explícitamente en el user
+        const user = {
+          ...normalizedUser,
+          organizationId: normalizedUser.organizationId || userRaw.organizationId || userRaw.organization?.id || undefined,
+          organization: normalizedUser.organization || userRaw.organization || undefined,
+        };
         
         console.log("🟢 [AUTH STORE] User normalized:", user);
         console.log("  - user.id:", user.id);
@@ -178,8 +186,20 @@ export const useAuthStore = create<AuthState>()(
 
         if (!rawUser) throw new Error("No user in response");
 
-        const user = normalizeUser(rawUser);
+        // Normalizar y asegurar que organizationId y organization estén presentes
+        const normalizedUser = normalizeUser(rawUser);
+        const user = {
+          ...normalizedUser,
+          organizationId: normalizedUser.organizationId || rawUser.organizationId || rawUser.organization?.id || undefined,
+          organization: normalizedUser.organization || rawUser.organization || undefined,
+        };
+        
         console.log("🔵 [ORGANIZATION] Usuario cargado (loadMe):", user);
+        if (user.organizationId) {
+          console.log("✅ [ORGANIZATION] organizationId presente (loadMe):", user.organizationId);
+        } else {
+          console.warn("⚠️ [ORGANIZATION] organizationId NO está presente (loadMe)");
+        }
 
         set({ user, isAuthenticated: true });
       },
@@ -202,7 +222,14 @@ export const useAuthStore = create<AuthState>()(
         const refresh_token = data.refresh_token || data.refreshToken;
 
         if (rawUser) {
-          const user = normalizeUser(rawUser);
+          // Normalizar y asegurar que organizationId y organization estén presentes
+          const normalizedUser = normalizeUser(rawUser);
+          const user = {
+            ...normalizedUser,
+            organizationId: normalizedUser.organizationId || rawUser.organizationId || rawUser.organization?.id || undefined,
+            organization: normalizedUser.organization || rawUser.organization || undefined,
+          };
+          
           console.log("🔵 [ORGANIZATION] Usuario cargado (refresh):", user);
           if (user.organizationId) {
             console.log("✅ [ORGANIZATION] organizationId presente (refresh):", user.organizationId);
@@ -216,8 +243,10 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
           });
         } else {
-          // Si no hay user, solo actualizamos tokens
+          // Si no hay user, solo actualizamos tokens (preservar user existente si existe)
+          const currentUser = get().user;
           set({
+            user: currentUser, // Preservar user existente
             token: access_token,
             refreshToken: refresh_token ?? null,
             isAuthenticated: true,
@@ -245,7 +274,14 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         if (state?.user) {
           try {
-            state.user = normalizeUser(state.user);
+            const normalizedUser = normalizeUser(state.user);
+            // Asegurar que organizationId y organization estén presentes después de rehidratar
+            state.user = {
+              ...normalizedUser,
+              organizationId: normalizedUser.organizationId || (state.user as any)?.organizationId || (state.user as any)?.organization?.id || undefined,
+              organization: normalizedUser.organization || (state.user as any)?.organization || undefined,
+            };
+            console.log("✅ [REHYDRATE] Usuario rehidratado con organizationId:", state.user.organizationId);
           } catch {
             // Si falla la normalización, limpiamos el estado
             state.user = null;

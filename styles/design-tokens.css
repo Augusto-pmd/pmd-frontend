@@ -18,6 +18,10 @@
   --apple-button-hover: #F2F2F2;
   --apple-button-active: #E8E8E8;
 
+  /* PMD Accent Colors */
+  --pmd-accent: #005bbb;
+  --pmd-accent-light: rgba(0, 91, 187, 0.12);
+
   /* Radii */
   --radius-xl: 16px;
   --radius-lg: 12px;

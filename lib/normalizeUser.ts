@@ -26,18 +26,24 @@ export function normalizeUser(rawUser: any): AuthUser {
     rawUser.organization?.id ||
     null;
 
+  // Preservar el objeto organization completo si existe
+  const organization = rawUser.organization || undefined;
+
   const normalizedUser: AuthUser = {
     id: String(rawUser.id),
     email: String(rawUser.email ?? ""),
     fullName: String(rawUser.fullName ?? rawUser.name ?? ""),
     role: String(role),
     organizationId: organizationId ? String(organizationId) : undefined,
-    organization: rawUser.organization ?? undefined,
+    organization: organization,
   };
 
   // Validar que organizationId esté presente si viene del backend
   if (organizationId) {
     console.log("✅ [normalizeUser] organizationId preservado:", organizationId);
+    if (organization) {
+      console.log("✅ [normalizeUser] organization object preservado:", organization);
+    }
   } else {
     console.warn("⚠️ [normalizeUser] organizationId no encontrado en rawUser");
   }

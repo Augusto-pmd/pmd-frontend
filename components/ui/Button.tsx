@@ -31,9 +31,17 @@ export function Button({
     boxShadow: "none",
   };
 
-  const hoverStyles = {
-    backgroundColor: "var(--apple-button-hover)",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+  const getHoverStyles = (variant: string) => {
+    if (variant === "primary") {
+      return {
+        backgroundColor: "var(--pmd-accent-light)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+      };
+    }
+    return {
+      backgroundColor: "var(--apple-button-hover)",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    };
   };
 
   const activeStyles = {
@@ -43,7 +51,11 @@ export function Button({
   };
 
   const variants: Record<string, React.CSSProperties> = {
-    primary: baseStyles,
+    primary: {
+      ...baseStyles,
+      borderColor: "var(--pmd-accent)",
+      color: "var(--pmd-accent)",
+    },
     secondary: baseStyles,
     outline: baseStyles,
     ghost: {
@@ -91,7 +103,7 @@ export function Button({
       style={combinedStyle}
       onMouseEnter={(e) => {
         if (!props.disabled) {
-          Object.assign(e.currentTarget.style, hoverStyles);
+          Object.assign(e.currentTarget.style, getHoverStyles(variant));
         }
       }}
       onMouseLeave={(e) => {
@@ -104,7 +116,7 @@ export function Button({
       }}
       onMouseUp={(e) => {
         if (!props.disabled) {
-          Object.assign(e.currentTarget.style, hoverStyles);
+          Object.assign(e.currentTarget.style, getHoverStyles(variant));
         }
       }}
       onFocus={(e) => {

@@ -14,8 +14,9 @@ export function useWorks() {
     ? () => Promise.resolve({ data: SIMULATED_WORKS })
     : () => {
         if (!organizationId || !organizationId.trim()) {
-          console.warn("❗ [useWorks] organizationId no está definido");
-          throw new Error("No hay organización seleccionada");
+          console.warn("❗ [useWorks] organizationId no está definido, intentando cargar organización...");
+          // No lanzar error, permitir que el hook intente cargar la organización
+          return Promise.resolve({ data: [] });
         }
         const url = safeApiUrlWithParams("/", organizationId, "works");
         if (!url) {
@@ -48,8 +49,8 @@ export function useWork(id: string | null) {
   }
   
   if (!organizationId || !organizationId.trim()) {
-    console.warn("❗ [useWork] organizationId no está definido");
-    return { work: null, error: null, isLoading: false, mutate: async () => {} };
+    console.warn("❗ [useWork] organizationId no está definido, permitiendo carga de organización...");
+    // No bloquear, permitir que se intente cargar
   }
   
   // Construir URL de forma segura
