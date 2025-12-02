@@ -3,8 +3,9 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
-import { UserProfileCard } from "@/components/settings/UserProfileCard";
-import { SettingsActions } from "@/components/settings/SettingsActions";
+import { UserInfoSection } from "@/components/settings/UserInfoSection";
+import { UserActionsSection } from "@/components/settings/UserActionsSection";
+import { RecentActivitySection } from "@/components/settings/RecentActivitySection";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function SettingsContent() {
@@ -22,16 +23,16 @@ function SettingsContent() {
           <p className="text-gray-600">Preferencias y datos del usuario</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Perfil del usuario */}
-          <div className="lg:col-span-2">
-            <UserProfileCard user={user} />
-          </div>
+        {/* Sección principal: Datos del usuario */}
+        <UserInfoSection user={user} />
 
-          {/* Acciones */}
-          <div>
-            <SettingsActions />
-          </div>
+        {/* Grid de secciones secundarias */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Opciones de cuenta */}
+          <UserActionsSection />
+
+          {/* Actividad reciente */}
+          <RecentActivitySection />
         </div>
       </div>
     </MainLayout>
