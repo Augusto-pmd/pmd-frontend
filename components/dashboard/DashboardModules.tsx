@@ -69,6 +69,12 @@ const modules = [
     icon: "👥",
     route: "/rrhh",
   },
+  {
+    title: "Organigrama",
+    description: "Estructura completa del personal PMD",
+    icon: "🏢",
+    route: "/organigrama",
+  },
 ];
 
 export function DashboardModules() {
