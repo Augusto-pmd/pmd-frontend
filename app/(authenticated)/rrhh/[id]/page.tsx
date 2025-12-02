@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useEmployee, useEmployeeAssignments } from "@/hooks/api/employees";
+import { useEmployee, useEmployeeAssignments, employeeApi } from "@/hooks/api/employees";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
+import { EmployeeForm } from "@/components/forms/EmployeeForm";
+import { useToast } from "@/components/ui/Toast";
 import { UserAvatar } from "@/components/settings/UserAvatar";
 import { calcularEstadoSeguro, getBadgeColorSeguro } from "@/utils/seguro";
 import { BotonVolver } from "@/components/ui/BotonVolver";
@@ -16,8 +20,12 @@ function EmployeeDetailContent() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { employee, isLoading, error } = useEmployee(id);
+  const { employee, isLoading, error, mutate } = useEmployee(id);
   const { assignments, isLoading: assignmentsLoading } = useEmployeeAssignments(id);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   const formatDate = (dateString: string | undefined): string => {
     if (!dateString) return "No especificada";
@@ -106,6 +114,41 @@ function EmployeeDetailContent() {
   const seguro = employee.seguro || employee.insurance;
   const fechaVencimiento = seguro?.fechaVencimiento || seguro?.expirationDate;
   const estadoSeguro = calcularEstadoSeguro(fechaVencimiento);
+
+  const handleUpdate = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await employeeApi.update(id, data);
+      await mutate();
+      toast.success("Empleado actualizado correctamente");
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      console.error("Error al actualizar empleado:", err);
+      toast.error(err.message || "Error al actualizar el empleado");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    try {
+      // Inactivar en lugar de eliminar físicamente
+      await employeeApi.update(id, { isActive: false, status: "inactive", estado: "inactivo" });
+      await mutate();
+      toast.success("Empleado inactivado correctamente");
+      setIsDeleteModalOpen(false);
+      // Redirigir a la lista después de inactivar
+      setTimeout(() => {
+        router.push("/rrhh");
+      }, 1500);
+    } catch (err: any) {
+      console.error("Error al inactivar empleado:", err);
+      toast.error(err.message || "Error al inactivar el empleado");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const renderField = (label: string, value: any, formatter?: (val: any) => string) => {
     if (value === null || value === undefined || value === "") return null;
@@ -288,14 +331,65 @@ function EmployeeDetailContent() {
 
         {/* Botones de Acción */}
         <div className="flex gap-4">
-          <Button variant="outline" onClick={() => alert("Funcionalidad próximamente disponible")}>
+          <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
             Editar datos
           </Button>
-          <Button variant="outline" onClick={() => alert("Funcionalidad próximamente disponible")}>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="text-red-600 hover:text-red-700 hover:border-red-300"
+          >
             Dar de baja
           </Button>
         </div>
       </div>
+
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Editar Empleado"
+        size="lg"
+      >
+        <EmployeeForm
+          initialData={employee}
+          onSubmit={handleUpdate}
+          onCancel={() => setIsEditModalOpen(false)}
+          isLoading={isSubmitting}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmar Inactivación"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            ¿Estás seguro de que deseas inactivar al empleado <strong>{nombre}</strong>?
+          </p>
+          <p className="text-sm text-gray-500">
+            El empleado será marcado como inactivo. Esta acción se puede revertir editando el empleado.
+          </p>
+          <div className="flex gap-3 justify-end pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isSubmitting ? "Inactivando..." : "Inactivar"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </MainLayout>
   );
 }

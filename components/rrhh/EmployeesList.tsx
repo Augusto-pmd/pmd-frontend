@@ -10,9 +10,10 @@ interface Employee {
 
 interface EmployeesListProps {
   employees: Employee[];
+  onRefresh?: () => void;
 }
 
-export function EmployeesList({ employees }: EmployeesListProps) {
+export function EmployeesList({ employees, onRefresh }: EmployeesListProps) {
   if (employees.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-pmd p-12">
@@ -28,7 +29,7 @@ export function EmployeesList({ employees }: EmployeesListProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {employees.map((employee) => (
-        <EmployeeCard key={employee.id} employee={employee} />
+        <EmployeeCard key={employee.id} employee={employee} onRefresh={onRefresh} />
       ))}
     </div>
   );

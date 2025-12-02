@@ -1,14 +1,38 @@
 "use client";
 
+import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useEmployees } from "@/hooks/api/employees";
+import { useEmployees, employeeApi } from "@/hooks/api/employees";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmployeesList } from "@/components/rrhh/EmployeesList";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { EmployeeForm } from "@/components/forms/EmployeeForm";
+import { useToast } from "@/components/ui/Toast";
+import { Plus } from "lucide-react";
 
 function RRHHContent() {
-  const { employees, isLoading, error } = useEmployees();
+  const { employees, isLoading, error, mutate } = useEmployees();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
+
+  const handleCreate = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await employeeApi.create(data);
+      await mutate();
+      toast.success("Empleado creado correctamente");
+      setIsCreateModalOpen(false);
+    } catch (err: any) {
+      console.error("Error al crear empleado:", err);
+      toast.error(err.message || "Error al crear el empleado");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -33,11 +57,36 @@ function RRHHContent() {
       <div className="space-y-6 py-6">
         <div className="px-1">
           <BotonVolver />
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Recursos Humanos</h1>
-          <p className="text-gray-600">Gestión del personal de PMD</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Recursos Humanos</h1>
+              <p className="text-gray-600">Gestión del personal de PMD</p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Nuevo Empleado
+            </Button>
+          </div>
         </div>
 
-        <EmployeesList employees={employees || []} />
+        <EmployeesList employees={employees || []} onRefresh={mutate} />
+
+        <Modal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          title="Nuevo Empleado"
+          size="lg"
+        >
+          <EmployeeForm
+            onSubmit={handleCreate}
+            onCancel={() => setIsCreateModalOpen(false)}
+            isLoading={isSubmitting}
+          />
+        </Modal>
       </div>
     </MainLayout>
   );
