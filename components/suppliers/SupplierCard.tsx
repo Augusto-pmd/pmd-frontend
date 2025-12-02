@@ -1,9 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
+import { SupplierForm } from "@/components/forms/SupplierForm";
+import { supplierApi } from "@/hooks/api/suppliers";
+import { useToast } from "@/components/ui/Toast";
+import { Edit, Trash2, Eye } from "lucide-react";
 
 interface Supplier {
   id: string;
@@ -20,10 +26,15 @@ interface Supplier {
 
 interface SupplierCardProps {
   supplier: Supplier;
+  onRefresh?: () => void;
 }
 
-export function SupplierCard({ supplier }: SupplierCardProps) {
+export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   const router = useRouter();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   const getSupplierName = () => {
     return supplier.nombre || supplier.name || "Sin nombre";
@@ -65,52 +76,150 @@ export function SupplierCard({ supplier }: SupplierCardProps) {
     return status;
   };
 
+  const handleUpdate = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await supplierApi.update(supplier.id, data);
+      await onRefresh?.();
+      toast.success("Proveedor actualizado correctamente");
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      console.error("Error al actualizar proveedor:", err);
+      toast.error(err.message || "Error al actualizar el proveedor");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    try {
+      await supplierApi.delete(supplier.id);
+      await onRefresh?.();
+      toast.success("Proveedor eliminado correctamente");
+      setIsDeleteModalOpen(false);
+    } catch (err: any) {
+      console.error("Error al eliminar proveedor:", err);
+      toast.error(err.message || "Error al eliminar el proveedor");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <Card className="border-l-4 border-pmd-gold hover:shadow-lg transition-shadow">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold text-pmd-darkBlue mb-2">
-              {getSupplierName()}
-            </h3>
-          </div>
+    <>
+      <Card className="border-l-4 border-pmd-gold hover:shadow-lg transition-shadow">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-pmd-darkBlue mb-2">
+                {getSupplierName()}
+              </h3>
+            </div>
 
-          <div className="space-y-2">
-            {getSupplierEmail() && (
+            <div className="space-y-2">
+              {getSupplierEmail() && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Email:</span>
+                  <span className="text-sm text-gray-900 font-medium">{getSupplierEmail()}</span>
+                </div>
+              )}
+
+              {getSupplierContact() && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Contacto:</span>
+                  <span className="text-sm text-gray-900">{getSupplierContact()}</span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Email:</span>
-                <span className="text-sm text-gray-900 font-medium">{getSupplierEmail()}</span>
+                <span className="text-sm text-gray-500">Estado:</span>
+                <Badge variant={getStatusVariant(getSupplierStatus())}>
+                  {getStatusLabel(getSupplierStatus())}
+                </Badge>
               </div>
-            )}
+            </div>
 
-            {getSupplierContact() && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Contacto:</span>
-                <span className="text-sm text-gray-900">{getSupplierContact()}</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Estado:</span>
-              <Badge variant={getStatusVariant(getSupplierStatus())}>
-                {getStatusLabel(getSupplierStatus())}
-              </Badge>
+            <div className="pt-2 flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 flex items-center justify-center gap-1"
+                onClick={() => router.push(`/suppliers/${supplier.id}`)}
+              >
+                <Eye className="h-4 w-4" />
+                Ver
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 flex items-center justify-center gap-1"
+                onClick={() => setIsEditModalOpen(true)}
+              >
+                <Edit className="h-4 w-4" />
+                Editar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar
+              </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="pt-2">
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Editar Proveedor"
+        size="lg"
+      >
+        <SupplierForm
+          initialData={supplier}
+          onSubmit={handleUpdate}
+          onCancel={() => setIsEditModalOpen(false)}
+          isLoading={isSubmitting}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmar Eliminación"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            ¿Estás seguro de que deseas eliminar el proveedor <strong>{getSupplierName()}</strong>?
+          </p>
+          <p className="text-sm text-gray-500">
+            Esta acción no se puede deshacer.
+          </p>
+          <div className="flex gap-3 justify-end pt-4">
             <Button
               variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => router.push(`/suppliers/${supplier.id}`)}
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isSubmitting}
             >
-              Ver proveedor
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isSubmitting ? "Eliminando..." : "Eliminar"}
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </Modal>
+    </>
   );
 }
 
