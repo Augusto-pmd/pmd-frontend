@@ -1,105 +1,246 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useCashboxes, useCashMovements, cashboxApi, cashMovementApi } from "@/hooks/api/cashboxes";
+import { useCashboxStore } from "@/store/cashboxStore";
+import { useWorks } from "@/hooks/api/works";
+import { useAuthStore } from "@/store/authStore";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Card, CardContent } from "@/components/ui/Card";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { CashboxForm } from "./components/CashboxForm";
+import { useToast } from "@/components/ui/Toast";
 
 function CashboxContent() {
-  const { cashboxes, isLoading, error } = useCashboxes();
-  const primaryCashbox = cashboxes?.[0];
-  const { movements, isLoading: movementsLoading } = useCashMovements(primaryCashbox?.id);
+  const router = useRouter();
+  const { cashboxes, isLoading, error, fetchCashboxes, closeCashbox } = useCashboxStore();
+  const { works } = useWorks();
+  const { getUserSafe } = useAuthStore();
+  const [showForm, setShowForm] = useState(false);
+  const [editingCashbox, setEditingCashbox] = useState<any>(null);
+  const toast = useToast();
 
-  if (isLoading) {
+  const user = getUserSafe();
+  const organizationId = (user as any)?.organizationId || (user as any)?.organization?.id;
+
+  useEffect(() => {
+    if (organizationId) {
+      fetchCashboxes();
+    }
+  }, [organizationId, fetchCashboxes]);
+
+  if (!organizationId) {
     return (
       <MainLayout>
-        <LoadingState message="Cargando caja…" />
+        <LoadingState message="Cargando organización..." />
       </MainLayout>
     );
   }
 
-  if (error) {
+  if (isLoading && cashboxes.length === 0) {
     return (
       <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error al cargar la caja: {error.message || "Error desconocido"}
-        </div>
+        <LoadingState message="Cargando cajas..." />
       </MainLayout>
     );
   }
 
-  const balance = primaryCashbox?.balance || 0;
+  const handleCloseCashbox = async (id: string) => {
+    if (!confirm("¿Estás seguro de cerrar esta caja? No se podrán agregar más movimientos.")) {
+      return;
+    }
+
+    try {
+      await closeCashbox(id);
+      toast.success("Caja cerrada correctamente");
+    } catch (error: any) {
+      toast.error(error.message || "Error al cerrar la caja");
+    }
+  };
+
+  const getWorkName = (workId?: string) => {
+    if (!workId) return "Sin obra asignada";
+    const work = works?.find((w: any) => w.id === workId);
+    return work?.title || work?.name || work?.nombre || `Obra ${workId.slice(0, 8)}`;
+  };
+
+  const calculateTotalMovements = (cashbox: any) => {
+    // Esto se calculará mejor cuando tengamos los movimientos cargados
+    // Por ahora retornamos el balance si existe
+    return cashbox.balance || 0;
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "No especificada";
+    try {
+      return new Date(dateString).toLocaleDateString("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
 
   return (
     <MainLayout>
       <div className="space-y-6">
         <div>
           <BotonVolver />
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Caja</h1>
-          <p className="text-gray-600">Gestión de transacciones y saldos de caja</p>
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Cajas</h1>
+              <p className="text-gray-600">Gestión de flujo de efectivo y cajas del sistema PMD</p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setEditingCashbox(null);
+                setShowForm(true);
+              }}
+            >
+              Abrir nueva caja
+            </Button>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-pmd p-6">
-          <div className="mb-6">
-            <div className="bg-gray-50 rounded-pmd p-6">
-              <p className="text-sm text-gray-600 mb-2">Saldo Actual de Caja</p>
-              <p className="text-3xl font-bold text-pmd-darkBlue">${balance.toFixed(2)}</p>
-            </div>
-          </div>
+        {showForm && (
+          <CashboxForm
+            initialData={editingCashbox}
+            onSuccess={() => {
+              setShowForm(false);
+              setEditingCashbox(null);
+              fetchCashboxes();
+            }}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingCashbox(null);
+            }}
+          />
+        )}
 
-          <div>
-            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Transacciones Recientes</h2>
-            {movementsLoading ? (
-              <LoadingState message="Cargando transacciones…" />
-            ) : movements?.length === 0 ? (
-              <EmptyState
-                title="No hay transacciones aún"
-                description="Las transacciones aparecerán aquí una vez que comiences a registrar movimientos de caja"
-              />
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+            {error}
+          </div>
+        )}
+
+        {!showForm && (
+          <>
+            {cashboxes.length === 0 ? (
+              <Card>
+                <CardContent className="p-12">
+                  <EmptyState
+                    title="No hay cajas registradas"
+                    description="Crea tu primera caja para comenzar a gestionar el flujo de efectivo"
+                    action={
+                      <Button variant="primary" onClick={() => setShowForm(true)}>
+                        Crear primera caja
+                      </Button>
+                    }
+                  />
+                </CardContent>
+              </Card>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fecha</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Descripción</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Monto</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {movements?.slice(0, 10).map((movement: any) => (
-                      <tr key={movement.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {movement.date ? new Date(movement.date).toLocaleDateString() : "-"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <Badge variant={movement.type === "income" ? "success" : "error"}>
-                            {movement.type === "income" ? "Ingreso" : movement.type === "expense" ? "Egreso" : movement.type}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{movement.description || "-"}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900 font-semibold">
-                          ${movement.amount?.toFixed(2) || "0.00"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <Badge variant={movement.status === "completed" ? "success" : "warning"}>
-                            {movement.status === "completed" ? "Completado" : movement.status === "pending" ? "Pendiente" : movement.status}
-                          </Badge>
-                        </td>
+              <div className="bg-white rounded-lg shadow-pmd overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Nombre de caja
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Obra asignada
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Fecha de apertura
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Estado
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Fecha de cierre
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Total movimientos
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Acciones
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {cashboxes.map((cashbox) => {
+                        const isClosed = cashbox.isClosed || cashbox.closedAt;
+                        return (
+                          <tr key={cashbox.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {cashbox.name || `Caja ${cashbox.id.slice(0, 8)}`}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {getWorkName(cashbox.workId)}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {formatDate(cashbox.createdAt)}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge variant={isClosed ? "default" : "success"}>
+                                {isClosed ? "Cerrada" : "Abierta"}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {cashbox.closedAt ? formatDate(cashbox.closedAt) : "-"}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-semibold text-gray-900">
+                                ${calculateTotalMovements(cashbox).toFixed(2)}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => router.push(`/cashbox/${cashbox.id}`)}
+                                >
+                                  Ver
+                                </Button>
+                                {!isClosed && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCloseCashbox(cashbox.id)}
+                                  >
+                                    Cerrar
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </MainLayout>
   );

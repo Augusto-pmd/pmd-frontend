@@ -79,23 +79,16 @@ const modules = [
 
 export function DashboardModules() {
   return (
-    <div className="space-y-6 py-6">
-      <div className="px-1">
-        <h2 className="text-2xl font-bold text-pmd-darkBlue mb-2">Módulos Principales</h2>
-        <p className="text-gray-600">Accede a las funcionalidades principales del sistema</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {modules.map((module) => (
-          <ModuleCard
-            key={module.route}
-            title={module.title}
-            description={module.description}
-            icon={module.icon}
-            route={module.route}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {modules.map((module) => (
+        <ModuleCard
+          key={module.route}
+          title={module.title}
+          description={module.description}
+          icon={module.icon}
+          route={module.route}
+        />
+      ))}
     </div>
   );
 }
-
