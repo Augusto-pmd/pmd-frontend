@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Card, CardTitle, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
@@ -43,9 +43,6 @@ export function CashboxCard({ cashbox }: CashboxCardProps) {
     if (statusLower === "abierta" || statusLower === "open" || statusLower === "opened") {
       return "success";
     }
-    if (statusLower === "cerrada" || statusLower === "closed" || statusLower === "closed") {
-      return "default";
-    }
     return "default";
   };
 
@@ -70,63 +67,61 @@ export function CashboxCard({ cashbox }: CashboxCardProps) {
   };
 
   const status = getCashboxStatus();
-  const isOpen = status.toLowerCase() === "abierta" || status.toLowerCase() === "open" || status.toLowerCase() === "opened";
 
   return (
-    <Card
-      className={`border-l-4 hover:bg-white/15 transition-all ${
-        isOpen ? "border-green-500/60" : "border-gray-400/60"
-      }`}
-    >
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-pmd-darkBlue">{getCashboxName()}</h3>
-              <Badge variant={getStatusVariant(status)}>{getStatusLabel(status)}</Badge>
-            </div>
+    <Card>
+      <CardContent style={{ padding: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <CardTitle style={{ margin: 0 }}>{getCashboxName()}</CardTitle>
+            <Badge variant={getStatusVariant(status)}>{getStatusLabel(status)}</Badge>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Fecha de apertura:</span>
-              <span className="text-sm text-gray-900 font-medium">
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "13px", color: "var(--apple-text-secondary)" }}>
+                Fecha de apertura:
+              </span>
+              <span style={{ fontSize: "13px", color: "var(--apple-text-primary)", fontWeight: 500 }}>
                 {formatDate(cashbox.fechaApertura || cashbox.openingDate || cashbox.openDate)}
               </span>
             </div>
 
             {(cashbox.fechaCierre || cashbox.closingDate || cashbox.closeDate) && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Fecha de cierre:</span>
-                <span className="text-sm text-gray-900 font-medium">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "13px", color: "var(--apple-text-secondary)" }}>
+                  Fecha de cierre:
+                </span>
+                <span style={{ fontSize: "13px", color: "var(--apple-text-primary)", fontWeight: 500 }}>
                   {formatDate(cashbox.fechaCierre || cashbox.closingDate || cashbox.closeDate)}
                 </span>
               </div>
             )}
 
             {(cashbox.balance !== undefined || cashbox.saldo !== undefined) && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Saldo:</span>
-                <span className="text-sm text-gray-900 font-semibold">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "13px", color: "var(--apple-text-secondary)" }}>
+                  Saldo:
+                </span>
+                <span style={{ fontSize: "13px", color: "var(--apple-text-primary)", fontWeight: 600 }}>
                   ${((cashbox.balance || cashbox.saldo) || 0).toFixed(2)}
                 </span>
               </div>
             )}
           </div>
-
-          <div className="pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => router.push(`/cashboxes/${cashbox.id}`)}
-            >
-              Ver caja
-            </Button>
-          </div>
         </div>
       </CardContent>
+
+      <CardFooter style={{ margin: 0, padding: 0, border: "none" }}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push(`/cashboxes/${cashbox.id}`)}
+          style={{ width: "100%" }}
+        >
+          Ver caja
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
-

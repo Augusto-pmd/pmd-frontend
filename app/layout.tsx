@@ -1,3 +1,5 @@
+import "../styles/ui-system.css";
+import "../styles/motion.css";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 

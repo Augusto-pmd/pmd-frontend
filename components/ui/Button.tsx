@@ -14,25 +14,109 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles =
-    "font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#0A84FF]/40 focus:ring-offset-1 apple-transition";
-
-  const variants = {
-    primary: "bg-gradient-to-r from-[#162F7F] to-[#0A84FF] text-white backdrop-blur-xl shadow-[0_4px_20px_rgba(22,47,127,0.25)] hover:opacity-90",
-    secondary: "bg-white/30 border border-white/20 rounded-xl text-[#3A3A3C] backdrop-blur-xl hover:bg-white/40",
-    outline: "border border-gray-300/40 text-[#3A3A3C] hover:bg-white/30 backdrop-blur-sm",
-    ghost: "text-[#0A84FF] hover:bg-white/30 backdrop-blur-sm",
-    icon: "bg-white/30 backdrop-blur-xl rounded-xl p-2 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:bg-white/40",
+  const baseStyles = {
+    fontFamily: "Inter, system-ui, sans-serif",
+    fontWeight: 500,
+    borderRadius: "var(--radius-lg)",
+    height: "44px",
+    border: "1px solid rgba(0,0,0,0.15)",
+    backgroundColor: "var(--apple-surface)",
+    color: "var(--apple-text-primary)",
+    transition: "background-color var(--apple-duration-fast) var(--apple-ease), border-color var(--apple-duration-fast) var(--apple-ease), box-shadow var(--apple-duration-fast) var(--apple-ease), transform var(--apple-duration-fast) var(--apple-ease)",
+    outline: "none",
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "none",
   };
 
-  const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-2.5 text-sm",
+  const hoverStyles = {
+    backgroundColor: "var(--apple-button-hover)",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+  };
+
+  const activeStyles = {
+    backgroundColor: "var(--apple-button-active)",
+    transform: "scale(0.985)",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+  };
+
+  const variants: Record<string, React.CSSProperties> = {
+    primary: baseStyles,
+    secondary: baseStyles,
+    outline: baseStyles,
+    ghost: {
+      ...baseStyles,
+      border: "none",
+      backgroundColor: "transparent",
+      color: "var(--apple-blue)",
+    },
+    icon: {
+      ...baseStyles,
+      width: "44px",
+      height: "44px",
+      padding: 0,
+      border: "1px solid var(--apple-border)",
+    },
+  };
+
+  const sizes: Record<string, React.CSSProperties> = {
+    sm: {
+      padding: "0 var(--space-sm)",
+      fontSize: "13px",
+      height: "36px",
+    },
+    md: {
+      padding: "0 var(--space-md)",
+      fontSize: "14px",
+      height: "44px",
+    },
+    lg: {
+      padding: "0 var(--space-lg)",
+      fontSize: "15px",
+      height: "48px",
+    },
+  };
+
+  const combinedStyle = {
+    ...variants[variant],
+    ...sizes[size],
+    ...(props.disabled && { opacity: 0.5, cursor: "not-allowed" }),
   };
 
   return (
-    <button className={cn(baseStyles, variants[variant], sizes[size], className)} {...props}>
+    <button
+      className={cn(className)}
+      style={combinedStyle}
+      onMouseEnter={(e) => {
+        if (!props.disabled) {
+          Object.assign(e.currentTarget.style, hoverStyles);
+        }
+      }}
+      onMouseLeave={(e) => {
+        Object.assign(e.currentTarget.style, combinedStyle);
+      }}
+      onMouseDown={(e) => {
+        if (!props.disabled) {
+          Object.assign(e.currentTarget.style, activeStyles);
+        }
+      }}
+      onMouseUp={(e) => {
+        if (!props.disabled) {
+          Object.assign(e.currentTarget.style, hoverStyles);
+        }
+      }}
+      onFocus={(e) => {
+        if (!props.disabled) {
+          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,122,255,0.25)";
+        }
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.boxShadow = combinedStyle.boxShadow || "none";
+      }}
+      {...props}
+    >
       {children}
     </button>
   );

@@ -11,103 +11,16 @@
   }
   
   html {
-    @apply bg-white;
+    background: var(--apple-canvas, #F5F5F7);
   }
   
   body {
-    @apply bg-white text-[#1C1C1E];
+    background: var(--apple-canvas, #F5F5F7);
+    color: var(--apple-text-primary, #1C1C1E);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "kern" 1;
     text-rendering: optimizeLegibility;
-  }
-  
-  * {
-    @apply border-white/20;
-  }
-  
-  /* Apple-like transitions */
-  * {
-    transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-  }
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-  
-  /* Apple Base Colors */
-  .apple-base {
-    @apply bg-white/40 backdrop-blur-xl border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.06)];
-  }
-  
-  /* Apple Vibrancy Effects */
-  .apple-vibrancy {
-    @apply bg-white/30 backdrop-blur-2xl;
-    mix-blend-mode: luminosity;
-  }
-  
-  .apple-vibrancy-overlay {
-    mix-blend-mode: overlay;
-  }
-  
-  /* Depth Hierarchy - Level 1: Background */
-  .depth-1 {
-    @apply bg-white;
-  }
-  
-  /* Depth Hierarchy - Level 2: Panels */
-  .depth-2 {
-    @apply bg-white/50 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)];
-  }
-  
-  /* Depth Hierarchy - Level 3: Floating Elements */
-  .depth-3 {
-    @apply bg-white/70 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)];
-  }
-  
-  /* Apple Glass utilities */
-  .apple-glass {
-    @apply bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)];
-  }
-  
-  .apple-glass-strong {
-    @apply bg-white/70 backdrop-blur-2xl border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.06)];
-  }
-  
-  .apple-sidebar {
-    @apply bg-white/30 backdrop-blur-2xl border-r border-white/20;
-    mix-blend-mode: luminosity;
-  }
-  
-  .apple-card {
-    @apply bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-6;
-  }
-  
-  .apple-button-primary {
-    @apply bg-gradient-to-r from-[#162F7F] to-[#0A84FF] rounded-xl text-white backdrop-blur-xl shadow-[0_4px_20px_rgba(22,47,127,0.25)];
-    transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
-  }
-  
-  .apple-button-secondary {
-    @apply bg-white/30 border border-white/20 rounded-xl text-[#3A3A3C] backdrop-blur-xl;
-    transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
-  }
-  
-  .apple-input {
-    @apply bg-white/70 border-gray-300/40 rounded-xl shadow-inner focus:ring-[#0A84FF]/40 outline-none;
-    transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
-  }
-  
-  /* Apple-like animations */
-  .apple-transition {
-    transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
-  }
-  
-  /* Icon wrapper for filled minimal style */
-  .apple-icon {
-    @apply text-[#636366];
   }
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/Input";
+import { InputField, SelectField, TextareaField } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
 import { useWorks } from "@/hooks/api/works";
+import styles from "@/components/ui/form.module.css";
 
 interface ClientFormProps {
   initialData?: any;
@@ -92,18 +93,23 @@ export function ClientForm({ initialData, onSubmit, onCancel, isLoading }: Clien
     }));
   };
 
+  const statusOptions = [
+    { value: "activo", label: "Activo" },
+    { value: "inactivo", label: "Inactivo" },
+  ];
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Nombre *"
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <InputField
+        label="Nombre"
+        required
         value={formData.name}
         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
         error={errors.name}
-        required
         placeholder="Nombre completo del cliente"
       />
 
-      <Input
+      <InputField
         label="Email"
         type="email"
         value={formData.email}
@@ -112,7 +118,7 @@ export function ClientForm({ initialData, onSubmit, onCancel, isLoading }: Clien
         placeholder="cliente@ejemplo.com"
       />
 
-      <Input
+      <InputField
         label="Teléfono"
         value={formData.phone}
         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -120,62 +126,83 @@ export function ClientForm({ initialData, onSubmit, onCancel, isLoading }: Clien
         placeholder="+54 9 11 1234-5678"
       />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
-        <textarea
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          rows={3}
-          placeholder="Dirección completa del cliente"
-        />
-      </div>
+      <TextareaField
+        label="Dirección"
+        value={formData.address}
+        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+        rows={3}
+        placeholder="Dirección completa del cliente"
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Notas internas</label>
-        <textarea
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          rows={3}
-          placeholder="Notas adicionales sobre el cliente"
-        />
-      </div>
+      <TextareaField
+        label="Notas internas"
+        value={formData.notes}
+        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+        rows={3}
+        placeholder="Notas adicionales sobre el cliente"
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-        <select
-          value={formData.status}
-          onChange={(e) => setFormData({ ...formData, status: e.target.value as "activo" | "inactivo" })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
+      <SelectField
+        label="Estado"
+        value={formData.status}
+        onChange={(e) => setFormData({ ...formData, status: e.target.value as "activo" | "inactivo" })}
+        options={statusOptions}
+      />
+
+      <div className={styles.formField}>
+        <label className={styles.label}>Obras Vinculadas</label>
+        <div
+          style={{
+            border: "1px solid var(--apple-border-strong)",
+            borderRadius: "var(--radius-md)",
+            padding: "var(--space-md)",
+            maxHeight: "192px",
+            overflowY: "auto",
+            backgroundColor: "var(--apple-surface)",
+          }}
         >
-          <option value="activo">Activo</option>
-          <option value="inactivo">Inactivo</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Obras Vinculadas</label>
-        <div className="border border-gray-300 rounded-pmd p-4 max-h-48 overflow-y-auto">
           {works.length === 0 ? (
-            <p className="text-sm text-gray-500">No hay obras disponibles</p>
+            <p style={{ font: "var(--font-body)", color: "var(--apple-text-secondary)", margin: 0 }}>
+              No hay obras disponibles
+            </p>
           ) : (
-            <div className="space-y-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
               {works.map((work: any) => {
                 const workName = work.name || work.title || work.nombre || work.id;
                 const isSelected = formData.projects.includes(work.id);
                 return (
                   <label
                     key={work.id}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "var(--space-sm)",
+                      cursor: "pointer",
+                      padding: "var(--space-xs) var(--space-sm)",
+                      borderRadius: "var(--radius-md)",
+                      transition: "background-color 200ms ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "var(--apple-hover)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleProject(work.id)}
-                      className="rounded border-gray-300 text-pmd-gold focus:ring-pmd-gold"
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        cursor: "pointer",
+                        accentColor: "var(--apple-blue)",
+                      }}
                     />
-                    <span className="text-sm text-gray-700">{workName}</span>
+                    <span style={{ font: "var(--font-body)", color: "var(--apple-text-primary)" }}>
+                      {workName}
+                    </span>
                   </label>
                 );
               })}
@@ -183,18 +210,25 @@ export function ClientForm({ initialData, onSubmit, onCancel, isLoading }: Clien
           )}
         </div>
         {formData.projects.length > 0 && (
-          <p className="mt-2 text-xs text-gray-500">
+          <p
+            style={{
+              marginTop: "var(--space-xs)",
+              fontSize: "13px",
+              color: "var(--apple-text-secondary)",
+              fontFamily: "Inter, system-ui, sans-serif",
+            }}
+          >
             {formData.projects.length} obra{formData.projects.length !== 1 ? "s" : ""} seleccionada
             {formData.projects.length !== 1 ? "s" : ""}
           </p>
         )}
       </div>
 
-      <div className="flex gap-3 justify-end pt-4">
+      <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-sm)" }}>
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancelar
         </Button>
-        <Button type="submit" variant="primary" disabled={isLoading}>
+        <Button type="submit" variant="outline" disabled={isLoading}>
           {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
         </Button>
       </div>

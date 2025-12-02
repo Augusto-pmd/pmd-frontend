@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { InputField, SelectField, TextareaField } from "@/components/ui/FormField";
 import { useUsersStore, UserPMD } from "@/store/usersStore";
 import { useRoles } from "@/hooks/api/roles";
 import { useToast } from "@/components/ui/Toast";
+import styles from "@/components/ui/form.module.css";
 
 interface UserFormProps {
   user?: UserPMD | null;
@@ -135,141 +136,110 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     }
   };
 
+  const roleOptions = [
+    { value: "", label: "Sin rol asignado" },
+    ...roles.map((role: any) => {
+      const roleName = role.name || role.nombre || role.id;
+      return { value: role.id, label: roleName };
+    }),
+  ];
+
+  const statusOptions = [
+    { value: "active", label: "Activo" },
+    { value: "inactive", label: "Inactivo" },
+  ];
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Nombre Completo <span className="text-red-500">*</span>
-        </label>
-        <Input
-          type="text"
-          value={formData.fullName}
-          onChange={(e) => setFormData((prev: any) => ({ ...prev, fullName: e.target.value }))}
-          required
-          placeholder="Nombre completo del usuario"
-        />
-      </div>
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <InputField
+        label="Nombre Completo"
+        required
+        type="text"
+        value={formData.fullName}
+        onChange={(e) => setFormData((prev: any) => ({ ...prev, fullName: e.target.value }))}
+        placeholder="Nombre completo del usuario"
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Email <span className="text-red-500">*</span>
-        </label>
-        <Input
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData((prev: any) => ({ ...prev, email: e.target.value }))}
-          required
-          placeholder="usuario@pmd.com"
-        />
-      </div>
+      <InputField
+        label="Email"
+        required
+        type="email"
+        value={formData.email}
+        onChange={(e) => setFormData((prev: any) => ({ ...prev, email: e.target.value }))}
+        placeholder="usuario@pmd.com"
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
-        <select
-          value={formData.roleId}
-          onChange={(e) => setFormData((prev: any) => ({ ...prev, roleId: e.target.value }))}
-          className="w-full px-4 py-2 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none text-sm"
-        >
-          <option value="">Sin rol asignado</option>
-          {roles.map((role: any) => {
-            const roleName = role.name || role.nombre || role.id;
-            return (
-              <option key={role.id} value={role.id}>
-                {roleName}
-              </option>
-            );
-          })}
-        </select>
-      </div>
+      <SelectField
+        label="Rol"
+        value={formData.roleId}
+        onChange={(e) => setFormData((prev: any) => ({ ...prev, roleId: e.target.value }))}
+        options={roleOptions}
+      />
 
       {!user && (
         <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contraseña <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, password: e.target.value }))}
-              required={!user}
-              placeholder="Mínimo 6 caracteres"
-            />
-          </div>
+          <InputField
+            label="Contraseña"
+            required
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData((prev: any) => ({ ...prev, password: e.target.value }))}
+            placeholder="Mínimo 6 caracteres"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Repetir Contraseña <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, confirmPassword: e.target.value }))}
-              required={!user}
-              placeholder="Repetir contraseña"
-            />
-          </div>
+          <InputField
+            label="Repetir Contraseña"
+            required
+            type="password"
+            value={formData.confirmPassword}
+            onChange={(e) => setFormData((prev: any) => ({ ...prev, confirmPassword: e.target.value }))}
+            placeholder="Repetir contraseña"
+          />
         </>
       )}
 
       {user && (
         <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nueva Contraseña (opcional)
-            </label>
-            <Input
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, password: e.target.value }))}
-              placeholder="Dejar vacío para mantener la actual"
-            />
-          </div>
+          <InputField
+            label="Nueva Contraseña (opcional)"
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData((prev: any) => ({ ...prev, password: e.target.value }))}
+            placeholder="Dejar vacío para mantener la actual"
+          />
 
           {formData.password && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Repetir Nueva Contraseña
-              </label>
-              <Input
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData((prev: any) => ({ ...prev, confirmPassword: e.target.value }))}
-                placeholder="Repetir nueva contraseña"
-              />
-            </div>
+            <InputField
+              label="Repetir Nueva Contraseña"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, confirmPassword: e.target.value }))}
+              placeholder="Repetir nueva contraseña"
+            />
           )}
         </>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-        <select
-          value={formData.isActive ? "active" : "inactive"}
-          onChange={(e) => setFormData((prev: any) => ({ ...prev, isActive: e.target.value === "active" }))}
-          className="w-full px-4 py-2 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none text-sm"
-        >
-          <option value="active">Activo</option>
-          <option value="inactive">Inactivo</option>
-        </select>
-      </div>
+      <SelectField
+        label="Estado"
+        value={formData.isActive ? "active" : "inactive"}
+        onChange={(e) => setFormData((prev: any) => ({ ...prev, isActive: e.target.value === "active" }))}
+        options={statusOptions}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Notas Internas (opcional)</label>
-        <textarea
-          value={formData.notes}
-          onChange={(e) => setFormData((prev: any) => ({ ...prev, notes: e.target.value }))}
-          rows={3}
-          className="w-full px-4 py-2 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none text-sm"
-          placeholder="Notas internas sobre el usuario..."
-        />
-      </div>
+      <TextareaField
+        label="Notas Internas (opcional)"
+        value={formData.notes}
+        onChange={(e) => setFormData((prev: any) => ({ ...prev, notes: e.target.value }))}
+        rows={3}
+        placeholder="Notas internas sobre el usuario..."
+      />
 
-      <div className="flex gap-3 justify-end pt-4">
+      <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-sm)" }}>
         <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" disabled={isSubmitting}>
+        <Button variant="outline" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Guardando..." : user ? "Actualizar" : "Crear"}
         </Button>
       </div>

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { TableContainer } from "@/components/ui/TableContainer";
+import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/Table";
 import { useAuditStore, AuditLog } from "@/store/auditStore";
 import { useToast } from "@/components/ui/Toast";
 import { Eye, Trash2, Shield, User, Calendar, FileText } from "lucide-react";
@@ -39,9 +41,7 @@ export function AuditList({
 
   const isAdmin = user?.role === "admin";
 
-  // Filtrar logs
   const filteredLogs = logs.filter((log) => {
-    // Búsqueda
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesAction = log.action?.toLowerCase().includes(query);
@@ -51,13 +51,10 @@ export function AuditList({
       if (!matchesAction && !matchesModule && !matchesUser && !matchesDetails) return false;
     }
 
-    // Filtro de módulo
     if (moduleFilter !== "all" && log.module !== moduleFilter) return false;
 
-    // Filtro de usuario
     if (userFilter !== "all" && log.user !== userFilter && log.userId !== userFilter) return false;
 
-    // Filtro de fecha
     if (startDateFilter) {
       const logDate = log.timestamp.split("T")[0];
       if (logDate < startDateFilter) return false;
@@ -115,9 +112,17 @@ export function AuditList({
 
   if (filteredLogs.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-12 text-center">
-        <Shield className="h-12 w-12 text-[#636366] mx-auto mb-4" />
-        <p className="text-[#636366] text-lg">
+      <div style={{
+        backgroundColor: "var(--apple-surface)",
+        border: "1px solid var(--apple-border)",
+        borderRadius: "var(--radius-xl)",
+        boxShadow: "var(--shadow-apple)",
+        padding: "40px 0",
+        textAlign: "center",
+        fontFamily: "Inter, system-ui, sans-serif"
+      }}>
+        <Shield className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--apple-text-secondary)" }} />
+        <p style={{ font: "var(--font-body)", color: "var(--apple-text-secondary)" }}>
           {logs.length === 0
             ? "No hay registros de auditoría"
             : "No se encontraron registros con los filtros aplicados"}
@@ -129,105 +134,97 @@ export function AuditList({
   return (
     <>
       {isAdmin && (
-        <div className="mb-4 flex justify-end">
+        <div style={{ marginBottom: "var(--space-md)", display: "flex", justifyContent: "flex-end" }}>
           <Button
             variant="outline"
             onClick={() => setIsClearAllModalOpen(true)}
-            className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
+            style={{ display: "flex", alignItems: "center", gap: "8px", color: "#FF3B30" }}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="w-4 h-4" />
             Limpiar Todo
           </Button>
         </div>
       )}
 
-      <div className="rounded-2xl border border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-white/5 border-b border-white/10">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#636366] uppercase tracking-wider">
-                  Usuario
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#636366] uppercase tracking-wider">
-                  Módulo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#636366] uppercase tracking-wider">
-                  Acción
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#636366] uppercase tracking-wider">
-                  Fecha & Hora
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {filteredLogs.map((log, index) => (
-                <tr key={log.id} className={`hover:bg-white/5 transition-colors ${index % 2 === 0 ? 'bg-white/5' : ''}`}>
-                  <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-[#636366]" />
-                      <div>
-                        <div className="text-sm font-medium text-[#1C1C1E]">
-                          {log.userName || log.user}
-                        </div>
-                        {log.userId && log.userId !== log.user && (
-                          <div className="text-xs text-[#636366]">{log.userId}</div>
-                        )}
+      <TableContainer>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Usuario</TableHead>
+              <TableHead>Módulo</TableHead>
+              <TableHead>Acción</TableHead>
+              <TableHead>Fecha & Hora</TableHead>
+              <TableHead align="right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredLogs.map((log) => (
+              <TableRow key={log.id}>
+                <TableCell>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <User className="w-4 h-4" style={{ color: "var(--apple-text-secondary)", flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--apple-text-primary)" }}>
+                        {log.userName || log.user}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-[#636366]" />
-                      <div className="text-sm text-[#1C1C1E]">{log.module}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 border-b border-white/5">
-                    <div className="text-sm text-[#1C1C1E]">{log.action}</div>
-                    {log.details && (
-                      <div className="text-xs text-[#636366] mt-1">{log.details}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-[#636366]" />
-                      <div className="text-sm text-[#636366]">{formatTimestamp(log.timestamp)}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-b border-white/5">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/audit/${log.id}`)}
-                        className="text-[#0A84FF] hover:opacity-70"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedLog(log);
-                            setIsDeleteModalOpen(true);
-                          }}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      {log.userId && log.userId !== log.user && (
+                        <div style={{ fontSize: "12px", color: "var(--apple-text-secondary)" }}>{log.userId}</div>
                       )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <FileText className="w-4 h-4" style={{ color: "var(--apple-text-secondary)", flexShrink: 0 }} />
+                    <span style={{ fontSize: "14px", color: "var(--apple-text-primary)" }}>{log.module}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div style={{ fontSize: "14px", color: "var(--apple-text-primary)" }}>{log.action}</div>
+                  {log.details && (
+                    <div style={{ fontSize: "12px", color: "var(--apple-text-secondary)", marginTop: "4px" }}>
+                      {log.details}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Calendar className="w-4 h-4" style={{ color: "var(--apple-text-secondary)", flexShrink: 0 }} />
+                    <span style={{ fontSize: "14px", color: "var(--apple-text-secondary)" }}>
+                      {formatTimestamp(log.timestamp)}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell align="right">
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+                    <Button
+                      variant="icon"
+                      size="sm"
+                      onClick={() => router.push(`/audit/${log.id}`)}
+                      style={{ color: "var(--apple-blue)" }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="icon"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedLog(log);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        style={{ color: "#FF3B30" }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       {selectedLog && (
         <Modal
@@ -239,13 +236,17 @@ export function AuditList({
           title="Confirmar Eliminación"
           size="md"
         >
-          <div className="space-y-4">
-            <p className="text-[#3A3A3C]">
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+            <p style={{ font: "var(--font-body)", color: "var(--apple-text-primary)" }}>
               ¿Estás seguro de que deseas eliminar este registro de auditoría?
             </p>
-            <p className="text-sm text-[#636366] font-medium">{selectedLog.action}</p>
-            <p className="text-sm text-[#636366]">Esta acción no se puede deshacer.</p>
-            <div className="flex gap-3 justify-end pt-4">
+            <p style={{ fontSize: "13px", color: "var(--apple-text-secondary)", fontWeight: 500 }}>
+              {selectedLog.action}
+            </p>
+            <p style={{ fontSize: "13px", color: "var(--apple-text-secondary)" }}>
+              Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-md)" }}>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -257,10 +258,10 @@ export function AuditList({
                 Cancelar
               </Button>
               <Button
-                variant="primary"
+                variant="outline"
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                className="bg-red-600 hover:bg-red-700"
+                style={{ color: "#FF3B30", borderColor: "#FF3B30" }}
               >
                 {isSubmitting ? "Eliminando..." : "Eliminar"}
               </Button>
@@ -275,14 +276,14 @@ export function AuditList({
         title="Confirmar Limpieza Total"
         size="md"
       >
-        <div className="space-y-4">
-          <p className="text-gray-700 font-medium">
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <p style={{ font: "var(--font-body)", color: "var(--apple-text-primary)", fontWeight: 500 }}>
             ¿Estás seguro de que deseas eliminar TODOS los registros de auditoría?
           </p>
-          <p className="text-sm text-gray-500">
+          <p style={{ fontSize: "13px", color: "var(--apple-text-secondary)" }}>
             Esta acción eliminará {logs.length} registro{logs.length !== 1 ? "s" : ""} y no se puede deshacer.
           </p>
-          <div className="flex gap-3 justify-end pt-4">
+          <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-md)" }}>
             <Button
               variant="outline"
               onClick={() => setIsClearAllModalOpen(false)}
@@ -291,10 +292,10 @@ export function AuditList({
               Cancelar
             </Button>
             <Button
-              variant="primary"
+              variant="outline"
               onClick={handleClearAll}
               disabled={isSubmitting}
-              className="bg-red-600 hover:bg-red-700"
+              style={{ color: "#FF3B30", borderColor: "#FF3B30" }}
             >
               {isSubmitting ? "Limpiando..." : "Limpiar Todo"}
             </Button>

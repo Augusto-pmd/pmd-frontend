@@ -1,49 +1,61 @@
 "use client";
 
 import { ReactNode } from "react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import styles from "./modal.module.css";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  subtitle?: string;
   children: ReactNode;
+  footer?: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  className?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  size = "md",
+  className,
+}: ModalProps) {
   if (!isOpen) return null;
 
-  const sizes = {
-    sm: "max-w-md",
-    md: "max-w-lg",
-    lg: "max-w-2xl",
-    xl: "max-w-4xl",
-  };
+  const sizeClass =
+    size === "sm"
+      ? styles.modalSmall
+      : size === "md"
+      ? styles.modalMedium
+      : size === "lg"
+      ? styles.modalLarge
+      : styles.modalXLarge;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm apple-transition"
-      onClick={onClose}
-    >
+    <div className={styles.overlay} onClick={onClose}>
       <div
-        className={cn(
-          "bg-white/30 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto apple-transition",
-          sizes[size]
-        )}
+        className={cn(styles.modal, sizeClass, className)}
         onClick={(e) => e.stopPropagation()}
-        style={{ mixBlendMode: 'luminosity' }}
       >
-        <div className="sticky top-0 bg-white/30 backdrop-blur-md border-b border-white/20 px-6 py-4 flex justify-between items-center rounded-t-3xl">
-          <h2 className="text-base font-semibold text-[#1C1C1E]">{title}</h2>
+        <div className={styles.header}>
+          <h2 className={styles.title}>{title}</h2>
+          {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
           <button
             onClick={onClose}
-            className="text-[#636366] hover:text-[#1C1C1E] hover:bg-white/40 text-xl leading-none w-7 h-7 flex items-center justify-center rounded-xl apple-transition backdrop-blur-sm"
+            className={styles.closeButton}
+            aria-label="Close"
           >
-            ×
+            <X size={20} strokeWidth={2} />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className={styles.content}>{children}</div>
+        {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     </div>
   );

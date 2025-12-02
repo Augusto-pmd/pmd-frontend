@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import styles from "./table.module.css";
 
 interface TableProps {
   children: ReactNode;
@@ -8,8 +9,10 @@ interface TableProps {
 
 export function Table({ children, className }: TableProps) {
   return (
-    <div className={cn("overflow-x-auto", className)}>
-      <table className="w-full">{children}</table>
+    <div className={styles.tableWrapper}>
+      <table className={cn(styles.table, className)}>
+        {children}
+      </table>
     </div>
   );
 }
@@ -21,7 +24,7 @@ interface TableHeaderProps {
 
 export function TableHeader({ children, className }: TableHeaderProps) {
   return (
-    <thead className={cn("bg-gray-50", className)}>
+    <thead className={cn(styles.header, className)}>
       {children}
     </thead>
   );
@@ -30,11 +33,23 @@ export function TableHeader({ children, className }: TableHeaderProps) {
 interface TableRowProps {
   children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
+  onClick?: () => void;
+  isSelected?: boolean;
 }
 
-export function TableRow({ children, className }: TableRowProps) {
+export function TableRow({ children, className, style, onClick, isSelected }: TableRowProps) {
   return (
-    <tr className={cn("border-b border-gray-200", className)}>
+    <tr 
+      className={cn(
+        styles.row,
+        onClick && styles.clickable,
+        isSelected && styles.selected,
+        className
+      )}
+      style={style}
+      onClick={onClick}
+    >
       {children}
     </tr>
   );
@@ -43,11 +58,15 @@ export function TableRow({ children, className }: TableRowProps) {
 interface TableHeadProps {
   children: ReactNode;
   className?: string;
+  align?: "left" | "right" | "center";
 }
 
-export function TableHead({ children, className }: TableHeadProps) {
+export function TableHead({ children, className, align = "left" }: TableHeadProps) {
   return (
-    <th className={cn("px-4 py-3 text-left text-sm font-semibold text-gray-700", className)}>
+    <th 
+      className={cn(styles.head, className)}
+      style={{ textAlign: align }}
+    >
       {children}
     </th>
   );
@@ -60,7 +79,7 @@ interface TableBodyProps {
 
 export function TableBody({ children, className }: TableBodyProps) {
   return (
-    <tbody className={cn("divide-y divide-gray-200", className)}>
+    <tbody className={cn(styles.body, className)}>
       {children}
     </tbody>
   );
@@ -69,13 +88,32 @@ export function TableBody({ children, className }: TableBodyProps) {
 interface TableCellProps {
   children: ReactNode;
   className?: string;
+  align?: "left" | "right" | "center";
+  style?: React.CSSProperties;
 }
 
-export function TableCell({ children, className }: TableCellProps) {
+export function TableCell({ children, className, align = "left", style }: TableCellProps) {
   return (
-    <td className={cn("px-4 py-3 text-sm text-gray-900", className)}>
+    <td 
+      className={cn(styles.cell, className)}
+      style={{ textAlign: align, ...style }}
+    >
       {children}
     </td>
   );
 }
 
+interface TableEmptyProps {
+  message?: string;
+  className?: string;
+}
+
+export function TableEmpty({ message = "No data available", className }: TableEmptyProps) {
+  return (
+    <tr>
+      <td colSpan={100} className={cn(styles.empty, className)}>
+        {message}
+      </td>
+    </tr>
+  );
+}

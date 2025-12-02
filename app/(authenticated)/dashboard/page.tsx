@@ -107,211 +107,251 @@ function DashboardContent() {
     }).format(amount);
   };
 
+  // KPI Card Component
+  const KPICard = ({ 
+    label, 
+    value, 
+    subtitle, 
+    icon: Icon,
+    warning 
+  }: { 
+    label: string; 
+    value: string | number; 
+    subtitle?: string;
+    icon: any;
+    warning?: string;
+  }) => (
+    <div 
+      className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl shadow-[0px_8px_24px_rgba(0,0,0,0.06)] p-6 transition-all duration-200 hover:shadow-[0px_12px_32px_rgba(0,0,0,0.08)]"
+      style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p 
+            className="text-[13px] text-[#7A7A7C] mb-2 uppercase tracking-wide"
+            style={{ fontWeight: 400 }}
+          >
+            {label}
+          </p>
+          <p 
+            className="text-[28px] text-[#1C1C1E] mb-1"
+            style={{ fontWeight: 600 }}
+          >
+            {value}
+          </p>
+          {subtitle && (
+            <p 
+              className="text-[13px] text-[#7A7A7C]"
+              style={{ fontWeight: 400 }}
+            >
+              {subtitle}
+            </p>
+          )}
+          {warning && (
+            <p 
+              className="text-[13px] text-[#7A7A7C] mt-1"
+              style={{ fontWeight: 400 }}
+            >
+              {warning}
+            </p>
+          )}
+        </div>
+        <Icon 
+          className="w-5 h-5 text-[#1C1C1E] flex-shrink-0 mt-1" 
+          strokeWidth={2}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-base font-semibold text-[#1C1C1E] mb-1">Dashboard PMD</h1>
-          <p className="text-sm text-[#636366]">Resumen ejecutivo del sistema</p>
+      <div className="p-6 lg:p-8" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+        {/* Header Section */}
+        <div className="mb-10">
+          <h1 
+            className="text-[24px] text-[#1C1C1E] mb-2"
+            style={{ fontWeight: 600 }}
+          >
+            Dashboard PMD
+          </h1>
+          <p 
+            className="text-[15px] text-[#7A7A7C]"
+            style={{ fontWeight: 400 }}
+          >
+            Resumen ejecutivo del sistema
+          </p>
         </div>
 
-        {/* KPIs Grid - Primera Fila */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Obras Activas */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Obras</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{activeWorks}</p>
-                <p className="text-xs text-[#636366] mt-0.5">de {totalWorks} totales</p>
-              </div>
-              <Building2 className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
-
-          {/* Ingresos Contabilidad */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Ingresos</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{formatCurrency(accountingIngresos || totalRevenue)}</p>
-              </div>
-              <DollarSign className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
-
-          {/* Egresos Contabilidad */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Egresos</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{formatCurrency(accountingEgresos || totalExpenses)}</p>
-              </div>
-              <TrendingUp className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
-
-          {/* Alertas Activas */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Alertas</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{pendingAlerts}</p>
-                {highSeverityAlerts > 0 && (
-                  <p className="text-xs text-red-600 mt-0.5">{highSeverityAlerts} alta severidad</p>
-                )}
-              </div>
-              <Bell className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
+        {/* KPIs Grid - First Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+          <KPICard
+            label="Obras"
+            value={activeWorks}
+            subtitle={`de ${totalWorks} totales`}
+            icon={Building2}
+          />
+          <KPICard
+            label="Ingresos"
+            value={formatCurrency(accountingIngresos || totalRevenue)}
+            icon={DollarSign}
+          />
+          <KPICard
+            label="Egresos"
+            value={formatCurrency(accountingEgresos || totalExpenses)}
+            icon={TrendingUp}
+          />
+          <KPICard
+            label="Alertas"
+            value={pendingAlerts}
+            warning={highSeverityAlerts > 0 ? `${highSeverityAlerts} alta severidad` : undefined}
+            icon={Bell}
+          />
         </div>
 
-        {/* KPIs Grid - Segunda Fila */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Staff */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">RRHH</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{activeEmployees}</p>
-                <p className="text-xs text-[#636366] mt-0.5">de {totalEmployees} totales</p>
-              </div>
-              <Users className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
-
-          {/* Proveedores */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Proveedores</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{activeSuppliers}</p>
-                <p className="text-xs text-[#636366] mt-0.5">de {totalSuppliers} totales</p>
-              </div>
-              <Truck className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
-
-          {/* Clientes */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Clientes</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{activeClients}</p>
-                <p className="text-xs text-[#636366] mt-0.5">de {totalClients} totales</p>
-              </div>
-              <UserRound className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
-
-          {/* Cajas */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Cajas</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{openCashboxes}</p>
-                <p className="text-xs text-[#636366] mt-0.5">de {totalCashboxes} totales</p>
-              </div>
-              <Wallet className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
+        {/* KPIs Grid - Second Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+          <KPICard
+            label="RRHH"
+            value={activeEmployees}
+            subtitle={`de ${totalEmployees} totales`}
+            icon={Users}
+          />
+          <KPICard
+            label="Proveedores"
+            value={activeSuppliers}
+            subtitle={`de ${totalSuppliers} totales`}
+            icon={Truck}
+          />
+          <KPICard
+            label="Clientes"
+            value={activeClients}
+            subtitle={`de ${totalClients} totales`}
+            icon={UserRound}
+          />
+          <KPICard
+            label="Cajas"
+            value={openCashboxes}
+            subtitle={`de ${totalCashboxes} totales`}
+            icon={Wallet}
+          />
         </div>
 
-        {/* KPIs Grid - Tercera Fila */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Documentos */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Documentos</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{totalDocuments}</p>
-                {pendingDocuments > 0 && (
-                  <p className="text-xs text-yellow-600 mt-0.5">{pendingDocuments} pendientes</p>
-                )}
-              </div>
-              <FolderOpen className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
-
-          {/* Balance Neto */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Balance Neto</p>
-                <p className={`text-2xl font-semibold ${netBalance >= 0 ? 'text-[#1C1C1E]' : 'text-red-600'}`}>
-                  {formatCurrency(netBalance)}
-                </p>
-              </div>
-              <TrendingUp className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
-
-          {/* Contratos */}
-          <div className="bg-white/50 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs text-[#636366] mb-1.5 uppercase tracking-wide font-medium">Contratos</p>
-                <p className="text-2xl font-semibold text-[#1C1C1E]">{activeContracts}</p>
-              </div>
-              <Briefcase className="h-5 w-5 text-[#636366] flex-shrink-0 mt-0.5" />
-            </div>
-          </div>
+        {/* KPIs Grid - Third Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+          <KPICard
+            label="Documentos"
+            value={totalDocuments}
+            warning={pendingDocuments > 0 ? `${pendingDocuments} pendientes` : undefined}
+            icon={FolderOpen}
+          />
+          <KPICard
+            label="Balance Neto"
+            value={formatCurrency(netBalance)}
+            icon={TrendingUp}
+          />
+          <KPICard
+            label="Contratos"
+            value={activeContracts}
+            icon={Briefcase}
+          />
         </div>
 
         {/* Separator */}
-        <div className="border-t border-white/20"></div>
+        <div className="border-t border-[rgba(0,0,0,0.08)] mb-10"></div>
 
-        {/* Módulos Principales */}
-        <div>
-          <h2 className="text-base font-semibold text-[#1C1C1E] mb-4">Módulos Principales</h2>
+        {/* Main Modules Section */}
+        <div className="mb-10">
+          <h2 
+            className="text-[24px] text-[#1C1C1E] mb-6"
+            style={{ fontWeight: 600 }}
+          >
+            Módulos Principales
+          </h2>
           <DashboardModules />
         </div>
 
         {/* Separator */}
-        <div className="border-t border-white/20"></div>
+        <div className="border-t border-[rgba(0,0,0,0.08)] mb-10"></div>
 
-        {/* Actividad y Acciones */}
+        {/* Activity and Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Actividad Reciente */}
-          <div className="bg-white/50 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition">
-            <div className="flex items-center gap-2 mb-5">
-              <Activity className="h-4 w-4 text-[#636366]" />
-              <h2 className="text-base font-semibold text-[#1C1C1E]">Actividad Reciente</h2>
+          {/* Recent Activity */}
+          <div 
+            className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl shadow-[0px_8px_24px_rgba(0,0,0,0.06)] p-6"
+          >
+            <div className="flex items-center gap-2 mb-6">
+              <Activity className="w-5 h-5 text-[#1C1C1E]" strokeWidth={2} />
+              <h2 
+                className="text-[17px] text-[#1C1C1E]"
+                style={{ fontWeight: 500 }}
+              >
+                Actividad Reciente
+              </h2>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {works?.slice(0, 5).map((work: any) => (
-                <div key={work.id} className="flex justify-between items-start pb-3 border-b border-white/20 last:border-0 last:pb-0">
+                <div 
+                  key={work.id} 
+                  className="flex justify-between items-start pb-4 border-b border-[rgba(0,0,0,0.08)] last:border-0 last:pb-0"
+                >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1C1C1E] truncate">
+                    <p 
+                      className="text-[14px] text-[#1C1C1E] truncate mb-1"
+                      style={{ fontWeight: 500 }}
+                    >
                       {work.name || work.title || work.nombre}
                     </p>
-                    <p className="text-xs text-[#636366] mt-0.5 capitalize">
+                    <p 
+                      className="text-[13px] text-[#7A7A7C] capitalize"
+                      style={{ fontWeight: 400 }}
+                    >
                       {work.status || "Sin estado"}
                     </p>
                   </div>
                 </div>
               ))}
               {(!works || works.length === 0) && (
-                <p className="text-xs text-[#636366] text-center py-4">No hay actividad reciente</p>
+                <p 
+                  className="text-[13px] text-[#7A7A7C] text-center py-8"
+                  style={{ fontWeight: 400 }}
+                >
+                  No hay actividad reciente
+                </p>
               )}
             </div>
           </div>
 
-          {/* Acciones Rápidas */}
-          <div className="bg-white/50 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] apple-transition">
-            <div className="flex items-center gap-2 mb-5">
-              <FileText className="h-4 w-4 text-[#636366]" />
-              <h2 className="text-base font-semibold text-[#1C1C1E]">Acciones Rápidas</h2>
+          {/* Quick Actions */}
+          <div 
+            className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl shadow-[0px_8px_24px_rgba(0,0,0,0.06)] p-6"
+          >
+            <div className="flex items-center gap-2 mb-6">
+              <FileText className="w-5 h-5 text-[#1C1C1E]" strokeWidth={2} />
+              <h2 
+                className="text-[17px] text-[#1C1C1E]"
+                style={{ fontWeight: 500 }}
+              >
+                Acciones Rápidas
+              </h2>
             </div>
-            <div className="space-y-2">
-              <button className="w-full text-left px-4 py-2.5 bg-white/30 hover:bg-white/40 rounded-xl border border-white/20 apple-transition text-sm text-[#3A3A3C] backdrop-blur-sm">
+            <div className="space-y-3">
+              <button 
+                className="w-full text-left px-4 py-3 bg-white text-[#1C1C1E] border border-[rgba(0,0,0,0.15)] rounded-xl transition-all duration-200 hover:bg-[#F2F2F2] active:bg-[#E8E8E8] text-[14px]"
+                style={{ fontWeight: 500 }}
+              >
                 Ver Reportes
               </button>
-              <button className="w-full text-left px-4 py-2.5 bg-white/30 hover:bg-white/40 rounded-xl border border-white/20 apple-transition text-sm text-[#3A3A3C] backdrop-blur-sm">
+              <button 
+                className="w-full text-left px-4 py-3 bg-white text-[#1C1C1E] border border-[rgba(0,0,0,0.15)] rounded-xl transition-all duration-200 hover:bg-[#F2F2F2] active:bg-[#E8E8E8] text-[14px]"
+                style={{ fontWeight: 500 }}
+              >
                 Gestionar Contratos
               </button>
-              <button className="w-full text-left px-4 py-2.5 bg-white/30 hover:bg-white/40 rounded-xl border border-white/20 apple-transition text-sm text-[#3A3A3C] backdrop-blur-sm">
+              <button 
+                className="w-full text-left px-4 py-3 bg-white text-[#1C1C1E] border border-[rgba(0,0,0,0.15)] rounded-xl transition-all duration-200 hover:bg-[#F2F2F2] active:bg-[#E8E8E8] text-[14px]"
+                style={{ fontWeight: 500 }}
+              >
                 Revisar Alertas
               </button>
             </div>

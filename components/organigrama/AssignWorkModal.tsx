@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { SelectField } from "@/components/ui/FormField";
 import { useWorks } from "@/hooks/api/works";
 import { employeeApi } from "@/hooks/api/employees";
 import { useToast } from "@/components/ui/Toast";
@@ -57,47 +58,38 @@ export function AssignWorkModal({
 
   const name = employee.fullName || employee.name || employee.nombre || "Sin nombre";
 
+  const workOptions = [
+    { value: "", label: "Sin obra asignada" },
+    ...works.map((work: any) => {
+      const workName = work.name || work.title || work.nombre || work.id;
+      return { value: work.id, label: workName };
+    }),
+  ];
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Asignar Obra" size="md">
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600">
-          Selecciona una obra para asignar a <strong>{name}</strong>
-        </p>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Obra
-          </label>
-          <select
-            value={selectedWorkId}
-            onChange={(e) => setSelectedWorkId(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none text-sm"
-          >
-            <option value="">Sin obra asignada</option>
-            {works.map((work: any) => {
-              const workName = work.name || work.title || work.nombre || work.id;
-              return (
-                <option key={work.id} value={work.id}>
-                  {workName}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-
-        <div className="flex gap-3 justify-end pt-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Asignar Obra"
+      subtitle={`Selecciona una obra para asignar a ${name}`}
+      size="md"
+      footer={
+        <>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
+          <Button variant="outline" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? "Asignando..." : "Asignar"}
           </Button>
-        </div>
-      </div>
+        </>
+      }
+    >
+      <SelectField
+        label="Obra"
+        value={selectedWorkId}
+        onChange={(e) => setSelectedWorkId(e.target.value)}
+        options={workOptions}
+      />
     </Modal>
   );
 }

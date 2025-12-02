@@ -1,17 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { LucideIcon } from "lucide-react";
+import { Card, CardTitle, CardContent } from "@/components/ui/Card";
 
 interface ModuleCardProps {
   title: string;
   description: string;
-  icon: string;
+  icon: LucideIcon;
   route: string;
   className?: string;
 }
 
-export function ModuleCard({ title, description, icon, route, className }: ModuleCardProps) {
+export function ModuleCard({ title, description, icon: Icon, route, className }: ModuleCardProps) {
   const router = useRouter();
 
   const handleClick = () => {
@@ -19,24 +20,31 @@ export function ModuleCard({ title, description, icon, route, className }: Modul
   };
 
   return (
-    <div
-      onClick={handleClick}
-      className={cn(
-        "cursor-pointer rounded-2xl border border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 hover:bg-white/60 apple-transition",
-        className
-      )}
-    >
-      <div className="flex items-start gap-4">
-        <div className="text-2xl flex-shrink-0">
-          {icon}
+    <Card onClick={handleClick} className={className}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon 
+            className="w-5 h-5"
+            style={{ color: "var(--apple-text-primary)" }}
+          />
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-[#1C1C1E] mb-1.5">
-            {title}
-          </h3>
-          <p className="text-xs text-[#636366] line-clamp-2 leading-relaxed">{description}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <CardTitle>{title}</CardTitle>
+          <CardContent style={{ padding: 0, margin: 0 }}>
+            <p style={{ 
+              fontSize: "13px", 
+              color: "var(--apple-text-secondary)", 
+              lineHeight: 1.5,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden"
+            }}>
+              {description}
+            </p>
+          </CardContent>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

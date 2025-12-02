@@ -121,57 +121,197 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md px-4">
-      <div className="bg-white/30 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8" style={{ mixBlendMode: 'luminosity' }}>
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-[#1C1C1E] mb-1">PMD</h1>
-          <p className="text-sm text-[#636366]">Management System</p>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-5">
-      {error && (
-        <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-700 px-4 py-3 rounded-xl text-sm">
-          {error}
-        </div>
-      )}
-
-      <div>
-        <label htmlFor="email" className="block text-xs font-medium text-[#3A3A3C] mb-1.5">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full px-3 py-2 text-sm bg-white/70 border-gray-300/40 rounded-xl text-[#1C1C1E] placeholder:text-[#AEAEB2] shadow-inner focus:ring-2 focus:ring-[#0A84FF]/40 focus:border-[#0A84FF]/50 outline-none apple-transition"
-          placeholder="your.email@example.com"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="password" className="block text-xs font-medium text-[#3A3A3C] mb-1.5">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full px-3 py-2 text-sm bg-white/70 border-gray-300/40 rounded-xl text-[#1C1C1E] placeholder:text-[#AEAEB2] shadow-inner focus:ring-2 focus:ring-[#0A84FF]/40 focus:border-[#0A84FF]/50 outline-none apple-transition"
-          placeholder="••••••••"
-        />
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-gradient-to-r from-[#162F7F] to-[#0A84FF] text-white backdrop-blur-xl rounded-xl px-4 py-2 hover:opacity-90 apple-transition shadow-[0_4px_20px_rgba(22,47,127,0.25)] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+    <div className="w-full max-w-[420px]">
+      {/* Main Card Container */}
+      <div
+        style={{
+          backgroundColor: "var(--apple-surface)",
+          border: "1px solid var(--apple-border)",
+          borderRadius: "var(--radius-xl)",
+          boxShadow: "var(--shadow-apple-strong)",
+          padding: "var(--space-xl)",
+          fontFamily: "Inter, system-ui, sans-serif",
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-lg)",
+        }}
       >
-        {loading ? "Signing in..." : "Sign In"}
-      </button>
-    </form>
+        {/* Header */}
+        <div style={{ textAlign: "center" }}>
+          <h1
+            style={{
+              font: "var(--font-title)",
+              color: "var(--apple-text-primary)",
+              margin: "0 0 var(--space-xs) 0",
+            }}
+          >
+            PMD
+          </h1>
+          <p
+            style={{
+              font: "var(--font-body)",
+              color: "var(--apple-text-secondary)",
+              margin: 0,
+            }}
+          >
+            Management System
+          </p>
+        </div>
+
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-md)",
+          }}
+        >
+          {/* Error Message */}
+          {error && (
+            <div
+              style={{
+                backgroundColor: "rgba(255,59,48,0.1)",
+                border: "1px solid rgba(255,59,48,0.3)",
+                color: "rgba(255,59,48,1)",
+                padding: "var(--space-sm) var(--space-md)",
+                borderRadius: "var(--radius-md)",
+                fontSize: "14px",
+                fontFamily: "Inter, system-ui, sans-serif",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Email Input */}
+          <div>
+            <label
+              htmlFor="email"
+              style={{
+                display: "block",
+                font: "var(--font-label)",
+                color: "var(--apple-text-secondary)",
+                marginBottom: "6px",
+              }}
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="your.email@example.com"
+              style={{
+                width: "100%",
+                height: "42px",
+                backgroundColor: "var(--apple-surface)",
+                border: "1px solid var(--apple-border-strong)",
+                borderRadius: "var(--radius-md)",
+                padding: "0 14px",
+                fontSize: "14px",
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "var(--apple-text-primary)",
+                outline: "none",
+                transition: "all 200ms ease",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.border = "1px solid var(--apple-blue)";
+                e.currentTarget.style.boxShadow =
+                  "0 0 0 2px rgba(0,122,255,0.15)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.border = "1px solid var(--apple-border-strong)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          {/* Password Input */}
+          <div>
+            <label
+              htmlFor="password"
+              style={{
+                display: "block",
+                font: "var(--font-label)",
+                color: "var(--apple-text-secondary)",
+                marginBottom: "6px",
+              }}
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+              style={{
+                width: "100%",
+                height: "42px",
+                backgroundColor: "var(--apple-surface)",
+                border: "1px solid var(--apple-border-strong)",
+                borderRadius: "var(--radius-md)",
+                padding: "0 14px",
+                fontSize: "14px",
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "var(--apple-text-primary)",
+                outline: "none",
+                transition: "all 200ms ease",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.border = "1px solid var(--apple-blue)";
+                e.currentTarget.style.boxShadow =
+                  "0 0 0 2px rgba(0,122,255,0.15)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.border = "1px solid var(--apple-border-strong)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          {/* Login Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: "100%",
+              height: "44px",
+              backgroundColor: "var(--apple-surface)",
+              color: "var(--apple-text-primary)",
+              border: "1px solid rgba(0,0,0,0.15)",
+              borderRadius: "var(--radius-lg)",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: "14px",
+              fontWeight: 500,
+              transition: "all 200ms ease",
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading ? 0.5 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = "var(--apple-button-hover)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--apple-surface)";
+            }}
+            onMouseDown={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = "var(--apple-button-active)";
+              }
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--apple-button-hover)";
+            }}
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
       </div>
     </div>
   );

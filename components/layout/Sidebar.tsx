@@ -7,9 +7,9 @@ import { useAlertsStore } from "@/store/alertsStore";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { useCashboxStore } from "@/store/cashboxStore";
 import { useCan, can } from "@/lib/acl";
-import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useSidebar } from "./SidebarContext";
+import { SidebarItem } from "@/components/ui/SidebarItem";
 import {
   LayoutDashboard,
   Building2,
@@ -59,7 +59,6 @@ export function Sidebar() {
 
   const user = useAuthStore.getState().getUserSafe();
 
-  // Cargar datos para badges
   useEffect(() => {
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
@@ -71,21 +70,18 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Cerrar sidebar en mobile cuando cambia la ruta
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname, setIsMobileOpen]);
 
   if (!user || typeof user.role === "object") return null;
 
-  // Calcular badges
   const highAlertsCount = alerts.filter((a) => !a.read && a.severity === "alta").length;
   const mediumAlertsCount = alerts.filter((a) => !a.read && a.severity === "media").length;
   const pendingDocsCount = documents.filter((d) => d.status === "pendiente").length;
   const reviewDocsCount = documents.filter((d) => d.status === "en revisión").length;
   const openCashboxesCount = cashboxes.filter((c) => !c.isClosed).length;
 
-  // Estructura completa del sidebar con permisos
   const allNavGroups: NavGroup[] = [
     {
       title: "Dashboard",
@@ -198,7 +194,6 @@ export function Sidebar() {
     },
   ];
 
-  // Filtrar grupos e items por permisos
   const accessibleGroups = allNavGroups
     .filter((group) => {
       if (group.permission) {
@@ -242,143 +237,212 @@ export function Sidebar() {
     }
   };
 
-  const getBadgeClass = (variant: "error" | "warning" | "info") => {
-    if (variant === "error") return "bg-red-500/90 text-white";
-    if (variant === "warning") return "bg-yellow-500/90 text-white";
-    return "bg-[#0A84FF]/90 text-white";
+  // Apple Sidebar Styles
+  const sidebarStyle: React.CSSProperties = {
+    width: "240px",
+    backgroundColor: "var(--apple-surface)",
+    borderRight: "1px solid var(--apple-border)",
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    padding: "var(--space-lg) var(--space-md)",
+    gap: "var(--space-sm)",
+    fontFamily: "Inter, system-ui, sans-serif",
   };
 
-  const sidebarContent = (
-    <>
-      {/* Logo */}
-      <div className="px-4 py-4 border-b border-white/20 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-r from-[#162F7F] to-[#0A84FF] backdrop-blur-xl rounded-lg flex items-center justify-center shadow-[0_4px_20px_rgba(22,47,127,0.25)]">
-            <span className="text-white text-xs font-semibold">PMD</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-[#1C1C1E]">PMD</h1>
-            <p className="text-xs text-[#636366]">Management</p>
-          </div>
-        </div>
-        <button
-          onClick={() => setIsMobileOpen(false)}
-          className="lg:hidden text-[#636366] hover:text-[#1C1C1E] hover:bg-white/40 p-2 -mr-2 rounded-xl apple-transition backdrop-blur-sm"
-          aria-label="Cerrar sidebar"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+  const logoSectionStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "var(--space-md)",
+    paddingBottom: "var(--space-md)",
+    borderBottom: "1px solid var(--apple-border)",
+  };
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3">
-        {accessibleGroups.map((group) => {
-          const isGroupExpanded = expandedGroups.has(group.title);
-          const hasActiveChild = group.items.some((item) => isActive(item.href));
+  const logoBoxStyle: React.CSSProperties = {
+    width: "32px",
+    height: "32px",
+    backgroundColor: "var(--apple-text-primary)",
+    borderRadius: "var(--radius-md)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "var(--apple-surface)",
+    fontSize: "12px",
+    fontWeight: 600,
+    flexShrink: 0,
+  };
 
-          return (
-            <div key={group.title} className="mb-2">
-              {/* Group Header */}
-              <button
-                onClick={() => toggleGroup(group.title)}
-                className={cn(
-                  "w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium tracking-wide text-[#636366] hover:text-[#3A3A3C] apple-transition"
-                )}
-              >
-                <span>{group.title}</span>
-                <ChevronDown
-                  className={cn(
-                    "h-3.5 w-3.5 apple-transition",
-                    isGroupExpanded ? "rotate-0" : "-rotate-90"
-                  )}
-                />
-              </button>
+  const logoTextStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+  };
 
-              {/* Group Items */}
-              <div
-                className={cn(
-                  "overflow-hidden apple-transition",
-                  isGroupExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                )}
-              >
-                <div className="space-y-0.5 pb-1">
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    const isItemActive = isActive(item.href);
+  const logoTitleStyle: React.CSSProperties = {
+    fontSize: "14px",
+    fontWeight: 600,
+    color: "var(--apple-text-primary)",
+    margin: 0,
+    lineHeight: 1.2,
+  };
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={handleLinkClick}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 text-sm text-[#1C1C1E] rounded-xl apple-transition",
-                          "hover:bg-white/40",
-                          isItemActive &&
-                            "bg-white/40 border-l-4 border-[#0A84FF]/60 text-[#1C1C1E] font-medium"
-                        )}
-                      >
-                        <Icon
-                          className={cn(
-                            "flex-shrink-0 h-4 w-4",
-                            isItemActive ? "text-[#1C1C1E]" : "text-[#636366]"
-                          )}
-                        />
-                        <span className="truncate flex-1">{item.label}</span>
-                        {item.badge && (
-                          <span
-                            className={cn(
-                              "flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
-                              getBadgeClass(item.badge.variant)
-                            )}
-                          >
-                            {item.badge.count > 99 ? "99+" : item.badge.count}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </nav>
+  const logoSubtitleStyle: React.CSSProperties = {
+    fontSize: "12px",
+    color: "var(--apple-text-secondary)",
+    margin: 0,
+    lineHeight: 1.2,
+  };
 
-      {/* User Info */}
-      {user && (
-        <div className="px-4 py-3 border-t border-white/20">
-          <div className="text-xs">
-            <p className="text-[#1C1C1E] font-medium truncate">{user.fullName || user.email}</p>
-            <p className="text-[#636366] capitalize">{String(user.role ?? "")}</p>
-          </div>
-        </div>
-      )}
-    </>
-  );
+  const navStyle: React.CSSProperties = {
+    flex: 1,
+    overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: "var(--space-xs)",
+  };
+
+  const groupTitleStyle: React.CSSProperties = {
+    fontSize: "13px",
+    fontWeight: 600,
+    color: "var(--apple-text-secondary)",
+    letterSpacing: "0.3px",
+    marginTop: "var(--space-md)",
+    marginBottom: "var(--space-xs)",
+    textTransform: "uppercase",
+    fontFamily: "Inter, system-ui, sans-serif",
+  };
+
+  const groupContainerStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+  };
+
+  const userSectionStyle: React.CSSProperties = {
+    paddingTop: "var(--space-md)",
+    borderTop: "1px solid var(--apple-border)",
+    marginTop: "auto",
+  };
+
+  const userNameStyle: React.CSSProperties = {
+    fontSize: "13px",
+    fontWeight: 500,
+    color: "var(--apple-text-primary)",
+    margin: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  };
+
+  const userRoleStyle: React.CSSProperties = {
+    fontSize: "12px",
+    color: "var(--apple-text-secondary)",
+    margin: "4px 0 0 0",
+    textTransform: "capitalize",
+  };
+
+  const closeButtonStyle: React.CSSProperties = {
+    padding: "8px",
+    border: "none",
+    background: "transparent",
+    color: "var(--apple-text-secondary)",
+    cursor: "pointer",
+    borderRadius: "var(--radius-md)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background-color 200ms ease",
+  };
 
   return (
     <>
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40 apple-transition"
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.2)",
+            backdropFilter: "blur(4px)",
+            zIndex: 40,
+          }}
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={cn(
-          "bg-white/30 backdrop-blur-2xl border-r border-white/20 min-h-screen flex flex-col z-50 rounded-r-2xl",
-          "lg:static lg:translate-x-0 lg:shadow-none",
-          "fixed left-0 top-0 w-64 shadow-[0_4px_20px_rgba(0,0,0,0.06)]",
-          "apple-transition",
+        className={`fixed lg:static left-0 top-0 z-50 ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        )}
-        style={{ mixBlendMode: 'luminosity' }}
+        }`}
+        style={sidebarStyle}
       >
-        {sidebarContent}
+        {/* Logo Section */}
+        <div style={logoSectionStyle}>
+          <div style={logoBoxStyle}>PMD</div>
+          <div style={logoTextStyle}>
+            <h1 style={logoTitleStyle}>PMD</h1>
+            <p style={logoSubtitleStyle}>Management</p>
+          </div>
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            className="lg:hidden ml-auto"
+            style={closeButtonStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--apple-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+            aria-label="Cerrar sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav style={navStyle}>
+          {accessibleGroups.map((group, groupIndex) => {
+            const isGroupExpanded = expandedGroups.has(group.title);
+            const hasActiveChild = group.items.some((item) => isActive(item.href));
+
+            return (
+              <div key={group.title} style={groupContainerStyle}>
+                {/* Group Title */}
+                {groupIndex > 0 && (
+                  <div style={groupTitleStyle}>{group.title}</div>
+                )}
+
+                {/* Group Items */}
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const itemIsActive = isActive(item.href);
+                  const badgeCount = item.badge?.count;
+
+                  return (
+                    <SidebarItem
+                      key={item.href}
+                      href={item.href}
+                      icon={Icon as any}
+                      label={item.label}
+                      isActive={itemIsActive}
+                      badge={badgeCount}
+                      onClick={handleLinkClick}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* User Info */}
+        {user && (
+          <div style={userSectionStyle}>
+            <p style={userNameStyle}>{user.fullName || user.email}</p>
+            <p style={userRoleStyle}>{String(user.role ?? "")}</p>
+          </div>
+        )}
       </aside>
     </>
   );

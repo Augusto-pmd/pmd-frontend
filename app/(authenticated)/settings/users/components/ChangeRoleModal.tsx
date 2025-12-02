@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { SelectField } from "@/components/ui/FormField";
 import { useUsersStore, UserPMD } from "@/store/usersStore";
 import { useRoles } from "@/hooks/api/roles";
 import { useToast } from "@/components/ui/Toast";
@@ -46,41 +47,38 @@ export function ChangeRoleModal({ isOpen, onClose, user, onSuccess }: ChangeRole
 
   if (!user) return null;
 
+  const roleOptions = [
+    { value: "", label: "Sin rol asignado" },
+    ...roles.map((role: any) => {
+      const roleName = role.name || role.nombre || role.id;
+      return { value: role.id, label: roleName };
+    }),
+  ];
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Cambiar Rol de Usuario" size="md">
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600">
-          Selecciona un nuevo rol para <strong>{user.fullName}</strong>
-        </p>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
-          <select
-            value={selectedRoleId}
-            onChange={(e) => setSelectedRoleId(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none text-sm"
-          >
-            <option value="">Sin rol asignado</option>
-            {roles.map((role: any) => {
-              const roleName = role.name || role.nombre || role.id;
-              return (
-                <option key={role.id} value={role.id}>
-                  {roleName}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-
-        <div className="flex gap-3 justify-end pt-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Cambiar Rol de Usuario"
+      subtitle={`Selecciona un nuevo rol para ${user.fullName}`}
+      size="md"
+      footer={
+        <>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button variant="outline" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? "Guardando..." : "Guardar"}
           </Button>
-        </div>
-      </div>
+        </>
+      }
+    >
+      <SelectField
+        label="Rol"
+        value={selectedRoleId}
+        onChange={(e) => setSelectedRoleId(e.target.value)}
+        options={roleOptions}
+      />
     </Modal>
   );
 }

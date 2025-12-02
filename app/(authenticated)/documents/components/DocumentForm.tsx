@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/Input";
+import { InputField, SelectField, TextareaField } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
+import styles from "@/components/ui/form.module.css";
 
 interface DocumentFormProps {
   initialData?: any;
@@ -113,120 +114,98 @@ export function DocumentForm({
     await onSubmit(payload);
   };
 
+  const workOptions = [
+    { value: "", label: "Seleccionar obra" },
+    ...works.map((work: any) => {
+      const workName = work.name || work.title || work.nombre || work.id;
+      return { value: work.id, label: workName };
+    }),
+  ];
+
+  const typeOptions = [
+    { value: "", label: "Seleccionar tipo" },
+    ...DOCUMENT_TYPES.map((type) => ({ value: type, label: type })),
+  ];
+
+  const statusOptions = DOCUMENT_STATUSES.map((status) => ({
+    value: status.value,
+    label: status.label,
+  }));
+
+  const userOptions = [
+    { value: "", label: "Seleccionar responsable" },
+    ...users.map((user: any) => {
+      const userName = user.fullName || user.name || user.nombre || user.id;
+      return { value: user.id, label: userName };
+    }),
+  ];
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Obra *
-        </label>
-        <select
-          value={formData.workId}
-          onChange={(e) => setFormData({ ...formData, workId: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          required
-          disabled={!!defaultWorkId}
-        >
-          <option value="">Seleccionar obra</option>
-          {works.map((work: any) => {
-            const workName = work.name || work.title || work.nombre || work.id;
-            return (
-              <option key={work.id} value={work.id}>
-                {workName}
-              </option>
-            );
-          })}
-        </select>
-        {errors.workId && <p className="mt-1 text-sm text-red-600">{errors.workId}</p>}
-      </div>
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <SelectField
+        label="Obra"
+        required
+        value={formData.workId}
+        onChange={(e) => setFormData({ ...formData, workId: e.target.value })}
+        error={errors.workId}
+        options={workOptions}
+        disabled={!!defaultWorkId}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tipo *
-        </label>
-        <select
-          value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          required
-        >
-          <option value="">Seleccionar tipo</option>
-          {DOCUMENT_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-        {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type}</p>}
-      </div>
+      <SelectField
+        label="Tipo"
+        required
+        value={formData.type}
+        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+        error={errors.type}
+        options={typeOptions}
+      />
 
-      <Input
-        label="Nombre del documento *"
+      <InputField
+        label="Nombre del documento"
+        required
         value={formData.name}
         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
         error={errors.name}
-        required
         placeholder="Ej: Planta baja – V1.2"
       />
 
-      <Input
+      <InputField
         label="Versión"
         value={formData.version}
         onChange={(e) => setFormData({ ...formData, version: e.target.value })}
         placeholder="Ej: 1.2, v2.0, draft"
       />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-        <select
-          value={formData.status}
-          onChange={(e) =>
-            setFormData({ ...formData, status: e.target.value as typeof formData.status })
-          }
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-        >
-          {DOCUMENT_STATUSES.map((status) => (
-            <option key={status.value} value={status.value}>
-              {status.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SelectField
+        label="Estado"
+        value={formData.status}
+        onChange={(e) =>
+          setFormData({ ...formData, status: e.target.value as typeof formData.status })
+        }
+        options={statusOptions}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Responsable</label>
-        <select
-          value={formData.uploadedBy}
-          onChange={(e) => setFormData({ ...formData, uploadedBy: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-        >
-          <option value="">Seleccionar responsable</option>
-          {users.map((user: any) => {
-            const userName = user.fullName || user.name || user.nombre || user.id;
-            return (
-              <option key={user.id} value={user.id}>
-                {userName}
-              </option>
-            );
-          })}
-        </select>
-      </div>
+      <SelectField
+        label="Responsable"
+        value={formData.uploadedBy}
+        onChange={(e) => setFormData({ ...formData, uploadedBy: e.target.value })}
+        options={userOptions}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Notas</label>
-        <textarea
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          rows={3}
-          placeholder="Notas adicionales sobre el documento"
-        />
-      </div>
+      <TextareaField
+        label="Notas"
+        value={formData.notes}
+        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+        rows={3}
+        placeholder="Notas adicionales sobre el documento"
+      />
 
-      <div className="flex gap-3 justify-end pt-4">
+      <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-sm)" }}>
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancelar
         </Button>
-        <Button type="submit" variant="primary" disabled={isLoading}>
+        <Button type="submit" variant="outline" disabled={isLoading}>
           {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Subir"}
         </Button>
       </div>
