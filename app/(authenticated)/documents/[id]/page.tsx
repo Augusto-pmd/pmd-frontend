@@ -1,134 +1,110 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useDocument } from "@/hooks/api/documents";
+import { useDocumentsStore } from "@/store/documentsStore";
+import { useWorks } from "@/hooks/api/works";
+import { useUsers } from "@/hooks/api/users";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { Edit, Trash2, Download, FileText, Building2, User, Calendar, Tag } from "lucide-react";
+import { Modal } from "@/components/ui/Modal";
+import { DocumentForm } from "../components/DocumentForm";
 
 function DocumentDetailContent() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
-  const { document, isLoading, error } = useDocument(id);
+  const documentId = params.id as string;
+  const { documents, fetchDocuments, updateDocument, deleteDocument } = useDocumentsStore();
+  const { works } = useWorks();
+  const { users } = useUsers();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
-  const getFileIcon = (type: string | undefined): string => {
-    if (!type) return "📄";
-    const typeLower = type.toLowerCase();
-    
-    if (typeLower.includes("pdf")) return "📕";
-    if (typeLower.includes("image") || typeLower.includes("jpg") || typeLower.includes("png") || typeLower.includes("gif")) return "🖼️";
-    if (typeLower.includes("excel") || typeLower.includes("xls") || typeLower.includes("xlsx")) return "📊";
-    if (typeLower.includes("word") || typeLower.includes("doc")) return "📝";
-    if (typeLower.includes("zip") || typeLower.includes("rar")) return "📦";
-    
-    return "📄";
-  };
+  useEffect(() => {
+    fetchDocuments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const getFileTypeLabel = (type: string | undefined): string => {
-    if (!type) return "Archivo";
-    const typeLower = type.toLowerCase();
-    
-    if (typeLower.includes("pdf")) return "PDF";
-    if (typeLower.includes("image") || typeLower.includes("jpg") || typeLower.includes("png") || typeLower.includes("gif")) return "Imagen";
-    if (typeLower.includes("excel") || typeLower.includes("xls") || typeLower.includes("xlsx")) return "Excel";
-    if (typeLower.includes("word") || typeLower.includes("doc")) return "Word";
-    if (typeLower.includes("zip") || typeLower.includes("rar")) return "Comprimido";
-    
-    return type.toUpperCase();
-  };
-
-  const formatDate = (dateString: string | undefined): string => {
-    if (!dateString) return "No especificada";
-    try {
-      return new Date(dateString).toLocaleString("es-ES", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const handleDownload = () => {
-    const fileUrl = document?.url || document?.fileUrl;
-    if (fileUrl) {
-      window.open(fileUrl, "_blank");
-    } else {
-      const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL}/documents/${id}/download`;
-      window.open(downloadUrl, "_blank");
-    }
-  };
-
-  const handleView = () => {
-    const fileUrl = document?.url || document?.fileUrl;
-    const fileType = document?.tipo || document?.type || document?.mimeType || "";
-    const isPdf = fileType.toLowerCase().includes("pdf");
-    
-    if (fileUrl) {
-      window.open(fileUrl, "_blank");
-    } else {
-      // Si no hay URL, intentar ver desde la API
-      const viewUrl = `${process.env.NEXT_PUBLIC_API_URL}/documents/${id}`;
-      window.open(viewUrl, "_blank");
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando archivo…" />
-      </MainLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error al cargar el archivo: {error.message || "Error desconocido"}
-        </div>
-        <div className="mt-4">
-          <Button onClick={() => router.push("/documents")}>Volver a Documentación</Button>
-        </div>
-      </MainLayout>
-    );
-  }
+  const document = documents.find((d) => d.id === documentId);
 
   if (!document) {
     return (
       <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
-          Archivo no encontrado
-        </div>
-        <div className="mt-4">
-          <Button onClick={() => router.push("/documents")}>Volver a Documentación</Button>
-        </div>
+        <LoadingState message="Cargando documento…" />
       </MainLayout>
     );
   }
 
-  const fileName = document.nombre || document.name || document.fileName || "Sin nombre";
-  const fileType = document.tipo || document.type || document.mimeType || "";
-  const uploadDate = document.fecha || document.uploadDate || document.createdAt;
-  const uploadedBy = document.usuario || document.uploadedBy || document.userId || "Usuario desconocido";
-  const description = document.descripcion || document.description || "";
+  const getWorkName = (workId?: string) => {
+    if (!workId) return "-";
+    const work = works.find((w: any) => w.id === workId);
+    if (!work) return workId;
+    return work.name || work.title || work.nombre || workId;
+  };
 
-  const renderField = (label: string, value: any, formatter?: (val: any) => string) => {
-    if (value === null || value === undefined || value === "") return null;
-    return (
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">{label}</h3>
-        <p className="text-gray-900">{formatter ? formatter(value) : String(value)}</p>
-      </div>
-    );
+  const getUserName = (userId?: string) => {
+    if (!userId) return "-";
+    const user = users.find((u: any) => u.id === userId);
+    if (!user) return userId;
+    return user.fullName || user.name || user.nombre || userId;
+  };
+
+  const getStatusVariant = (status?: string) => {
+    if (!status) return "default";
+    const statusLower = status.toLowerCase();
+    if (statusLower === "aprobado") return "success";
+    if (statusLower === "pendiente") return "warning";
+    if (statusLower === "en revisión" || statusLower === "en revision") return "info";
+    if (statusLower === "rechazado") return "error";
+    return "default";
+  };
+
+  const getStatusLabel = (status?: string) => {
+    if (!status) return "Sin estado";
+    const statusLower = status.toLowerCase();
+    if (statusLower === "aprobado") return "Aprobado";
+    if (statusLower === "pendiente") return "Pendiente";
+    if (statusLower === "en revisión" || statusLower === "en revision") return "En Revisión";
+    if (statusLower === "rechazado") return "Rechazado";
+    return status;
+  };
+
+  const handleUpdate = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await updateDocument(documentId, data);
+      await fetchDocuments();
+      toast.success("Documento actualizado correctamente");
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      console.error("Error al actualizar documento:", err);
+      toast.error(err.message || "Error al actualizar el documento");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    try {
+      await deleteDocument(documentId);
+      toast.success("Documento eliminado correctamente");
+      router.push("/documents");
+    } catch (err: any) {
+      console.error("Error al eliminar documento:", err);
+      toast.error(err.message || "Error al eliminar el documento");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -136,69 +112,172 @@ function DocumentDetailContent() {
       <div className="space-y-6 py-6">
         <div className="px-1">
           <BotonVolver />
-        </div>
-        <div className="flex items-center justify-between px-1">
-          <div>
-            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Detalle del archivo</h1>
-            <p className="text-gray-600">Información completa del archivo seleccionado</p>
-          </div>
-          <Button variant="outline" onClick={() => router.push("/documents")}>
-            Volver a Documentación
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-5xl">{getFileIcon(fileType)}</span>
-                <div>
-                  <CardTitle className="text-2xl mb-2">{fileName}</CardTitle>
-                  <Badge variant="info">{getFileTypeLabel(fileType)}</Badge>
-                </div>
-              </div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">{document.name}</h1>
+              <p className="text-gray-600">Información completa del documento</p>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField("Nombre del archivo", fileName)}
-              {renderField("Tipo", getFileTypeLabel(fileType))}
-              {renderField("Fecha de subida", uploadDate, formatDate)}
-              {renderField("Subido por", uploadedBy)}
-            </div>
-
-            {description && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Descripción</h3>
-                <p className="text-gray-900">{description}</p>
-              </div>
-            )}
-
-            <div className="flex gap-4 pt-4 border-t border-gray-200">
+            <div className="flex gap-2">
+              {document.url && (
+                <Button
+                  variant="outline"
+                  onClick={() => window.open(document.url, "_blank")}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar
+                </Button>
+              )}
               <Button
-                variant="primary"
-                size="lg"
-                onClick={handleView}
+                variant="outline"
+                onClick={() => setIsEditModalOpen(true)}
+                className="flex items-center gap-2"
               >
-                Ver archivo
+                <Edit className="h-4 w-4" />
+                Editar
               </Button>
               <Button
                 variant="outline"
-                size="lg"
-                onClick={handleDownload}
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
               >
-                Descargar archivo
+                <Trash2 className="h-4 w-4" />
+                Eliminar
               </Button>
             </div>
+          </div>
+        </div>
 
-            {document.id && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">ID del archivo</h3>
-                <p className="text-gray-600 font-mono text-sm">{document.id}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Información Principal */}
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Información General</h2>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Nombre</p>
+                    <p className="text-base font-medium text-gray-900">{document.name}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Tag className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Tipo</p>
+                    <p className="text-base font-medium text-gray-900">{document.type}</p>
+                  </div>
+                </div>
+
+                {document.version && (
+                  <div className="flex items-start gap-3">
+                    <div className="h-5 w-5 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-gray-500">Versión</p>
+                      <p className="text-base font-medium text-gray-900">{document.version}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-3">
+                  <Building2 className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Obra</p>
+                    <p className="text-base font-medium text-gray-900">{getWorkName(document.workId)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="h-5 w-5 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Estado</p>
+                    <Badge variant={getStatusVariant(document.status)}>
+                      {getStatusLabel(document.status)}
+                    </Badge>
+                  </div>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Metadatos */}
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Metadatos</h2>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Fecha de carga</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {new Date(document.uploadedAt).toLocaleDateString("es-AR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">Responsable</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {getUserName(document.uploadedBy)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          title="Editar Documento"
+          size="lg"
+        >
+          <DocumentForm
+            initialData={document}
+            onSubmit={handleUpdate}
+            onCancel={() => setIsEditModalOpen(false)}
+            isLoading={isSubmitting}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          title="Confirmar Eliminación"
+          size="md"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              ¿Estás seguro de que deseas eliminar el documento <strong>{document.name}</strong>?
+            </p>
+            <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3 justify-end pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleDelete}
+                disabled={isSubmitting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isSubmitting ? "Eliminando..." : "Eliminar"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </MainLayout>
   );
@@ -211,4 +290,3 @@ export default function DocumentDetailPage() {
     </ProtectedRoute>
   );
 }
-

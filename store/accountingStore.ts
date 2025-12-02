@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { SIMULATION_MODE, SIMULATED_ACCOUNTING_ENTRIES } from "@/lib/useSimulation";
 
 export interface AccountingEntry {
   id: string;
@@ -49,6 +50,52 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
   error: null,
 
   async fetchEntries(filters = {}) {
+    // Modo simulación: usar datos dummy
+    if (SIMULATION_MODE) {
+      let filteredEntries = [...SIMULATED_ACCOUNTING_ENTRIES] as AccountingEntry[];
+      
+      // Aplicar filtros
+      if (filters.workId) {
+        filteredEntries = filteredEntries.filter(
+          (e) => e.workId === filters.workId || e.obraId === filters.workId
+        );
+      }
+      if (filters.supplierId) {
+        filteredEntries = filteredEntries.filter(
+          (e) => e.supplierId === filters.supplierId || e.proveedorId === filters.supplierId
+        );
+      }
+      if (filters.type) {
+        filteredEntries = filteredEntries.filter(
+          (e) => e.type === filters.type || e.tipo === filters.type
+        );
+      }
+      if (filters.category) {
+        filteredEntries = filteredEntries.filter(
+          (e) => e.category === filters.category || e.categoria === filters.category
+        );
+      }
+      if (filters.startDate) {
+        filteredEntries = filteredEntries.filter(
+          (e) => {
+            const entryDate = e.date || e.fecha;
+            return entryDate ? entryDate >= filters.startDate! : false;
+          }
+        );
+      }
+      if (filters.endDate) {
+        filteredEntries = filteredEntries.filter(
+          (e) => {
+            const entryDate = e.date || e.fecha;
+            return entryDate ? entryDate <= filters.endDate! : false;
+          }
+        );
+      }
+      
+      set({ entries: filteredEntries, isLoading: false, error: null });
+      return;
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 

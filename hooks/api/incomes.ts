@@ -2,30 +2,36 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { SIMULATION_MODE, SIMULATED_INCOMES } from "@/lib/useSimulation";
 
 const API_BASE = safeApiUrl("/incomes");
 
 export function useIncomes() {
   const { token } = useAuthStore();
   
-  if (!API_BASE) {
+  // Si está en modo simulación, usar un fetcher que retorna datos dummy
+  const fetcher = SIMULATION_MODE
+    ? () => Promise.resolve({ data: SIMULATED_INCOMES })
+    : () => {
+        if (!API_BASE) {
+          throw new Error("API_BASE no está definido correctamente");
+        }
+        return apiClient.get(API_BASE);
+      };
+  
+  if (!API_BASE && !SIMULATION_MODE) {
     console.error("🔴 [useIncomes] API_BASE es inválido");
   }
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && API_BASE ? API_BASE : null,
-    () => {
-      if (!API_BASE) {
-        throw new Error("API_BASE no está definido correctamente");
-      }
-      return apiClient.get(API_BASE);
-    }
+    SIMULATION_MODE || (token && API_BASE) ? "incomes" : null,
+    fetcher
   );
 
   return {
     incomes: data?.data || data || [],
     error,
-    isLoading,
+    isLoading: SIMULATION_MODE ? false : isLoading,
     mutate,
   };
 }

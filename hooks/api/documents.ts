@@ -2,38 +2,51 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { SIMULATION_MODE, SIMULATED_DOCUMENTS } from "@/lib/useSimulation";
 
 const API_BASE = safeApiUrl("/documents");
 
-export function useDocuments() {
+export function useDocuments(workId?: string) {
   const { token } = useAuthStore();
   
-  if (!API_BASE) {
+  // Si está en modo simulación, usar un fetcher que retorna datos dummy
+  const fetcher = SIMULATION_MODE
+    ? () => {
+        let filteredDocuments = [...SIMULATED_DOCUMENTS];
+        if (workId) {
+          filteredDocuments = filteredDocuments.filter((doc) => doc.workId === workId);
+        }
+        return Promise.resolve({ data: filteredDocuments });
+      }
+    : async () => {
+        if (!API_BASE) {
+          throw new Error("API_BASE no está definido correctamente");
+        }
+        try {
+          const url = workId ? `${API_BASE}?workId=${workId}` : API_BASE;
+          return await apiClient.get(url);
+        } catch (err: any) {
+          // Si el endpoint no existe, retornar array vacío
+          if (err.response?.status === 404) {
+            return [];
+          }
+          throw err;
+        }
+      };
+  
+  if (!API_BASE && !SIMULATION_MODE) {
     console.error("🔴 [useDocuments] API_BASE es inválido");
   }
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && API_BASE ? API_BASE : null,
-    async () => {
-      if (!API_BASE) {
-        throw new Error("API_BASE no está definido correctamente");
-      }
-      try {
-        return await apiClient.get(API_BASE);
-      } catch (err: any) {
-        // Si el endpoint no existe, retornar array vacío
-        if (err.response?.status === 404) {
-          return [];
-        }
-        throw err;
-      }
-    }
+    SIMULATION_MODE || (token && API_BASE) ? `documents${workId ? `-${workId}` : ""}` : null,
+    fetcher
   );
 
   return {
     documents: data?.data || data || [],
     error,
-    isLoading,
+    isLoading: SIMULATION_MODE ? false : isLoading,
     mutate,
   };
 }

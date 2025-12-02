@@ -2,6 +2,7 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { SIMULATION_MODE, SIMULATED_SUPPLIERS } from "@/lib/useSimulation";
 
 // Construir API_BASE de forma segura
 const API_BASE = safeApiUrl("/suppliers");
@@ -9,24 +10,29 @@ const API_BASE = safeApiUrl("/suppliers");
 export function useSuppliers() {
   const { token } = useAuthStore();
   
-  if (!API_BASE) {
+  // Si está en modo simulación, usar un fetcher que retorna datos dummy
+  const fetcher = SIMULATION_MODE
+    ? () => Promise.resolve({ data: SIMULATED_SUPPLIERS })
+    : () => {
+        if (!API_BASE) {
+          throw new Error("API_BASE no está definido correctamente");
+        }
+        return apiClient.get(API_BASE);
+      };
+  
+  if (!API_BASE && !SIMULATION_MODE) {
     console.error("🔴 [useSuppliers] API_BASE es inválido");
   }
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && API_BASE ? API_BASE : null,
-    () => {
-      if (!API_BASE) {
-        throw new Error("API_BASE no está definido correctamente");
-      }
-      return apiClient.get(API_BASE);
-    }
+    SIMULATION_MODE || (token && API_BASE) ? "suppliers" : null,
+    fetcher
   );
 
   return {
     suppliers: data?.data || data || [],
     error,
-    isLoading,
+    isLoading: SIMULATION_MODE ? false : isLoading,
     mutate,
   };
 }

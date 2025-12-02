@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { SIMULATION_MODE, SIMULATED_CASHBOXES, SIMULATED_CASH_MOVEMENTS } from "@/lib/useSimulation";
 
 export interface Cashbox {
   id: string;
@@ -52,6 +53,12 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   error: null,
 
   async fetchCashboxes() {
+    // Modo simulación: usar datos dummy
+    if (SIMULATION_MODE) {
+      set({ cashboxes: SIMULATED_CASHBOXES, isLoading: false, error: null });
+      return;
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
@@ -157,6 +164,17 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async fetchMovements(cashboxId) {
+    // Modo simulación: usar datos dummy
+    if (SIMULATION_MODE) {
+      const movements = SIMULATED_CASH_MOVEMENTS[cashboxId] || [];
+      set((state) => ({
+        movements: { ...state.movements, [cashboxId]: movements },
+        isLoading: false,
+        error: null,
+      }));
+      return;
+    }
+
     const authState = useAuthStore.getState();
     const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
 
