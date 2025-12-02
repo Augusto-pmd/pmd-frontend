@@ -1,20 +1,33 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useWork } from "@/hooks/api/works";
+import { useWork, workApi } from "@/hooks/api/works";
+import { useEmployees } from "@/hooks/api/employees";
+import { useSuppliers } from "@/hooks/api/suppliers";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
+import { WorkForm } from "@/components/forms/WorkForm";
+import { useToast } from "@/components/ui/Toast";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { Edit, Archive, Trash2, UserPlus, Building2 } from "lucide-react";
 
 function WorkDetailContent() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { work, isLoading, error } = useWork(id);
+  const { work, isLoading, error, mutate } = useWork(id);
+  const { employees } = useEmployees();
+  const { suppliers } = useSuppliers();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   if (isLoading) {
     return (
@@ -99,6 +112,73 @@ function WorkDetailContent() {
     }).format(amount);
   };
 
+  const handleUpdate = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await workApi.update(id, data);
+      await mutate();
+      toast.success("Obra actualizada correctamente");
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      console.error("Error al actualizar obra:", err);
+      toast.error(err.message || "Error al actualizar la obra");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    setIsSubmitting(true);
+    try {
+      await workApi.update(id, { 
+        estado: "finalizada", 
+        status: "completed",
+        isActive: false 
+      });
+      await mutate();
+      toast.success("Obra archivada correctamente");
+      setIsDeleteModalOpen(false);
+      setTimeout(() => {
+        router.push("/works");
+      }, 1500);
+    } catch (err: any) {
+      console.error("Error al archivar obra:", err);
+      toast.error(err.message || "Error al archivar la obra");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    try {
+      await workApi.delete(id);
+      toast.success("Obra eliminada correctamente");
+      setIsDeleteModalOpen(false);
+      setTimeout(() => {
+        router.push("/works");
+      }, 1500);
+    } catch (err: any) {
+      console.error("Error al eliminar obra:", err);
+      toast.error(err.message || "Error al eliminar la obra");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Obtener personal asignado a esta obra
+  const assignedEmployees = employees?.filter((emp: any) => {
+    const assignments = emp.assignments || [];
+    return assignments.some((assignment: any) => 
+      assignment.workId === id || assignment.obraId === id
+    );
+  }) || [];
+
+  // Obtener proveedores asignados (placeholder - ajustar según backend)
+  const assignedSuppliers = suppliers?.filter((sup: any) => {
+    return sup.workId === id || sup.obraId === id;
+  }) || [];
+
   return (
     <MainLayout>
       <div className="space-y-6 py-6">
@@ -110,9 +190,15 @@ function WorkDetailContent() {
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Detalle de la obra</h1>
             <p className="text-gray-600">Información completa de la obra seleccionada</p>
           </div>
-          <Button variant="outline" onClick={() => router.push("/works")}>
-            Volver a Obras
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/works")}>
+              Volver a Obras
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -190,7 +276,200 @@ function WorkDetailContent() {
             )}
           </CardContent>
         </Card>
+
+        {/* Personal Asignado */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Personal Asignado</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.info("Funcionalidad de asignación próximamente disponible")}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Asignar Personal
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {assignedEmployees.length > 0 ? (
+              <div className="space-y-2">
+                {assignedEmployees.map((emp: any) => {
+                  const nombre = emp.nombre || emp.fullName || emp.name || "Sin nombre";
+                  const puesto = emp.puesto || emp.position || "";
+                  return (
+                    <div key={emp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-pmd">
+                      <div>
+                        <p className="font-medium text-gray-900">{nombre}</p>
+                        {puesto && <p className="text-sm text-gray-500">{puesto}</p>}
+                      </div>
+                      <Badge variant="info">{emp.area || emp.areaTrabajo || ""}</Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500">No hay personal asignado a esta obra</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Proveedores Asignados */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Proveedores Asignados</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.info("Funcionalidad de asignación próximamente disponible")}
+              >
+                <Building2 className="h-4 w-4 mr-2" />
+                Asignar Proveedor
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {assignedSuppliers.length > 0 ? (
+              <div className="space-y-2">
+                {assignedSuppliers.map((sup: any) => {
+                  const nombre = sup.nombre || sup.name || "Sin nombre";
+                  const estado = sup.estado || sup.status || "";
+                  return (
+                    <div key={sup.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-pmd">
+                      <div>
+                        <p className="font-medium text-gray-900">{nombre}</p>
+                        {sup.email && <p className="text-sm text-gray-500">{sup.email}</p>}
+                      </div>
+                      <Badge variant={estado === "aprobado" ? "success" : "warning"}>
+                        {estado}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500">No hay proveedores asignados a esta obra</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Documentos de Obra (Placeholder) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Documentos de la Obra</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500">No hay documentos registrados</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => toast.info("Funcionalidad de documentos próximamente disponible")}
+            >
+              Subir Documento
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Dashboard por Obra (Placeholder) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Dashboard de la Obra</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-blue-50 rounded-pmd">
+                <p className="text-sm text-gray-600">Presupuesto</p>
+                <p className="text-2xl font-bold text-pmd-darkBlue">
+                  {formatCurrency(work.presupuesto || work.budget)}
+                </p>
+              </div>
+              <div className="p-4 bg-green-50 rounded-pmd">
+                <p className="text-sm text-gray-600">Personal Asignado</p>
+                <p className="text-2xl font-bold text-green-700">{assignedEmployees.length}</p>
+              </div>
+              <div className="p-4 bg-yellow-50 rounded-pmd">
+                <p className="text-sm text-gray-600">Proveedores</p>
+                <p className="text-2xl font-bold text-yellow-700">{assignedSuppliers.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Botones de Acción */}
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Editar Obra
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="text-red-600 hover:text-red-700 hover:border-red-300"
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            Archivar / Eliminar
+          </Button>
+        </div>
       </div>
+
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Editar Obra"
+        size="lg"
+      >
+        <WorkForm
+          initialData={work}
+          onSubmit={handleUpdate}
+          onCancel={() => setIsEditModalOpen(false)}
+          isLoading={isSubmitting}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmar Acción"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            ¿Qué acción deseas realizar con la obra <strong>{getWorkName()}</strong>?
+          </p>
+          <div className="space-y-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={handleArchive}
+              disabled={isSubmitting}
+            >
+              <Archive className="h-4 w-4 mr-2" />
+              Archivar (marcar como finalizada)
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar permanentemente
+            </Button>
+          </div>
+          <div className="flex gap-3 justify-end pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </MainLayout>
   );
 }

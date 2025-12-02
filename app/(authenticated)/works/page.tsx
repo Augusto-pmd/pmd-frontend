@@ -1,14 +1,38 @@
 "use client";
 
+import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useWorks } from "@/hooks/api/works";
+import { useWorks, workApi } from "@/hooks/api/works";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { WorksList } from "@/components/works/WorksList";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { WorkForm } from "@/components/forms/WorkForm";
+import { useToast } from "@/components/ui/Toast";
+import { Plus } from "lucide-react";
 
 function WorksContent() {
-  const { works, isLoading, error } = useWorks();
+  const { works, isLoading, error, mutate } = useWorks();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
+
+  const handleCreate = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await workApi.create(data);
+      await mutate();
+      toast.success("Obra creada correctamente");
+      setIsCreateModalOpen(false);
+    } catch (err: any) {
+      console.error("Error al crear obra:", err);
+      toast.error(err.message || "Error al crear la obra");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -33,11 +57,36 @@ function WorksContent() {
       <div className="space-y-6 py-6">
         <div className="px-1">
           <BotonVolver />
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Obras</h1>
-          <p className="text-gray-600">Listado de obras registradas en el sistema PMD</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Obras</h1>
+              <p className="text-gray-600">Listado de obras registradas en el sistema PMD</p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Nueva Obra
+            </Button>
+          </div>
         </div>
 
-        <WorksList works={works || []} />
+        <WorksList works={works || []} onRefresh={mutate} />
+
+        <Modal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          title="Nueva Obra"
+          size="lg"
+        >
+          <WorkForm
+            onSubmit={handleCreate}
+            onCancel={() => setIsCreateModalOpen(false)}
+            isLoading={isSubmitting}
+          />
+        </Modal>
       </div>
     </MainLayout>
   );
