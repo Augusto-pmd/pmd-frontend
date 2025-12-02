@@ -57,6 +57,12 @@ const modules = [
     icon: "📋",
     route: "/audit",
   },
+  {
+    title: "Documentación",
+    description: "Archivos y adjuntos del sistema PMD",
+    icon: "📁",
+    route: "/documents",
+  },
 ];
 
 export function DashboardModules() {
