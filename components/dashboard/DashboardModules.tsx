@@ -63,6 +63,12 @@ const modules = [
     icon: "📁",
     route: "/documents",
   },
+  {
+    title: "Recursos Humanos",
+    description: "Empleados, obreros y seguros",
+    icon: "👥",
+    route: "/rrhh",
+  },
 ];
 
 export function DashboardModules() {
