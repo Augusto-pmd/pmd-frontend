@@ -49,7 +49,20 @@ export function ProtectedRoute({
   }, [isAuthenticated, userRole, allowedRoles, router, redirectTo]);
 
   // --- Guard DESPUÉS del efecto ---
-  if (user === null || typeof user.role === "object") {
+  if (user === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loading size="lg" />
+      </div>
+    );
+  }
+
+  // Si user.role es objeto, tomar el nombre del rol o permitir paso
+  const role = typeof user.role === "object" 
+    ? (user.role.name ?? user.role.id ?? null) 
+    : user.role;
+
+  if (!role) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />
