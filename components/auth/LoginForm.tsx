@@ -19,15 +19,30 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
-      const loginUrl = `${apiUrl}/auth/login`;
+      // Obtener URL base del entorno
+      const envApiUrl = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
+      
+      // Normalizar URL base: remover /api al final si existe, para luego agregarlo explícitamente
+      let apiBase = envApiUrl.trim();
+      if (apiBase.endsWith('/api')) {
+        apiBase = apiBase.slice(0, -4); // Remover '/api'
+      } else if (apiBase.endsWith('/api/')) {
+        apiBase = apiBase.slice(0, -5); // Remover '/api/'
+      } else if (apiBase.endsWith('/')) {
+        apiBase = apiBase.slice(0, -1); // Remover '/' final
+      }
+      
+      // Construir URL completa: SIEMPRE usar /api/auth/login
+      const loginUrl = `${apiBase}/api/auth/login`;
       
       console.log("🔵 [LOGIN REQUEST]");
+      console.log("  - NEXT_PUBLIC_API_URL (raw):", process.env.NEXT_PUBLIC_API_URL);
+      console.log("  - apiBase (normalized):", apiBase);
       console.log("  - URL completa:", loginUrl);
       console.log("  - Method: POST");
       console.log("  - Data:", { email, password: "***" });
-      console.log("  - NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
       console.log("  - Client-side fetch: YES");
+      console.log("  - URL usada:", loginUrl);
 
       const response = await fetch(loginUrl, {
         method: "POST",
@@ -36,15 +51,32 @@ export function LoginForm() {
         },
         credentials: "include",
         body: JSON.stringify({ email, password })
+      }).catch((fetchError) => {
+        console.error("🔴 [LOGIN FETCH ERROR] Error de red:");
+        console.error("  - Error:", fetchError);
+        console.error("  - Error message:", fetchError.message);
+        console.error("  - Error name:", fetchError.name);
+        console.error("  - URL intentada:", loginUrl);
+        console.error("  - Posibles causas:");
+        console.error("    1. CORS bloqueado - verificar configuración en backend");
+        console.error("    2. URL incorrecta - verificar NEXT_PUBLIC_API_URL");
+        console.error("    3. Backend no disponible - verificar que el servidor esté corriendo");
+        console.error("    4. Red desconectada - verificar conexión a internet");
+        throw fetchError;
       });
 
       console.log("🟢 [LOGIN RESPONSE]");
       console.log("  - Status:", response.status);
       console.log("  - Status OK:", response.ok);
+      console.log("  - Status Text:", response.statusText);
       console.log("  - Headers:", Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("🔴 [LOGIN HTTP ERROR]");
+        console.error("  - Status:", response.status);
+        console.error("  - Status Text:", response.statusText);
+        console.error("  - Error Data:", errorData);
         throw {
           response: {
             status: response.status,
@@ -163,30 +195,8 @@ export function LoginForm() {
         }}
       >
         {/* Logo */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "var(--space-lg)" }}>
+        <div className="flex flex-col items-center mb-6">
           <LogoPMD size={90} className="opacity-95" />
-        </div>
-
-        {/* Header */}
-        <div style={{ textAlign: "center" }}>
-          <h1
-            style={{
-              font: "var(--font-title)",
-              color: "var(--apple-text-primary)",
-              margin: "0 0 var(--space-xs) 0",
-            }}
-          >
-            PMD
-          </h1>
-          <p
-            style={{
-              font: "var(--font-body)",
-              color: "var(--apple-text-secondary)",
-              margin: 0,
-            }}
-          >
-            Management System
-          </p>
         </div>
 
         {/* Form */}
