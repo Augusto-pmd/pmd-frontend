@@ -151,7 +151,7 @@ export function DocumentsList({
   return (
     <>
       <div className="bg-white rounded-lg shadow-pmd overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>

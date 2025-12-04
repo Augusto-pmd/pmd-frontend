@@ -20,14 +20,11 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const loginEndpoint = "/auth/login";
-      const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
-      const fullURL = `${baseURL}${loginEndpoint}`;
-      
+      const loginEndpoint = "/api/auth/login";
       const requestData = { email, password };
       
       console.log("🔵 [LOGIN REQUEST]");
-      console.log("  - URL:", fullURL);
+      console.log("  - Endpoint:", loginEndpoint);
       console.log("  - Method: POST");
       console.log("  - Data:", { email, password: "***" });
       console.log("  - NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);

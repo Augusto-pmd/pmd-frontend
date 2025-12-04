@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { buildApiRoute } from "@/lib/safeApi";
 
 export interface Document {
   id: string;
@@ -40,16 +40,18 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   error: null,
 
   async fetchDocuments(workId) {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [documentsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
       set({ error: "No hay organización seleccionada", isLoading: false });
+      console.warn("❗Error: organizationId undefined en documentsStore");
       return;
     }
 
-    const baseUrl = safeApiUrlWithParams("/", organizationId, "documents");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const baseUrl = buildApiRoute(orgId, "documents");
     if (!baseUrl) {
       console.error("🔴 [documentsStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -78,11 +80,12 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [documentsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en documentsStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -97,7 +100,8 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       throw new Error("La obra es obligatoria");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "documents");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "documents");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -142,15 +146,17 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [documentsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en documentsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "documents", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "documents", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -188,15 +194,17 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       throw new Error("ID de documento no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [documentsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en documentsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "documents", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "documents", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

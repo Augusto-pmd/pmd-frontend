@@ -116,9 +116,49 @@ export function safeApiUrl(endpoint: string | null | undefined): string | null {
 }
 
 /**
- * Valida y construye una URL con parámetros dinámicos
- * @param baseEndpoint - Endpoint base (ej: "/works")
- * @param params - Parámetros dinámicos (ej: ["123", "suppliers"])
+ * Construye una ruta relativa para API con organizationId
+ * @param organizationId - ID de la organización
+ * @param resource - Recurso (ej: "works", "clients", "alerts")
+ * @param params - Parámetros adicionales opcionales (ej: ["123", "movements"])
+ * @returns Ruta relativa como `${organizationId}/resource/...` o null si algún parámetro es inválido
+ */
+export function buildApiRoute(
+  organizationId: string | null | undefined,
+  resource: string,
+  ...params: (string | number | null | undefined)[]
+): string | null {
+  // Validar organizationId
+  if (!organizationId || typeof organizationId !== "string" || !organizationId.trim()) {
+    console.warn("⚠️ [buildApiRoute] organizationId inválido");
+    return null;
+  }
+  
+  // Validar resource
+  if (!resource || typeof resource !== "string" || !resource.trim()) {
+    console.warn("⚠️ [buildApiRoute] resource inválido");
+    return null;
+  }
+  
+  // Validar parámetros adicionales
+  const validParams = params
+    .map((param) => {
+      if (param === null || param === undefined) {
+        return null;
+      }
+      const str = String(param).trim();
+      return str.length > 0 ? str : null;
+    })
+    .filter((param): param is string => param !== null);
+  
+  // Construir ruta relativa: ${organizationId}/resource/param1/param2/...
+  const parts = [organizationId.trim(), resource.trim(), ...validParams];
+  return parts.join("/");
+}
+
+/**
+ * Valida y construye una URL con parámetros dinámicos (DEPRECATED - usar buildApiRoute)
+ * @param baseEndpoint - Endpoint base (ej: "/works" o "" para rutas con organizationId)
+ * @param params - Parámetros dinámicos (ej: [organizationId, "clients"] o ["123", "suppliers"])
  * @returns URL válida o null si algún parámetro es inválido
  */
 export function safeApiUrlWithParams(
@@ -146,7 +186,13 @@ export function safeApiUrlWithParams(
     return null;
   }
   
-  // Construir URL
+  // Si baseEndpoint es "/" o vacío, construir directamente con baseUrl y params
+  // Esto es para rutas como /api/${organizationId}/clients
+  if (baseEndpoint === "/" || baseEndpoint === "") {
+    return buildSafeApiUrl(baseUrl, ...validParams);
+  }
+  
+  // Construir URL con endpoint base
   const normalizedEndpoint = baseEndpoint.startsWith("/") ? baseEndpoint : `/${baseEndpoint}`;
   return buildSafeApiUrl(baseUrl, normalizedEndpoint, ...validParams);
 }

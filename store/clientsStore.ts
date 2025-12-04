@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { buildApiRoute } from "@/lib/safeApi";
 
 export interface Client {
   id: string;
@@ -33,16 +33,18 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
   error: null,
 
   async fetchClients() {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [clientsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
       set({ error: "No hay organización seleccionada", isLoading: false });
+      console.warn("❗Error: organizationId undefined en clientsStore");
       return;
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "clients");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "clients");
     if (!url) {
       console.error("🔴 [clientsStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -65,15 +67,17 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [clientsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en clientsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "clients");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "clients");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -98,15 +102,17 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [clientsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en clientsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "clients", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "clients", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -126,15 +132,17 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
       throw new Error("ID de cliente no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [clientsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en clientsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "clients", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "clients", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

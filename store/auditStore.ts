@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { buildApiRoute } from "@/lib/safeApi";
 
 export interface AuditLog {
   id: string;
@@ -35,16 +35,18 @@ export const useAuditStore = create<AuditState>((set, get) => ({
   error: null,
 
   async fetchLogs(params) {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [auditStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en auditStore");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
 
-    const baseUrl = safeApiUrlWithParams("/", organizationId, "audit");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const baseUrl = buildApiRoute(orgId, "audit");
     if (!baseUrl) {
       console.error("🔴 [auditStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -76,11 +78,12 @@ export const useAuditStore = create<AuditState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [auditStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en auditStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -95,7 +98,8 @@ export const useAuditStore = create<AuditState>((set, get) => ({
       throw new Error("El usuario es obligatorio");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "audit");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "audit");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -133,15 +137,17 @@ export const useAuditStore = create<AuditState>((set, get) => ({
       throw new Error("ID de entrada no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [auditStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en auditStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "audit", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "audit", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }
@@ -156,15 +162,17 @@ export const useAuditStore = create<AuditState>((set, get) => ({
   },
 
   async clearAll() {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [auditStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en auditStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "audit");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "audit");
     if (!url) {
       throw new Error("URL de API inválida");
     }

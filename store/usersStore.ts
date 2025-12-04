@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrlWithParams } from "@/lib/safeApi";
+import { buildApiRoute } from "@/lib/safeApi";
 import { logCreate, logUpdate, logDelete } from "@/lib/auditHelper";
 
 export interface UserPMD {
@@ -41,16 +41,18 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   error: null,
 
   async fetchUsers() {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [usersStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en usersStore");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "users");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "users");
     if (!url) {
       console.error("🔴 [usersStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -73,11 +75,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [usersStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en usersStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -100,7 +103,8 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("La contraseña debe tener al menos 6 caracteres");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "users");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "users");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -144,11 +148,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [usersStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en usersStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -169,7 +174,8 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("La contraseña debe tener al menos 6 caracteres");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "users", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "users", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -207,11 +213,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("ID de usuario no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [usersStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en usersStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -219,7 +226,8 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const user = get().users.find((u) => u.id === id);
     const userName = user?.fullName || user?.email || id;
 
-    const url = safeApiUrlWithParams("/", organizationId, "users", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "users", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }
@@ -244,11 +252,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     }
 
     // roleId puede ser vacío para quitar el rol
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [usersStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en usersStore");
       throw new Error("No hay organización seleccionada");
     }
 

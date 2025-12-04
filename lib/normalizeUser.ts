@@ -12,17 +12,19 @@ export interface AuthUser {
 }
 
 export function normalizeUser(rawUser: any): AuthUser {
+  // Extraer organizationId: primero de organizationId directo, luego de organization.id
   const organizationId =
     rawUser.organizationId ||
     rawUser.organization?.id ||
     null;
 
-  // Normalizar el rol: puede venir como objeto con permisos o como string/ID
+  // Normalizar el rol: el backend ahora devuelve role como string
+  // Pero mantenemos compatibilidad con objetos por si acaso
   let normalizedRole: string | { id: string; name: string; permissions?: string[] };
   let roleId: string | undefined;
 
   if (rawUser.role && typeof rawUser.role === "object") {
-    // El rol viene como objeto (con permisos)
+    // El rol viene como objeto (compatibilidad con versiones anteriores)
     normalizedRole = {
       id: String(rawUser.role.id || rawUser.roleId || ""),
       name: String(rawUser.role.name || rawUser.role.nombre || ""),
@@ -30,7 +32,7 @@ export function normalizeUser(rawUser: any): AuthUser {
     };
     roleId = String(rawUser.role.id || rawUser.roleId || "");
   } else {
-    // El rol viene como string o ID
+    // El rol viene como string (formato actual del backend)
     normalizedRole = String(rawUser.role ?? rawUser.roleId ?? "");
     roleId = rawUser.roleId ? String(rawUser.roleId) : undefined;
   }
@@ -41,12 +43,14 @@ export function normalizeUser(rawUser: any): AuthUser {
     fullName: String(rawUser.fullName ?? rawUser.name ?? ""),
     role: normalizedRole,
     roleId,
-    organizationId,
+    organizationId, // SIEMPRE preservar organizationId
     organization: rawUser.organization ?? null
   };
 
-  // Console.log temporal para validar
-  console.log("Auth user loaded:", normalizedUser);
+  // Validar que organizationId esté presente
+  if (!normalizedUser.organizationId) {
+    console.warn("⚠️ [normalizeUser] organizationId no encontrado en rawUser:", rawUser);
+  }
 
   return normalizedUser;
 }

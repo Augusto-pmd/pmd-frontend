@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { buildApiRoute } from "@/lib/safeApi";
 
 export interface AccountingEntry {
   id: string;
@@ -49,11 +49,12 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
   error: null,
 
   async fetchEntries(filters = {}) {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [accountingStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en accountingStore");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -71,7 +72,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       if (filters.category) queryParams.append("category", filters.category);
 
       const queryString = queryParams.toString();
-      const baseUrl = safeApiUrlWithParams("/", organizationId, "accounting", "transactions");
+      // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+      const baseUrl = buildApiRoute(orgId, "accounting", "transactions");
       if (!baseUrl) {
         throw new Error("URL de API inválida");
       }
@@ -91,11 +93,12 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [accountingStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en accountingStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -113,7 +116,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("El tipo de movimiento es obligatorio");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "accounting", "transactions");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "accounting", "transactions");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -139,11 +143,12 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [accountingStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en accountingStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -152,7 +157,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("El monto debe ser mayor a 0");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "accounting", "transactions", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "accounting", "transactions", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -172,15 +178,17 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("ID de movimiento no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [accountingStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en accountingStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "accounting", "transactions", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "accounting", "transactions", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

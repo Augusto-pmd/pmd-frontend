@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrlWithParams } from "@/lib/safeApi";
+import { buildApiRoute } from "@/lib/safeApi";
 import { logCreate, logUpdate, logDelete } from "@/lib/auditHelper";
 
 export interface Role {
@@ -35,16 +35,18 @@ export const useRolesStore = create<RolesState>((set, get) => ({
   error: null,
 
   async fetchRoles() {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [rolesStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en rolesStore");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "roles");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "roles");
     if (!url) {
       console.error("🔴 [rolesStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -62,11 +64,12 @@ export const useRolesStore = create<RolesState>((set, get) => ({
   },
 
   async fetchPermissions() {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [rolesStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en rolesStore");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -74,7 +77,8 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     // Intentar obtener permisos desde el backend
     // Si el backend no tiene endpoint de permisos, usar lista estándar
     try {
-      const url = safeApiUrlWithParams("/", organizationId, "permissions");
+      // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+      const url = buildApiRoute(orgId, "permissions");
       if (url) {
         const data = await apiClient.get(url);
         const permissions = data?.data || data || [];
@@ -111,11 +115,12 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [rolesStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en rolesStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -124,7 +129,8 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       throw new Error("El nombre del rol es obligatorio");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "roles");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "roles");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -167,11 +173,12 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [rolesStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en rolesStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -179,7 +186,8 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     const currentRole = get().roles.find((r) => r.id === id);
     const beforeState = currentRole ? { ...currentRole } : null;
 
-    const url = safeApiUrlWithParams("/", organizationId, "roles", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "roles", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -214,11 +222,12 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       throw new Error("ID de rol no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [rolesStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en rolesStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -226,7 +235,8 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     const role = get().roles.find((r) => r.id === id);
     const roleName = role?.name || id;
 
-    const url = safeApiUrlWithParams("/", organizationId, "roles", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "roles", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

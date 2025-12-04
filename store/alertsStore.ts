@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { buildApiRoute } from "@/lib/safeApi";
 
 export interface Alert {
   id: string;
@@ -38,16 +38,18 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   error: null,
 
   async fetchAlerts() {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [alertsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en alertsStore");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "alerts");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "alerts");
     if (!url) {
       console.error("🔴 [alertsStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -70,15 +72,17 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("ID de alerta no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [alertsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en alertsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "alerts", id, "read");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "alerts", id, "read");
     if (!url) {
       throw new Error("URL de markAsRead inválida");
     }
@@ -98,11 +102,12 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [alertsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en alertsStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -120,7 +125,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("La fecha es obligatoria");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "alerts");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "alerts");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -163,15 +169,17 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [alertsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en alertsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "alerts", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "alerts", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -191,15 +199,17 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("ID de alerta no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [alertsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en alertsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "alerts", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "alerts", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }
@@ -214,15 +224,17 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   },
 
   async markAllAsRead() {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [alertsStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en alertsStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "alerts", "read-all");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "alerts", "read-all");
     if (!url) {
       throw new Error("URL de markAllAsRead inválida");
     }

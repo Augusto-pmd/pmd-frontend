@@ -10,6 +10,15 @@
     color-scheme: light;
   }
   
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
   html {
     background: var(--apple-canvas, #F5F5F7);
   }

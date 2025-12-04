@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { fetcher } from "./useSWRConfig";
 import { apiClient } from "@/lib/api-client";
+import { useAuthStore } from "@/store/authStore";
 
 export interface Work {
   id: string;
@@ -24,22 +25,32 @@ export interface WorkBudget {
 }
 
 export function useWorks() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<Work[]>("/works", fetcher);
+  const authState = useAuthStore.getState();
+  const organizationId = authState.user?.organizationId;
+  const endpoint = organizationId ? `${organizationId}/works` : null;
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR<Work[]>(
+    endpoint, 
+    fetcher
+  );
 
   const createWork = async (workData: Partial<Work>) => {
-    const newWork = await apiClient.create<Work>("/works", workData);
+    if (!organizationId) throw new Error("No hay organización seleccionada");
+    const newWork = await apiClient.create<Work>(`${organizationId}/works`, workData);
     await revalidate();
     return newWork;
   };
 
   const updateWork = async (id: string, workData: Partial<Work>) => {
-    const updatedWork = await apiClient.update<Work>("/works", id, workData);
+    if (!organizationId) throw new Error("No hay organización seleccionada");
+    const updatedWork = await apiClient.update<Work>(`${organizationId}/works`, id, workData);
     await revalidate();
     return updatedWork;
   };
 
   const deleteWork = async (id: string) => {
-    await apiClient.delete("/works", id);
+    if (!organizationId) throw new Error("No hay organización seleccionada");
+    await apiClient.delete(`${organizationId}/works`, id);
     await revalidate();
   };
 
@@ -55,7 +66,14 @@ export function useWorks() {
 }
 
 export function useWork(id: string | null) {
-  const { data, error, isLoading } = useSWR<Work | null>(id ? `/works/${id}` : null, fetcher);
+  const authState = useAuthStore.getState();
+  const organizationId = authState.user?.organizationId;
+  const endpoint = id && organizationId ? `${organizationId}/works/${id}` : null;
+  
+  const { data, error, isLoading } = useSWR<Work | null>(
+    endpoint, 
+    fetcher
+  );
 
   return {
     work: data || null,

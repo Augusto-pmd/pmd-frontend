@@ -185,7 +185,15 @@ export const useAuthStore = create<AuthState>()(
         const token = get().token;
         if (!token) throw new Error("No token");
 
-        const response = await fetch("/api/auth/profile");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
+        const response = await fetch(`${apiUrl}/auth/profile`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          credentials: "include",
+        });
         const data = await response.json();
         const rawUser = data?.user;
 
@@ -199,15 +207,23 @@ export const useAuthStore = create<AuthState>()(
 
       // --- REFRESH SESSION ---
       refreshSession: async () => {
-        const { refreshToken } = get();
-        if (!refreshToken) throw new Error("No refresh token");
+        const { token } = get();
+        if (!token) throw new Error("No access token");
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refreshToken }),
+        // El backend usa GET /api/auth/refresh con JWT en header
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
+        const response = await fetch(`${apiUrl}/auth/refresh`, {
+          method: "GET",
+          headers: { 
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json" 
+          },
           credentials: "include",
         });
+
+        if (!response.ok) {
+          throw new Error(`Refresh failed: ${response.status}`);
+        }
 
         const data = await response.json();
         const rawUser = data?.user;
@@ -217,6 +233,14 @@ export const useAuthStore = create<AuthState>()(
         if (rawUser) {
           // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
           const normalizedUser = normalizeUser(rawUser);
+          
+          // Asegurar que organizationId esté presente
+          if (!normalizedUser.organizationId) {
+            console.warn("⚠️ [refreshSession] organizationId no presente en respuesta, preservando el existente");
+            const currentUser = get().user;
+            normalizedUser.organizationId = currentUser?.organizationId || undefined;
+          }
+          
           set({
             user: normalizedUser,
             token: access_token,

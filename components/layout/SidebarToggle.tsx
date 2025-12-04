@@ -3,18 +3,17 @@
 import { Menu, X } from "lucide-react";
 
 interface SidebarToggleProps {
-  isOpen: boolean;
   onToggle: () => void;
+  open: boolean;
 }
 
-export default function SidebarToggle({ isOpen, onToggle }: SidebarToggleProps) {
+export default function SidebarToggle({ onToggle, open }: SidebarToggleProps) {
   return (
     <button
       onClick={onToggle}
-      className="p-3 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all active:scale-95 touch-none select-none"
-      aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
+      className="fixed top-4 left-4 z-[9999] p-3 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all active:scale-95 shadow-[0_4px_10px_rgba(0,0,0,0.25)] md:hidden"
     >
-      {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
     </button>
   );
 }

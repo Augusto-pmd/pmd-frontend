@@ -101,9 +101,9 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = useAuthStore.getState().refreshToken;
-        if (refreshToken) {
-          // Attempt to refresh token
+        const token = useAuthStore.getState().token;
+        if (token) {
+          // Attempt to refresh token using GET /api/auth/refresh
           const apiBase = getApiBaseUrl() || baseURL;
           const refreshURL = `${apiBase}/auth/refresh`;
           
@@ -114,15 +114,24 @@ api.interceptors.response.use(
           }
           
           console.log('🔍 [Token Refresh] URL:', refreshURL);
-          const response = await axios.post(
+          const response = await axios.get(
             refreshURL,
-            { refreshToken },
-            { withCredentials: true }
+            { 
+              withCredentials: true,
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
           );
 
-          const { user: rawUser, token: newToken, refreshToken: newRefreshToken } = response.data || {};
+          const { user: rawUser, access_token: newToken, refresh_token: newRefreshToken } = response.data || {};
           if (rawUser) {
             const user = normalizeUser(rawUser);
+            // Preservar organizationId si no viene en respuesta
+            if (!user.organizationId) {
+              const currentUser = useAuthStore.getState().user;
+              user.organizationId = currentUser?.organizationId || undefined;
+            }
             useAuthStore.setState({
               user,
               token: newToken,
@@ -137,7 +146,7 @@ api.interceptors.response.use(
           }
 
           // Retry original request with new token
-          if (originalRequest.headers) {
+          if (originalRequest.headers && newToken) {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
           }
           return api(originalRequest);

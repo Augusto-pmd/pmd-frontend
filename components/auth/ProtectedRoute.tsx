@@ -49,7 +49,7 @@ export function ProtectedRoute({
   }, [isAuthenticated, userRole, allowedRoles, router, redirectTo]);
 
   // --- Guard DESPUÉS del efecto ---
-  if (user === null) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />
@@ -57,12 +57,24 @@ export function ProtectedRoute({
     );
   }
 
-  // Si user.role es objeto, tomar el nombre del rol o permitir paso
+  // Verificar organizationId
+  if (!user.organizationId) {
+    console.warn("⚠️ [ProtectedRoute] user.organizationId no está presente");
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loading size="lg" />
+      </div>
+    );
+  }
+
+  // El backend ahora devuelve role como string, pero mantenemos compatibilidad con objetos
   const role = typeof user.role === "object" 
     ? (user.role.name ?? user.role.id ?? null) 
     : user.role;
 
-  if (!role) {
+  // Si no hay role pero hay user, permitir paso (el backend puede devolver role como null)
+  // Solo bloquear si hay allowedRoles específicos
+  if (allowedRoles && allowedRoles.length > 0 && !role) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />

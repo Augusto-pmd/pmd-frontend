@@ -193,28 +193,13 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden transition-all"
-          onClick={onClose}
-        />
-      )}
-
       {/* Sidebar */}
       <aside
-        className={`
-          fixed top-0 left-0 h-screen w-64
-          bg-[#162F7F]/90 backdrop-blur-2xl
-          border-r border-white/20
-          text-white
-          z-50
-          touch-none select-none
-          overflow-y-auto scrollbar-none
-          transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0 md:flex
-        `}
+        className={
+          mobileOpen
+            ? "fixed top-0 left-0 z-[9998] w-64 h-screen bg-[#162F7F]/90 backdrop-blur-2xl border-r border-white/20 translate-x-0 transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] md:static md:translate-x-0 touch-pan-y touch-manipulation overflow-y-auto scrollbar-none text-white touch-none select-none"
+            : "fixed top-0 left-0 z-[9998] w-64 h-screen bg-[#162F7F]/90 backdrop-blur-2xl border-r border-white/20 -translate-x-full transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] md:static md:translate-x-0 touch-pan-y touch-manipulation overflow-y-auto scrollbar-none text-white touch-none select-none"
+        }
       >
         {/* Logo Section */}
         <div className="flex justify-center items-center py-6 border-b border-white/10">

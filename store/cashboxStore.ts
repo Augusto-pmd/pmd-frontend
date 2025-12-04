@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
+import { buildApiRoute } from "@/lib/safeApi";
 import { accountingApi } from "@/hooks/api/accounting";
 
 export interface Cashbox {
@@ -60,16 +60,18 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   error: null,
 
   async fetchCashboxes() {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [cashboxStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en cashboxStore");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashboxes");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "cashboxes");
     if (!url) {
       console.error("🔴 [cashboxStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -92,15 +94,17 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [cashboxStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en cashboxStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashboxes");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "cashboxes");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -126,15 +130,17 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [cashboxStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en cashboxStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "cashboxes", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -154,11 +160,12 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       throw new Error("ID de caja no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [cashboxStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en cashboxStore");
       throw new Error("No hay organización seleccionada");
     }
 
@@ -193,7 +200,8 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     const saldoFinal = saldoInicial + totalIngresos - totalEgresos;
     const diferencia = saldoFinal;
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "cashboxes", id);
     if (!url) {
       throw new Error("URL de cierre inválida");
     }
@@ -231,11 +239,12 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async fetchMovements(cashboxId) {
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [cashboxStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en cashboxStore");
       set({ error: "No hay organización seleccionada", isLoading: false });
       return;
     }
@@ -246,7 +255,8 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       return;
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", cashboxId, "movements");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "cashboxes", cashboxId, "movements");
     if (!url) {
       console.error("🔴 [cashboxStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -279,15 +289,17 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [cashboxStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en cashboxStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", cashboxId, "movements");
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "cashboxes", cashboxId, "movements");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -361,15 +373,17 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [cashboxStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en cashboxStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", cashboxId, "movements", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "cashboxes", cashboxId, "movements", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -399,15 +413,17 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       throw new Error("ID de movimiento no está definido");
     }
 
+    // Regla 1: Nunca llamar un endpoint sin organizationId
     const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
-
-    if (!organizationId || !organizationId.trim()) {
-      console.warn("❗ [cashboxStore] organizationId no está definido");
+    const orgId = authState.user?.organizationId;
+    
+    if (!orgId) {
+      console.warn("❗Error: organizationId undefined en cashboxStore");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", cashboxId, "movements", id);
+    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
+    const url = buildApiRoute(orgId, "cashboxes", cashboxId, "movements", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

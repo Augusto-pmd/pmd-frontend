@@ -9,19 +9,28 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div style={{ 
-      display: "flex", 
-      height: "100vh", 
-      backgroundColor: "var(--apple-canvas)",
-      fontFamily: "Inter, system-ui, sans-serif"
-    }}>
-      {/* Mobile Sidebar Toggle Button */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <SidebarToggle 
-          isOpen={mobileSidebarOpen} 
-          onToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)} 
+    <div 
+      className="flex h-screen bg-[var(--apple-canvas)] font-[Inter,system-ui,sans-serif] touch-pan-y touch-manipulation"
+      style={{ 
+        display: "flex", 
+        height: "100vh", 
+        backgroundColor: "var(--apple-canvas)",
+        fontFamily: "Inter, system-ui, sans-serif"
+      }}
+    >
+      {/* Mobile Sidebar Toggle Button - Fixed and always visible */}
+      <SidebarToggle
+        open={mobileSidebarOpen}
+        onToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+      />
+
+      {/* Mobile Overlay */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998] md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
         />
-      </div>
+      )}
 
       {/* Sidebar - Responsive: hidden on mobile, visible on desktop */}
       <Sidebar 
@@ -35,11 +44,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <Topbar />
         
         {/* Main Content - Scrollable */}
-        <main style={{ 
-          flex: 1, 
-          overflowY: "auto",
-          overflowX: "hidden"
-        }}>
+        <main 
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          style={{ 
+            flex: 1, 
+            overflowY: "auto",
+            overflowX: "hidden"
+          }}
+        >
           {children}
         </main>
       </div>
