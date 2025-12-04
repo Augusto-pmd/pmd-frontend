@@ -1,9 +1,13 @@
 "use client";
 
-import { Sidebar } from "./Sidebar";
+import { useState } from "react";
+import Sidebar from "./Sidebar";
 import { Topbar } from "./Topbar";
+import SidebarToggle from "./SidebarToggle";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   return (
     <div style={{ 
       display: "flex", 
@@ -11,18 +15,22 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       backgroundColor: "var(--apple-canvas)",
       fontFamily: "Inter, system-ui, sans-serif"
     }}>
-      {/* Sidebar - Always visible, fixed position */}
-      <Sidebar />
+      {/* Mobile Sidebar Toggle Button */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <SidebarToggle 
+          isOpen={mobileSidebarOpen} 
+          onToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)} 
+        />
+      </div>
+
+      {/* Sidebar - Responsive: hidden on mobile, visible on desktop */}
+      <Sidebar 
+        mobileOpen={mobileSidebarOpen} 
+        onClose={() => setMobileSidebarOpen(false)} 
+      />
       
-      {/* Content Area - Fixed to right of sidebar */}
-      <div style={{ 
-        flex: 1, 
-        display: "flex", 
-        flexDirection: "column", 
-        overflow: "hidden",
-        marginLeft: "240px", // Sidebar width
-        minWidth: 0, // Allow content to shrink
-      }}>
+      {/* Content Area - Responsive margin */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 md:ml-64">
         {/* Header - Fixed to top of content area */}
         <Topbar />
         
