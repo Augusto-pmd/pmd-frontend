@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-import api from "@/lib/api";
 import LogoPMD from "@/components/LogoPMD";
 
 export function LoginForm() {
@@ -20,30 +19,48 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const loginEndpoint = "/api/auth/login";
-      const requestData = { email, password };
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
+      const loginUrl = `${apiUrl}/auth/login`;
       
       console.log("🔵 [LOGIN REQUEST]");
-      console.log("  - Endpoint:", loginEndpoint);
+      console.log("  - URL completa:", loginUrl);
       console.log("  - Method: POST");
       console.log("  - Data:", { email, password: "***" });
       console.log("  - NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
-      console.log("  - api.defaults.baseURL:", api.defaults.baseURL);
+      console.log("  - Client-side fetch: YES");
 
-      const response = await api.post(loginEndpoint, requestData);
+      const response = await fetch(loginUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ email, password })
+      });
 
       console.log("🟢 [LOGIN RESPONSE]");
       console.log("  - Status:", response.status);
-      console.log("  - Data:", response.data);
-      console.log("  - Headers:", response.headers);
+      console.log("  - Status OK:", response.ok);
+      console.log("  - Headers:", Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw {
+          response: {
+            status: response.status,
+            data: errorData
+          },
+          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`
+        };
+      }
 
       // Backend returns: { user, access_token, refresh_token }
-      const responseData = response.data;
-      console.log("🔵 [LOGIN EXTRACT] Extrayendo datos de response.data:");
-      console.log("  - response.data keys:", Object.keys(responseData));
-      console.log("  - response.data.access_token exists:", !!responseData.access_token);
-      console.log("  - response.data.token exists:", !!responseData.token);
-      console.log("  - response.data.user exists:", !!responseData.user);
+      const responseData = await response.json();
+      console.log("🔵 [LOGIN EXTRACT] Extrayendo datos de response JSON:");
+      console.log("  - response keys:", Object.keys(responseData));
+      console.log("  - response.access_token exists:", !!responseData.access_token);
+      console.log("  - response.token exists:", !!responseData.token);
+      console.log("  - response.user exists:", !!responseData.user);
       
       // Intentar extraer access_token o token (el backend puede usar cualquiera)
       const access_token = responseData.access_token || responseData.token;
@@ -119,6 +136,8 @@ export function LoginForm() {
         errorMessage = "Server error. Please try again later.";
       } else if (err.message) {
         errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
       }
       
       setError(errorMessage);
