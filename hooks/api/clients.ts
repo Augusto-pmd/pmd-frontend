@@ -2,37 +2,33 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_CLIENTS } from "@/lib/useSimulation";
 
 export function useClients() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
-  // Si está en modo simulación, usar un fetcher que retorna datos dummy
-  const fetcher = SIMULATION_MODE
-    ? () => Promise.resolve({ data: SIMULATED_CLIENTS })
-    : () => {
-        if (!organizationId || !organizationId.trim()) {
-          console.warn("❗ [useClients] organizationId no está definido");
-          throw new Error("No hay organización seleccionada");
-        }
-        const url = safeApiUrlWithParams("/", organizationId, "clients");
-        if (!url) {
-          throw new Error("URL de API inválida");
-        }
-        return apiClient.get(url);
-      };
+  const fetcher = () => {
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [useClients] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    const url = safeApiUrlWithParams("/", organizationId, "clients");
+    if (!url) {
+      throw new Error("URL de API inválida");
+    }
+    return apiClient.get(url);
+  };
   
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && organizationId) ? "clients" : null,
+    token && organizationId ? "clients" : null,
     fetcher
   );
 
   return {
     clients: data?.data || data || [],
     error,
-    isLoading: SIMULATION_MODE ? false : isLoading,
+    isLoading,
     mutate,
   };
 }
@@ -40,7 +36,7 @@ export function useClients() {
 export function useClient(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useClient] id no está definido");
@@ -75,7 +71,7 @@ export function useClient(id: string | null) {
 export const clientApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [clientApi.create] organizationId no está definido");
@@ -88,7 +84,7 @@ export const clientApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [clientApi.update] organizationId no está definido");
@@ -106,7 +102,7 @@ export const clientApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [clientApi.delete] organizationId no está definido");

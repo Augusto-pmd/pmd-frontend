@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/Button";
 function AuditContent() {
   const { logs, isLoading, error, fetchLogs } = useAuditStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
@@ -26,10 +26,15 @@ function AuditContent() {
 
   useEffect(() => {
     if (organizationId) {
-      fetchLogs();
+      const params: any = {};
+      if (startDateFilter) params.startDate = startDateFilter;
+      if (endDateFilter) params.endDate = endDateFilter;
+      if (moduleFilter !== "all") params.module = moduleFilter;
+      if (userFilter !== "all") params.user = userFilter;
+      fetchLogs(Object.keys(params).length > 0 ? params : undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organizationId]);
+  }, [organizationId, startDateFilter, endDateFilter, moduleFilter, userFilter]);
 
   if (!organizationId) {
     return (

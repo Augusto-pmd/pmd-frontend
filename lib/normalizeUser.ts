@@ -2,7 +2,8 @@ export interface AuthUser {
   id: string;
   email: string;
   fullName: string;
-  role: string; // SIEMPRE string
+  role: string | { id: string; name: string; permissions?: string[] }; // Puede ser string o objeto con permisos
+  roleId?: string; // ID del rol si está disponible
   organizationId?: string;
   organization?: {
     id?: string;
@@ -11,42 +12,41 @@ export interface AuthUser {
 }
 
 export function normalizeUser(rawUser: any): AuthUser {
-  if (!rawUser) {
-    throw new Error("normalizeUser: rawUser is required");
-  }
-
-  const role =
-    typeof rawUser.role === "object"
-      ? rawUser.role?.name
-      : rawUser.role ?? "operator"; // valor por defecto razonable
-
-  // Preservar organizationId de múltiples fuentes posibles
   const organizationId =
     rawUser.organizationId ||
     rawUser.organization?.id ||
     null;
 
-  // Preservar el objeto organization completo si existe
-  const organization = rawUser.organization || undefined;
+  // Normalizar el rol: puede venir como objeto con permisos o como string/ID
+  let normalizedRole: string | { id: string; name: string; permissions?: string[] };
+  let roleId: string | undefined;
+
+  if (rawUser.role && typeof rawUser.role === "object") {
+    // El rol viene como objeto (con permisos)
+    normalizedRole = {
+      id: String(rawUser.role.id || rawUser.roleId || ""),
+      name: String(rawUser.role.name || rawUser.role.nombre || ""),
+      permissions: Array.isArray(rawUser.role.permissions) ? rawUser.role.permissions : undefined,
+    };
+    roleId = String(rawUser.role.id || rawUser.roleId || "");
+  } else {
+    // El rol viene como string o ID
+    normalizedRole = String(rawUser.role ?? rawUser.roleId ?? "");
+    roleId = rawUser.roleId ? String(rawUser.roleId) : undefined;
+  }
 
   const normalizedUser: AuthUser = {
     id: String(rawUser.id),
     email: String(rawUser.email ?? ""),
     fullName: String(rawUser.fullName ?? rawUser.name ?? ""),
-    role: String(role),
-    organizationId: organizationId ? String(organizationId) : undefined,
-    organization: organization,
+    role: normalizedRole,
+    roleId,
+    organizationId,
+    organization: rawUser.organization ?? null
   };
 
-  // Validar que organizationId esté presente si viene del backend
-  if (organizationId) {
-    console.log("✅ [normalizeUser] organizationId preservado:", organizationId);
-    if (organization) {
-      console.log("✅ [normalizeUser] organization object preservado:", organization);
-    }
-  } else {
-    console.warn("⚠️ [normalizeUser] organizationId no encontrado en rawUser");
-  }
+  // Console.log temporal para validar
+  console.log("Auth user loaded:", normalizedUser);
 
   return normalizedUser;
 }

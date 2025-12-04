@@ -6,7 +6,7 @@ import { safeApiUrlWithParams } from "@/lib/safeApi";
 export function useAccounting() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   const { data, error, isLoading, mutate } = useSWR(
     token && organizationId ? "accounting" : null,
@@ -34,7 +34,7 @@ export function useAccounting() {
 export function useAccountingReport(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useAccountingReport] id no está definido");
@@ -69,7 +69,7 @@ export function useAccountingReport(id: string | null) {
 export function useAccountingSummary() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!organizationId || !organizationId.trim()) {
     console.warn("❗ [useAccountingSummary] organizationId no está definido");
@@ -99,7 +99,7 @@ export function useAccountingSummary() {
 export function useAccountingTransactions(params?: { startDate?: string; endDate?: string }) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!organizationId || !organizationId.trim()) {
     console.warn("❗ [useAccountingTransactions] organizationId no está definido");
@@ -137,7 +137,7 @@ export function useAccountingTransactions(params?: { startDate?: string; endDate
 export function useAccountingMonth(month: number | null, year: number | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!month || !year) {
     console.warn("❗ [useAccountingMonth] month o year no está definido");
@@ -177,7 +177,7 @@ export function useAccountingMonth(month: number | null, year: number | null) {
 export const accountingApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [accountingApi.create] organizationId no está definido");
@@ -190,7 +190,7 @@ export const accountingApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [accountingApi.update] organizationId no está definido");
@@ -208,7 +208,7 @@ export const accountingApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [accountingApi.delete] organizationId no está definido");
@@ -226,7 +226,7 @@ export const accountingApi = {
   },
   generateReport: (params: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [accountingApi.generateReport] organizationId no está definido");
@@ -239,7 +239,7 @@ export const accountingApi = {
   },
   createTransaction: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [accountingApi.createTransaction] organizationId no está definido");
@@ -252,7 +252,7 @@ export const accountingApi = {
   },
   getSummary: () => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [accountingApi.getSummary] organizationId no está definido");
@@ -265,7 +265,7 @@ export const accountingApi = {
   },
   getMonth: (month: number, year: number) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [accountingApi.getMonth] organizationId no está definido");

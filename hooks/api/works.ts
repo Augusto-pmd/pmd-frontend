@@ -2,38 +2,33 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_WORKS } from "@/lib/useSimulation";
 
 export function useWorks() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
-  // Si está en modo simulación, usar un fetcher que retorna datos dummy
-  const fetcher = SIMULATION_MODE
-    ? () => Promise.resolve({ data: SIMULATED_WORKS })
-    : () => {
-        if (!organizationId || !organizationId.trim()) {
-          console.warn("❗ [useWorks] organizationId no está definido, intentando cargar organización...");
-          // No lanzar error, permitir que el hook intente cargar la organización
-          return Promise.resolve({ data: [] });
-        }
-        const url = safeApiUrlWithParams("/", organizationId, "works");
-        if (!url) {
-          throw new Error("URL de API inválida");
-        }
-        return apiClient.get(url);
-      };
+  const fetcher = () => {
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [useWorks] organizationId no está definido");
+      return Promise.resolve({ data: [] });
+    }
+    const url = safeApiUrlWithParams("/", organizationId, "works");
+    if (!url) {
+      throw new Error("URL de API inválida");
+    }
+    return apiClient.get(url);
+  };
   
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && organizationId) ? "works" : null,
+    token && organizationId ? "works" : null,
     fetcher
   );
 
   return {
     works: data?.data || data || [],
     error,
-    isLoading: SIMULATION_MODE ? false : isLoading,
+    isLoading,
     mutate,
   };
 }
@@ -41,7 +36,7 @@ export function useWorks() {
 export function useWork(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useWork] id no está definido");
@@ -77,7 +72,7 @@ export function useWork(id: string | null) {
 export const workApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [workApi.create] organizationId no está definido");
@@ -90,7 +85,7 @@ export const workApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [workApi.update] organizationId no está definido");
@@ -108,7 +103,7 @@ export const workApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [workApi.delete] organizationId no está definido");

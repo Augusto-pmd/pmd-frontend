@@ -21,7 +21,7 @@ function UsersContent() {
   const { users, isLoading, error, fetchUsers, deleteUser, deactivateUser, activateUser } = useUsersStore();
   const { roles } = useRoles();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");

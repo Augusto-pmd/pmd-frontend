@@ -2,37 +2,33 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_STAFF } from "@/lib/useSimulation";
 
 export function useEmployees() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
-  // Si está en modo simulación, usar un fetcher que retorna datos dummy
-  const fetcher = SIMULATION_MODE
-    ? () => Promise.resolve({ data: SIMULATED_STAFF })
-    : () => {
-        if (!organizationId || !organizationId.trim()) {
-          console.warn("❗ [useEmployees] organizationId no está definido");
-          throw new Error("No hay organización seleccionada");
-        }
-        const url = safeApiUrlWithParams("/", organizationId, "employees");
-        if (!url) {
-          throw new Error("URL de API inválida");
-        }
-        return apiClient.get(url);
-      };
+  const fetcher = () => {
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [useEmployees] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    const url = safeApiUrlWithParams("/", organizationId, "employees");
+    if (!url) {
+      throw new Error("URL de API inválida");
+    }
+    return apiClient.get(url);
+  };
   
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && organizationId) ? "employees" : null,
+    token && organizationId ? "employees" : null,
     fetcher
   );
 
   return {
     employees: data?.data || data || [],
     error,
-    isLoading: SIMULATION_MODE ? false : isLoading,
+    isLoading,
     mutate,
   };
 }
@@ -40,7 +36,7 @@ export function useEmployees() {
 export function useEmployee(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useEmployee] id no está definido");
@@ -75,7 +71,7 @@ export function useEmployee(id: string | null) {
 export function useEmployeeAssignments(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useEmployeeAssignments] id no está definido");
@@ -110,7 +106,7 @@ export function useEmployeeAssignments(id: string | null) {
 export const employeeApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [employeeApi.create] organizationId no está definido");
@@ -123,7 +119,7 @@ export const employeeApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [employeeApi.update] organizationId no está definido");
@@ -141,7 +137,7 @@ export const employeeApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [employeeApi.delete] organizationId no está definido");
@@ -159,7 +155,7 @@ export const employeeApi = {
   },
   assignToWork: (employeeId: string, workId: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [employeeApi.assignToWork] organizationId no está definido");

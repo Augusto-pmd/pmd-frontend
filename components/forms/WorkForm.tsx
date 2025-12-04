@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { FormField } from "@/components/ui/FormField";
+import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { useEmployees } from "@/hooks/api/employees";
+import { useClients } from "@/hooks/api/clients";
 
 interface WorkFormProps {
   initialData?: any;
@@ -14,6 +18,8 @@ interface WorkFormProps {
 
 export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFormProps) {
   const { employees } = useEmployees();
+  const { clients } = useClients();
+  
   const [formData, setFormData] = useState({
     nombre: "",
     name: "",
@@ -21,8 +27,6 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
     address: "",
     clienteId: "",
     clientId: "",
-    cliente: "",
-    client: "",
     fechaInicio: "",
     startDate: "",
     fechaFin: "",
@@ -35,10 +39,10 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
     squareMeters: "",
     responsableId: "",
     managerId: "",
-    presupuesto: 0,
-    budget: 0,
-    ...initialData,
+    presupuesto: "",
+    budget: "",
   });
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -51,8 +55,6 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
         address: initialData.address || initialData.direccion || "",
         clienteId: initialData.clienteId || initialData.clientId || "",
         clientId: initialData.clientId || initialData.clienteId || "",
-        cliente: initialData.cliente || initialData.client || "",
-        client: initialData.client || initialData.cliente || "",
         fechaInicio: initialData.fechaInicio || initialData.startDate || initialData.estimatedStartDate || "",
         startDate: initialData.startDate || initialData.fechaInicio || initialData.estimatedStartDate || "",
         fechaFin: initialData.fechaFin || initialData.endDate || "",
@@ -65,99 +67,144 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
         squareMeters: initialData.squareMeters || initialData.metrosCuadrados || "",
         responsableId: initialData.responsableId || initialData.managerId || "",
         managerId: initialData.managerId || initialData.responsableId || "",
-        presupuesto: initialData.presupuesto || initialData.budget || 0,
-        budget: initialData.budget || initialData.presupuesto || 0,
+        presupuesto: initialData.presupuesto || initialData.budget || "",
+        budget: initialData.budget || initialData.presupuesto || "",
       });
     }
   }, [initialData]);
 
-  const validate = () => {
+  const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
+    
+    // Validación obligatoria: nombre
     const nombre = formData.nombre || formData.name;
     if (!nombre?.trim()) {
       newErrors.nombre = "El nombre de la obra es obligatorio";
     }
+    
+    // Validar fechas si están presentes
+    if (formData.fechaInicio && formData.fechaFin) {
+      const inicio = new Date(formData.fechaInicio);
+      const fin = new Date(formData.fechaFin);
+      if (inicio > fin) {
+        newErrors.fechaFin = "La fecha de fin debe ser posterior a la fecha de inicio";
+      }
+    }
+    
+    // Validar metros cuadrados si está presente
+    if (formData.metrosCuadrados && parseFloat(formData.metrosCuadrados) < 0) {
+      newErrors.metrosCuadrados = "Los metros cuadrados deben ser un valor positivo";
+    }
+    
+    // Validar presupuesto si está presente
+    if (formData.presupuesto && parseFloat(formData.presupuesto) < 0) {
+      newErrors.presupuesto = "El presupuesto debe ser un valor positivo";
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    
+    if (!validate()) {
+      return;
+    }
 
-    // Preparar datos para enviar
+    // Preparar payload según lo que el backend espera
     const payload: any = {
-      nombre: formData.nombre || formData.name,
-      name: formData.name || formData.nombre,
+      // Campos principales
+      nombre: (formData.nombre || formData.name).trim(),
+      name: (formData.nombre || formData.name).trim(), // Compatibilidad
       direccion: formData.direccion || formData.address || undefined,
-      address: formData.address || formData.direccion || undefined,
+      address: formData.direccion || formData.address || undefined, // Compatibilidad
       clienteId: formData.clienteId || formData.clientId || undefined,
-      clientId: formData.clientId || formData.clienteId || undefined,
-      cliente: formData.cliente || formData.client || undefined,
-      client: formData.client || formData.cliente || undefined,
+      clientId: formData.clienteId || formData.clientId || undefined, // Compatibilidad
       fechaInicio: formData.fechaInicio || formData.startDate || undefined,
-      startDate: formData.startDate || formData.fechaInicio || undefined,
+      startDate: formData.fechaInicio || formData.startDate || undefined, // Compatibilidad
       fechaFin: formData.fechaFin || formData.endDate || undefined,
-      endDate: formData.endDate || formData.fechaFin || undefined,
+      endDate: formData.fechaFin || formData.endDate || undefined, // Compatibilidad
       estado: formData.estado || formData.status || "planificada",
-      status: formData.status || formData.estado || "planned",
+      status: formData.status || formData.estado || "planned", // Compatibilidad
       descripcion: formData.descripcion || formData.description || undefined,
-      description: formData.description || formData.descripcion || undefined,
-      metrosCuadrados: formData.metrosCuadrados || formData.squareMeters || undefined,
-      squareMeters: formData.squareMeters || formData.metrosCuadrados || undefined,
+      description: formData.descripcion || formData.description || undefined, // Compatibilidad
+      metrosCuadrados: formData.metrosCuadrados ? parseFloat(formData.metrosCuadrados) : undefined,
+      squareMeters: formData.metrosCuadrados ? parseFloat(formData.metrosCuadrados) : undefined, // Compatibilidad
       responsableId: formData.responsableId || formData.managerId || undefined,
-      managerId: formData.managerId || formData.responsableId || undefined,
-      presupuesto: formData.presupuesto || formData.budget || undefined,
-      budget: formData.budget || formData.presupuesto || undefined,
+      managerId: formData.responsableId || formData.managerId || undefined, // Compatibilidad
+      presupuesto: formData.presupuesto ? parseFloat(formData.presupuesto) : undefined,
+      budget: formData.presupuesto ? parseFloat(formData.presupuesto) : undefined, // Compatibilidad
     };
 
-    // Limpiar campos undefined
+    // Limpiar campos undefined del payload
     Object.keys(payload).forEach((key) => {
       if (payload[key] === undefined || payload[key] === "") {
         delete payload[key];
       }
     });
 
-    await onSubmit(payload);
+    try {
+      await onSubmit(payload);
+    } catch (error) {
+      // El error ya se maneja en el componente padre
+      console.error("Error en WorkForm:", error);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Nombre de la obra *"
-        value={formData.nombre || formData.name}
-        onChange={(e) => setFormData({ ...formData, nombre: e.target.value, name: e.target.value })}
-        error={errors.nombre}
-        required
-      />
-
-      <Input
-        label="Dirección"
-        value={formData.direccion || formData.address}
-        onChange={(e) => setFormData({ ...formData, direccion: e.target.value, address: e.target.value })}
-        placeholder="Dirección completa de la obra"
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+      {/* Nombre de la obra - OBLIGATORIO */}
+      <FormField label="Nombre de la obra" required error={errors.nombre}>
         <Input
-          label="Cliente"
-          value={formData.cliente || formData.client}
-          onChange={(e) => setFormData({ ...formData, cliente: e.target.value, client: e.target.value })}
-          placeholder="Nombre del cliente"
+          type="text"
+          value={formData.nombre || formData.name}
+          onChange={(e) => setFormData({ ...formData, nombre: e.target.value, name: e.target.value })}
+          placeholder="Ej: Edificio Residencial Centro"
+          required
         />
+      </FormField>
+
+      {/* Dirección */}
+      <FormField label="Dirección">
         <Input
-          label="Metros cuadrados"
-          type="number"
-          step="0.01"
-          value={formData.metrosCuadrados || formData.squareMeters}
-          onChange={(e) => setFormData({ ...formData, metrosCuadrados: e.target.value, squareMeters: e.target.value })}
-          placeholder="m²"
+          type="text"
+          value={formData.direccion || formData.address}
+          onChange={(e) => setFormData({ ...formData, direccion: e.target.value, address: e.target.value })}
+          placeholder="Dirección completa de la obra"
         />
+      </FormField>
+
+      {/* Cliente y Metros cuadrados */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <FormField label="Cliente">
+          <Select
+            value={formData.clienteId || formData.clientId}
+            onChange={(e) => setFormData({ ...formData, clienteId: e.target.value, clientId: e.target.value })}
+          >
+            <option value="">Sin cliente asignado</option>
+            {clients?.map((client: any) => (
+              <option key={client.id} value={client.id}>
+                {client.name || client.nombre || client.fullName || `Cliente ${client.id.slice(0, 8)}`}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <FormField label="Metros cuadrados" error={errors.metrosCuadrados}>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.metrosCuadrados || formData.squareMeters}
+            onChange={(e) => setFormData({ ...formData, metrosCuadrados: e.target.value, squareMeters: e.target.value })}
+            placeholder="m²"
+          />
+        </FormField>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
-        <select
+      {/* Estado - OBLIGATORIO */}
+      <FormField label="Estado" required>
+        <Select
           value={formData.estado || formData.status}
           onChange={(e) => {
             const estado = e.target.value;
@@ -168,7 +215,6 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
             else if (estado === "finalizada" || estado === "completada") status = "completed";
             setFormData({ ...formData, estado: estado, status: status });
           }}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
           required
         >
           <option value="planificada">Planificada</option>
@@ -177,72 +223,87 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
           <option value="pausada">Pausada</option>
           <option value="finalizada">Finalizada</option>
           <option value="completada">Completada</option>
-        </select>
+        </Select>
+      </FormField>
+
+      {/* Fechas */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <FormField label="Fecha de inicio">
+          <Input
+            type="date"
+            value={formData.fechaInicio || formData.startDate}
+            onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value, startDate: e.target.value })}
+          />
+        </FormField>
+        <FormField label="Fecha estimada de finalización" error={errors.fechaFin}>
+          <Input
+            type="date"
+            value={formData.fechaFin || formData.endDate}
+            onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value, endDate: e.target.value })}
+            min={formData.fechaInicio || formData.startDate}
+          />
+        </FormField>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Fecha de inicio"
-          type="date"
-          value={formData.fechaInicio || formData.startDate}
-          onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value, startDate: e.target.value })}
-        />
-        <Input
-          label="Fecha estimada de finalización"
-          type="date"
-          value={formData.fechaFin || formData.endDate}
-          onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value, endDate: e.target.value })}
-        />
+      {/* Responsable y Presupuesto */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <FormField label="Responsable">
+          <Select
+            value={formData.responsableId || formData.managerId}
+            onChange={(e) => setFormData({ ...formData, responsableId: e.target.value, managerId: e.target.value })}
+          >
+            <option value="">Seleccionar responsable</option>
+            {employees?.map((emp: any) => {
+              const nombre = emp.nombre || emp.fullName || emp.name || "Sin nombre";
+              return (
+                <option key={emp.id} value={emp.id}>
+                  {nombre}
+                </option>
+              );
+            })}
+          </Select>
+        </FormField>
+        <FormField label="Presupuesto" error={errors.presupuesto}>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.presupuesto || formData.budget}
+            onChange={(e) => setFormData({ ...formData, presupuesto: e.target.value, budget: e.target.value })}
+            placeholder="0.00"
+          />
+        </FormField>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Responsable</label>
-        <select
-          value={formData.responsableId || formData.managerId}
-          onChange={(e) => setFormData({ ...formData, responsableId: e.target.value, managerId: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-        >
-          <option value="">Seleccionar responsable</option>
-          {employees?.map((emp: any) => {
-            const nombre = emp.nombre || emp.fullName || emp.name || "Sin nombre";
-            return (
-              <option key={emp.id} value={emp.id}>
-                {nombre}
-              </option>
-            );
-          })}
-        </select>
-      </div>
-
-      <Input
-        label="Presupuesto"
-        type="number"
-        step="0.01"
-        value={formData.presupuesto || formData.budget}
-        onChange={(e) => setFormData({ ...formData, presupuesto: parseFloat(e.target.value) || 0, budget: parseFloat(e.target.value) || 0 })}
-        placeholder="0.00"
-      />
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-        <textarea
+      {/* Descripción */}
+      <FormField label="Descripción">
+        <Textarea
           value={formData.descripcion || formData.description}
           onChange={(e) => setFormData({ ...formData, descripcion: e.target.value, description: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
           rows={4}
           placeholder="Descripción detallada de la obra"
         />
-      </div>
+      </FormField>
 
-      <div className="flex gap-3 justify-end pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-          Cancelar
+      {/* Botones */}
+      <div style={{ display: "flex", gap: "var(--space-sm)", paddingTop: "var(--space-md)" }}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isLoading}
+          style={{ flex: 1 }}
+        >
+          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear Obra"}
         </Button>
-        <Button type="submit" variant="primary" disabled={isLoading}>
-          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+        >
+          Cancelar
         </Button>
       </div>
     </form>
   );
 }
-

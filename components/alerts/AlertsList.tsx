@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/Toast";
 import { Eye, Trash2, Check, CheckCheck, Bell, AlertTriangle } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
+import { useDocuments } from "@/hooks/api/documents";
+import { useSuppliers } from "@/hooks/api/suppliers";
 
 interface AlertsListProps {
   alerts: Alert[];
@@ -33,6 +35,8 @@ export function AlertsList({
   const router = useRouter();
   const { works } = useWorks();
   const { users } = useUsers();
+  const { documents } = useDocuments();
+  const { suppliers } = useSuppliers();
   const { markAsRead, deleteAlert, markAllAsRead } = useAlertsStore();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -76,6 +80,20 @@ export function AlertsList({
     const user = users.find((u: any) => u.id === userId);
     if (!user) return userId;
     return user.fullName || user.name || user.nombre || userId;
+  };
+
+  const getDocumentName = (documentId?: string) => {
+    if (!documentId) return "-";
+    const doc = documents?.find((d: any) => d.id === documentId);
+    if (!doc) return documentId;
+    return doc.name || doc.nombre || documentId;
+  };
+
+  const getSupplierName = (supplierId?: string) => {
+    if (!supplierId) return "-";
+    const supplier = suppliers?.find((s: any) => s.id === supplierId);
+    if (!supplier) return supplierId;
+    return supplier.nombre || supplier.name || supplierId;
   };
 
   const getSeverityVariant = (severity: "alta" | "media" | "baja") => {
@@ -193,6 +211,9 @@ export function AlertsList({
                   Personal
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Documento
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Severidad
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -226,6 +247,9 @@ export function AlertsList({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{getUserName(alert.personId)}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-600">{getDocumentName(alert.documentId)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Badge variant={getSeverityVariant(alert.severity)}>

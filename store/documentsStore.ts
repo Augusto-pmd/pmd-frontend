@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_DOCUMENTS } from "@/lib/useSimulation";
 
 export interface Document {
   id: string;
@@ -14,8 +13,14 @@ export interface Document {
   uploadedBy?: string;
   status?: "aprobado" | "en revisión" | "pendiente" | "rechazado";
   url?: string;
+  fileUrl?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+interface DocumentPayload extends Partial<Document> {
+  file?: File;
+  notes?: string;
 }
 
 interface DocumentsState {
@@ -24,8 +29,8 @@ interface DocumentsState {
   error: string | null;
 
   fetchDocuments: (workId?: string) => Promise<void>;
-  createDocument: (payload: Partial<Document>) => Promise<void>;
-  updateDocument: (id: string, payload: Partial<Document>) => Promise<void>;
+  createDocument: (payload: DocumentPayload) => Promise<void>;
+  updateDocument: (id: string, payload: DocumentPayload) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
 }
 
@@ -35,20 +40,8 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   error: null,
 
   async fetchDocuments(workId) {
-    // Modo simulación: usar datos dummy
-    if (SIMULATION_MODE) {
-      let filteredDocuments = [...SIMULATED_DOCUMENTS];
-      
-      if (workId) {
-        filteredDocuments = filteredDocuments.filter((doc) => doc.workId === workId);
-      }
-      
-      set({ documents: filteredDocuments as Document[], isLoading: false, error: null });
-      return;
-    }
-
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [documentsStore] organizationId no está definido");
@@ -86,11 +79,22 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [documentsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
+    }
+
+    // Validar campos obligatorios
+    if (!payload.name || payload.name.trim() === "") {
+      throw new Error("El nombre del documento es obligatorio");
+    }
+    if (!payload.type || payload.type.trim() === "") {
+      throw new Error("El tipo de documento es obligatorio");
+    }
+    if (!payload.workId || payload.workId.trim() === "") {
+      throw new Error("La obra es obligatoria");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "documents");
@@ -99,8 +103,28 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     try {
-      await apiClient.post(url, payload);
-      await get().fetchDocuments();
+      // Si hay un archivo, usar FormData para multipart/form-data
+      if (payload.file && payload.file instanceof File) {
+        const formData = new FormData();
+        formData.append("file", payload.file);
+        formData.append("name", payload.name);
+        formData.append("type", payload.type);
+        formData.append("workId", payload.workId);
+        if (payload.version) formData.append("version", payload.version);
+        if (payload.status) formData.append("status", payload.status);
+        if (payload.uploadedBy) formData.append("uploadedBy", payload.uploadedBy);
+        if (payload.notes) formData.append("notes", payload.notes);
+
+        // Usar apiClient.post con FormData (axios maneja multipart automáticamente)
+        const response = await apiClient.post(url, formData);
+        await get().fetchDocuments(payload.workId);
+        return response;
+      } else {
+        // Si no hay archivo, enviar JSON normal
+        const response = await apiClient.post(url, payload);
+        await get().fetchDocuments(payload.workId);
+        return response;
+      }
     } catch (error: any) {
       console.error("🔴 [documentsStore] Error al crear documento:", error);
       throw error;
@@ -119,7 +143,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [documentsStore] organizationId no está definido");
@@ -132,8 +156,26 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     try {
-      await apiClient.put(url, payload);
-      await get().fetchDocuments();
+      // Si hay un archivo nuevo, usar FormData
+      if (payload.file && payload.file instanceof File) {
+        const formData = new FormData();
+        if (payload.name) formData.append("name", payload.name);
+        if (payload.type) formData.append("type", payload.type);
+        if (payload.workId) formData.append("workId", payload.workId);
+        if (payload.version) formData.append("version", payload.version);
+        if (payload.status) formData.append("status", payload.status);
+        if (payload.uploadedBy) formData.append("uploadedBy", payload.uploadedBy);
+        if (payload.notes) formData.append("notes", payload.notes);
+        formData.append("file", payload.file);
+
+        await apiClient.put(url, formData);
+      } else {
+        // Si no hay archivo, enviar JSON normal
+        await apiClient.put(url, payload);
+      }
+      
+      // Refrescar lista (con workId si está disponible)
+      await get().fetchDocuments(payload.workId);
     } catch (error: any) {
       console.error("🔴 [documentsStore] Error al actualizar documento:", error);
       throw error;
@@ -147,7 +189,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [documentsStore] organizationId no está definido");
@@ -160,8 +202,12 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     try {
+      // Obtener workId del documento antes de eliminarlo para refrescar correctamente
+      const document = get().documents.find((d) => d.id === id);
+      const workId = document?.workId;
+
       await apiClient.delete(url);
-      await get().fetchDocuments();
+      await get().fetchDocuments(workId);
     } catch (error: any) {
       console.error("🔴 [documentsStore] Error al eliminar documento:", error);
       throw error;

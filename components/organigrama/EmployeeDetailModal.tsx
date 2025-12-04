@@ -7,6 +7,8 @@ import { UserAvatar } from "@/components/settings/UserAvatar";
 import { Building2, Mail, Phone, Calendar, AlertTriangle, Bell, Edit } from "lucide-react";
 import { useAlertsStore } from "@/store/alertsStore";
 import { useWorks } from "@/hooks/api/works";
+import { useRoles } from "@/hooks/api/roles";
+import Link from "next/link";
 
 interface Employee {
   id: string;
@@ -42,6 +44,7 @@ export function EmployeeDetailModal({
 }: EmployeeDetailModalProps) {
   const { alerts } = useAlertsStore();
   const { works } = useWorks();
+  const { roles } = useRoles();
 
   if (!employee) return null;
 
@@ -53,13 +56,17 @@ export function EmployeeDetailModal({
   };
 
   const name = employee.fullName || employee.name || employee.nombre || "Sin nombre";
-  const role = employee.role || "Sin rol";
+  const roleId = employee.roleId || employee.role;
+  const role = roles.find((r: any) => r.id === roleId || r.name === roleId);
+  const roleName = role?.name || role?.nombre || roleId || "Sin rol";
   const subrole = employee.subrole || "";
   const isActive = employee.isActive !== false;
   const workName = getWorkName(employee.workId);
+  const workId = employee.workId;
   const employeeAlerts = alerts.filter((alert) => alert.personId === employee.id);
   const unreadAlerts = employeeAlerts.filter((a) => !a.read).length;
   const highSeverityAlerts = employeeAlerts.filter((a) => a.severity === "alta").length;
+  const mediumSeverityAlerts = employeeAlerts.filter((a) => a.severity === "media").length;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Detalle del Personal" size="lg">
@@ -71,7 +78,7 @@ export function EmployeeDetailModal({
             <h3 className="text-lg font-semibold text-gray-900 mb-2">{name}</h3>
             <div className="flex flex-wrap gap-2">
               <Badge variant={isActive ? "success" : "default"}>{isActive ? "Activo" : "Inactivo"}</Badge>
-              <Badge variant="info">{role}</Badge>
+              <Badge variant="info">{roleName}</Badge>
               {subrole && <Badge variant="default">{subrole}</Badge>}
             </div>
           </div>
@@ -105,12 +112,22 @@ export function EmployeeDetailModal({
         </div>
 
         {/* Obra asignada */}
-        {workName && (
+        {workName && workId ? (
           <div className="space-y-2">
             <h4 className="text-sm font-semibold text-gray-900">Obra Asignada</h4>
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600">{workName}</span>
+              <Link href={`/works/${workId}`} className="text-sm text-blue-600 hover:underline">
+                {workName}
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-gray-900">Obra Asignada</h4>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-500">Sin obra asignada</span>
             </div>
           </div>
         )}
@@ -130,6 +147,20 @@ export function EmployeeDetailModal({
                       ? "border-yellow-200 bg-yellow-50"
                       : "border-blue-200 bg-blue-50"
                   }`}
+                  style={{
+                    borderColor:
+                      alert.severity === "alta"
+                        ? "rgba(255,59,48,0.3)"
+                        : alert.severity === "media"
+                        ? "rgba(255,193,7,0.3)"
+                        : "rgba(0,122,255,0.3)",
+                    backgroundColor:
+                      alert.severity === "alta"
+                        ? "rgba(255,59,48,0.1)"
+                        : alert.severity === "media"
+                        ? "rgba(255,193,7,0.1)"
+                        : "rgba(0,122,255,0.1)",
+                  }}
                 >
                   <div className="flex items-start gap-2">
                     <AlertTriangle

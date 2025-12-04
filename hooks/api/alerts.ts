@@ -2,37 +2,33 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_ALERTS } from "@/lib/useSimulation";
 
 export function useAlerts() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
-  // Si está en modo simulación, usar un fetcher que retorna datos dummy
-  const fetcher = SIMULATION_MODE
-    ? () => Promise.resolve({ data: SIMULATED_ALERTS })
-    : () => {
-        if (!organizationId || !organizationId.trim()) {
-          console.warn("❗ [useAlerts] organizationId no está definido");
-          throw new Error("No hay organización seleccionada");
-        }
-        const url = safeApiUrlWithParams("/", organizationId, "alerts");
-        if (!url) {
-          throw new Error("URL de API inválida");
-        }
-        return apiClient.get(url);
-      };
+  const fetcher = () => {
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [useAlerts] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    const url = safeApiUrlWithParams("/", organizationId, "alerts");
+    if (!url) {
+      throw new Error("URL de API inválida");
+    }
+    return apiClient.get(url);
+  };
   
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && organizationId) ? "alerts" : null,
+    token && organizationId ? "alerts" : null,
     fetcher
   );
 
   return {
     alerts: data?.data || data || [],
     error,
-    isLoading: SIMULATION_MODE ? false : isLoading,
+    isLoading,
     mutate,
   };
 }
@@ -40,7 +36,7 @@ export function useAlerts() {
 export function useAlert(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useAlert] id no está definido");
@@ -75,7 +71,7 @@ export function useAlert(id: string | null) {
 export const alertApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertApi.create] organizationId no está definido");
@@ -88,7 +84,7 @@ export const alertApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertApi.update] organizationId no está definido");
@@ -106,7 +102,7 @@ export const alertApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertApi.delete] organizationId no está definido");
@@ -124,7 +120,7 @@ export const alertApi = {
   },
   markAsRead: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertApi.markAsRead] organizationId no está definido");

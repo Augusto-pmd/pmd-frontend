@@ -9,6 +9,7 @@ import { useCashboxStore } from "@/store/cashboxStore";
 import { useCan, can } from "@/lib/acl";
 import { useState, useEffect } from "react";
 import { SidebarItem } from "@/components/ui/SidebarItem";
+import LogoPMD from "@/components/LogoPMD";
 import {
   LayoutDashboard,
   Building2,
@@ -58,7 +59,7 @@ export function Sidebar() {
 
   useEffect(() => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     if (organizationId) {
       fetchAlerts();
       fetchDocuments();
@@ -67,8 +68,11 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!user || typeof user.role === "object") return null;
+  // El Sidebar debe renderizarse incluso si el rol es un objeto (con permisos)
+  // Solo ocultar si no hay usuario
+  if (!user) return null;
 
+  const unreadAlertsCount = alerts.filter((a) => !a.read).length;
   const highAlertsCount = alerts.filter((a) => !a.read && a.severity === "alta").length;
   const mediumAlertsCount = alerts.filter((a) => !a.read && a.severity === "media").length;
   const pendingDocsCount = documents.filter((d) => d.status === "pendiente").length;
@@ -152,23 +156,24 @@ export function Sidebar() {
         { label: "Subir Documento", href: "/documents/upload", icon: Upload, permission: "documents.create" },
       ],
     },
-    {
-      title: "Alertas",
-      permission: "alerts.read",
-      items: [
-        {
-          label: "Todas",
-          href: "/alerts",
-          icon: Bell,
-          badge:
-            highAlertsCount > 0
-              ? { count: highAlertsCount, variant: "error" }
-              : mediumAlertsCount > 0
-              ? { count: mediumAlertsCount, variant: "warning" }
-              : undefined,
-        },
-      ],
-    },
+      {
+        title: "Alertas",
+        permission: "alerts.read",
+        items: [
+          {
+            label: "Todas",
+            href: "/alerts",
+            icon: Bell,
+            badge:
+              unreadAlertsCount > 0
+                ? {
+                    count: unreadAlertsCount,
+                    variant: highAlertsCount > 0 ? "error" : mediumAlertsCount > 0 ? "warning" : "info",
+                  }
+                : undefined,
+          },
+        ],
+      },
     {
       title: "Auditoría",
       permission: "audit.read",
@@ -337,12 +342,8 @@ export function Sidebar() {
   return (
     <aside style={sidebarStyle}>
       {/* Logo Section */}
-      <div style={logoSectionStyle}>
-        <div style={logoBoxStyle}>PMD</div>
-        <div style={logoTextStyle}>
-          <h1 style={logoTitleStyle}>PMD</h1>
-          <p style={logoSubtitleStyle}>Management</p>
-        </div>
+      <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-md) 0", marginBottom: "var(--space-md)", borderBottom: "1px solid var(--apple-border)" }}>
+        <LogoPMD size={48} className="opacity-95" />
       </div>
 
         {/* Navigation */}
@@ -384,7 +385,11 @@ export function Sidebar() {
         {user && (
           <div style={userSectionStyle}>
             <p style={userNameStyle}>{user.fullName || user.email}</p>
-            <p style={userRoleStyle}>{String(user.role ?? "")}</p>
+            <p style={userRoleStyle}>
+              {typeof user.role === "string" 
+                ? user.role 
+                : user.role?.name || user.roleId || "Sin rol"}
+            </p>
           </div>
         )}
     </aside>

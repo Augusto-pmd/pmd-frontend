@@ -20,7 +20,7 @@ import { useUsers } from "@/hooks/api/users";
 function DocumentsContent() {
   const { documents, isLoading, error, fetchDocuments, createDocument } = useDocumentsStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   const { works } = useWorks();
   const { users } = useUsers();
 

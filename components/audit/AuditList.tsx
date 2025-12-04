@@ -39,7 +39,9 @@ export function AuditList({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
-  const isAdmin = user?.role === "admin";
+  // Verificar permisos: solo admin puede eliminar
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
+  const canDelete = isAdmin; // Solo admin puede eliminar registros de auditoría
 
   const filteredLogs = logs.filter((log) => {
     if (searchQuery) {
@@ -133,7 +135,7 @@ export function AuditList({
 
   return (
     <>
-      {isAdmin && (
+      {canDelete && (
         <div style={{ marginBottom: "var(--space-md)", display: "flex", justifyContent: "flex-end" }}>
           <Button
             variant="outline"
@@ -205,7 +207,7 @@ export function AuditList({
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    {isAdmin && (
+                    {canDelete && (
                       <Button
                         variant="icon"
                         size="sm"

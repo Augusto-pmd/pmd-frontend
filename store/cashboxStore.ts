@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_CASHBOXES, SIMULATED_CASH_MOVEMENTS } from "@/lib/useSimulation";
+import { accountingApi } from "@/hooks/api/accounting";
 
 export interface Cashbox {
   id: string;
@@ -28,6 +28,13 @@ export interface CashMovement {
   supplierId?: string;
   createdAt?: string;
   updatedAt?: string;
+  // Nuevos campos
+  typeDocument?: "factura" | "comprobante" | null;
+  invoiceNumber?: string; // obligatorio si factura
+  isIncome?: boolean; // true en refuerzo
+  responsible?: string; // responsable del refuerzo
+  workId?: string; // obra asociada (para facturas)
+  attachmentUrl?: string; // URL del archivo adjunto (comprobantes)
 }
 
 interface CashboxState {
@@ -53,14 +60,8 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   error: null,
 
   async fetchCashboxes() {
-    // Modo simulación: usar datos dummy
-    if (SIMULATION_MODE) {
-      set({ cashboxes: SIMULATED_CASHBOXES, isLoading: false, error: null });
-      return;
-    }
-
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxStore] organizationId no está definido");
@@ -68,7 +69,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       return;
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashbox");
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes");
     if (!url) {
       console.error("🔴 [cashboxStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -92,14 +93,14 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashbox");
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -126,14 +127,14 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashbox", id);
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -154,20 +155,74 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashbox", id);
+    // Obtener movimientos de la caja antes de cerrar
+    const movements = get().movements[id] || [];
+    
+    // Calcular balance final
+    let totalIngresos = 0;
+    let totalEgresos = 0;
+    let cantidadFacturas = 0;
+    let cantidadComprobantes = 0;
+    const facturas: CashMovement[] = [];
+
+    movements.forEach((movement) => {
+      const type = movement.type === "ingreso" || movement.type === "income" ? "ingreso" : "egreso";
+      const amount = movement.amount || 0;
+
+      if (type === "ingreso") {
+        totalIngresos += amount;
+      } else {
+        totalEgresos += amount;
+        if (movement.typeDocument === "factura") {
+          cantidadFacturas++;
+          facturas.push(movement);
+        } else if (movement.typeDocument === "comprobante") {
+          cantidadComprobantes++;
+        }
+      }
+    });
+
+    const saldoInicial = get().cashboxes.find((c) => c.id === id)?.balance || 0;
+    const saldoFinal = saldoInicial + totalIngresos - totalEgresos;
+    const diferencia = saldoFinal;
+
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", id);
     if (!url) {
       throw new Error("URL de cierre inválida");
     }
 
     try {
-      await apiClient.patch(url, { isClosed: true, closedAt: new Date().toISOString() });
+      // Enviar resumen completo al backend
+      const closePayload = {
+        isClosed: true,
+        closedAt: new Date().toISOString(),
+        finalBalance: saldoFinal,
+        summary: {
+          totalIngresos,
+          totalEgresos,
+          cantidadFacturas,
+          cantidadComprobantes,
+          saldoInicial,
+          saldoFinal,
+          diferencia,
+          facturas: facturas.map((f) => ({
+            id: f.id,
+            invoiceNumber: f.invoiceNumber,
+            amount: f.amount,
+            supplierId: f.supplierId,
+            workId: f.workId,
+          })),
+        },
+      };
+
+      await apiClient.patch(url, closePayload);
       await get().fetchCashboxes();
     } catch (error: any) {
       console.error("🔴 [cashboxStore] Error al cerrar caja:", error);
@@ -176,19 +231,8 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
   },
 
   async fetchMovements(cashboxId) {
-    // Modo simulación: usar datos dummy
-    if (SIMULATION_MODE) {
-      const movements = SIMULATED_CASH_MOVEMENTS[cashboxId] || [];
-      set((state) => ({
-        movements: { ...state.movements, [cashboxId]: movements },
-        isLoading: false,
-        error: null,
-      }));
-      return;
-    }
-
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxStore] organizationId no está definido");
@@ -202,7 +246,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       return;
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashbox", cashboxId, "movements");
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", cashboxId, "movements");
     if (!url) {
       console.error("🔴 [cashboxStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -236,14 +280,14 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashbox", cashboxId, "movements");
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", cashboxId, "movements");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -254,7 +298,46 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
         type: payload.type === "ingreso" ? "income" : payload.type === "egreso" ? "expense" : payload.type,
       };
       
-      await apiClient.post(url, movementPayload);
+      const createdMovement = await apiClient.post(url, movementPayload);
+      
+      // Si es una factura (egreso con typeDocument = "factura"), generar movimiento contable automáticamente
+      if (
+        (payload.type === "egreso" || payload.type === "expense") &&
+        payload.typeDocument === "factura" &&
+        payload.invoiceNumber &&
+        payload.workId &&
+        payload.supplierId
+      ) {
+        try {
+          const movementId = createdMovement?.id || createdMovement?.data?.id || createdMovement?.data?.[0]?.id;
+          
+          // Construir payload exacto para contabilidad según DTO
+          const accountingPayload = {
+            type: "expense",
+            amount: payload.amount,
+            date: payload.date || new Date().toISOString().split("T")[0],
+            workId: payload.workId,
+            supplierId: payload.supplierId,
+            invoiceNumber: payload.invoiceNumber,
+            category: payload.category || "Gastos de caja",
+            notes: `Factura ${payload.invoiceNumber} - ${payload.notes || payload.description || ""}`,
+            description: `Factura ${payload.invoiceNumber} - ${payload.notes || payload.description || ""}`,
+            source: "cashbox",
+            cashboxMovementId: movementId,
+          };
+          
+          await accountingApi.createTransaction(accountingPayload);
+          console.log("✅ [cashboxStore] Movimiento contable generado automáticamente para factura:", payload.invoiceNumber);
+        } catch (accountingError: any) {
+          console.error("⚠️ [cashboxStore] Error al generar movimiento contable:", accountingError);
+          // No fallar el movimiento de caja si falla la contabilidad, pero loguear el error
+          console.warn("⚠️ [cashboxStore] El movimiento de caja se guardó, pero no se pudo generar el movimiento contable");
+        }
+      }
+      
+      // Si es un refuerzo (ingreso), NO generar contabilidad
+      // Si es un comprobante, NO generar contabilidad
+      
       await get().fetchMovements(cashboxId);
     } catch (error: any) {
       console.error("🔴 [cashboxStore] Error al crear movimiento:", error);
@@ -279,14 +362,14 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashbox", cashboxId, "movements", id);
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", cashboxId, "movements", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -317,14 +400,14 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    const url = safeApiUrlWithParams("/", organizationId, "cashbox", cashboxId, "movements", id);
+    const url = safeApiUrlWithParams("/", organizationId, "cashboxes", cashboxId, "movements", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

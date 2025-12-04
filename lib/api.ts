@@ -36,6 +36,11 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
+    // Si es FormData, dejar que axios maneje el Content-Type automáticamente
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     // 🔍 DEBUG: Log URL construction before request
     const requestBaseURL = config.baseURL || api.defaults.baseURL || '';
     const url = config.url || '';

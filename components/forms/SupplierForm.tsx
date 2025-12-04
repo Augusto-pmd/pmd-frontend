@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { FormField } from "@/components/ui/FormField";
+import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 
 interface SupplierFormProps {
   initialData?: any;
@@ -25,8 +28,10 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
     contactName: "",
     estado: "pendiente",
     status: "pending",
-    ...initialData,
+    notes: "",
+    notas: "",
   });
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -45,111 +50,201 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
         contactName: initialData.contactName || initialData.contact || initialData.contacto || "",
         estado: initialData.estado || initialData.status || "pendiente",
         status: initialData.status || initialData.estado || "pending",
+        notes: initialData.notes || initialData.notas || "",
+        notas: initialData.notas || initialData.notes || "",
       });
     }
   }, [initialData]);
 
-  const validate = () => {
+  const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
+    
+    // Validación obligatoria: nombre
     const nombre = formData.nombre || formData.name;
     if (!nombre?.trim()) {
       newErrors.nombre = "El nombre o razón social es obligatorio";
     }
+    
+    // Validar email si está presente
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "El email no es válido";
     }
+    
+    // Validar CUIT si está presente (formato básico: XX-XXXXXXXX-X)
+    if (formData.cuit && !/^\d{2}-?\d{8}-?\d{1}$/.test(formData.cuit.replace(/\D/g, ""))) {
+      const cuitDigits = formData.cuit.replace(/\D/g, "");
+      if (cuitDigits.length !== 11) {
+        newErrors.cuit = "El CUIT debe tener 11 dígitos";
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    
+    if (!validate()) {
+      return;
+    }
 
-    // Preparar datos para enviar (usar campos que el backend espera)
+    // Preparar payload según lo que el backend espera
+    // El backend puede aceptar tanto nombres en español como en inglés
     const payload: any = {
-      nombre: formData.nombre || formData.name,
-      email: formData.email || undefined,
-      cuit: formData.cuit || undefined,
+      // Campos principales (usar nombre como estándar, pero también enviar name para compatibilidad)
+      nombre: (formData.nombre || formData.name).trim(),
+      name: (formData.nombre || formData.name).trim(), // Compatibilidad con backend en inglés
+      email: formData.email.trim() || undefined,
+      cuit: formData.cuit.trim() || undefined,
       telefono: formData.telefono || formData.phone || undefined,
+      phone: formData.telefono || formData.phone || undefined, // Compatibilidad
       direccion: formData.direccion || formData.address || undefined,
+      address: formData.direccion || formData.address || undefined, // Compatibilidad
       contacto: formData.contacto || formData.contactName || undefined,
+      contactName: formData.contacto || formData.contactName || undefined, // Compatibilidad
       estado: formData.estado || formData.status || "pendiente",
+      status: formData.status || formData.estado || "pending", // Compatibilidad
+      notes: formData.notes || formData.notas || undefined,
+      notas: formData.notes || formData.notas || undefined, // Compatibilidad
     };
 
-    // Limpiar campos undefined
+    // Limpiar campos undefined del payload
     Object.keys(payload).forEach((key) => {
       if (payload[key] === undefined || payload[key] === "") {
         delete payload[key];
       }
     });
 
-    await onSubmit(payload);
+    try {
+      await onSubmit(payload);
+    } catch (error) {
+      // El error ya se maneja en el componente padre
+      console.error("Error en SupplierForm:", error);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Nombre o Razón Social *"
-        value={formData.nombre || formData.name}
-        onChange={(e) => setFormData({ ...formData, nombre: e.target.value, name: e.target.value })}
-        error={errors.nombre}
-        required
-      />
-      <Input
-        label="CUIT"
-        value={formData.cuit}
-        onChange={(e) => setFormData({ ...formData, cuit: e.target.value })}
-        placeholder="20-12345678-9"
-      />
-      <Input
-        label="Email"
-        type="email"
-        value={formData.email}
-        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-        error={errors.email}
-        placeholder="proveedor@ejemplo.com"
-      />
-      <Input
-        label="Teléfono"
-        value={formData.telefono || formData.phone}
-        onChange={(e) => setFormData({ ...formData, telefono: e.target.value, phone: e.target.value })}
-        placeholder="+54 11 1234-5678"
-      />
-      <Input
-        label="Contacto"
-        value={formData.contacto || formData.contactName}
-        onChange={(e) => setFormData({ ...formData, contacto: e.target.value, contactName: e.target.value })}
-        placeholder="Nombre del contacto"
-      />
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
-        <textarea
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+      {/* Nombre o Razón Social - OBLIGATORIO */}
+      <FormField label="Nombre o Razón Social" required error={errors.nombre}>
+        <Input
+          type="text"
+          value={formData.nombre || formData.name}
+          onChange={(e) => setFormData({ ...formData, nombre: e.target.value, name: e.target.value })}
+          placeholder="Ej: Proveedora S.A."
+          required
+        />
+      </FormField>
+
+      {/* CUIT y Email */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <FormField label="CUIT" error={errors.cuit}>
+          <Input
+            type="text"
+            value={formData.cuit}
+            onChange={(e) => {
+              // Permitir solo números y guiones, formatear automáticamente
+              const value = e.target.value.replace(/\D/g, "");
+              let formatted = value;
+              if (value.length > 2) {
+                formatted = value.slice(0, 2) + "-" + value.slice(2);
+              }
+              if (value.length > 10) {
+                formatted = value.slice(0, 2) + "-" + value.slice(2, 10) + "-" + value.slice(10);
+              }
+              setFormData({ ...formData, cuit: formatted });
+            }}
+            placeholder="20-12345678-9"
+            maxLength={13}
+          />
+        </FormField>
+        <FormField label="Email" error={errors.email}>
+          <Input
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="proveedor@ejemplo.com"
+          />
+        </FormField>
+      </div>
+
+      {/* Teléfono y Contacto */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <FormField label="Teléfono">
+          <Input
+            type="tel"
+            value={formData.telefono || formData.phone}
+            onChange={(e) => setFormData({ ...formData, telefono: e.target.value, phone: e.target.value })}
+            placeholder="+54 11 1234-5678"
+          />
+        </FormField>
+        <FormField label="Contacto">
+          <Input
+            type="text"
+            value={formData.contacto || formData.contactName}
+            onChange={(e) => setFormData({ ...formData, contacto: e.target.value, contactName: e.target.value })}
+            placeholder="Nombre del contacto"
+          />
+        </FormField>
+      </div>
+
+      {/* Dirección */}
+      <FormField label="Dirección">
+        <Textarea
           value={formData.direccion || formData.address}
           onChange={(e) => setFormData({ ...formData, direccion: e.target.value, address: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
           rows={3}
           placeholder="Dirección completa del proveedor"
         />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-        <select
+      </FormField>
+
+      {/* Estado */}
+      <FormField label="Estado">
+        <Select
           value={formData.estado || formData.status}
-          onChange={(e) => setFormData({ ...formData, estado: e.target.value, status: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
+          onChange={(e) => {
+            const estado = e.target.value;
+            setFormData({ 
+              ...formData, 
+              estado: estado,
+              status: estado === "pendiente" ? "pending" : estado === "aprobado" ? "approved" : "rejected"
+            });
+          }}
         >
           <option value="pendiente">Pendiente</option>
           <option value="aprobado">Aprobado</option>
           <option value="rechazado">Rechazado</option>
-        </select>
-      </div>
-      <div className="flex gap-3 justify-end pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-          Cancelar
+        </Select>
+      </FormField>
+
+      {/* Notas */}
+      <FormField label="Notas">
+        <Textarea
+          value={formData.notes || formData.notas}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value, notas: e.target.value })}
+          rows={3}
+          placeholder="Notas adicionales sobre el proveedor"
+        />
+      </FormField>
+
+      {/* Botones */}
+      <div style={{ display: "flex", gap: "var(--space-sm)", paddingTop: "var(--space-md)" }}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isLoading}
+          style={{ flex: 1 }}
+        >
+          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear Proveedor"}
         </Button>
-        <Button type="submit" variant="primary" disabled={isLoading}>
-          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+        >
+          Cancelar
         </Button>
       </div>
     </form>

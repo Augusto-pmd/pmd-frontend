@@ -51,6 +51,7 @@ export function DocumentForm({
     status: "pendiente" as "aprobado" | "en revisión" | "pendiente" | "rechazado",
     uploadedBy: "",
     notes: "",
+    file: null as File | null,
     ...initialData,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -102,11 +103,12 @@ export function DocumentForm({
       status: formData.status,
       uploadedBy: formData.uploadedBy?.trim() || undefined,
       notes: formData.notes?.trim() || undefined,
+      file: formData.file || undefined,
     };
 
-    // Limpiar campos undefined
+    // Limpiar campos undefined (excepto file)
     Object.keys(payload).forEach((key) => {
-      if (payload[key] === undefined || payload[key] === "") {
+      if (key !== "file" && (payload[key] === undefined || payload[key] === "")) {
         delete payload[key];
       }
     });
@@ -201,12 +203,32 @@ export function DocumentForm({
         placeholder="Notas adicionales sobre el documento"
       />
 
+      <div>
+        <label className={styles.label} style={{ marginBottom: "6px", display: "block" }}>
+          Archivo (opcional)
+        </label>
+        <input
+          type="file"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            setFormData({ ...formData, file });
+          }}
+          className={styles.input}
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.dwg,.dxf"
+        />
+        {formData.file && (
+          <p style={{ fontSize: "13px", color: "var(--apple-text-secondary)", marginTop: "4px" }}>
+            Archivo seleccionado: {formData.file.name} ({(formData.file.size / 1024 / 1024).toFixed(2)} MB)
+          </p>
+        )}
+      </div>
+
       <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-sm)" }}>
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancelar
         </Button>
-        <Button type="submit" variant="outline" disabled={isLoading}>
-          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Subir"}
+        <Button type="submit" variant="primary" disabled={isLoading}>
+          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Subir Documento"}
         </Button>
       </div>
     </form>

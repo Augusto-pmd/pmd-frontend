@@ -13,12 +13,14 @@ import { Input } from "@/components/ui/Input";
 import { Search, Filter, X, Bell } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useWorks } from "@/hooks/api/works";
-import { generateAutomaticAlerts } from "@/lib/alertsEngine";
+import { Modal } from "@/components/ui/Modal";
+import { AlertForm } from "./components/AlertForm";
+import { Plus } from "lucide-react";
 
 function AlertsContent() {
-  const { alerts, isLoading, error, fetchAlerts } = useAlertsStore();
+  const { alerts, isLoading, error, fetchAlerts, createAlert } = useAlertsStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   const { works } = useWorks();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +29,8 @@ function AlertsContent() {
   const [workFilter, setWorkFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -36,14 +40,6 @@ function AlertsContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
-  // Generar alertas automáticas en modo simulación
-  useEffect(() => {
-    const autoAlerts = generateAutomaticAlerts();
-    if (autoAlerts.length > 0) {
-      // Las alertas automáticas se generan pero no se agregan automáticamente
-      // Se pueden agregar manualmente si se desea
-    }
-  }, []);
 
   if (!organizationId) {
     return (
@@ -95,6 +91,14 @@ function AlertsContent() {
                 )}
               </p>
             </div>
+            <Button
+              variant="primary"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Nueva Alerta
+            </Button>
           </div>
         </div>
 
@@ -206,6 +210,32 @@ function AlertsContent() {
           workFilter={workFilter}
           dateFilter={dateFilter}
         />
+
+        <Modal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          title="Nueva Alerta"
+          size="lg"
+        >
+          <AlertForm
+            onSubmit={async (data) => {
+              setIsSubmitting(true);
+              try {
+                await createAlert(data);
+                toast.success("Alerta creada correctamente");
+                setIsCreateModalOpen(false);
+                await fetchAlerts();
+              } catch (err: any) {
+                console.error("Error al crear alerta:", err);
+                toast.error(err.message || "Error al crear la alerta");
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+            onCancel={() => setIsCreateModalOpen(false)}
+            isLoading={isSubmitting}
+          />
+        </Modal>
       </div>
     </MainLayout>
   );

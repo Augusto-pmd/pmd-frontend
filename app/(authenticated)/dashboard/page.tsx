@@ -20,6 +20,13 @@ import { CommandBar } from "@/components/ui/CommandBar";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { SecondaryCard } from "@/components/ui/SecondaryCard";
 import { ActivityFeed } from "@/components/ui/ActivityFeed";
+import {
+  calculateTotalStaffCost,
+  calculateOfficeCost,
+  calculateOperativeCost,
+  calculateStaffCostByDepartment,
+  getStaffStatsByDepartment,
+} from "@/lib/financial/staffCosts";
 import { 
   TrendingUp, 
   Bell, 
@@ -39,7 +46,7 @@ import { useRouter } from "next/navigation";
 
 function DashboardContent() {
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   const router = useRouter();
 
   const { works, isLoading: worksLoading } = useWorks();
@@ -92,10 +99,17 @@ function DashboardContent() {
   const pendingDocuments = documents?.filter((d: any) => d.status === "pendiente").length || 0;
   const totalDocuments = documents?.length || 0;
 
+  // Cálculos de costos laborales
+  const totalStaffCost = useMemo(() => calculateTotalStaffCost(employees || []), [employees]);
+  const officeCost = useMemo(() => calculateOfficeCost(employees || []), [employees]);
+  const operativeCost = useMemo(() => calculateOperativeCost(employees || []), [employees]);
+  const staffCostByDepartment = useMemo(() => calculateStaffCostByDepartment(employees || []), [employees]);
+  const staffStatsByDepartment = useMemo(() => getStaffStatsByDepartment(employees || []), [employees]);
+
   // Calculate monthly flow (simplified)
   const monthlyFlow = accountingIngresos - accountingEgresos;
 
-  // Generate sparkline data from recent entries (last 7 days simulation)
+  // Generate sparkline data from recent entries (last 7 days)
   const generateSparklineData = (baseValue: number, variance: number = 0.1): number[] => {
     const data: number[] = [];
     for (let i = 0; i < 7; i++) {
@@ -240,6 +254,16 @@ function DashboardContent() {
               icon={Bell}
               sparklineData={generateSparklineData(highSeverityAlerts, 0.3)}
               onClick={() => router.push("/alerts")}
+            />
+          </div>
+          <div style={{ marginTop: "4px" }}>
+            <KpiCard
+              label="Costo Laboral Mensual"
+              value={formatCurrency(totalStaffCost)}
+              subtitle={`${activeEmployees} empleados`}
+              icon={Users}
+              sparklineData={generateSparklineData(totalStaffCost, 0.05)}
+              onClick={() => router.push("/rrhh")}
             />
           </div>
         </div>

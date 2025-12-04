@@ -6,7 +6,7 @@ import { safeApiUrlWithParams } from "@/lib/safeApi";
 export function useDashboardStats() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   const { data, error, isLoading, mutate } = useSWR(
     token && organizationId ? "dashboard-stats" : null,

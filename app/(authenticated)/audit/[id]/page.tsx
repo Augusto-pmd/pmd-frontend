@@ -4,28 +4,55 @@ import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useAuditStore } from "@/store/auditStore";
+import { useAuditLog } from "@/hooks/api/audit";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Shield, User, Calendar, FileText, ArrowRight } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 
 function AuditDetailContent() {
   const params = useParams();
   const logId = params.id as string;
-  const { logs, fetchLogs } = useAuditStore();
+  const { log, isLoading, error } = useAuditLog(logId);
+  const authState = useAuthStore.getState();
+  const organizationId = authState.user?.organizationId;
 
-  useEffect(() => {
-    fetchLogs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  if (!organizationId) {
+    return (
+      <MainLayout>
+        <LoadingState message="Cargando organización..." />
+      </MainLayout>
+    );
+  }
 
-  const log = logs.find((l) => l.id === logId);
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <LoadingState message="Cargando registro de auditoría…" />
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
+          Error al cargar el registro: {error.message || "Error desconocido"}
+        </div>
+      </MainLayout>
+    );
+  }
 
   if (!log) {
     return (
       <MainLayout>
-        <LoadingState message="Cargando registro de auditoría…" />
+        <div style={{ backgroundColor: "var(--apple-surface)", border: "1px solid var(--apple-border)", borderRadius: "var(--radius-xl)", padding: "var(--space-xl)", textAlign: "center" }}>
+          <Shield className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--apple-text-secondary)" }} />
+          <p style={{ font: "var(--font-body)", color: "var(--apple-text-secondary)" }}>
+            Registro de auditoría no encontrado
+          </p>
+        </div>
       </MainLayout>
     );
   }

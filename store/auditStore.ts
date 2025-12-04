@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_AUDIT_LOGS } from "@/lib/useSimulation";
 
 export interface AuditLog {
   id: string;
@@ -36,47 +35,8 @@ export const useAuditStore = create<AuditState>((set, get) => ({
   error: null,
 
   async fetchLogs(params) {
-    // Modo simulación: usar datos dummy
-    if (SIMULATION_MODE) {
-      let filteredLogs = [...SIMULATED_AUDIT_LOGS];
-      
-      // Aplicar filtros de fecha si existen
-      if (params?.startDate) {
-        filteredLogs = filteredLogs.filter(
-          (log) => log.timestamp >= params.startDate!
-        );
-      }
-      if (params?.endDate) {
-        filteredLogs = filteredLogs.filter(
-          (log) => log.timestamp <= params.endDate!
-        );
-      }
-      
-      // Filtro por módulo
-      if (params?.module) {
-        filteredLogs = filteredLogs.filter(
-          (log) => log.module === params.module
-        );
-      }
-      
-      // Filtro por usuario
-      if (params?.user) {
-        filteredLogs = filteredLogs.filter(
-          (log) => log.user === params.user || log.userId === params.user
-        );
-      }
-      
-      // Ordenar por timestamp descendente (más recientes primero)
-      filteredLogs.sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-      
-      set({ logs: filteredLogs, isLoading: false, error: null });
-      return;
-    }
-
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [auditStore] organizationId no está definido");
@@ -117,33 +77,22 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [auditStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    // En modo simulación, solo actualizar el estado local
-    if (SIMULATION_MODE) {
-      const newEntry: AuditLog = {
-        id: `aud-${Date.now()}`,
-        user: payload.user || "system",
-        action: payload.action || "",
-        module: payload.module || "General",
-        timestamp: payload.timestamp || new Date().toISOString(),
-        before: payload.before,
-        after: payload.after,
-        details: payload.details,
-        entity: payload.entity,
-        entityId: payload.entityId,
-        userName: payload.userName,
-        userId: payload.userId,
-      };
-      set((state) => ({
-        logs: [newEntry, ...state.logs],
-      }));
-      return;
+    // Validar campos obligatorios según DTO
+    if (!payload.action || payload.action.trim() === "") {
+      throw new Error("La acción es obligatoria");
+    }
+    if (!payload.module || payload.module.trim() === "") {
+      throw new Error("El módulo es obligatorio");
+    }
+    if (!payload.user || payload.user.trim() === "") {
+      throw new Error("El usuario es obligatorio");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "audit");
@@ -152,8 +101,26 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     }
 
     try {
-      await apiClient.post(url, payload);
+      // Construir payload exacto según DTO
+      const auditPayload: any = {
+        action: payload.action.trim(),
+        module: payload.module.trim(),
+        user: payload.user.trim(),
+        timestamp: payload.timestamp || new Date().toISOString(),
+      };
+
+      // Agregar campos opcionales
+      if (payload.userId) auditPayload.userId = payload.userId;
+      if (payload.userName) auditPayload.userName = payload.userName;
+      if (payload.entity) auditPayload.entity = payload.entity;
+      if (payload.entityId) auditPayload.entityId = payload.entityId;
+      if (payload.details) auditPayload.details = payload.details;
+      if (payload.before) auditPayload.before = payload.before;
+      if (payload.after) auditPayload.after = payload.after;
+
+      const response = await apiClient.post(url, auditPayload);
       await get().fetchLogs();
+      return response;
     } catch (error: any) {
       console.error("🔴 [auditStore] Error al crear entrada de auditoría:", error);
       throw error;
@@ -167,19 +134,11 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [auditStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    // En modo simulación, solo actualizar el estado local
-    if (SIMULATION_MODE) {
-      set((state) => ({
-        logs: state.logs.filter((log) => log.id !== id),
-      }));
-      return;
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "audit", id);
@@ -198,17 +157,11 @@ export const useAuditStore = create<AuditState>((set, get) => ({
 
   async clearAll() {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [auditStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    // En modo simulación, solo actualizar el estado local
-    if (SIMULATION_MODE) {
-      set({ logs: [] });
-      return;
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "audit");

@@ -2,19 +2,21 @@ import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_ALERTS } from "@/lib/useSimulation";
 
 export interface Alert {
   id: string;
-  type: "seguro" | "documentacion" | "obra" | "contable" | "general";
+  type: "seguro" | "documentacion" | "obra" | "contable" | "general" | "rrhh";
   personId?: string;
   workId?: string;
+  documentId?: string;
+  supplierId?: string;
   message: string;
   severity: "alta" | "media" | "baja";
   date: string;
   title?: string;
   read: boolean;
   createdAt?: string;
+  notes?: string;
 }
 
 interface AlertsState {
@@ -36,14 +38,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   error: null,
 
   async fetchAlerts() {
-    // Modo simulación: usar datos dummy
-    if (SIMULATION_MODE) {
-      set({ alerts: SIMULATED_ALERTS as Alert[], isLoading: false, error: null });
-      return;
-    }
-
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertsStore] organizationId no está definido");
@@ -75,21 +71,11 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    // En modo simulación, solo actualizar el estado local
-    if (SIMULATION_MODE) {
-      set((state) => ({
-        alerts: state.alerts.map((alert) =>
-          alert.id === id ? { ...alert, read: true } : alert
-        ),
-      }));
-      return;
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "alerts", id, "read");
@@ -113,31 +99,25 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
     }
 
-    // En modo simulación, solo actualizar el estado local
-    if (SIMULATION_MODE) {
-      const newAlert: Alert = {
-        id: `al-${Date.now()}`,
-        type: payload.type || "general",
-        message: payload.message || "",
-        severity: payload.severity || "media",
-        date: payload.date || new Date().toISOString().split("T")[0],
-        read: false,
-        personId: payload.personId,
-        workId: payload.workId,
-        title: payload.title,
-        createdAt: new Date().toISOString(),
-      };
-      set((state) => ({
-        alerts: [newAlert, ...state.alerts],
-      }));
-      return;
+    // Validar campos obligatorios
+    if (!payload.message || payload.message.trim() === "") {
+      throw new Error("El mensaje de la alerta es obligatorio");
+    }
+    if (!payload.type || payload.type.trim() === "") {
+      throw new Error("El tipo de alerta es obligatorio");
+    }
+    if (!payload.severity || !["alta", "media", "baja"].includes(payload.severity)) {
+      throw new Error("La severidad debe ser: alta, media o baja");
+    }
+    if (!payload.date || payload.date.trim() === "") {
+      throw new Error("La fecha es obligatoria");
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "alerts");
@@ -146,8 +126,26 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     }
 
     try {
-      await apiClient.post(url, payload);
+      // Construir payload exacto según DTO
+      const alertPayload: any = {
+        message: payload.message.trim(),
+        type: payload.type,
+        severity: payload.severity,
+        date: payload.date,
+        read: false,
+      };
+
+      // Agregar campos opcionales
+      if (payload.title) alertPayload.title = payload.title.trim();
+      if (payload.workId) alertPayload.workId = payload.workId;
+      if (payload.personId) alertPayload.personId = payload.personId;
+      if (payload.documentId) alertPayload.documentId = payload.documentId;
+      if (payload.supplierId) alertPayload.supplierId = payload.supplierId;
+      if (payload.notes) alertPayload.notes = payload.notes.trim();
+
+      const response = await apiClient.post(url, alertPayload);
       await get().fetchAlerts();
+      return response;
     } catch (error: any) {
       console.error("🔴 [alertsStore] Error al crear alerta:", error);
       throw error;
@@ -166,21 +164,11 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    // En modo simulación, solo actualizar el estado local
-    if (SIMULATION_MODE) {
-      set((state) => ({
-        alerts: state.alerts.map((alert) =>
-          alert.id === id ? { ...alert, ...payload } : alert
-        ),
-      }));
-      return;
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "alerts", id);
@@ -204,19 +192,11 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    // En modo simulación, solo actualizar el estado local
-    if (SIMULATION_MODE) {
-      set((state) => ({
-        alerts: state.alerts.filter((alert) => alert.id !== id),
-      }));
-      return;
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "alerts", id);
@@ -235,19 +215,11 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
 
   async markAllAsRead() {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [alertsStore] organizationId no está definido");
       throw new Error("No hay organización seleccionada");
-    }
-
-    // En modo simulación, solo actualizar el estado local
-    if (SIMULATION_MODE) {
-      set((state) => ({
-        alerts: state.alerts.map((alert) => ({ ...alert, read: true })),
-      }));
-      return;
     }
 
     const url = safeApiUrlWithParams("/", organizationId, "alerts", "read-all");

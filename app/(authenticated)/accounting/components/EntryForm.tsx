@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { FormField, InputField, SelectField, TextareaField } from "@/components/ui/FormField";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
 
@@ -14,95 +14,92 @@ interface EntryFormProps {
 }
 
 export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryFormProps) {
-  const { works } = useWorks();
-  const { suppliers } = useSuppliers();
-  const [formData, setFormData] = useState({
-    date: "",
-    fecha: "",
-    workId: "",
-    obraId: "",
-    supplierId: "",
-    proveedorId: "",
-    type: "egreso" as "ingreso" | "egreso" | "income" | "expense",
-    tipo: "egreso" as "ingreso" | "egreso",
-    amount: 0,
-    monto: 0,
-    category: "",
-    categoria: "",
-    notes: "",
-    notas: "",
-    description: "",
-    descripcion: "",
-    ...initialData,
-  });
+  const { works, isLoading: worksLoading } = useWorks();
+  const { suppliers, isLoading: suppliersLoading } = useSuppliers();
+  
+  const [date, setDate] = useState("");
+  const [type, setType] = useState<"ingreso" | "egreso" | "income" | "expense">("egreso");
+  const [workId, setWorkId] = useState("");
+  const [supplierId, setSupplierId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [notes, setNotes] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initialData) {
       // Normalizar datos del backend
       const fecha = initialData.date || initialData.fecha || "";
-      setFormData({
-        date: fecha.split("T")[0] || "",
-        fecha: fecha.split("T")[0] || "",
-        workId: initialData.workId || initialData.obraId || "",
-        obraId: initialData.obraId || initialData.workId || "",
-        supplierId: initialData.supplierId || initialData.proveedorId || "",
-        proveedorId: initialData.proveedorId || initialData.supplierId || "",
-        type: initialData.type || initialData.tipo || "egreso",
-        tipo: initialData.tipo || initialData.type || "egreso",
-        amount: initialData.amount || initialData.monto || 0,
-        monto: initialData.monto || initialData.amount || 0,
-        category: initialData.category || initialData.categoria || "",
-        categoria: initialData.categoria || initialData.category || "",
-        notes: initialData.notes || initialData.notas || initialData.description || initialData.descripcion || "",
-        notas: initialData.notas || initialData.notes || initialData.descripcion || initialData.description || "",
-        description: initialData.description || initialData.descripcion || initialData.notes || initialData.notas || "",
-        descripcion: initialData.descripcion || initialData.description || initialData.notas || initialData.notes || "",
-      });
+      setDate(fecha.split("T")[0] || "");
+      setWorkId(initialData.workId || initialData.obraId || "");
+      setSupplierId(initialData.supplierId || initialData.proveedorId || "");
+      const tipo = initialData.type || initialData.tipo || "egreso";
+      setType(tipo === "ingreso" ? "income" : tipo === "egreso" ? "expense" : tipo);
+      setAmount((initialData.amount || initialData.monto || 0).toString());
+      setCategory(initialData.category || initialData.categoria || "");
+      setNotes(initialData.notes || initialData.notas || initialData.description || initialData.descripcion || "");
+      setInvoiceNumber(initialData.invoiceNumber || "");
     } else {
       // Establecer fecha por defecto a hoy
       const today = new Date().toISOString().split("T")[0];
-      setFormData((prev: any) => ({ ...prev, date: today, fecha: today }));
+      setDate(today);
     }
   }, [initialData]);
 
-  const validate = () => {
+  const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!formData.date && !formData.fecha) {
+    
+    if (!date || date.trim() === "") {
       newErrors.date = "La fecha es obligatoria";
     }
-    if (!formData.amount && !formData.monto) {
-      newErrors.amount = "El monto es obligatorio";
-    } else if ((formData.amount || formData.monto || 0) <= 0) {
+    
+    if (!amount || parseFloat(amount) <= 0) {
       newErrors.amount = "El monto debe ser mayor a 0";
     }
+    
+    if (!workId || workId.trim() === "") {
+      newErrors.workId = "La obra es obligatoria";
+    }
+    
+    // Si es egreso y tiene invoiceNumber, validar que tenga proveedor
+    if (type === "egreso" || type === "expense") {
+      if (invoiceNumber && invoiceNumber.trim() !== "" && (!supplierId || supplierId.trim() === "")) {
+        newErrors.supplierId = "El proveedor es obligatorio cuando hay número de factura";
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    
+    if (!validate()) {
+      return;
+    }
 
-    // Preparar datos para enviar
+    // Preparar payload exacto según DTO del backend
     const payload: any = {
-      date: formData.date || formData.fecha,
-      fecha: formData.fecha || formData.date,
-      workId: formData.workId || formData.obraId || undefined,
-      obraId: formData.obraId || formData.workId || undefined,
-      supplierId: formData.supplierId || formData.proveedorId || undefined,
-      proveedorId: formData.proveedorId || formData.supplierId || undefined,
-      type: formData.type || formData.tipo,
-      tipo: formData.tipo || formData.type,
-      amount: formData.amount || formData.monto,
-      monto: formData.monto || formData.amount,
-      category: formData.category || formData.categoria || undefined,
-      categoria: formData.categoria || formData.category || undefined,
-      notes: formData.notes || formData.notas || formData.description || formData.descripcion || undefined,
-      notas: formData.notas || formData.notes || formData.descripcion || formData.description || undefined,
-      description: formData.description || formData.descripcion || formData.notes || formData.notas || undefined,
-      descripcion: formData.descripcion || formData.description || formData.notas || formData.notes || undefined,
+      date: date,
+      type: type === "ingreso" ? "income" : type === "egreso" ? "expense" : type,
+      workId: workId || undefined,
+      amount: parseFloat(amount),
+      category: category.trim() || undefined,
+      notes: notes.trim() || undefined,
+      description: notes.trim() || undefined,
     };
+
+    // Agregar proveedor si está seleccionado
+    if (supplierId && supplierId.trim() !== "") {
+      payload.supplierId = supplierId;
+    }
+
+    // Agregar número de factura si está presente
+    if (invoiceNumber && invoiceNumber.trim() !== "") {
+      payload.invoiceNumber = invoiceNumber.trim();
+    }
 
     // Limpiar campos undefined
     Object.keys(payload).forEach((key) => {
@@ -114,133 +111,123 @@ export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryF
     await onSubmit(payload);
   };
 
+  const typeOptions = [
+    { value: "egreso", label: "Egreso" },
+    { value: "ingreso", label: "Ingreso" },
+  ];
+
+  const categoryOptions = [
+    { value: "", label: "Seleccionar categoría" },
+    { value: "materiales", label: "Materiales" },
+    { value: "mano-de-obra", label: "Mano de obra" },
+    { value: "honorarios", label: "Honorarios" },
+    { value: "impuestos", label: "Impuestos" },
+    { value: "servicios", label: "Servicios" },
+    { value: "alquileres", label: "Alquileres" },
+    { value: "combustible", label: "Combustible" },
+    { value: "otros", label: "Otros" },
+  ];
+
+  const workOptions = [
+    { value: "", label: "Seleccionar obra" },
+    ...(works?.map((work: any) => ({
+      value: work.id,
+      label: work.nombre || work.name || work.title || `Obra ${work.id.slice(0, 8)}`,
+    })) || []),
+  ];
+
+  const supplierOptions = [
+    { value: "", label: "Seleccionar proveedor" },
+    ...(suppliers?.map((sup: any) => ({
+      value: sup.id,
+      label: sup.nombre || sup.name || `Proveedor ${sup.id.slice(0, 8)}`,
+    })) || []),
+  ];
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Fecha *"
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <InputField
+          label="Fecha"
           type="date"
-          value={formData.date || formData.fecha}
-          onChange={(e) => setFormData({ ...formData, date: e.target.value, fecha: e.target.value })}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
           error={errors.date}
           required
         />
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
-          <select
-            value={formData.type || formData.tipo}
-            onChange={(e) => {
-              const tipo = e.target.value as "ingreso" | "egreso" | "income" | "expense";
-              let type = tipo;
-              if (tipo === "ingreso") type = "income";
-              else if (tipo === "egreso") type = "expense";
-              setFormData({ ...formData, type, tipo: tipo === "income" ? "ingreso" : "egreso" });
-            }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-            required
-          >
-            <option value="egreso">Egreso</option>
-            <option value="ingreso">Ingreso</option>
-          </select>
-        </div>
+        <SelectField
+          label="Tipo de movimiento"
+          value={type}
+          onChange={(e) => setType(e.target.value as "ingreso" | "egreso" | "income" | "expense")}
+          options={typeOptions}
+          required
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Obra</label>
-          <select
-            value={formData.workId || formData.obraId}
-            onChange={(e) => setFormData({ ...formData, workId: e.target.value, obraId: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          >
-            <option value="">Seleccionar obra</option>
-            {works?.map((work: any) => {
-              const nombre = work.nombre || work.name || work.title || "Sin nombre";
-              return (
-                <option key={work.id} value={work.id}>
-                  {nombre}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Proveedor</label>
-          <select
-            value={formData.supplierId || formData.proveedorId}
-            onChange={(e) => setFormData({ ...formData, supplierId: e.target.value, proveedorId: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          >
-            <option value="">Seleccionar proveedor</option>
-            {suppliers?.map((sup: any) => {
-              const nombre = sup.nombre || sup.name || "Sin nombre";
-              return (
-                <option key={sup.id} value={sup.id}>
-                  {nombre}
-                </option>
-              );
-            })}
-          </select>
-        </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <SelectField
+          label="Obra"
+          value={workId}
+          onChange={(e) => setWorkId(e.target.value)}
+          options={workOptions}
+          error={errors.workId}
+          required
+          disabled={worksLoading}
+        />
+        <SelectField
+          label="Proveedor"
+          value={supplierId}
+          onChange={(e) => setSupplierId(e.target.value)}
+          options={supplierOptions}
+          error={errors.supplierId}
+          disabled={suppliersLoading}
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Monto *"
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <InputField
+          label="Monto"
           type="number"
           step="0.01"
-          value={formData.amount || formData.monto}
-          onChange={(e) => {
-            const value = parseFloat(e.target.value) || 0;
-            setFormData({ ...formData, amount: value, monto: value });
-          }}
+          min="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
           error={errors.amount}
           required
           placeholder="0.00"
         />
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-          <select
-            value={formData.category || formData.categoria}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value, categoria: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          >
-            <option value="">Seleccionar categoría</option>
-            <option value="materiales">Materiales</option>
-            <option value="mano-de-obra">Mano de obra</option>
-            <option value="honorarios">Honorarios</option>
-            <option value="impuestos">Impuestos</option>
-            <option value="servicios">Servicios</option>
-            <option value="alquileres">Alquileres</option>
-            <option value="combustible">Combustible</option>
-            <option value="otros">Otros</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Notas / Descripción</label>
-        <textarea
-          value={formData.notes || formData.notas || formData.description || formData.descripcion}
-          onChange={(e) => setFormData({
-            ...formData,
-            notes: e.target.value,
-            notas: e.target.value,
-            description: e.target.value,
-            descripcion: e.target.value,
-          })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none"
-          rows={3}
-          placeholder="Notas adicionales sobre el movimiento"
+        <SelectField
+          label="Categoría"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          options={categoryOptions}
         />
       </div>
 
-      <div className="flex gap-3 justify-end pt-4">
+      {(type === "egreso" || type === "expense") && (
+        <InputField
+          label="Número de factura (opcional)"
+          type="text"
+          value={invoiceNumber}
+          onChange={(e) => setInvoiceNumber(e.target.value)}
+          placeholder="Ej: 0001-00001234"
+        />
+      )}
+
+      <TextareaField
+        label="Notas / Descripción"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={3}
+        placeholder="Notas adicionales sobre el movimiento contable"
+      />
+
+      <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-md)" }}>
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancelar
         </Button>
         <Button type="submit" variant="primary" disabled={isLoading}>
-          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
+          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear Movimiento"}
         </Button>
       </div>
     </form>

@@ -6,7 +6,7 @@ import { safeApiUrlWithParams, isValidApiUrl } from "@/lib/safeApi";
 export function useCashboxes() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   const { data, error, isLoading, mutate } = useSWR(
     token && organizationId ? "cashboxes" : null,
@@ -34,7 +34,7 @@ export function useCashboxes() {
 export function useCashbox(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useCashbox] id no está definido");
@@ -69,7 +69,7 @@ export function useCashbox(id: string | null) {
 export const cashboxApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxApi.create] organizationId no está definido");
@@ -82,7 +82,7 @@ export const cashboxApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxApi.update] organizationId no está definido");
@@ -100,7 +100,7 @@ export const cashboxApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashboxApi.delete] organizationId no está definido");
@@ -121,7 +121,7 @@ export const cashboxApi = {
 export function useCashMovements(cashboxId?: string) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!organizationId || !organizationId.trim()) {
     console.warn("❗ [useCashMovements] organizationId no está definido");
@@ -168,7 +168,7 @@ export function useCashMovements(cashboxId?: string) {
 export function useCashMovement(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useCashMovement] id no está definido");
@@ -203,7 +203,7 @@ export function useCashMovement(id: string | null) {
 export const cashMovementApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashMovementApi.create] organizationId no está definido");
@@ -216,7 +216,7 @@ export const cashMovementApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashMovementApi.update] organizationId no está definido");
@@ -234,7 +234,7 @@ export const cashMovementApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [cashMovementApi.delete] organizationId no está definido");

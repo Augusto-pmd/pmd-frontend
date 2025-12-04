@@ -79,35 +79,11 @@ export const useAuthStore = create<AuthState>()(
           throw new Error("login: token is required");
         }
 
-        // Normalizar el usuario y asegurar que organizationId y organization estén presentes
+        // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
         const normalizedUser = normalizeUser(userRaw);
-        
-        // Asegurar que organizationId y organization estén explícitamente en el user
-        const user = {
-          ...normalizedUser,
-          organizationId: normalizedUser.organizationId || userRaw.organizationId || userRaw.organization?.id || undefined,
-          organization: normalizedUser.organization || userRaw.organization || undefined,
-        };
-        
-        console.log("🟢 [AUTH STORE] User normalized:", user);
-        console.log("  - user.id:", user.id);
-        console.log("  - user.email:", user.email);
-        console.log("  - user.fullName:", user.fullName);
-        console.log("  - user.role:", user.role, "(type:", typeof user.role, ")");
-        console.log("  - user.role is string:", typeof user.role === "string");
-        console.log("  - user.organizationId:", user.organizationId);
-        console.log("  - user.organization:", user.organization);
-        
-        // Validación específica de organizationId
-        console.log("🔵 [ORGANIZATION] Usuario cargado:", user);
-        if (user.organizationId) {
-          console.log("✅ [ORGANIZATION] organizationId presente:", user.organizationId);
-        } else {
-          console.warn("⚠️ [ORGANIZATION] organizationId NO está presente en el usuario normalizado");
-        }
 
         const newState = {
-          user,
+          user: normalizedUser,
           token, // Guardamos como 'token' en el store (estándar interno)
           refreshToken: refreshToken ?? null,
           isAuthenticated: true,
@@ -186,22 +162,10 @@ export const useAuthStore = create<AuthState>()(
 
         if (!rawUser) throw new Error("No user in response");
 
-        // Normalizar y asegurar que organizationId y organization estén presentes
+        // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
         const normalizedUser = normalizeUser(rawUser);
-        const user = {
-          ...normalizedUser,
-          organizationId: normalizedUser.organizationId || rawUser.organizationId || rawUser.organization?.id || undefined,
-          organization: normalizedUser.organization || rawUser.organization || undefined,
-        };
-        
-        console.log("🔵 [ORGANIZATION] Usuario cargado (loadMe):", user);
-        if (user.organizationId) {
-          console.log("✅ [ORGANIZATION] organizationId presente (loadMe):", user.organizationId);
-        } else {
-          console.warn("⚠️ [ORGANIZATION] organizationId NO está presente (loadMe)");
-        }
 
-        set({ user, isAuthenticated: true });
+        set({ user: normalizedUser, isAuthenticated: true });
       },
 
       // --- REFRESH SESSION ---
@@ -222,22 +186,10 @@ export const useAuthStore = create<AuthState>()(
         const refresh_token = data.refresh_token || data.refreshToken;
 
         if (rawUser) {
-          // Normalizar y asegurar que organizationId y organization estén presentes
+          // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
           const normalizedUser = normalizeUser(rawUser);
-          const user = {
-            ...normalizedUser,
-            organizationId: normalizedUser.organizationId || rawUser.organizationId || rawUser.organization?.id || undefined,
-            organization: normalizedUser.organization || rawUser.organization || undefined,
-          };
-          
-          console.log("🔵 [ORGANIZATION] Usuario cargado (refresh):", user);
-          if (user.organizationId) {
-            console.log("✅ [ORGANIZATION] organizationId presente (refresh):", user.organizationId);
-          } else {
-            console.warn("⚠️ [ORGANIZATION] organizationId NO está presente en el usuario normalizado (refresh)");
-          }
           set({
-            user,
+            user: normalizedUser,
             token: access_token,
             refreshToken: refresh_token ?? null,
             isAuthenticated: true,
@@ -274,14 +226,9 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         if (state?.user) {
           try {
+            // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
             const normalizedUser = normalizeUser(state.user);
-            // Asegurar que organizationId y organization estén presentes después de rehidratar
-            state.user = {
-              ...normalizedUser,
-              organizationId: normalizedUser.organizationId || (state.user as any)?.organizationId || (state.user as any)?.organization?.id || undefined,
-              organization: normalizedUser.organization || (state.user as any)?.organization || undefined,
-            };
-            console.log("✅ [REHYDRATE] Usuario rehidratado con organizationId:", state.user.organizationId);
+            state.user = normalizedUser;
           } catch {
             // Si falla la normalización, limpiamos el estado
             state.user = null;

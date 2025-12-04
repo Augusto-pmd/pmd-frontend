@@ -6,7 +6,7 @@ import { safeApiUrlWithParams } from "@/lib/safeApi";
 export function useRoles() {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   const { data, error, isLoading, mutate } = useSWR(
     token && organizationId ? "roles" : null,
@@ -34,7 +34,7 @@ export function useRoles() {
 export function useRole(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useRole] id no está definido");
@@ -69,7 +69,7 @@ export function useRole(id: string | null) {
 export const roleApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [roleApi.create] organizationId no está definido");
@@ -82,7 +82,7 @@ export const roleApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [roleApi.update] organizationId no está definido");
@@ -100,7 +100,7 @@ export const roleApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [roleApi.delete] organizationId no está definido");

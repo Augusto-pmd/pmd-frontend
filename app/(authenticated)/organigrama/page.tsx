@@ -16,6 +16,9 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Search, Filter, X, Grid3x3, Network } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
+import { useRoles } from "@/hooks/api/roles";
+import { useAuthStore } from "@/store/authStore";
+import { can } from "@/lib/acl";
 
 type ViewMode = "grid" | "tree";
 
@@ -33,9 +36,12 @@ interface Employee {
 
 function OrganigramaContent() {
   const router = useRouter();
+  const authState = useAuthStore.getState();
+  const organizationId = authState.user?.organizationId;
   const { employees, isLoading, error } = useEmployees();
   const { alerts, fetchAlerts } = useAlertsStore();
   const { works } = useWorks();
+  const { roles } = useRoles();
 
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,9 +56,30 @@ function OrganigramaContent() {
   const [isAssignWorkModalOpen, setIsAssignWorkModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchAlerts();
+    if (organizationId) {
+      fetchAlerts();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [organizationId]);
+
+  // Verificar permisos ACL
+  if (!can("staff.read")) {
+    return (
+      <MainLayout>
+        <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
+          No tienes permisos para acceder al Organigrama
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!organizationId) {
+    return (
+      <MainLayout>
+        <LoadingState message="Cargando organización..." />
+      </MainLayout>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -65,8 +92,8 @@ function OrganigramaContent() {
   if (error) {
     return (
       <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error al cargar el organigrama: {error.message || "Error desconocido"}
+        <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
+          Error al cargar el organigrama: {error?.message || "Error desconocido"}
         </div>
       </MainLayout>
     );
@@ -104,11 +131,18 @@ function OrganigramaContent() {
     return true;
   });
 
-  // Obtener valores únicos para filtros
-  const roles = Array.from(new Set((employees || []).map((e: Employee) => e.role).filter(Boolean))) as string[];
+  // Obtener valores únicos para filtros desde datos reales
+  const uniqueRoles = Array.from(new Set((employees || []).map((e: Employee) => e.role).filter(Boolean))) as string[];
   const subroles = Array.from(
     new Set((employees || []).map((e: Employee) => e.subrole).filter(Boolean))
   ) as string[];
+  
+  // Obtener nombres de roles desde rolesStore si están disponibles
+  const getRoleName = (roleId?: string) => {
+    if (!roleId) return null;
+    const role = roles.find((r: any) => r.id === roleId || r.name === roleId);
+    return role?.name || role?.nombre || roleId;
+  };
 
   const handleViewDetail = (employee: Employee) => {
     setSelectedEmployee(employee);
@@ -213,11 +247,14 @@ function OrganigramaContent() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-pmd focus:ring-2 focus:ring-pmd-gold focus:border-pmd-gold outline-none text-sm"
                 >
                   <option value="all">Todos</option>
-                  {roles.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
+                  {uniqueRoles.map((role) => {
+                    const roleName = getRoleName(role) || role;
+                    return (
+                      <option key={role} value={role}>
+                        {roleName}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div>
@@ -317,7 +354,9 @@ function OrganigramaContent() {
           }}
           employee={selectedEmployee}
           onSuccess={() => {
-            // Recargar datos si es necesario
+            // Los datos se recargarán automáticamente desde los hooks
+            setIsAssignWorkModalOpen(false);
+            setSelectedEmployee(null);
           }}
         />
       </div>

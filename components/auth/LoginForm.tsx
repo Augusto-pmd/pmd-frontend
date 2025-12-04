@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
+import LogoPMD from "@/components/LogoPMD";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -145,6 +146,11 @@ export function LoginForm() {
           gap: "var(--space-lg)",
         }}
       >
+        {/* Logo */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "var(--space-lg)" }}>
+          <LogoPMD size={90} className="opacity-95" />
+        </div>
+
         {/* Header */}
         <div style={{ textAlign: "center" }}>
           <h1

@@ -23,7 +23,7 @@ function WorkDocumentsContent() {
   const { documents, isLoading, error, fetchDocuments, createDocument } = useDocumentsStore();
   const { works } = useWorks();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

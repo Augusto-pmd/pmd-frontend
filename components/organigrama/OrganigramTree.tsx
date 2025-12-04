@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/Badge";
 import { ChevronDown, ChevronRight, Users, Building2, Bell } from "lucide-react";
 import { useAlertsStore } from "@/store/alertsStore";
 import { useWorks } from "@/hooks/api/works";
+import { useRoles } from "@/hooks/api/roles";
+import Link from "next/link";
 
 interface Employee {
   id: string;
@@ -36,6 +38,7 @@ interface OrganigramTreeProps {
 export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreeProps) {
   const { alerts } = useAlertsStore();
   const { works } = useWorks();
+  const { roles } = useRoles();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(["direccion"]));
 
   const getWorkName = (workId?: string) => {
@@ -43,6 +46,12 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
     const work = works.find((w: any) => w.id === workId);
     if (!work) return null;
     return work.name || work.title || work.nombre || workId;
+  };
+
+  const getRoleName = (roleId?: string) => {
+    if (!roleId) return null;
+    const role = roles.find((r: any) => r.id === roleId || r.name === roleId);
+    return role?.name || role?.nombre || roleId;
   };
 
   const getEmployeeAlerts = (employeeId: string) => {
@@ -61,47 +70,72 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
     });
   };
 
-  // Estructura jerárquica del organigrama
+  // Estructura jerárquica del organigrama basada en roles reales del backend
   const buildTree = (): TreeNode[] => {
-    const roleHierarchy: Record<string, { parent?: string; label: string }> = {
-      Dirección: { label: "Dirección" },
-      Arquitectura: { parent: "Dirección", label: "Arquitectura" },
-      "Gestión de Obras": { parent: "Dirección", label: "Gestión de Obras" },
-      "Jefe de Obra": { parent: "Gestión de Obras", label: "Jefes de Obra" },
-      Obrero: { parent: "Jefe de Obra", label: "Obreros" },
-      RRHH: { parent: "Dirección", label: "RRHH" },
-      Administración: { parent: "Dirección", label: "Administración" },
-      Compras: { parent: "Dirección", label: "Compras" },
-      Logística: { parent: "Dirección", label: "Logística" },
-    };
-
-    // Agrupar empleados por rol
-    const employeesByRole: Record<string, Employee[]> = {};
-    employees.forEach((emp) => {
-      const role = emp.role || "Sin rol";
-      if (!employeesByRole[role]) {
-        employeesByRole[role] = [];
+    // Obtener roles reales del backend y construir jerarquía dinámica
+    // Si no hay roles en el backend, usar estructura por defecto
+    const roleHierarchy: Record<string, { parent?: string; label: string }> = {};
+    
+    // Agregar roles del backend a la jerarquía
+    roles.forEach((role: any) => {
+      const roleName = role.name || role.nombre || role.id;
+      const roleKey = role.id || roleName;
+      
+      // Determinar jerarquía basada en el nombre del rol
+      const nameLower = roleName.toLowerCase();
+      
+      if (nameLower.includes("admin") || nameLower.includes("director") || nameLower.includes("gerente")) {
+        roleHierarchy[roleKey] = { label: roleName };
+      } else if (nameLower.includes("supervisor") || nameLower.includes("jefe")) {
+        roleHierarchy[roleKey] = { parent: "direccion", label: roleName };
+      } else if (nameLower.includes("operador") || nameLower.includes("obrero") || nameLower.includes("empleado")) {
+        roleHierarchy[roleKey] = { parent: "supervisor", label: roleName };
+      } else {
+        // Rol genérico sin jerarquía específica
+        roleHierarchy[roleKey] = { label: roleName };
       }
-      employeesByRole[role].push(emp);
     });
+    
+    // Estructura por defecto si no hay roles en el backend
+    if (Object.keys(roleHierarchy).length === 0) {
+      roleHierarchy["direccion"] = { label: "Dirección" };
+      roleHierarchy["administracion"] = { label: "Administración" };
+      roleHierarchy["supervisor"] = { parent: "direccion", label: "Supervisores" };
+      roleHierarchy["operador"] = { parent: "supervisor", label: "Operadores" };
+    }
+
+    // Los empleados se agrupan dentro de buildNode, no necesitamos pre-agruparlos
 
     // Construir árbol
     const buildNode = (roleKey: string): TreeNode | null => {
       const config = roleHierarchy[roleKey];
       if (!config) return null;
 
-      const nodeEmployees = employeesByRole[roleKey] || [];
+      // Buscar empleados que tengan este rol (por roleId o role)
+      const nodeEmployees: Employee[] = [];
+      employees.forEach((emp) => {
+        const empRoleId = emp.roleId || emp.role;
+        if (empRoleId === roleKey || empRoleId === config.label) {
+          nodeEmployees.push(emp);
+        }
+      });
+
       const children: TreeNode[] = [];
 
       // Buscar hijos
       Object.keys(roleHierarchy).forEach((childKey) => {
         if (roleHierarchy[childKey].parent === roleKey) {
           const childNode = buildNode(childKey);
-          if (childNode) {
+          if (childNode && (childNode.employees.length > 0 || (childNode.children && childNode.children.length > 0))) {
             children.push(childNode);
           }
         }
       });
+
+      // Solo retornar nodo si tiene empleados o hijos
+      if (nodeEmployees.length === 0 && children.length === 0) {
+        return null;
+      }
 
       return {
         id: roleKey.toLowerCase().replace(/\s+/g, "-"),
@@ -112,9 +146,34 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
       };
     };
 
-    // Construir desde la raíz (Dirección)
-    const root = buildNode("Dirección");
-    return root ? [root] : [];
+    // Construir desde las raíces (roles sin parent)
+    const roots: TreeNode[] = [];
+    Object.keys(roleHierarchy).forEach((roleKey) => {
+      if (!roleHierarchy[roleKey].parent) {
+        const rootNode = buildNode(roleKey);
+        if (rootNode) {
+          roots.push(rootNode);
+        }
+      }
+    });
+    
+    // Si no hay raíces, crear una raíz genérica
+    if (roots.length === 0) {
+      const allEmployees: Employee[] = [];
+      employees.forEach((emp) => {
+        allEmployees.push(emp);
+      });
+      return [
+        {
+          id: "organigrama",
+          label: "Organigrama",
+          role: "all",
+          employees: allEmployees,
+        },
+      ];
+    }
+    
+    return roots;
   };
 
   const tree = buildTree();
@@ -178,11 +237,13 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    {workName && (
-                      <Badge variant="info" className="text-xs">
-                        <Building2 className="h-3 w-3 mr-1" />
-                        {workName}
-                      </Badge>
+                    {workName && employee.workId && (
+                      <Link href={`/works/${employee.workId}`}>
+                        <Badge variant="info" className="text-xs cursor-pointer hover:opacity-80">
+                          <Building2 className="h-3 w-3 mr-1" />
+                          {workName}
+                        </Badge>
+                      </Link>
                     )}
                     {hasAlerts && (
                       <Badge variant="error" className="text-xs">

@@ -2,52 +2,42 @@ import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_DOCUMENTS } from "@/lib/useSimulation";
 
 export function useDocuments(workId?: string) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
-  // Si está en modo simulación, usar un fetcher que retorna datos dummy
-  const fetcher = SIMULATION_MODE
-    ? () => {
-        let filteredDocuments = [...SIMULATED_DOCUMENTS];
-        if (workId) {
-          filteredDocuments = filteredDocuments.filter((doc) => doc.workId === workId);
-        }
-        return Promise.resolve({ data: filteredDocuments });
+  const fetcher = async () => {
+    if (!organizationId || !organizationId.trim()) {
+      console.warn("❗ [useDocuments] organizationId no está definido");
+      throw new Error("No hay organización seleccionada");
+    }
+    try {
+      const baseUrl = safeApiUrlWithParams("/", organizationId, "documents");
+      if (!baseUrl) {
+        throw new Error("URL de API inválida");
       }
-    : async () => {
-        if (!organizationId || !organizationId.trim()) {
-          console.warn("❗ [useDocuments] organizationId no está definido");
-          throw new Error("No hay organización seleccionada");
-        }
-        try {
-          const baseUrl = safeApiUrlWithParams("/", organizationId, "documents");
-          if (!baseUrl) {
-            throw new Error("URL de API inválida");
-          }
-          const url = workId ? `${baseUrl}?workId=${workId}` : baseUrl;
-          return await apiClient.get(url);
-        } catch (err: any) {
-          // Si el endpoint no existe, retornar array vacío
-          if (err.response?.status === 404) {
-            return [];
-          }
-          throw err;
-        }
-      };
+      const url = workId ? `${baseUrl}?workId=${workId}` : baseUrl;
+      return await apiClient.get(url);
+    } catch (err: any) {
+      // Si el endpoint no existe, retornar array vacío
+      if (err.response?.status === 404) {
+        return [];
+      }
+      throw err;
+    }
+  };
   
   const { data, error, isLoading, mutate } = useSWR(
-    SIMULATION_MODE || (token && organizationId) ? `documents${workId ? `-${workId}` : ""}` : null,
+    token && organizationId ? `documents${workId ? `-${workId}` : ""}` : null,
     fetcher
   );
 
   return {
     documents: data?.data || data || [],
     error,
-    isLoading: SIMULATION_MODE ? false : isLoading,
+    isLoading,
     mutate,
   };
 }
@@ -55,7 +45,7 @@ export function useDocuments(workId?: string) {
 export function useDocument(id: string | null) {
   const { token } = useAuthStore();
   const authState = useAuthStore.getState();
-  const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+  const organizationId = authState.user?.organizationId;
   
   if (!id) {
     console.warn("❗ [useDocument] id no está definido");
@@ -90,7 +80,7 @@ export function useDocument(id: string | null) {
 export const documentApi = {
   create: (data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [documentApi.create] organizationId no está definido");
@@ -103,7 +93,7 @@ export const documentApi = {
   },
   update: (id: string, data: any) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [documentApi.update] organizationId no está definido");
@@ -121,7 +111,7 @@ export const documentApi = {
   },
   delete: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [documentApi.delete] organizationId no está definido");
@@ -139,7 +129,7 @@ export const documentApi = {
   },
   download: (id: string) => {
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
     
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [documentApi.download] organizationId no está definido");

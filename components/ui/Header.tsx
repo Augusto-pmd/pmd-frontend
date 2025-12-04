@@ -14,7 +14,7 @@ export function Header({ title }: HeaderProps) {
   const logout = useAuthStore.getState().logout;
   const router = useRouter();
 
-  if (!user || typeof user.role === "object") return null;
+  if (!user) return null;
 
   const handleLogout = () => {
     logout();
@@ -117,7 +117,11 @@ export function Header({ title }: HeaderProps) {
           <div style={userInfoStyle} className="hidden sm:flex">
             <div style={userTextStyle}>
               <p style={userNameStyle}>{user.fullName}</p>
-              <p style={userRoleStyle}>{String(user.role ?? "")}</p>
+              <p style={userRoleStyle}>
+                {typeof user.role === "string" 
+                  ? user.role 
+                  : user.role?.name || user.roleId || "Sin rol"}
+              </p>
             </div>
             <div style={avatarStyle}>
               {(user.fullName?.charAt(0) || "").toUpperCase()}

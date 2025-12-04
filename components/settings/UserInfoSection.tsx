@@ -33,9 +33,16 @@ export function UserInfoSection({ user }: UserInfoSectionProps) {
     }
   };
 
-  const translateRole = (role: string | undefined): string => {
-    if (!role) return "Sin rol";
-    const roleLower = role.toLowerCase();
+  const getRoleString = (role: string | { id: string; name: string; permissions?: string[] } | undefined): string => {
+    if (!role) return "";
+    if (typeof role === "string") return role;
+    return role.name || "";
+  };
+
+  const translateRole = (role: string | { id: string; name: string; permissions?: string[] } | undefined): string => {
+    const roleStr = getRoleString(role);
+    if (!roleStr) return "Sin rol";
+    const roleLower = roleStr.toLowerCase();
     const translations: Record<string, string> = {
       admin: "Administrador",
       operator: "Operador",
@@ -43,12 +50,13 @@ export function UserInfoSection({ user }: UserInfoSectionProps) {
       supervisor: "Supervisor",
       manager: "Gerente",
     };
-    return translations[roleLower] || role;
+    return translations[roleLower] || roleStr;
   };
 
-  const getRoleVariant = (role: string | undefined): "default" | "success" | "warning" | "error" | "info" => {
-    if (!role) return "default";
-    const roleLower = role.toLowerCase();
+  const getRoleVariant = (role: string | { id: string; name: string; permissions?: string[] } | undefined): "default" | "success" | "warning" | "error" | "info" => {
+    const roleStr = getRoleString(role);
+    if (!roleStr) return "default";
+    const roleLower = roleStr.toLowerCase();
     if (roleLower === "admin") return "error";
     if (roleLower === "operator") return "info";
     if (roleLower === "auditor") return "warning";

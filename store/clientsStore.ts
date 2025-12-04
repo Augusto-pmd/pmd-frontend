@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { safeApiUrl, safeApiUrlWithParams } from "@/lib/safeApi";
-import { SIMULATION_MODE, SIMULATED_CLIENTS } from "@/lib/useSimulation";
 
 export interface Client {
   id: string;
@@ -34,14 +33,8 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
   error: null,
 
   async fetchClients() {
-    // Modo simulación: usar datos dummy
-    if (SIMULATION_MODE) {
-      set({ clients: SIMULATED_CLIENTS as Client[], isLoading: false, error: null });
-      return;
-    }
-
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [clientsStore] organizationId no está definido");
@@ -73,7 +66,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [clientsStore] organizationId no está definido");
@@ -106,7 +99,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [clientsStore] organizationId no está definido");
@@ -134,7 +127,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     }
 
     const authState = useAuthStore.getState();
-    const organizationId = (authState.user as any)?.organizationId || (authState.user as any)?.organization?.id;
+    const organizationId = authState.user?.organizationId;
 
     if (!organizationId || !organizationId.trim()) {
       console.warn("❗ [clientsStore] organizationId no está definido");

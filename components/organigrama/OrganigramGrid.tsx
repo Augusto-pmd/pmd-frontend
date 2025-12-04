@@ -8,6 +8,8 @@ import { UserAvatar } from "@/components/settings/UserAvatar";
 import { Eye, Edit, Building2, AlertTriangle, Bell } from "lucide-react";
 import { useAlertsStore } from "@/store/alertsStore";
 import { useWorks } from "@/hooks/api/works";
+import { useRoles } from "@/hooks/api/roles";
+import Link from "next/link";
 
 interface Employee {
   id: string;
@@ -39,12 +41,19 @@ export function OrganigramGrid({
 }: OrganigramGridProps) {
   const { alerts } = useAlertsStore();
   const { works } = useWorks();
+  const { roles } = useRoles();
 
   const getWorkName = (workId?: string) => {
     if (!workId) return null;
     const work = works.find((w: any) => w.id === workId);
     if (!work) return null;
     return work.name || work.title || work.nombre || workId;
+  };
+
+  const getRoleName = (roleId?: string) => {
+    if (!roleId) return null;
+    const role = roles.find((r: any) => r.id === roleId || r.name === roleId);
+    return role?.name || role?.nombre || roleId;
   };
 
   const getEmployeeAlerts = (employeeId: string) => {
@@ -71,14 +80,17 @@ export function OrganigramGrid({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {employees.map((employee) => {
         const name = employee.fullName || employee.name || employee.nombre || "Sin nombre";
-        const role = employee.role || "Sin rol";
+        const roleId = employee.roleId || employee.role;
+        const role = getRoleName(roleId) || employee.role || "Sin rol";
         const subrole = employee.subrole || "";
         const isActive = employee.isActive !== false;
         const workName = getWorkName(employee.workId);
+        const workId = employee.workId;
         const employeeAlerts = getEmployeeAlerts(employee.id);
         const hasAlerts = employeeAlerts.length > 0;
         const unreadAlerts = employeeAlerts.filter((a) => !a.read).length;
         const highSeverityAlerts = employeeAlerts.filter((a) => a.severity === "alta").length;
+        const mediumSeverityAlerts = employeeAlerts.filter((a) => a.severity === "media").length;
 
         return (
           <Card
@@ -111,15 +123,23 @@ export function OrganigramGrid({
                   <Badge variant={isActive ? "success" : "default"} className="text-xs">
                     {isActive ? "Activo" : "Inactivo"}
                   </Badge>
-                  {workName && (
-                    <Badge variant="info" className="text-xs flex items-center gap-1">
-                      <Building2 className="h-3 w-3" />
-                      {workName}
-                    </Badge>
+                  {workName && workId && (
+                    <Link href={`/works/${workId}`}>
+                      <Badge variant="info" className="text-xs flex items-center gap-1 cursor-pointer hover:opacity-80">
+                        <Building2 className="h-3 w-3" />
+                        {workName}
+                      </Badge>
+                    </Link>
                   )}
                   {hasAlerts && (
                     <Badge
-                      variant={highSeverityAlerts > 0 ? "error" : "warning"}
+                      variant={
+                        highSeverityAlerts > 0 
+                          ? "error" 
+                          : mediumSeverityAlerts > 0 
+                          ? "warning" 
+                          : "info"
+                      }
                       className="text-xs flex items-center gap-1"
                     >
                       <Bell className="h-3 w-3" />
@@ -130,15 +150,16 @@ export function OrganigramGrid({
 
                 {/* Acciones */}
                 <div className="pt-2 border-t border-gray-100 flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onViewDetail?.(employee)}
-                    className="flex-1 text-xs h-8"
-                  >
-                    <Eye className="h-3.5 w-3.5 mr-1" />
-                    Ver
-                  </Button>
+                  <Link href={`/organigrama/${employee.id}`} style={{ flex: 1 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-xs h-8"
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1" />
+                      Ver
+                    </Button>
+                  </Link>
                   <Button
                     variant="ghost"
                     size="sm"
