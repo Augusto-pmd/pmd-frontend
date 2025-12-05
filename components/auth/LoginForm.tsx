@@ -19,30 +19,23 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      // Obtener URL base del entorno
-      const envApiUrl = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
-      
-      // Normalizar URL base: remover /api al final si existe, para luego agregarlo explícitamente
-      let apiBase = envApiUrl.trim();
-      if (apiBase.endsWith('/api')) {
-        apiBase = apiBase.slice(0, -4); // Remover '/api'
-      } else if (apiBase.endsWith('/api/')) {
-        apiBase = apiBase.slice(0, -5); // Remover '/api/'
-      } else if (apiBase.endsWith('/')) {
-        apiBase = apiBase.slice(0, -1); // Remover '/' final
+      // Validar que NEXT_PUBLIC_API_URL esté definida
+      const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
+        throw new Error("NEXT_PUBLIC_API_URL no está configurada. Por favor, configura la variable de entorno.");
       }
       
-      // Construir URL completa: SIEMPRE usar /api/auth/login
-      const loginUrl = `${apiBase}/api/auth/login`;
+      // Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
+      const API_URL = `${envApiUrl}/api`;
+      const loginUrl = `${API_URL}/auth/login`;
       
       console.log("🔵 [LOGIN REQUEST]");
-      console.log("  - NEXT_PUBLIC_API_URL (raw):", process.env.NEXT_PUBLIC_API_URL);
-      console.log("  - apiBase (normalized):", apiBase);
+      console.log("  - NEXT_PUBLIC_API_URL:", envApiUrl);
+      console.log("  - API_URL:", API_URL);
       console.log("  - URL completa:", loginUrl);
       console.log("  - Method: POST");
       console.log("  - Data:", { email, password: "***" });
       console.log("  - Client-side fetch: YES");
-      console.log("  - URL usada:", loginUrl);
 
       const response = await fetch(loginUrl, {
         method: "POST",
@@ -51,8 +44,8 @@ export function LoginForm() {
         },
         credentials: "include",
         body: JSON.stringify({ email, password })
-      }).catch((fetchError) => {
-        console.error("🔴 [LOGIN FETCH ERROR] Error de red:");
+      }).catch((fetchError: any) => {
+        console.error("🔴 [LOGIN FETCH ERROR] Error de red/CORS:");
         console.error("  - Error:", fetchError);
         console.error("  - Error message:", fetchError.message);
         console.error("  - Error name:", fetchError.name);
@@ -62,7 +55,15 @@ export function LoginForm() {
         console.error("    2. URL incorrecta - verificar NEXT_PUBLIC_API_URL");
         console.error("    3. Backend no disponible - verificar que el servidor esté corriendo");
         console.error("    4. Red desconectada - verificar conexión a internet");
-        throw fetchError;
+        
+        // No romper la app, solo mostrar error al usuario
+        const errorMessage = fetchError.message?.includes("CORS") || fetchError.message?.includes("cors")
+          ? "Error de conexión (CORS). Verifica la configuración del backend."
+          : fetchError.message?.includes("Failed to fetch") || fetchError.message?.includes("NetworkError")
+          ? "Error de conexión. Verifica que el backend esté disponible."
+          : "Error de conexión. Por favor, intenta nuevamente.";
+        
+        throw new Error(errorMessage);
       });
 
       console.log("🟢 [LOGIN RESPONSE]");
@@ -158,23 +159,26 @@ export function LoginForm() {
       console.error("  - Error response data:", err.response?.data);
       console.error("  - Error status:", err.response?.status);
       
-      let errorMessage = "Invalid credentials. Please try again.";
+      let errorMessage = "Error al iniciar sesión. Por favor, intenta nuevamente.";
       
-      if (err.response?.status === 400 || err.response?.status === 401) {
-        errorMessage = err.response?.data?.message || 
-                      err.response?.data?.error || 
-                      "Invalid email or password. Please check your credentials.";
-      } else if (err.response?.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
+      // Manejar errores de respuesta HTTP
+      if (err.response) {
+        if (err.response.status === 400 || err.response.status === 401) {
+          errorMessage = err.response?.data?.message || 
+                        err.response?.data?.error || 
+                        "Credenciales inválidas. Por favor, verifica tu email y contraseña.";
+        } else if (err.response.status >= 500) {
+          errorMessage = "Error del servidor. Por favor, intenta más tarde.";
+        }
       } else if (err.message) {
+        // Manejar errores de red/CORS
         errorMessage = err.message;
       } else if (typeof err === 'string') {
         errorMessage = err;
       }
       
       setError(errorMessage);
-    } finally {
-      setLoading(false);
+      setLoading(false); // Asegurar que loading se resetee siempre
     }
   };
 

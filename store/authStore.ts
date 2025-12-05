@@ -184,107 +184,172 @@ export const useAuthStore = create<AuthState>()(
 
       // --- LOAD ME ---
       loadMe: async () => {
+        // Validar que NEXT_PUBLIC_API_URL esté definida
+        const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
+          console.error("🔴 [loadMe] NEXT_PUBLIC_API_URL no está definida");
+          throw new Error("NEXT_PUBLIC_API_URL no está configurada");
+        }
+
         const token = get().token;
-        if (!token) throw new Error("No token");
+        if (!token) {
+          throw new Error("No token");
+        }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
-        const response = await fetch(`${apiUrl}/auth/profile`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          credentials: "include",
-        });
-        const data = await response.json();
-        const rawUser = data?.user;
+        // Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
+        const API_URL = `${envApiUrl}/api`;
+        
+        try {
+          const response = await fetch(`${API_URL}/auth/profile`, {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            credentials: "include",
+          });
 
-        if (!rawUser) throw new Error("No user in response");
+          // Validar respuesta
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
 
-        // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
-        const normalizedUser = normalizeUser(rawUser);
+          const data = await response.json().catch(() => ({}));
+          const rawUser = data?.user;
 
-        set({ user: normalizedUser, isAuthenticated: true });
+          // No crashear si la respuesta es null o undefined
+          if (!rawUser) {
+            console.warn("⚠️ [loadMe] No user in response, pero no se bloquea el render");
+            return;
+          }
+
+          // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
+          const normalizedUser = normalizeUser(rawUser);
+
+          set({ user: normalizedUser, isAuthenticated: true });
+        } catch (error: any) {
+          console.error("🔴 [loadMe] Error al cargar perfil:", error);
+          // No crashear SSR, solo loguear el error
+          if (typeof window === "undefined") {
+            // SSR: no hacer throw, solo loguear
+            console.warn("⚠️ [loadMe] Error en SSR, omitiendo");
+            return;
+          }
+          // Cliente: propagar error pero no bloquear render
+          throw error;
+        }
       },
 
       // --- REFRESH SESSION ---
       refreshSession: async () => {
+        // Validar que NEXT_PUBLIC_API_URL esté definida
+        const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
+          console.error("🔴 [refreshSession] NEXT_PUBLIC_API_URL no está definida");
+          throw new Error("NEXT_PUBLIC_API_URL no está configurada");
+        }
+
         const { token } = get();
-        if (!token) throw new Error("No access token");
-
-        // El backend usa GET /api/auth/refresh con JWT en header
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://pmd-backend-l47d.onrender.com/api";
-        const response = await fetch(`${apiUrl}/auth/refresh`, {
-          method: "GET",
-          headers: { 
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json" 
-          },
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          throw new Error(`Refresh failed: ${response.status}`);
+        if (!token) {
+          throw new Error("No access token");
         }
 
-        const data = await response.json();
-        const rawUser = data?.user;
-        const access_token = data.access_token || data.token;
-        const refresh_token = data.refresh_token || data.refreshToken;
-
-        if (rawUser) {
-          // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
-          const normalizedUser = normalizeUser(rawUser);
-          
-          // Asegurar que organizationId esté presente
-          if (!normalizedUser.organizationId) {
-            console.warn("⚠️ [refreshSession] organizationId no presente en respuesta, preservando el existente");
-            const currentUser = get().user;
-            normalizedUser.organizationId = currentUser?.organizationId || undefined;
-          }
-          
-          set({
-            user: normalizedUser,
-            token: access_token,
-            refreshToken: refresh_token ?? null,
-            isAuthenticated: true,
-          });
-        } else {
-          // Si no hay user, solo actualizamos tokens (preservar user existente si existe)
-          const currentUser = get().user;
-          set({
-            user: currentUser, // Preservar user existente
-            token: access_token,
-            refreshToken: refresh_token ?? null,
-            isAuthenticated: true,
-          });
-        }
+        // Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
+        const API_URL = `${envApiUrl}/api`;
         
-        // Actualizar cookies cuando se refresca el token
-        if (typeof window !== "undefined" && access_token) {
-          const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        try {
+          // El backend usa GET /api/auth/refresh con JWT en header
+          const response = await fetch(`${API_URL}/auth/refresh`, {
+            method: "GET",
+            headers: { 
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json" 
+            },
+            credentials: "include",
+          });
+
+          // Validar error de backend
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("🔴 [refreshSession] Error de backend:", response.status, errorData);
+            throw new Error(`Refresh failed: ${response.status}`);
+          }
+
+          const data = await response.json().catch(() => ({}));
+          const rawUser = data?.user;
+          const access_token = data.access_token || data.token;
+          const refresh_token = data.refresh_token || data.refreshToken;
           
-          if (isLocalhost) {
-            document.cookie = `token=${access_token}; Path=/; Max-Age=604800; SameSite=Lax`;
-            console.log("🟢 [COOKIE SET] token actualizado en cookie (refresh, localhost)");
-            console.log("[COOKIE SET]", document.cookie);
+          // No crashear si la respuesta es null o undefined
+          if (!access_token) {
+            console.warn("⚠️ [refreshSession] No access_token in response");
+            throw new Error("No access token in refresh response");
+          }
+
+          if (rawUser) {
+            // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
+            const normalizedUser = normalizeUser(rawUser);
             
-            if (refresh_token) {
-              document.cookie = `refreshToken=${refresh_token}; Path=/; Max-Age=2592000; SameSite=Lax`;
-              console.log("🟢 [COOKIE SET] refreshToken actualizado en cookie (refresh, localhost)");
-              console.log("[COOKIE SET]", document.cookie);
+            // Asegurar que organizationId esté presente
+            if (!normalizedUser.organizationId) {
+              console.warn("⚠️ [refreshSession] organizationId no presente en respuesta, preservando el existente");
+              const currentUser = get().user;
+              normalizedUser.organizationId = currentUser?.organizationId || undefined;
             }
-          } else {
-            document.cookie = `token=${access_token}; Path=/; Max-Age=604800; SameSite=None; Secure`;
-            console.log("🟢 [COOKIE SET] token actualizado en cookie (refresh, producción)");
-            console.log("[COOKIE SET]", document.cookie);
             
-            if (refresh_token) {
-              document.cookie = `refreshToken=${refresh_token}; Path=/; Max-Age=2592000; SameSite=None; Secure`;
-              console.log("🟢 [COOKIE SET] refreshToken actualizado en cookie (refresh, producción)");
+            set({
+              user: normalizedUser,
+              token: access_token,
+              refreshToken: refresh_token ?? null,
+              isAuthenticated: true,
+            });
+          } else {
+            // Si no hay user, solo actualizamos tokens (preservar user existente si existe)
+            const currentUser = get().user;
+            set({
+              user: currentUser, // Preservar user existente
+              token: access_token,
+              refreshToken: refresh_token ?? null,
+              isAuthenticated: true,
+            });
+          }
+          
+          // Actualizar cookies cuando se refresca el token
+          if (typeof window !== "undefined" && access_token) {
+            const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+            
+            if (isLocalhost) {
+              document.cookie = `token=${access_token}; Path=/; Max-Age=604800; SameSite=Lax`;
+              console.log("🟢 [COOKIE SET] token actualizado en cookie (refresh, localhost)");
               console.log("[COOKIE SET]", document.cookie);
+              
+              if (refresh_token) {
+                document.cookie = `refreshToken=${refresh_token}; Path=/; Max-Age=2592000; SameSite=Lax`;
+                console.log("🟢 [COOKIE SET] refreshToken actualizado en cookie (refresh, localhost)");
+                console.log("[COOKIE SET]", document.cookie);
+              }
+            } else {
+              document.cookie = `token=${access_token}; Path=/; Max-Age=604800; SameSite=None; Secure`;
+              console.log("🟢 [COOKIE SET] token actualizado en cookie (refresh, producción)");
+              console.log("[COOKIE SET]", document.cookie);
+              
+              if (refresh_token) {
+                document.cookie = `refreshToken=${refresh_token}; Path=/; Max-Age=2592000; SameSite=None; Secure`;
+                console.log("🟢 [COOKIE SET] refreshToken actualizado en cookie (refresh, producción)");
+                console.log("[COOKIE SET]", document.cookie);
+              }
             }
           }
+        } catch (error: any) {
+          console.error("🔴 [refreshSession] Error al refrescar sesión:", error);
+          // No crashear SSR, solo loguear el error
+          if (typeof window === "undefined") {
+            // SSR: no hacer throw, solo loguear
+            console.warn("⚠️ [refreshSession] Error en SSR, omitiendo");
+            return;
+          }
+          // Cliente: propagar error pero no bloquear render
+          throw error;
         }
       },
     }),

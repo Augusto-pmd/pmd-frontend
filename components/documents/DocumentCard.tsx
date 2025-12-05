@@ -79,7 +79,14 @@ export function DocumentCard({ document }: DocumentCardProps) {
       window.open(fileUrl, "_blank");
     } else {
       // Si no hay URL, intentar descargar desde la API
-      const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL}/documents/${document.id}/download`;
+      const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
+        console.error("🔴 [DocumentCard] NEXT_PUBLIC_API_URL no está definida");
+        return;
+      }
+      // Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
+      const API_URL = `${envApiUrl}/api`;
+      const downloadUrl = `${API_URL}/documents/${document.id}/download`;
       window.open(downloadUrl, "_blank");
     }
   };

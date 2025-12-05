@@ -74,14 +74,14 @@ export function buildSafeApiUrl(...parts: (string | null | undefined)[]): string
 }
 
 /**
- * Obtiene la URL base de la API de forma segura
+ * Obtiene la URL base de la API de forma segura (sin /api)
  * @returns URL base o null si no está definida
  */
 export function getApiBaseUrl(): string | null {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   
-  if (!apiUrl) {
-    console.error("🔴 [safeApi] NEXT_PUBLIC_API_URL no está definido en variables de entorno");
+  if (!apiUrl || apiUrl.includes("undefined") || apiUrl.includes("null")) {
+    console.error("🔴 [safeApi] NEXT_PUBLIC_API_URL no está definida en variables de entorno");
     return null;
   }
   
@@ -91,6 +91,27 @@ export function getApiBaseUrl(): string | null {
   }
   
   return apiUrl;
+}
+
+/**
+ * Obtiene la API_URL completa de forma segura (con /api)
+ * Construye EXACTAMENTE: ${NEXT_PUBLIC_API_URL}/api
+ * @returns API_URL o null si no está definida
+ */
+export function getApiUrl(): string | null {
+  const baseUrl = getApiBaseUrl();
+  if (!baseUrl) {
+    return null;
+  }
+  
+  const API_URL = `${baseUrl}/api`;
+  
+  if (!isValidApiUrl(API_URL)) {
+    console.error("🔴 [safeApi] API_URL inválida:", API_URL);
+    return null;
+  }
+  
+  return API_URL;
 }
 
 /**
@@ -104,15 +125,15 @@ export function safeApiUrl(endpoint: string | null | undefined): string | null {
     return null;
   }
   
-  const baseUrl = getApiBaseUrl();
-  if (!baseUrl) {
+  const API_URL = getApiUrl();
+  if (!API_URL) {
     return null;
   }
   
   // Normalizar endpoint: asegurar que empiece con /
   const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   
-  return buildSafeApiUrl(baseUrl, normalizedEndpoint);
+  return buildSafeApiUrl(API_URL, normalizedEndpoint);
 }
 
 /**
@@ -165,8 +186,8 @@ export function safeApiUrlWithParams(
   baseEndpoint: string,
   ...params: (string | number | null | undefined)[]
 ): string | null {
-  const baseUrl = getApiBaseUrl();
-  if (!baseUrl) {
+  const API_URL = getApiUrl();
+  if (!API_URL) {
     return null;
   }
   
@@ -186,14 +207,14 @@ export function safeApiUrlWithParams(
     return null;
   }
   
-  // Si baseEndpoint es "/" o vacío, construir directamente con baseUrl y params
+  // Si baseEndpoint es "/" o vacío, construir directamente con API_URL y params
   // Esto es para rutas como /api/${organizationId}/clients
   if (baseEndpoint === "/" || baseEndpoint === "") {
-    return buildSafeApiUrl(baseUrl, ...validParams);
+    return buildSafeApiUrl(API_URL, ...validParams);
   }
   
   // Construir URL con endpoint base
   const normalizedEndpoint = baseEndpoint.startsWith("/") ? baseEndpoint : `/${baseEndpoint}`;
-  return buildSafeApiUrl(baseUrl, normalizedEndpoint, ...validParams);
+  return buildSafeApiUrl(API_URL, normalizedEndpoint, ...validParams);
 }
 

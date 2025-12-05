@@ -5,17 +5,30 @@ import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { isValidApiUrl, getApiBaseUrl } from "@/lib/safeApi";
 
-// Obtener URL base de forma segura
-const defaultBaseURL = "https://pmd-backend-l47d.onrender.com/api";
+// Construir URL base de forma segura
+// NEXT_PUBLIC_API_URL debe ser la base sin /api (ej: https://pmd-backend-l47d.onrender.com)
+// API_URL será: ${NEXT_PUBLIC_API_URL}/api
 const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
-const baseURL = envApiUrl && isValidApiUrl(envApiUrl) 
-  ? envApiUrl 
-  : defaultBaseURL;
+const defaultBaseUrl = "https://pmd-backend-l47d.onrender.com";
+const baseUrl = envApiUrl || defaultBaseUrl;
 
-// Validar que la URL base sea válida
-if (!isValidApiUrl(baseURL)) {
-  console.error("🔴 [API INIT] URL base inválida, usando default:", defaultBaseURL);
+// Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
+const API_URL = `${baseUrl}/api`;
+
+// Validar que la URL base sea válida (solo en cliente, no romper SSR)
+if (typeof window !== "undefined") {
+  if (!baseUrl || baseUrl.includes("undefined") || baseUrl.includes("null")) {
+    console.error("🔴 [API INIT] NEXT_PUBLIC_API_URL inválida o no definida");
+    // No throw en cliente para no romper la app, solo loguear
+  }
+
+  if (!isValidApiUrl(API_URL)) {
+    console.error("🔴 [API INIT] API_URL inválida:", API_URL);
+    // No throw en cliente para no romper la app, solo loguear
+  }
 }
+
+const baseURL = API_URL;
 
 const api: AxiosInstance = axios.create({
   baseURL: baseURL,
@@ -26,13 +39,24 @@ const api: AxiosInstance = axios.create({
 });
 
 console.log("🔵 [API INIT] Axios instance created");
-console.log("  - baseURL:", baseURL);
 console.log("  - NEXT_PUBLIC_API_URL:", envApiUrl || "NOT SET (using default)");
-console.log("  - isValidApiUrl:", isValidApiUrl(baseURL));
+console.log("  - baseUrl (sin /api):", baseUrl);
+console.log("  - API_URL (con /api):", API_URL);
+console.log("  - baseURL (axios):", baseURL);
+console.log("  - isValidApiUrl:", isValidApiUrl(API_URL));
 
 // Request interceptor - Add auth token and validate URLs
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // ⚠️ VALIDACIÓN CRÍTICA: Asegurar que NEXT_PUBLIC_API_URL esté definida antes de hacer requests
+    const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
+      console.error("🔴 [API Request Interceptor] NEXT_PUBLIC_API_URL no está definida");
+      return Promise.reject(
+        new Error("NEXT_PUBLIC_API_URL no está configurada. Por favor, configura la variable de entorno.")
+      ) as any;
+    }
+    
     const token = useAuthStore.getState().token;
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -106,8 +130,8 @@ api.interceptors.response.use(
         const token = useAuthStore.getState().token;
         if (token) {
           // Attempt to refresh token using GET /api/auth/refresh
-          const apiBase = getApiBaseUrl() || baseURL;
-          const refreshURL = `${apiBase}/auth/refresh`;
+          // Usar API_URL ya construida (baseURL contiene ${NEXT_PUBLIC_API_URL}/api)
+          const refreshURL = `${baseURL}/auth/refresh`;
           
           if (!isValidApiUrl(refreshURL)) {
             console.error("🔴 [Token Refresh] URL inválida:", refreshURL);
@@ -206,5 +230,10 @@ export const apiClient = {
     return api.delete<T>(url, config).then((res) => res.data);
   },
 };
+
+// Exportar API_URL para uso en otros módulos
+export function getApiUrl(): string {
+  return API_URL;
+}
 
 export default api;
