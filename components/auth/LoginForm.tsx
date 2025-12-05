@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { getApiUrl } from "@/lib/api";
 import LogoPMD from "@/components/LogoPMD";
 
 export function LoginForm() {
@@ -19,23 +20,17 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      // Validar que NEXT_PUBLIC_API_URL esté definida
-      const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
-      if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
-        throw new Error("NEXT_PUBLIC_API_URL no está configurada. Por favor, configura la variable de entorno.");
+      // Validar API_URL ANTES de hacer fetch - evitar login colgado
+      const apiBase = getApiUrl();
+      if (!apiBase) {
+        setError("Error interno: API_URL no definida.");
+        setLoading(false);
+        return;
       }
+
+      const loginUrl = `${apiBase}/auth/login`;
       
-      // Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
-      const API_URL = `${envApiUrl}/api`;
-      const loginUrl = `${API_URL}/auth/login`;
-      
-      console.log("🔵 [LOGIN REQUEST]");
-      console.log("  - NEXT_PUBLIC_API_URL:", envApiUrl);
-      console.log("  - API_URL:", API_URL);
-      console.log("  - URL completa:", loginUrl);
-      console.log("  - Method: POST");
-      console.log("  - Data:", { email, password: "***" });
-      console.log("  - Client-side fetch: YES");
+      console.log("🔵 LOGIN → POST", loginUrl);
 
       const response = await fetch(loginUrl, {
         method: "POST",

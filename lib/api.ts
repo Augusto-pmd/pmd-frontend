@@ -3,32 +3,27 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
-import { isValidApiUrl, getApiBaseUrl } from "@/lib/safeApi";
 
-// Construir URL base de forma segura
-// NEXT_PUBLIC_API_URL debe ser la base sin /api (ej: https://pmd-backend-l47d.onrender.com)
-// API_URL será: ${NEXT_PUBLIC_API_URL}/api
-const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
-const defaultBaseUrl = "https://pmd-backend-l47d.onrender.com";
-const baseUrl = envApiUrl || defaultBaseUrl;
+// Función universal para obtener API_URL
+export function getApiUrl() {
+  const url = process.env.NEXT_PUBLIC_API_URL;
 
-// Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
-const API_URL = `${baseUrl}/api`;
-
-// Validar que la URL base sea válida (solo en cliente, no romper SSR)
-if (typeof window !== "undefined") {
-  if (!baseUrl || baseUrl.includes("undefined") || baseUrl.includes("null")) {
-    console.error("🔴 [API INIT] NEXT_PUBLIC_API_URL inválida o no definida");
-    // No throw en cliente para no romper la app, solo loguear
+  if (!url || typeof url !== "string" || url.trim() === "") {
+    console.error("❌ NEXT_PUBLIC_API_URL no está definida en runtime.");
+    return null;
   }
 
-  if (!isValidApiUrl(API_URL)) {
-    console.error("🔴 [API INIT] API_URL inválida:", API_URL);
-    // No throw en cliente para no romper la app, solo loguear
-  }
+  return url.endsWith("/api") ? url : `${url}/api`;
 }
 
-const baseURL = API_URL;
+// Exposición global para debug en cliente
+if (typeof window !== "undefined") {
+  (window as any).__envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+}
+
+// Construir API_URL usando getApiUrl()
+const API_URL = getApiUrl();
+const baseURL = API_URL || "https://pmd-backend-l47d.onrender.com/api"; // Fallback si getApiUrl() retorna null
 
 const api: AxiosInstance = axios.create({
   baseURL: baseURL,
@@ -38,19 +33,12 @@ const api: AxiosInstance = axios.create({
   withCredentials: true, // Enable cookies
 });
 
-console.log("🔵 [API INIT] Axios instance created");
-console.log("  - NEXT_PUBLIC_API_URL:", envApiUrl || "NOT SET (using default)");
-console.log("  - baseUrl (sin /api):", baseUrl);
-console.log("  - API_URL (con /api):", API_URL);
-console.log("  - baseURL (axios):", baseURL);
-console.log("  - isValidApiUrl:", isValidApiUrl(API_URL));
-
 // Request interceptor - Add auth token and validate URLs
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // ⚠️ VALIDACIÓN CRÍTICA: Asegurar que NEXT_PUBLIC_API_URL esté definida antes de hacer requests
-    const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
+    // Validar que API_URL esté definida antes de hacer requests
+    const apiUrl = getApiUrl();
+    if (!apiUrl) {
       console.error("🔴 [API Request Interceptor] NEXT_PUBLIC_API_URL no está definida");
       return Promise.reject(
         new Error("NEXT_PUBLIC_API_URL no está configurada. Por favor, configura la variable de entorno.")
@@ -66,32 +54,6 @@ api.interceptors.request.use(
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
-    
-    // 🔍 DEBUG: Log URL construction before request
-    const requestBaseURL = config.baseURL || api.defaults.baseURL || '';
-    const url = config.url || '';
-    const finalURL = requestBaseURL ? `${requestBaseURL}${url.startsWith('/') ? '' : '/'}${url}` : url;
-    
-    // ⚠️ VALIDACIÓN CRÍTICA: Detectar URLs con undefined/null
-    if (!isValidApiUrl(finalURL)) {
-      console.error("🔴 [API Request Interceptor] URL INVÁLIDA detectada:");
-      console.error("  - baseURL:", requestBaseURL);
-      console.error("  - config.url:", url);
-      console.error("  - finalURL:", finalURL);
-      console.error("  - method:", config.method?.toUpperCase());
-      console.error("  - stack trace:", new Error().stack?.split('\n').slice(1, 6).join('\n'));
-      
-      // Rechazar la petición con un error descriptivo
-      return Promise.reject(
-        new Error(`URL inválida detectada: ${finalURL}. Verifica que todos los parámetros estén definidos.`)
-      ) as any;
-    }
-    
-    console.log('🔍 [API Request Interceptor] URL Construction:');
-    console.log('  - baseURL:', requestBaseURL);
-    console.log('  - config.url:', url);
-    console.log('  - finalURL:', finalURL);
-    console.log('  - method:', config.method?.toUpperCase());
     
     return config;
   },
@@ -110,7 +72,6 @@ api.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    // NO silenciar errores - loguear todo
     console.error("🔴 [API RESPONSE ERROR]");
     console.error("  - URL:", error.config?.url);
     console.error("  - Method:", error.config?.method?.toUpperCase());
@@ -118,6 +79,7 @@ api.interceptors.response.use(
     console.error("  - Status Text:", error.response?.statusText);
     console.error("  - Response Data:", error.response?.data);
     console.error("  - Error Message:", error.message);
+    
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
@@ -129,17 +91,15 @@ api.interceptors.response.use(
       try {
         const token = useAuthStore.getState().token;
         if (token) {
-          // Attempt to refresh token using GET /api/auth/refresh
-          // Usar API_URL ya construida (baseURL contiene ${NEXT_PUBLIC_API_URL}/api)
-          const refreshURL = `${baseURL}/auth/refresh`;
-          
-          if (!isValidApiUrl(refreshURL)) {
-            console.error("🔴 [Token Refresh] URL inválida:", refreshURL);
+          const apiUrl = getApiUrl();
+          if (!apiUrl) {
             useAuthStore.getState().logout();
             return Promise.reject(new Error("URL de refresh inválida"));
           }
           
+          const refreshURL = `${apiUrl}/auth/refresh`;
           console.log('🔍 [Token Refresh] URL:', refreshURL);
+          
           const response = await axios.get(
             refreshURL,
             { 
@@ -189,7 +149,7 @@ api.interceptors.response.use(
       useAuthStore.getState().logout();
     }
 
-    // Normalize error response - NO silenciar, propagar completo
+    // Normalize error response
     const normalizedError = {
       message:
         (error.response?.data as { message?: string })?.message ||
@@ -198,7 +158,7 @@ api.interceptors.response.use(
         "An error occurred",
       status: error.response?.status || 500,
       data: error.response?.data,
-      originalError: error, // Mantener referencia al error original
+      originalError: error,
     };
 
     console.error("🔴 [API ERROR NORMALIZED]", normalizedError);
@@ -232,11 +192,6 @@ export const apiClient = {
 };
 
 // Exportar API_URL para uso en otros módulos
-export function getApiUrl(): string {
-  return API_URL;
-}
-
-// Exportar API_URL como constante para uso directo
 export { API_URL };
 
 export default api;

@@ -56,6 +56,7 @@ export function ProtectedRoute({
 
   // Verificar que user existe antes de acceder a sus propiedades
   if (!user) {
+    console.warn("⚠ ProtectedRoute sin user — evitando loading infinito");
     return null;
   }
 
