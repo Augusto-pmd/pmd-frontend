@@ -5,34 +5,47 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
 
   const isAuthPage = req.nextUrl.pathname.startsWith("/login");
-  const isProtectedRoute = req.nextUrl.pathname.startsWith("/dashboard")
-    || req.nextUrl.pathname.startsWith("/works")
-    || req.nextUrl.pathname.startsWith("/admin")
-    || req.nextUrl.pathname.startsWith("/suppliers")
-    || req.nextUrl.pathname.startsWith("/accounting");
+  const isProtected = ["/dashboard", "/works", "/admin", "/suppliers", "/accounting"]
+    .some(path => req.nextUrl.pathname.startsWith(path));
 
   // Logs de depuración (solo en desarrollo)
   if (process.env.NODE_ENV === "development") {
     console.log("🔵 [MIDDLEWARE] Request:", req.nextUrl.pathname);
     console.log("  - Token en cookie:", token ? "***PRESENT***" : "NULL");
     console.log("  - isAuthPage:", isAuthPage);
-    console.log("  - isProtectedRoute:", isProtectedRoute);
+    console.log("  - isProtected:", isProtected);
   }
 
-  // Si NO hay token y es una ruta privada → mandar al login
-  if (!token && isProtectedRoute) {
+  // Permitir siempre entrar al login
+  if (isAuthPage) {
+    if (process.env.NODE_ENV === "development") {
+      console.log("🟢 [MIDDLEWARE] Allowing access to /login");
+    }
+    return NextResponse.next();
+  }
+
+  // Si no hay token y la ruta es privada → a login
+  if (!token && isProtected) {
     if (process.env.NODE_ENV === "development") {
       console.log("🔴 [MIDDLEWARE] No token found, redirecting to /login");
     }
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Si SÍ hay token y va al login → mandarlo al dashboard
-  if (token && isAuthPage) {
-    if (process.env.NODE_ENV === "development") {
-      console.log("🟢 [MIDDLEWARE] Token found, redirecting to /dashboard");
+  // Validar que el token no esté vacío, null, undefined o no sea string
+  if (isProtected && token) {
+    const isValidToken = token && 
+                        typeof token === "string" && 
+                        token.trim().length > 0 && 
+                        token !== "null" && 
+                        token !== "undefined";
+    
+    if (!isValidToken) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("🔴 [MIDDLEWARE] Invalid token format, redirecting to /login");
+      }
+      return NextResponse.redirect(new URL("/login", req.url));
     }
-    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   if (process.env.NODE_ENV === "development") {

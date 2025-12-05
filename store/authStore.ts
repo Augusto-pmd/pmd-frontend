@@ -21,6 +21,7 @@ interface AuthState {
   logout: () => void;
   loadMe: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  syncAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -350,6 +351,56 @@ export const useAuthStore = create<AuthState>()(
           }
           // Cliente: propagar error pero no bloquear render
           throw error;
+        }
+      },
+
+      // --- SYNC AUTH ---
+      syncAuth: async () => {
+        // Función helper para obtener cookie
+        const getCookie = (name: string): string | null => {
+          if (typeof window === "undefined") return null;
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) {
+            return parts.pop()?.split(';').shift() || null;
+          }
+          return null;
+        };
+
+        const token = getCookie("token");
+        
+        // Si no hay token → limpiar store
+        if (!token) {
+          set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+          return;
+        }
+
+        // Si hay token pero no está en el store, intentar cargar sesión
+        const currentToken = get().token;
+        if (!currentToken || currentToken !== token) {
+          // Sincronizar token del store con cookie
+          set({ token });
+          
+          // Intentar cargar sesión con loadMe()
+          try {
+            await get().loadMe();
+          } catch (error) {
+            // Si falla loadMe() → limpiar token y store
+            console.error("🔴 [syncAuth] loadMe() failed, clearing auth state");
+            set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+            
+            // Limpiar cookie también
+            if (typeof window !== "undefined") {
+              const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+              if (isLocalhost) {
+                document.cookie = "token=; Path=/; Max-Age=0; SameSite=Lax";
+                document.cookie = "refreshToken=; Path=/; Max-Age=0; SameSite=Lax";
+              } else {
+                document.cookie = "token=; Path=/; Max-Age=0; SameSite=None; Secure";
+                document.cookie = "refreshToken=; Path=/; Max-Age=0; SameSite=None; Secure";
+              }
+            }
+          }
         }
       },
     }),
