@@ -230,6 +230,23 @@ export const useAuthStore = create<AuthState>()(
           set({ user: normalizedUser, isAuthenticated: true });
         } catch (error: any) {
           console.error("🔴 [loadMe] Error al cargar perfil:", error);
+          
+          // Limpiar cookie corrupta si loadMe() falla
+          if (typeof window !== "undefined") {
+            const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+            if (isLocalhost) {
+              document.cookie = "token=; Path=/; Max-Age=0; SameSite=Lax";
+              document.cookie = "refreshToken=; Path=/; Max-Age=0; SameSite=Lax";
+            } else {
+              document.cookie = "token=; Path=/; Max-Age=0; SameSite=None; Secure";
+              document.cookie = "refreshToken=; Path=/; Max-Age=0; SameSite=None; Secure";
+            }
+            console.log("🟢 [loadMe] Cookies limpiadas después de error");
+          }
+          
+          // Limpiar store
+          set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+          
           // No crashear SSR, solo loguear el error
           if (typeof window === "undefined") {
             // SSR: no hacer throw, solo loguear

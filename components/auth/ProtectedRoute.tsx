@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore, UserRole } from "@/store/authStore";
 import { Loading } from "@/components/ui/Loading";
@@ -24,7 +24,6 @@ export function ProtectedRoute({
   }));
 
   const router = useRouter();
-  const [hasAttemptedSessionLoad, setHasAttemptedSessionLoad] = useState(false);
   
   // Logs de depuración
   const storeState = useAuthStore.getState();
@@ -35,12 +34,6 @@ export function ProtectedRoute({
   console.log("  - user.role:", user?.role, "(type:", typeof user?.role, ")");
 
   const userRole = user?.role ?? null;
-
-  // --- useEffect: Marcar que se intentó cargar sesión ---
-  useEffect(() => {
-    // Marcar que ya se intentó cargar la sesión después del primer render
-    setHasAttemptedSessionLoad(true);
-  }, []);
 
   // --- useEffect: NO debe haber returns antes ---
   useEffect(() => {
@@ -56,21 +49,12 @@ export function ProtectedRoute({
   }, [isAuthenticated, userRole, allowedRoles, router, redirectTo]);
 
   // --- Guard DESPUÉS del efecto: Permitir redirect sin bloquear ---
-  if (!isAuthenticated && hasAttemptedSessionLoad) {
+  if (!isAuthenticated) {
     router.replace(redirectTo);
     return null;
   }
 
-  // Mostrar loading solo mientras se intenta cargar la sesión por primera vez
-  if (!user && !hasAttemptedSessionLoad) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loading size="lg" />
-      </div>
-    );
-  }
-
-  // Si no hay user después de intentar cargar, permitir redirect
+  // Verificar que user existe antes de acceder a sus propiedades
   if (!user) {
     return null;
   }
