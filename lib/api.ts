@@ -236,4 +236,7 @@ export function getApiUrl(): string {
   return API_URL;
 }
 
+// Exportar API_URL como constante para uso directo
+export { API_URL };
+
 export default api;
