@@ -39,21 +39,22 @@ function AccountingContent() {
   const toast = useToast();
 
   const user = getUserSafe();
-  const organizationId = (user as any)?.organizationId || (user as any)?.organization?.id;
+  const organizationId = user?.organizationId;
 
   useEffect(() => {
-    // Solo cargar si tenemos organizationId
-    if (organizationId) {
-      fetchEntries(filters);
-    }
+    // organizationId should always be present now (with DEFAULT_ORG_ID fallback)
+    fetchEntries(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, organizationId]);
+  }, [filters]);
 
-  // Prevenir renderizado si no hay organizationId
+  // If organizationId is still missing (shouldn't happen), show friendly error
   if (!organizationId) {
     return (
       <MainLayout>
-        <LoadingState message="Cargando organización..." />
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+        </div>
       </MainLayout>
     );
   }

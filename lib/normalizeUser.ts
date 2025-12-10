@@ -4,19 +4,46 @@ export interface AuthUser {
   fullName: string;
   role: string | { id: string; name: string; permissions?: string[] }; // Puede ser string o objeto con permisos
   roleId?: string; // ID del rol si está disponible
-  organizationId?: string;
-  organization?: {
-    id?: string;
+  organizationId: string; // SIEMPRE requerido (con fallback a DEFAULT_ORG_ID)
+  organization: {
+    id: string;
+    name: string;
     [key: string]: any;
   };
 }
 
+const DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001";
+
 export function normalizeUser(rawUser: any): AuthUser {
-  // Extraer organizationId: primero de organizationId directo, luego de organization.id
+  // Extraer organizationId en este orden:
+  // 1) rawUser.organizationId (preferred)
+  // 2) rawUser.organization?.id (fallback)
+  // 3) DEFAULT_ORG_ID (ultimate fallback)
   const organizationId =
     rawUser.organizationId ||
     rawUser.organization?.id ||
-    null;
+    DEFAULT_ORG_ID;
+
+  // Si no hay organization object y usamos DEFAULT_ORG_ID, crear uno
+  let organization = rawUser.organization;
+  if (!organization && organizationId === DEFAULT_ORG_ID) {
+    organization = {
+      id: DEFAULT_ORG_ID,
+      name: "PMD Arquitectura",
+    };
+  } else if (organization && !organization.id) {
+    // Asegurar que organization.id esté presente
+    organization = {
+      ...organization,
+      id: organizationId,
+    };
+  } else if (!organization) {
+    // Si organization es null/undefined pero tenemos organizationId, crear objeto básico
+    organization = {
+      id: organizationId,
+      name: rawUser.organization?.name || "PMD Arquitectura",
+    };
+  }
 
   // Normalizar el rol: el backend ahora devuelve role como string
   // Pero mantenemos compatibilidad con objetos por si acaso
@@ -43,13 +70,13 @@ export function normalizeUser(rawUser: any): AuthUser {
     fullName: String(rawUser.fullName ?? rawUser.name ?? ""),
     role: normalizedRole,
     roleId,
-    organizationId, // SIEMPRE preservar organizationId
-    organization: rawUser.organization ?? null
+    organizationId, // SIEMPRE presente (con fallback)
+    organization, // SIEMPRE presente (con fallback)
   };
 
-  // Validar que organizationId esté presente
-  if (!normalizedUser.organizationId) {
-    console.warn("⚠️ [normalizeUser] organizationId no encontrado en rawUser:", rawUser);
+  // Validar que organizationId esté presente (solo warning, no throw)
+  if (!normalizedUser.organizationId || normalizedUser.organizationId === DEFAULT_ORG_ID) {
+    console.warn("⚠️ [normalizeUser] organizationId no encontrado en rawUser, usando DEFAULT_ORG_ID:", rawUser);
   }
 
   return normalizedUser;

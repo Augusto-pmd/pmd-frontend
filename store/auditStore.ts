@@ -46,7 +46,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const baseUrl = buildApiRoute(orgId, "audit");
+    const baseUrl = buildApiRoute(null, "audit");
     if (!baseUrl) {
       console.error("🔴 [auditStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -99,7 +99,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "audit");
+    const url = buildApiRoute(null, "audit");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -147,7 +147,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "audit", id);
+    const url = buildApiRoute(null, "audit", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }
@@ -172,7 +172,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "audit");
+    const url = buildApiRoute(null, "audit");
     if (!url) {
       throw new Error("URL de API inválida");
     }

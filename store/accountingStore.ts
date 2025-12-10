@@ -49,16 +49,6 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
   error: null,
 
   async fetchEntries(filters = {}) {
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en accountingStore");
-      set({ error: "No hay organización seleccionada", isLoading: false });
-      return;
-    }
-
     try {
       set({ isLoading: true, error: null });
 
@@ -72,8 +62,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       if (filters.category) queryParams.append("category", filters.category);
 
       const queryString = queryParams.toString();
-      // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-      const baseUrl = buildApiRoute(orgId, "accounting", "transactions");
+      // Backend deriva organizationId del JWT token
+      const baseUrl = buildApiRoute(null, "accounting", "transactions");
       if (!baseUrl) {
         throw new Error("URL de API inválida");
       }
@@ -93,15 +83,6 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en accountingStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
     // Validar campos obligatorios
     if (!payload.date) {
       throw new Error("La fecha es obligatoria");
@@ -116,8 +97,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("El tipo de movimiento es obligatorio");
     }
 
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "accounting", "transactions");
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "accounting", "transactions");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -143,22 +124,13 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en accountingStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
     // Validar campos obligatorios si están presentes
     if (payload.amount !== undefined && payload.amount <= 0) {
       throw new Error("El monto debe ser mayor a 0");
     }
 
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "accounting", "transactions", id);
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "accounting", "transactions", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -178,17 +150,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("ID de movimiento no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en accountingStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "accounting", "transactions", id);
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "accounting", "transactions", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

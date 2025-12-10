@@ -51,7 +51,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const baseUrl = buildApiRoute(orgId, "documents");
+    const baseUrl = buildApiRoute(null, "documents");
     if (!baseUrl) {
       console.error("🔴 [documentsStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -101,7 +101,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "documents");
+    const url = buildApiRoute(null, "documents");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -156,7 +156,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "documents", id);
+    const url = buildApiRoute(null, "documents", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -204,7 +204,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "documents", id);
+    const url = buildApiRoute(null, "documents", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

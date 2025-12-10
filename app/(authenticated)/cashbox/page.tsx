@@ -38,7 +38,10 @@ function CashboxContent() {
   if (!organizationId) {
     return (
       <MainLayout>
-        <LoadingState message="Cargando organización..." />
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+        </div>
       </MainLayout>
     );
   }

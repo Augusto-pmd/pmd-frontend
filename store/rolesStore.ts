@@ -46,7 +46,7 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "roles");
+    const url = buildApiRoute(null, "roles");
     if (!url) {
       console.error("🔴 [rolesStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -78,7 +78,7 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     // Si el backend no tiene endpoint de permisos, usar lista estándar
     try {
       // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-      const url = buildApiRoute(orgId, "permissions");
+      const url = buildApiRoute(null, "permissions");
       if (url) {
         const data = await apiClient.get(url);
         const permissions = data?.data || data || [];
@@ -130,7 +130,7 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "roles");
+    const url = buildApiRoute(null, "roles");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -187,7 +187,7 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     const beforeState = currentRole ? { ...currentRole } : null;
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "roles", id);
+    const url = buildApiRoute(null, "roles", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -236,7 +236,7 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     const roleName = role?.name || id;
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "roles", id);
+    const url = buildApiRoute(null, "roles", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

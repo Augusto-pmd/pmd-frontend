@@ -52,7 +52,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "users");
+    const url = buildApiRoute(null, "users");
     if (!url) {
       console.error("🔴 [usersStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -104,7 +104,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "users");
+    const url = buildApiRoute(null, "users");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -175,7 +175,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "users", id);
+    const url = buildApiRoute(null, "users", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -227,7 +227,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const userName = user?.fullName || user?.email || id;
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "users", id);
+    const url = buildApiRoute(null, "users", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

@@ -71,7 +71,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "cashboxes");
+    const url = buildApiRoute(null, "cashboxes");
     if (!url) {
       console.error("🔴 [cashboxStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -104,7 +104,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "cashboxes");
+    const url = buildApiRoute(null, "cashboxes");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -140,7 +140,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "cashboxes", id);
+    const url = buildApiRoute(null, "cashboxes", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -201,7 +201,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     const diferencia = saldoFinal;
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "cashboxes", id);
+    const url = buildApiRoute(null, "cashboxes", id);
     if (!url) {
       throw new Error("URL de cierre inválida");
     }
@@ -256,7 +256,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "cashboxes", cashboxId, "movements");
+    const url = buildApiRoute(null, "cashboxes", cashboxId, "movements");
     if (!url) {
       console.error("🔴 [cashboxStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -299,7 +299,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "cashboxes", cashboxId, "movements");
+    const url = buildApiRoute(null, "cashboxes", cashboxId, "movements");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -383,7 +383,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "cashboxes", cashboxId, "movements", id);
+    const url = buildApiRoute(null, "cashboxes", cashboxId, "movements", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -423,7 +423,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "cashboxes", cashboxId, "movements", id);
+    const url = buildApiRoute(null, "cashboxes", cashboxId, "movements", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

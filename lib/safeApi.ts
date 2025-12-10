@@ -137,22 +137,19 @@ export function safeApiUrl(endpoint: string | null | undefined): string | null {
 }
 
 /**
- * Construye una ruta relativa para API con organizationId
- * @param organizationId - ID de la organización
+ * Construye una ruta relativa para API (sin organizationId en la URL)
+ * El backend deriva organizationId del JWT token (req.user.organizationId)
+ * @param organizationId - ID de la organización (ignorado, solo para compatibilidad)
  * @param resource - Recurso (ej: "works", "clients", "alerts")
  * @param params - Parámetros adicionales opcionales (ej: ["123", "movements"])
- * @returns Ruta relativa como `${organizationId}/resource/...` o null si algún parámetro es inválido
+ * @returns Ruta relativa como `resource/param1/param2/...` o null si algún parámetro es inválido
  */
 export function buildApiRoute(
   organizationId: string | null | undefined,
   resource: string,
   ...params: (string | number | null | undefined)[]
 ): string | null {
-  // Validar organizationId
-  if (!organizationId || typeof organizationId !== "string" || !organizationId.trim()) {
-    console.warn("⚠️ [buildApiRoute] organizationId inválido");
-    return null;
-  }
+  // organizationId se ignora - el backend lo deriva del JWT token
   
   // Validar resource
   if (!resource || typeof resource !== "string" || !resource.trim()) {
@@ -171,8 +168,8 @@ export function buildApiRoute(
     })
     .filter((param): param is string => param !== null);
   
-  // Construir ruta relativa: ${organizationId}/resource/param1/param2/...
-  const parts = [organizationId.trim(), resource.trim(), ...validParams];
+  // Construir ruta relativa SIN organizationId: resource/param1/param2/...
+  const parts = [resource.trim(), ...validParams];
   return parts.join("/");
 }
 

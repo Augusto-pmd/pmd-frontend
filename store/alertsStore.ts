@@ -38,18 +38,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   error: null,
 
   async fetchAlerts() {
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en alertsStore");
-      set({ error: "No hay organización seleccionada", isLoading: false });
-      return;
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "alerts");
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "alerts");
     if (!url) {
       console.error("🔴 [alertsStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -72,17 +62,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("ID de alerta no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en alertsStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "alerts", id, "read");
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "alerts", id, "read");
     if (!url) {
       throw new Error("URL de markAsRead inválida");
     }
@@ -102,15 +83,6 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en alertsStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
     // Validar campos obligatorios
     if (!payload.message || payload.message.trim() === "") {
       throw new Error("El mensaje de la alerta es obligatorio");
@@ -125,8 +97,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("La fecha es obligatoria");
     }
 
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "alerts");
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "alerts");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -169,17 +141,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en alertsStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "alerts", id);
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "alerts", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -199,17 +162,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("ID de alerta no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en alertsStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "alerts", id);
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "alerts", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }
@@ -224,17 +178,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   },
 
   async markAllAsRead() {
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en alertsStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "alerts", "read-all");
+    // Backend deriva organizationId del JWT token
+    const url = buildApiRoute(null, "alerts", "read-all");
     if (!url) {
       throw new Error("URL de markAllAsRead inválida");
     }

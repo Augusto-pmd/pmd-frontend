@@ -84,6 +84,16 @@ export const useAuthStore = create<AuthState>()(
 
         // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
         const normalizedUser = normalizeUser(userRaw);
+        
+        // Preservar organizationId existente si el normalizado no lo tiene
+        const currentUser = get().user;
+        if (!normalizedUser.organizationId && currentUser?.organizationId) {
+          console.warn("⚠️ [login] organizationId no presente en respuesta, preservando el existente");
+          normalizedUser.organizationId = currentUser.organizationId;
+          if (!normalizedUser.organization && currentUser.organization) {
+            normalizedUser.organization = currentUser.organization;
+          }
+        }
 
         const newState = {
           user: normalizedUser,
@@ -216,7 +226,8 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const data = await response.json().catch(() => ({}));
-          const rawUser = data?.user;
+          // Soporte para ambos formatos: { user: {...} } o bare user object
+          const rawUser = data?.user ?? data;
 
           // No crashear si la respuesta es null o undefined
           if (!rawUser) {
@@ -226,6 +237,16 @@ export const useAuthStore = create<AuthState>()(
 
           // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
           const normalizedUser = normalizeUser(rawUser);
+          
+          // Preservar organizationId existente si el normalizado no lo tiene
+          const currentUser = get().user;
+          if (!normalizedUser.organizationId && currentUser?.organizationId) {
+            console.warn("⚠️ [loadMe] organizationId no presente en respuesta, preservando el existente");
+            normalizedUser.organizationId = currentUser.organizationId;
+            if (!normalizedUser.organization && currentUser.organization) {
+              normalizedUser.organization = currentUser.organization;
+            }
+          }
 
           set({ user: normalizedUser, isAuthenticated: true });
         } catch (error: any) {
@@ -294,7 +315,8 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const data = await response.json().catch(() => ({}));
-          const rawUser = data?.user;
+          // Soporte para ambos formatos: { user: {...} } o bare user object
+          const rawUser = data?.user ?? data;
           const access_token = data.access_token || data.token;
           const refresh_token = data.refresh_token || data.refreshToken;
           
@@ -308,11 +330,14 @@ export const useAuthStore = create<AuthState>()(
             // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
             const normalizedUser = normalizeUser(rawUser);
             
-            // Asegurar que organizationId esté presente
-            if (!normalizedUser.organizationId) {
+            // Preservar organizationId existente si el normalizado no lo tiene
+            const currentUser = get().user;
+            if (!normalizedUser.organizationId && currentUser?.organizationId) {
               console.warn("⚠️ [refreshSession] organizationId no presente en respuesta, preservando el existente");
-              const currentUser = get().user;
-              normalizedUser.organizationId = currentUser?.organizationId || undefined;
+              normalizedUser.organizationId = currentUser.organizationId;
+              if (!normalizedUser.organization && currentUser.organization) {
+                normalizedUser.organization = currentUser.organization;
+              }
             }
             
             set({

@@ -44,7 +44,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "clients");
+    const url = buildApiRoute(null, "clients");
     if (!url) {
       console.error("🔴 [clientsStore] URL inválida");
       set({ error: "URL de API inválida", isLoading: false });
@@ -77,7 +77,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "clients");
+    const url = buildApiRoute(null, "clients");
     if (!url) {
       throw new Error("URL de API inválida");
     }
@@ -112,7 +112,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "clients", id);
+    const url = buildApiRoute(null, "clients", id);
     if (!url) {
       throw new Error("URL de actualización inválida");
     }
@@ -142,7 +142,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     }
 
     // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(orgId, "clients", id);
+    const url = buildApiRoute(null, "clients", id);
     if (!url) {
       throw new Error("URL de eliminación inválida");
     }

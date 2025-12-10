@@ -112,10 +112,18 @@ export function LoginForm() {
       }
 
       // Asegurar que organizationId y organization estén en el user object
+      // Usar DEFAULT_ORG_ID como fallback si no está presente
+      const DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001";
       const user = {
         ...userRaw,
-        organizationId: userRaw.organizationId || userRaw.organization?.id || undefined,
-        organization: userRaw.organization || undefined,
+        organizationId:
+          userRaw.organizationId ||
+          userRaw.organization?.id ||
+          DEFAULT_ORG_ID,
+        organization: userRaw.organization ?? {
+          id: DEFAULT_ORG_ID,
+          name: "PMD Arquitectura",
+        },
       };
 
       console.log("🔵 [LOGIN STORE] Llamando login() con:");
