@@ -6,10 +6,11 @@ export interface UserPMD {
   id: string;
   email: string;
   fullName: string;
-  roleId?: string;
+  roleId?: string | number;
   role?: {
-    id: string;
+    id: number | string;
     name: string;
+    permissions?: string[];
   };
   createdAt?: string;
   updatedAt?: string;

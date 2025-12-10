@@ -71,8 +71,10 @@ export function normalizeUser(rawUser: any): AuthUser {
     };
     roleId = rawUser.role.id ?? rawUser.roleId ?? "";
   } else if (rawUser.role && typeof rawUser.role === "string") {
-    // Fallback: si viene como string, crear objeto (caso legacy)
-    console.warn("⚠️ [normalizeUser] role viene como string, convirtiendo a objeto:", rawUser.role);
+    // FALLBACK LEGACY: si viene como string, crear objeto (no debería pasar en producción)
+    // El backend SIEMPRE devuelve role como objeto { id, name }
+    // Este caso solo existe para compatibilidad con datos antiguos
+    console.warn("⚠️ [normalizeUser] role viene como string (legacy), convirtiendo a objeto:", rawUser.role);
     normalizedRole = {
       id: rawUser.roleId ?? rawUser.role,
       name: String(rawUser.role),

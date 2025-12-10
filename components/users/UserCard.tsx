@@ -11,7 +11,7 @@ interface User {
   nombre?: string;
   fullName?: string;
   email?: string;
-  role?: string | { name: string };
+  role?: { id: number | string; name: string; permissions?: string[] };
   rol?: string;
   status?: string;
   estado?: string;
@@ -33,7 +33,7 @@ export function UserCard({ user }: UserCardProps) {
     return user.email || null;
   };
 
-  const getUserRole = () => {
+  const getUserRole = (): string | null => {
     if (user.rol) return user.rol;
     if (user.role) {
       return user.role.name || null;

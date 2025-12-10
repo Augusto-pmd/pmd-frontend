@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { UserAvatar } from "./UserAvatar";
 import { AuthUser } from "@/lib/normalizeUser";
+import { getRoleString, translateRole, getRoleVariant } from "@/lib/roleHelpers";
 
 interface UserInfoSectionProps {
   user: (AuthUser & { createdAt?: string }) | null;
@@ -33,34 +34,7 @@ export function UserInfoSection({ user }: UserInfoSectionProps) {
     }
   };
 
-  const getRoleString = (role: { id: string | number; name: string; permissions?: string[] } | undefined): string => {
-    if (!role) return "";
-    return role.name || "";
-  };
-
-  const translateRole = (role: string | { id: string; name: string; permissions?: string[] } | undefined): string => {
-    const roleStr = getRoleString(role);
-    if (!roleStr) return "Sin rol";
-    const roleLower = roleStr.toLowerCase();
-    const translations: Record<string, string> = {
-      admin: "Administrador",
-      operator: "Operador",
-      auditor: "Auditor",
-      supervisor: "Supervisor",
-      manager: "Gerente",
-    };
-    return translations[roleLower] || roleStr;
-  };
-
-  const getRoleVariant = (role: string | { id: string; name: string; permissions?: string[] } | undefined): "default" | "success" | "warning" | "error" | "info" => {
-    const roleStr = getRoleString(role);
-    if (!roleStr) return "default";
-    const roleLower = roleStr.toLowerCase();
-    if (roleLower === "admin") return "error";
-    if (roleLower === "operator") return "info";
-    if (roleLower === "auditor") return "warning";
-    return "default";
-  };
+  // Usar helpers centralizados desde lib/roleHelpers
 
   return (
     <Card className="border-l-4 border-l-pmd-darkBlue">

@@ -7,7 +7,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: { id: number | string; name: string; permissions?: string[] };
+  roleId?: number | string;
   status?: string;
   createdAt?: string;
   updatedAt?: string;
