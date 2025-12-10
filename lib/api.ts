@@ -113,10 +113,15 @@ api.interceptors.response.use(
           const { user: rawUser, access_token: newToken, refresh_token: newRefreshToken } = response.data || {};
           if (rawUser) {
             const user = normalizeUser(rawUser);
-            // Preservar organizationId si no viene en respuesta
-            if (!user.organizationId) {
-              const currentUser = useAuthStore.getState().user;
-              user.organizationId = currentUser?.organizationId || undefined;
+            // normalizeUser siempre retorna organizationId (con DEFAULT_ORG_ID como fallback)
+            // Si el usuario actualizado tiene DEFAULT_ORG_ID y el usuario actual tiene uno válido, preservarlo
+            const DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001";
+            const currentUser = useAuthStore.getState().user;
+            if (user.organizationId === DEFAULT_ORG_ID && currentUser?.organizationId && currentUser.organizationId !== DEFAULT_ORG_ID) {
+              user.organizationId = currentUser.organizationId;
+              if (currentUser.organization) {
+                user.organization = currentUser.organization;
+              }
             }
             useAuthStore.setState({
               user,
