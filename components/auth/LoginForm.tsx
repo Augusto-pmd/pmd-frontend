@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-import { getApiUrl } from "@/lib/api";
+import { getApiUrl, apiFetch } from "@/lib/api";
 import LogoPMD from "@/components/LogoPMD";
 
 export function LoginForm() {
@@ -26,12 +26,9 @@ export function LoginForm() {
       
       console.log("🔵 LOGIN → POST", loginUrl);
 
-      const response = await fetch(loginUrl, {
+      // apiFetch no agregará Authorization header si no hay token (correcto para login)
+      const response = await apiFetch(loginUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
         body: JSON.stringify({ email, password })
       }).catch((fetchError: any) => {
         console.error("🔴 [LOGIN FETCH ERROR] Error de red/CORS:");

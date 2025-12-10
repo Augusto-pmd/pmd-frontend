@@ -192,6 +192,31 @@ export const apiClient = {
   },
 };
 
+// Wrapper universal para fetch con Authorization Bearer token
+export async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = useAuthStore.getState().token;
+  
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+  
+  // Agregar Authorization Bearer solo si hay token
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+    console.log(`🔵 [apiFetch] ${options.method || "GET"} ${url}`);
+    console.log(`   → Headers: Authorization: Bearer ${token.substring(0, 20)}...`);
+  } else {
+    console.log(`🔵 [apiFetch] ${options.method || "GET"} ${url} (no token available)`);
+  }
+  
+  return fetch(url, {
+    ...options,
+    headers,
+    credentials: "include", // Mantener cookies
+  });
+}
+
 // Exportar API_URL para uso en otros módulos
 export { API_URL };
 

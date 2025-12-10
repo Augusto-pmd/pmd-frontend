@@ -212,13 +212,10 @@ export const useAuthStore = create<AuthState>()(
         const API_URL = `${envApiUrl}/api`;
         
         try {
-          const response = await fetch(`${API_URL}/auth/me`, {
+          // Importar apiFetch dinámicamente para evitar dependencias circulares
+          const { apiFetch } = await import("@/lib/api");
+          const response = await apiFetch(`${API_URL}/auth/me`, {
             method: "GET",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
-            credentials: "include",
           });
 
           // Validar respuesta
@@ -298,14 +295,11 @@ export const useAuthStore = create<AuthState>()(
         const API_URL = `${envApiUrl}/api`;
         
         try {
-          // El backend usa GET /api/auth/refresh con JWT en header
-          const response = await fetch(`${API_URL}/auth/refresh`, {
+          // Importar apiFetch dinámicamente para evitar dependencias circulares
+          const { apiFetch } = await import("@/lib/api");
+          // El backend usa GET /api/auth/refresh con JWT en header (apiFetch lo agrega automáticamente)
+          const response = await apiFetch(`${API_URL}/auth/refresh`, {
             method: "GET",
-            headers: { 
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json" 
-            },
-            credentials: "include",
           });
 
           // Validar error de backend
@@ -450,14 +444,14 @@ export const useAuthStore = create<AuthState>()(
       // --- HYDRATE USER ---
       hydrateUser: async () => {
         try {
-          // Importar getApiUrl dinámicamente para evitar dependencias circulares
-          const { getApiUrl } = await import("@/lib/api");
+          // Importar getApiUrl y apiFetch dinámicamente para evitar dependencias circulares
+          const { getApiUrl, apiFetch } = await import("@/lib/api");
           // getApiUrl() siempre devuelve una string válida
           const api = getApiUrl();
 
-          const res = await fetch(`${api}/users/me`, {
+          // apiFetch agrega automáticamente Authorization Bearer token
+          const res = await apiFetch(`${api}/users/me`, {
             method: "GET",
-            credentials: "include",
           });
 
           if (!res.ok) {
