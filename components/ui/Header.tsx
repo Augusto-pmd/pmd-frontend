@@ -118,9 +118,7 @@ export function Header({ title }: HeaderProps) {
             <div style={userTextStyle}>
               <p style={userNameStyle}>{user.fullName}</p>
               <p style={userRoleStyle}>
-                {typeof user.role === "string" 
-                  ? user.role 
-                  : user.role?.name || user.roleId || "Sin rol"}
+                {user.role?.name || user.roleId || "Sin rol"}
               </p>
             </div>
             <div style={avatarStyle}>

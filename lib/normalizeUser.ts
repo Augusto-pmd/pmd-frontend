@@ -1,12 +1,24 @@
+/**
+ * Modelo unificado de usuario que coincide con la respuesta del backend
+ * El backend SIEMPRE devuelve:
+ * - role: { id: number; name: string }
+ * - roleId: number
+ * - organizationId: number
+ * - organization: { id: number; name: string }
+ */
 export interface AuthUser {
   id: string;
   email: string;
   fullName: string;
-  role: string | { id: string; name: string; permissions?: string[] }; // Puede ser string o objeto con permisos
-  roleId?: string; // ID del rol si está disponible
-  organizationId: string; // SIEMPRE requerido (con fallback a DEFAULT_ORG_ID)
+  role: {
+    id: string | number;
+    name: string;
+    permissions?: string[];
+  };
+  roleId: string | number;
+  organizationId: string | number;
   organization: {
-    id: string;
+    id: string | number;
     name: string;
     [key: string]: any;
   };
@@ -45,31 +57,43 @@ export function normalizeUser(rawUser: any): AuthUser {
     };
   }
 
-  // Normalizar el rol: el backend devuelve role como objeto { id, name }
-  // Asegurar que user.role = rawUser.role.name y user.roleId = rawUser.role.id
-  let normalizedRole: string | { id: string; name: string; permissions?: string[] };
-  let roleId: string | undefined;
+  // Normalizar el rol: el backend SIEMPRE devuelve role como objeto { id, name }
+  // Mantener role como objeto, nunca como string
+  let normalizedRole: { id: string | number; name: string; permissions?: string[] };
+  let roleId: string | number;
 
   if (rawUser.role && typeof rawUser.role === "object") {
-    // El rol viene como objeto { id, name, permissions? }
-    normalizedRole = String(rawUser.role.name || rawUser.role.nombre || "");
-    roleId = String(rawUser.role.id || rawUser.roleId || "");
+    // El rol viene como objeto { id, name, permissions? } - FORMATO CORRECTO
+    normalizedRole = {
+      id: rawUser.role.id ?? rawUser.roleId ?? "",
+      name: String(rawUser.role.name || rawUser.role.nombre || ""),
+      permissions: rawUser.role.permissions,
+    };
+    roleId = rawUser.role.id ?? rawUser.roleId ?? "";
   } else if (rawUser.role && typeof rawUser.role === "string") {
-    // El rol viene como string (fallback)
-    normalizedRole = String(rawUser.role);
-    roleId = rawUser.roleId ? String(rawUser.roleId) : undefined;
+    // Fallback: si viene como string, crear objeto (caso legacy)
+    console.warn("⚠️ [normalizeUser] role viene como string, convirtiendo a objeto:", rawUser.role);
+    normalizedRole = {
+      id: rawUser.roleId ?? rawUser.role,
+      name: String(rawUser.role),
+    };
+    roleId = rawUser.roleId ?? rawUser.role;
   } else {
-    // Sin rol
-    normalizedRole = "";
-    roleId = rawUser.roleId ? String(rawUser.roleId) : undefined;
+    // Sin rol - crear objeto vacío (no debería pasar en producción)
+    console.warn("⚠️ [normalizeUser] role no encontrado, usando fallback");
+    normalizedRole = {
+      id: rawUser.roleId ?? "",
+      name: "",
+    };
+    roleId = rawUser.roleId ?? "";
   }
 
   const normalizedUser: AuthUser = {
     id: String(rawUser.id),
     email: String(rawUser.email ?? ""),
     fullName: String(rawUser.fullName ?? rawUser.name ?? ""),
-    role: normalizedRole,
-    roleId,
+    role: normalizedRole, // SIEMPRE objeto { id, name }
+    roleId, // SIEMPRE presente
     organizationId, // SIEMPRE presente (con fallback)
     organization, // SIEMPRE presente (con fallback)
   };

@@ -33,9 +33,8 @@ export function UserInfoSection({ user }: UserInfoSectionProps) {
     }
   };
 
-  const getRoleString = (role: string | { id: string; name: string; permissions?: string[] } | undefined): string => {
+  const getRoleString = (role: { id: string | number; name: string; permissions?: string[] } | undefined): string => {
     if (!role) return "";
-    if (typeof role === "string") return role;
     return role.name || "";
   };
 

@@ -57,7 +57,7 @@ function UserDetailContent() {
   const getUserRole = () => {
     if (user.rol) return user.rol;
     if (user.role) {
-      return typeof user.role === "object" ? user.role.name : user.role;
+      return user.role.name || null;
     }
     return null;
   };

@@ -277,9 +277,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
               {user.fullName || user.email}
             </p>
             <p className="text-xs text-white/70 truncate">
-              {typeof user.role === "string"
-                ? user.role
-                : user.role?.name || user.roleId || "Sin rol"}
+              {user.role?.name || user.roleId || "Sin rol"}
             </p>
           </div>
         )}

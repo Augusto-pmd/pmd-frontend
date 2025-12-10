@@ -4,7 +4,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AuthUser, normalizeUser } from "@/lib/normalizeUser";
 
-export type UserRole = "admin" | "operator" | "auditor";
+// UserRole ahora es el nombre del rol (string) para comparaciones
+export type UserRole = "admin" | "operator" | "auditor" | "administrator";
 
 // SUPER ADMIN TEMPORAL - FALLBACK
 // Activar esto si necesitas acceso total cuando no tienes rol asignado
@@ -43,16 +44,22 @@ export const useAuthStore = create<AuthState>()(
         
         // SUPER ADMIN FALLBACK - Solo aplicar si está activo y el usuario no tiene rol válido
         if (SUPER_ADMIN_FALLBACK) {
-          const hasValidRole = normalizedUser.role && 
-            (normalizedUser.role === "admin" || 
-             normalizedUser.role === "operator" || 
-             normalizedUser.role === "auditor");
+          const roleName = normalizedUser.role?.name?.toLowerCase() || "";
+          const hasValidRole = roleName && 
+            (roleName === "admin" || 
+             roleName === "operator" || 
+             roleName === "auditor" ||
+             roleName === "administrator");
           
           if (!hasValidRole) {
             console.log("🟡 [SUPER ADMIN FALLBACK] Usuario sin rol válido, aplicando fallback 'admin'");
             normalizedUser = {
               ...normalizedUser,
-              role: "admin", // "admin" tiene todos los permisos en el ACL
+              role: {
+                id: normalizedUser.role?.id || "admin",
+                name: "admin",
+              },
+              roleId: normalizedUser.roleId || "admin",
             };
           }
         }
@@ -162,7 +169,7 @@ export const useAuthStore = create<AuthState>()(
         console.log("  - refreshToken stored:", stateAfter.refreshToken ? "YES" : "NO");
         
         if (stateAfter.user) {
-          console.log("  - user.role:", stateAfter.user.role, "(type:", typeof stateAfter.user.role, ")");
+          console.log("  - user.role:", stateAfter.user.role?.name || "N/A", "(id:", stateAfter.user.role?.id || "N/A", ")");
         }
       },
 
@@ -220,6 +227,15 @@ export const useAuthStore = create<AuthState>()(
 
           // Validar respuesta
           if (!response.ok) {
+            // Si es 401, limpiar sesión y redirigir
+            if (response.status === 401) {
+              console.error("🔴 [loadMe] 401 Unauthorized - limpiando sesión");
+              get().logout();
+              if (typeof window !== "undefined") {
+                window.location.href = "/login";
+              }
+              return;
+            }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
@@ -321,34 +337,24 @@ export const useAuthStore = create<AuthState>()(
             throw new Error("No access token in refresh response");
           }
 
+          // SIEMPRE normalizar el usuario si viene en la respuesta
           if (rawUser) {
-            // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
             const normalizedUser = normalizeUser(rawUser);
             
-            // Preservar organizationId existente si el normalizado no lo tiene
-            const currentUser = get().user;
-            if (!normalizedUser.organizationId && currentUser?.organizationId) {
-              console.warn("⚠️ [refreshSession] organizationId no presente en respuesta, preservando el existente");
-              normalizedUser.organizationId = currentUser.organizationId;
-              if (!normalizedUser.organization && currentUser.organization) {
-                normalizedUser.organization = currentUser.organization;
-              }
-            }
-            
             set({
-              user: normalizedUser,
+              user: normalizedUser, // Usar usuario normalizado completo
               token: access_token,
               refreshToken: refresh_token ?? null,
               isAuthenticated: true,
             });
           } else {
-            // Si no hay user, solo actualizamos tokens (preservar user existente si existe)
+            // Si no hay user en respuesta, preservar el existente pero actualizar tokens
             const currentUser = get().user;
             set({
-              user: currentUser, // Preservar user existente
+              user: currentUser,
               token: access_token,
               refreshToken: refresh_token ?? null,
-              isAuthenticated: true,
+              isAuthenticated: currentUser ? true : false,
             });
           }
           
@@ -456,7 +462,17 @@ export const useAuthStore = create<AuthState>()(
 
           if (!res.ok) {
             console.warn("❌ [hydrateUser] /users/me returned", res.status);
-            set({ user: null, isAuthenticated: false });
+            // Si es 401, limpiar todo y redirigir a login
+            if (res.status === 401) {
+              console.error("🔴 [hydrateUser] 401 Unauthorized - limpiando sesión");
+              get().logout();
+              // Redirigir a login solo en cliente
+              if (typeof window !== "undefined") {
+                window.location.href = "/login";
+              }
+            } else {
+              set({ user: null, isAuthenticated: false });
+            }
             return;
           }
 

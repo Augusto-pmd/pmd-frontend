@@ -40,7 +40,8 @@ export function AuditList({
   const toast = useToast();
 
   // Verificar permisos: solo admin puede eliminar
-  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
+  const roleName = user?.role?.name?.toLowerCase() || "";
+  const isAdmin = roleName === "admin" || roleName === "administrator" || roleName === "superadmin";
   const canDelete = isAdmin; // Solo admin puede eliminar registros de auditoría
 
   const filteredLogs = logs.filter((log) => {

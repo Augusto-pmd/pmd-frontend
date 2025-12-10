@@ -31,9 +31,10 @@ export function ProtectedRoute({
   console.log("  - isAuthenticated:", isAuthenticated);
   console.log("  - user:", user ? "PRESENT" : "NULL");
   console.log("  - token:", storeState.token ? "***PRESENT***" : "NULL");
-  console.log("  - user.role:", user?.role, "(type:", typeof user?.role, ")");
+  console.log("  - user.role.name:", user?.role?.name || "N/A", "(id:", user?.role?.id || "N/A", ")");
 
-  const userRole = user?.role ?? null;
+  // role ahora es SIEMPRE un objeto { id, name }, extraer el nombre
+  const userRoleName = user?.role?.name?.toLowerCase() as UserRole | null;
 
   // --- useEffect: Hidratar usuario al montar si no está presente ---
   useEffect(() => {
@@ -41,6 +42,7 @@ export function ProtectedRoute({
       console.log("🔵 ProtectedRoute: hydrating user...");
       useAuthStore.getState().hydrateUser();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- useEffect: Manejar redirecciones ---
@@ -50,11 +52,11 @@ export function ProtectedRoute({
       return;
     }
 
-    if (allowedRoles && userRole && !allowedRoles.includes(userRole as UserRole)) {
+    if (allowedRoles && userRoleName && !allowedRoles.includes(userRoleName)) {
       router.replace("/unauthorized");
       return;
     }
-  }, [isAuthenticated, userRole, allowedRoles, router, redirectTo]);
+  }, [isAuthenticated, userRoleName, allowedRoles, router, redirectTo]);
 
   // --- Guard DESPUÉS del efecto: Permitir redirect sin bloquear ---
   if (!isAuthenticated) {
@@ -78,14 +80,12 @@ export function ProtectedRoute({
     );
   }
 
-  // El backend ahora devuelve role como string, pero mantenemos compatibilidad con objetos
-  const role = typeof user.role === "object" 
-    ? (user.role.name ?? user.role.id ?? null) 
-    : user.role;
+  // role ahora es SIEMPRE un objeto { id, name }
+  const roleName = user.role?.name?.toLowerCase();
 
   // Si no hay role pero hay user, permitir paso (el backend puede devolver role como null)
   // Solo bloquear si hay allowedRoles específicos
-  if (allowedRoles && allowedRoles.length > 0 && !role) {
+  if (allowedRoles && allowedRoles.length > 0 && !roleName) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />
