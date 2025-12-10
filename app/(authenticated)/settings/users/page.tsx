@@ -18,7 +18,7 @@ import { useAuthStore } from "@/store/authStore";
 import { Badge } from "@/components/ui/Badge";
 
 function UsersContent() {
-  const { users, isLoading, error, fetchUsers, deleteUser, deactivateUser, activateUser } = useUsersStore();
+  const { users, isLoading, error, fetchUsers, deleteUser } = useUsersStore();
   const { roles } = useRoles();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
@@ -83,9 +83,9 @@ function UsersContent() {
     // Filtro de rol
     if (roleFilter !== "all" && user.roleId !== roleFilter) return false;
 
-    // Filtro de estado
-    if (statusFilter === "active" && !user.isActive) return false;
-    if (statusFilter === "inactive" && user.isActive) return false;
+    // Filtro de estado - isActive no existe en el backend, todos los usuarios son activos
+    // if (statusFilter === "active" && !user.isActive) return false;
+    // if (statusFilter === "inactive" && user.isActive) return false;
 
     return true;
   });
@@ -119,13 +119,15 @@ function UsersContent() {
   const handleToggleStatus = async (user: any) => {
     setIsSubmitting(true);
     try {
-      if (user.isActive) {
-        await deactivateUser(user.id);
-        toast.success("Usuario desactivado correctamente");
-      } else {
-        await activateUser(user.id);
-        toast.success("Usuario activado correctamente");
-      }
+      // isActive no existe en el backend - todos los usuarios son activos
+      // if (user.isActive) {
+      //   await deactivateUser(user.id);
+      //   toast.success("Usuario desactivado correctamente");
+      // } else {
+      //   await activateUser(user.id);
+      //   toast.success("Usuario activado correctamente");
+      // }
+      toast.info("El estado de usuario no está disponible en el backend");
     } catch (err: any) {
       console.error("Error al cambiar estado:", err);
       toast.error(err.message || "Error al cambiar el estado del usuario");
@@ -264,7 +266,7 @@ function UsersContent() {
                   filteredUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className={`hover:bg-gray-50 transition-colors ${!user.isActive ? "opacity-60" : ""}`}
+                      className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{user.fullName}</div>
@@ -276,8 +278,8 @@ function UsersContent() {
                         <Badge variant="info">{getRoleName(user.roleId)}</Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant={user.isActive ? "success" : "default"}>
-                          {user.isActive ? "Activo" : "Inactivo"}
+                        <Badge variant="success">
+                          Activo
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -316,9 +318,9 @@ function UsersContent() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleToggleStatus(user)}
-                            disabled={isSubmitting}
-                            className={user.isActive ? "text-yellow-600 hover:text-yellow-700" : "text-green-600 hover:text-green-700"}
-                            title={user.isActive ? "Desactivar" : "Activar"}
+                            disabled={true}
+                            className="text-gray-400 hover:text-gray-500"
+                            title="Estado no disponible en backend"
                           >
                             <UserX className="h-4 w-4" />
                           </Button>

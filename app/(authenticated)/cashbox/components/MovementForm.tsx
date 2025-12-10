@@ -91,34 +91,29 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
 
     setIsSubmitting(true);
     try {
+      // Construir payload exacto según CreateCashMovementDto del backend
       const payload: any = {
-        type: movementType,
-        amount: parseFloat(amount),
-        date,
-        notes: notes.trim() || undefined,
-        description: notes.trim() || undefined,
-        category: category.trim() || undefined,
-        isIncome: movementType === "ingreso",
+        cashbox_id: cashboxId, // required, UUID
+        type: movementType === "ingreso" ? "income" : "expense", // required, CashMovementType enum
+        amount: parseFloat(amount), // required, number
+        currency: "ARS", // required, "ARS" | "USD"
+        date: new Date(date).toISOString(), // required, ISO8601
       };
 
-      // Campos específicos para Egreso
+      // Campos opcionales
+      if (notes.trim()) payload.description = notes.trim();
+
+      // Campos específicos para Egreso (expense)
       if (movementType === "egreso") {
-        payload.typeDocument = documentType;
-        
-        if (documentType === "factura") {
-          payload.invoiceNumber = invoiceNumber.trim();
-          payload.supplierId = supplierId;
-          payload.workId = workId; // Obra obligatoria para facturas
-        } else if (documentType === "comprobante") {
-          // Comprobante no requiere número de factura ni proveedor obligatorio
-          payload.supplierId = supplierId || undefined;
-        }
+        // Si hay expense_id, agregarlo
+        // Si hay income_id, agregarlo (aunque no debería haberlo en egreso)
+        // El backend maneja expense_id e income_id según el tipo
       }
 
-      // Campos específicos para Ingreso (Refuerzo)
+      // Campos específicos para Ingreso (income)
       if (movementType === "ingreso") {
-        payload.responsible = responsible.trim() || undefined;
-        payload.typeDocument = null; // Refuerzo no es factura ni comprobante
+        // Si hay income_id, agregarlo
+        // Si hay expense_id, agregarlo (aunque no debería haberlo en ingreso)
       }
 
       if (initialData?.id) {

@@ -110,35 +110,48 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
       return;
     }
 
-    // Preparar payload según lo que el backend espera
+    // Preparar payload EXACTO según CreateWorkDto del backend
+    // Solo enviar campos que existen en el backend DTO
     const payload: any = {
-      // Campos principales
       nombre: (formData.nombre || formData.name).trim(),
-      name: (formData.nombre || formData.name).trim(), // Compatibilidad
-      direccion: formData.direccion || formData.address || undefined,
-      address: formData.direccion || formData.address || undefined, // Compatibilidad
-      fechaInicio: formData.fechaInicio || formData.startDate || undefined,
-      startDate: formData.fechaInicio || formData.startDate || undefined, // Compatibilidad
-      fechaFin: formData.fechaFin || formData.endDate || undefined,
-      endDate: formData.fechaFin || formData.endDate || undefined, // Compatibilidad
-      estado: formData.estado || formData.status || "planificada",
-      status: formData.status || formData.estado || "planned", // Compatibilidad
-      descripcion: formData.descripcion || formData.description || undefined,
-      description: formData.descripcion || formData.description || undefined, // Compatibilidad
-      metrosCuadrados: formData.metrosCuadrados ? parseFloat(formData.metrosCuadrados) : undefined,
-      squareMeters: formData.metrosCuadrados ? parseFloat(formData.metrosCuadrados) : undefined, // Compatibilidad
-      responsableId: formData.responsableId || formData.managerId || undefined,
-      managerId: formData.responsableId || formData.managerId || undefined, // Compatibilidad
-      presupuesto: formData.presupuesto ? parseFloat(formData.presupuesto) : undefined,
-      budget: formData.presupuesto ? parseFloat(formData.presupuesto) : undefined, // Compatibilidad
     };
 
-    // Limpiar campos undefined del payload
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === undefined || payload[key] === "") {
-        delete payload[key];
+    // Campos opcionales - solo agregar si tienen valor
+    if (formData.direccion || formData.address) {
+      payload.direccion = (formData.direccion || formData.address).trim();
+    }
+    if (formData.fechaInicio || formData.startDate) {
+      payload.fechaInicio = formData.fechaInicio || formData.startDate;
+    }
+    if (formData.fechaFin || formData.endDate) {
+      payload.fechaFin = formData.fechaFin || formData.endDate;
+    }
+    if (formData.estado || formData.status) {
+      payload.estado = formData.estado || formData.status;
+    }
+    if (formData.descripcion || formData.description) {
+      payload.descripcion = (formData.descripcion || formData.description).trim();
+    }
+    if (formData.metrosCuadrados) {
+      const metros = parseFloat(formData.metrosCuadrados);
+      if (!isNaN(metros) && metros > 0) {
+        payload.metrosCuadrados = metros;
       }
-    });
+    }
+    if (formData.responsableId || formData.managerId) {
+      payload.responsableId = formData.responsableId || formData.managerId;
+    }
+    if (formData.presupuesto) {
+      const presupuesto = parseFloat(formData.presupuesto);
+      if (!isNaN(presupuesto) && presupuesto > 0) {
+        payload.presupuesto = presupuesto;
+      }
+    }
+
+    // Asegurar que el payload no esté vacío
+    if (Object.keys(payload).length === 0) {
+      throw new Error("El payload no puede estar vacío. Al menos el nombre es requerido.");
+    }
 
     try {
       await onSubmit(payload);

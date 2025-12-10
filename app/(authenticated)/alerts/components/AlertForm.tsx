@@ -18,31 +18,22 @@ interface AlertFormProps {
   defaultDocumentId?: string;
 }
 
-const ALERT_TYPES = [
-  { value: "obra", label: "Obra" },
-  { value: "rrhh", label: "RRHH" },
-  { value: "documentacion", label: "Documentación" },
-  { value: "contable", label: "Contable" },
-  { value: "seguro", label: "Seguro" },
-  { value: "general", label: "General" },
-];
-
-// Backend severity enum: "info" | "warning" | "critical"
-const SEVERITY_OPTIONS = [
-  { value: "info", label: "Info" },
-  { value: "warning", label: "Advertencia" },
-  { value: "critical", label: "Crítico" },
-];
-
-// Backend category enum - must match backend AlertCategory enum exactly
-// Common categories (adjust based on actual backend enum):
-const CATEGORY_OPTIONS = [
+// Backend AlertType enum - must match backend enum exactly
+const ALERT_TYPE_OPTIONS = [
   { value: "work", label: "Obra" },
   { value: "supplier", label: "Proveedor" },
   { value: "document", label: "Documento" },
   { value: "accounting", label: "Contable" },
   { value: "cashbox", label: "Caja" },
+  { value: "user", label: "Usuario" },
   { value: "general", label: "General" },
+];
+
+// Backend severity enum: "info" | "warning" | "critical" (optional)
+const SEVERITY_OPTIONS = [
+  { value: "info", label: "Info" },
+  { value: "warning", label: "Advertencia" },
+  { value: "critical", label: "Crítico" },
 ];
 
 export function AlertForm({
@@ -60,25 +51,31 @@ export function AlertForm({
   const { suppliers } = useSuppliers();
 
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("general");
+  const [message, setMessage] = useState("");
+  const [type, setType] = useState("general");
   const [severity, setSeverity] = useState<"info" | "warning" | "critical">("info");
   const [workId, setWorkId] = useState(defaultWorkId || "");
   const [supplierId, setSupplierId] = useState("");
+  const [userId, setUserId] = useState(defaultPersonId || "");
+  const [documentId, setDocumentId] = useState(defaultDocumentId || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || "");
-      setDescription(initialData.description || "");
-      setCategory(initialData.category || "general");
+      setMessage(initialData.message || initialData.description || "");
+      setType(initialData.type || initialData.category || "general");
       setSeverity(initialData.severity || "info");
-      setWorkId(initialData.workId || defaultWorkId || "");
-      setSupplierId(initialData.supplierId || "");
+      setWorkId(initialData.work_id || initialData.workId || defaultWorkId || "");
+      setSupplierId(initialData.supplier_id || initialData.supplierId || "");
+      setUserId(initialData.user_id || initialData.userId || defaultPersonId || "");
+      setDocumentId(initialData.document_id || initialData.documentId || defaultDocumentId || "");
     } else {
       if (defaultWorkId) setWorkId(defaultWorkId);
+      if (defaultPersonId) setUserId(defaultPersonId);
+      if (defaultDocumentId) setDocumentId(defaultDocumentId);
     }
-  }, [initialData, defaultWorkId]);
+  }, [initialData, defaultWorkId, defaultPersonId, defaultDocumentId]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -91,12 +88,12 @@ export function AlertForm({
       newErrors.title = "El título no puede exceder 255 caracteres";
     }
 
-    if (!category || category.trim() === "") {
-      newErrors.category = "La categoría es obligatoria";
+    if (!message || message.trim() === "") {
+      newErrors.message = "El mensaje es obligatorio";
     }
 
-    if (!severity || !["info", "warning", "critical"].includes(severity)) {
-      newErrors.severity = "La severidad es obligatoria";
+    if (!type || type.trim() === "") {
+      newErrors.type = "El tipo es obligatorio";
     }
 
     setErrors(newErrors);
@@ -110,17 +107,19 @@ export function AlertForm({
       return;
     }
 
-    // Construir payload exacto según backend DTO
+    // Construir payload exacto según CreateAlertDto del backend
     const payload: any = {
-      title: title.trim(),
-      category: category,
-      severity: severity,
+      type: type, // AlertType enum - required
+      title: title.trim(), // required, max 255
+      message: message.trim(), // required, string
     };
 
-    // Agregar campos opcionales
-    if (description.trim()) payload.description = description.trim();
-    if (workId) payload.workId = workId;
-    if (supplierId) payload.supplierId = supplierId;
+    // Campos opcionales
+    if (severity) payload.severity = severity;
+    if (userId) payload.user_id = userId;
+    if (workId) payload.work_id = workId;
+    if (supplierId) payload.supplier_id = supplierId;
+    if (documentId) payload.document_id = documentId;
 
     await onSubmit(payload);
   };
@@ -176,33 +175,40 @@ export function AlertForm({
       />
 
       <TextareaField
-        label="Descripción (opcional)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
+        label="Mensaje"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
         rows={3}
-        placeholder="Descripción detallada de la alerta"
+        placeholder="Mensaje de la alerta (obligatorio)"
+        error={errors.message}
+        required
       />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
         <SelectField
-          label="Categoría"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          options={CATEGORY_OPTIONS}
-          error={errors.category}
+          label="Tipo"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          options={ALERT_TYPE_OPTIONS}
+          error={errors.type}
           required
         />
         <SelectField
-          label="Severidad"
+          label="Severidad (opcional)"
           value={severity}
           onChange={(e) => setSeverity(e.target.value as typeof severity)}
           options={SEVERITY_OPTIONS}
-          error={errors.severity}
-          required
         />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <SelectField
+          label="Usuario (opcional)"
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
+          options={userOptions}
+          disabled={!!defaultPersonId}
+        />
         <SelectField
           label="Obra (opcional)"
           value={workId}
@@ -210,11 +216,21 @@ export function AlertForm({
           options={workOptions}
           disabled={!!defaultWorkId}
         />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
         <SelectField
           label="Proveedor (opcional)"
           value={supplierId}
           onChange={(e) => setSupplierId(e.target.value)}
           options={supplierOptions}
+        />
+        <SelectField
+          label="Documento (opcional)"
+          value={documentId}
+          onChange={(e) => setDocumentId(e.target.value)}
+          options={documentOptions}
+          disabled={!!defaultDocumentId}
         />
       </div>
 

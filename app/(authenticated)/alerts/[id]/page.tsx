@@ -71,16 +71,17 @@ function AlertDetailContent() {
     return labels[severity] || severity;
   };
 
-  const getCategoryLabel = (category: string) => {
+  const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       work: "Obra",
       supplier: "Proveedor",
       document: "Documento",
       accounting: "Contable",
       cashbox: "Caja",
+      user: "Usuario",
       general: "General",
     };
-    return labels[category] || category;
+    return labels[type] || type;
   };
 
   const handleMarkAsRead = async () => {
@@ -157,7 +158,7 @@ function AlertDetailContent() {
                   <Bell className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500">Mensaje</p>
-                    <p className="text-base font-medium text-gray-900">{alert.description || alert.title || "Sin descripción"}</p>
+                    <p className="text-base font-medium text-gray-900">{alert.message || alert.title || "Sin mensaje"}</p>
                   </div>
                 </div>
 
@@ -165,7 +166,7 @@ function AlertDetailContent() {
                   <Tag className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500">Tipo</p>
-                    <p className="text-base font-medium text-gray-900">{getCategoryLabel(alert.category || "general")}</p>
+                    <p className="text-base font-medium text-gray-900">{getTypeLabel(alert.type || alert.category || "general")}</p>
                   </div>
                 </div>
 
@@ -173,8 +174,8 @@ function AlertDetailContent() {
                   <AlertTriangle className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500">Severidad</p>
-                    <Badge variant={getSeverityVariant(alert.severity)}>
-                      {getSeverityLabel(alert.severity)}
+                    <Badge variant={getSeverityVariant(alert.severity || "info")}>
+                      {getSeverityLabel(alert.severity || "info")}
                     </Badge>
                   </div>
                 </div>
@@ -202,7 +203,7 @@ function AlertDetailContent() {
                   <div>
                     <p className="text-sm text-gray-500">Obra asociada</p>
                     <p className="text-base font-medium text-gray-900">
-                      {(alert as any).workId ? getWorkName((alert as any).workId) : "-"}
+                      {(alert as any).work_id || (alert as any).workId ? getWorkName((alert as any).work_id || (alert as any).workId) : "-"}
                     </p>
                   </div>
                 </div>
@@ -210,9 +211,9 @@ function AlertDetailContent() {
                 <div className="flex items-start gap-3">
                   <User className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Personal involucrado</p>
+                    <p className="text-sm text-gray-500">Usuario involucrado</p>
                     <p className="text-base font-medium text-gray-900">
-                      {(alert as any).personId ? getUserName((alert as any).personId) : "-"}
+                      {(alert as any).user_id || (alert as any).userId ? getUserName((alert as any).user_id || (alert as any).userId) : "-"}
                     </p>
                   </div>
                 </div>
@@ -245,7 +246,7 @@ function AlertDetailContent() {
             <p className="text-gray-700">
               ¿Estás seguro de que deseas eliminar esta alerta?
             </p>
-            <p className="text-sm text-gray-500 font-medium">{alert.description || alert.title || "Sin descripción"}</p>
+            <p className="text-sm text-gray-500 font-medium">{alert.message || alert.title || "Sin mensaje"}</p>
             <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
             <div className="flex gap-3 justify-end pt-4">
               <Button

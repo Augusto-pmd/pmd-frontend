@@ -261,8 +261,8 @@ export function AlertsList({
                     <div className="text-sm text-gray-600">{getDocumentName((alert as any).documentId)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant={getSeverityVariant(alert.severity)}>
-                      {getSeverityLabel(alert.severity)}
+                    <Badge variant={getSeverityVariant(alert.severity || "info")}>
+                      {getSeverityLabel(alert.severity || "info")}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

@@ -15,12 +15,16 @@ export interface Cashbox {
 export interface CashMovement {
   id: string;
   cashboxId: string;
+  cashbox_id?: string; // Backend field
   type: "ingreso" | "egreso" | "income" | "expense";
   amount: number;
+  currency?: "ARS" | "USD"; // Backend field
   category?: string;
   date: string;
   notes?: string;
   description?: string;
+  expense_id?: string; // Backend field
+  income_id?: string; // Backend field
   supplierId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -165,51 +169,24 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     try {
-      const movementPayload = {
-        ...payload,
-        cashboxId,
-        type: payload.type === "ingreso" ? "income" : payload.type === "egreso" ? "expense" : payload.type,
+      // Construir payload exacto según CreateCashMovementDto del backend
+      const movementPayload: any = {
+        cashbox_id: cashboxId, // required, UUID
+        type: payload.type === "ingreso" || payload.type === "income" ? "income" : "expense", // required, CashMovementType enum
+        amount: payload.amount, // required, number
+        currency: payload.currency || "ARS", // required, "ARS" | "USD"
+        date: payload.date ? (typeof payload.date === "string" ? payload.date : new Date(payload.date).toISOString()) : new Date().toISOString(), // required, ISO8601
       };
+
+      // Campos opcionales
+      if (payload.description) movementPayload.description = payload.description.trim();
+      if (payload.expense_id) movementPayload.expense_id = payload.expense_id;
+      if (payload.income_id) movementPayload.income_id = payload.income_id;
       
       const createdMovement = await apiClient.post("/cash-movements", movementPayload);
       
-      // Si es una factura (egreso con typeDocument = "factura"), generar movimiento contable automáticamente
-      if (
-        (payload.type === "egreso" || payload.type === "expense") &&
-        payload.typeDocument === "factura" &&
-        payload.invoiceNumber &&
-        payload.workId &&
-        payload.supplierId
-      ) {
-        try {
-          const movementId = createdMovement?.id || createdMovement?.data?.id || createdMovement?.data?.[0]?.id;
-          
-          // Construir payload exacto para contabilidad según DTO
-          const accountingPayload = {
-            type: "expense",
-            amount: payload.amount,
-            date: payload.date || new Date().toISOString().split("T")[0],
-            workId: payload.workId,
-            supplierId: payload.supplierId,
-            invoiceNumber: payload.invoiceNumber,
-            category: payload.category || "Gastos de caja",
-            notes: `Factura ${payload.invoiceNumber} - ${payload.notes || payload.description || ""}`,
-            description: `Factura ${payload.invoiceNumber} - ${payload.notes || payload.description || ""}`,
-            source: "cashbox",
-            cashboxMovementId: movementId,
-          };
-          
-          // Note: Accounting entries should be created separately through the accounting module
-          console.log("✅ [cashboxStore] Movimiento de caja creado. Crear entrada contable manualmente si es necesario:", payload.invoiceNumber);
-        } catch (accountingError: any) {
-          console.error("⚠️ [cashboxStore] Error al generar movimiento contable:", accountingError);
-          // No fallar el movimiento de caja si falla la contabilidad, pero loguear el error
-          console.warn("⚠️ [cashboxStore] El movimiento de caja se guardó, pero no se pudo generar el movimiento contable");
-        }
-      }
-      
-      // Si es un refuerzo (ingreso), NO generar contabilidad
-      // Si es un comprobante, NO generar contabilidad
+      // Note: Accounting entries should be created separately through the accounting module
+      // El backend maneja la relación entre cash movements y accounting entries
       
       await get().fetchMovements(cashboxId);
     } catch (error: any) {
@@ -235,10 +212,21 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
 
     try {
-      const movementPayload = {
-        ...payload,
-        type: payload.type === "ingreso" ? "income" : payload.type === "egreso" ? "expense" : payload.type,
-      };
+      // Construir payload exacto según UpdateCashMovementDto del backend
+      const movementPayload: any = {};
+
+      // Campos opcionales para actualización
+      if (payload.type !== undefined) {
+        movementPayload.type = payload.type === "ingreso" || payload.type === "income" ? "income" : "expense";
+      }
+      if (payload.amount !== undefined) movementPayload.amount = payload.amount;
+      if (payload.currency !== undefined) movementPayload.currency = payload.currency;
+      if (payload.date !== undefined) {
+        movementPayload.date = typeof payload.date === "string" ? payload.date : new Date(payload.date).toISOString();
+      }
+      if (payload.description !== undefined) movementPayload.description = payload.description.trim();
+      if (payload.expense_id !== undefined) movementPayload.expense_id = payload.expense_id;
+      if (payload.income_id !== undefined) movementPayload.income_id = payload.income_id;
       
       await apiClient.put(`/cash-movements/${id}`, movementPayload);
       await get().fetchMovements(cashboxId);

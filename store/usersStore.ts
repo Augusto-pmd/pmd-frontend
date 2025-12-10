@@ -11,12 +11,15 @@ export interface UserPMD {
     id: string;
     name: string;
   };
-  isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  notes?: string;
-  phone?: string;
-  position?: string;
+  // Campos que pueden venir del backend pero no se deben enviar en create/update
+  // organizationId?: string; // NO enviar - backend lo toma del JWT
+  // status?: string; // NO existe en backend
+  // phone?: string; // NO existe en backend
+  // position?: string; // NO existe en backend
+  // notes?: string; // NO existe en backend
+  // isActive?: boolean; // NO existe en backend
 }
 
 interface UsersState {
@@ -86,9 +89,8 @@ export const useUsersStore = create<UsersState>((set, get) => ({
         roleId: payload.roleId,
       };
 
-      // Agregar campos opcionales solo si existen en el backend
-      if (payload.phone) userPayload.phone = payload.phone.trim();
-      if (payload.position) userPayload.position = payload.position.trim();
+      // NO agregar campos que no existen en el backend DTO
+      // phone, position, notes, isActive, organizationId NO se envían
 
       const response = await apiClient.post("/users", userPayload);
       
@@ -135,12 +137,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       // Construir payload exacto según DTO del backend
       const userPayload: any = {};
 
+      // Solo enviar campos que existen en UpdateUserDto del backend
       if (payload.fullName) userPayload.fullName = payload.fullName.trim();
       if (payload.email) userPayload.email = payload.email.trim().toLowerCase();
       if (payload.password) userPayload.password = payload.password;
       if (payload.roleId !== undefined) userPayload.roleId = payload.roleId || null;
-      if (payload.phone !== undefined) userPayload.phone = payload.phone?.trim() || null;
-      if (payload.position !== undefined) userPayload.position = payload.position?.trim() || null;
+      // NO enviar: phone, position, notes, isActive, organizationId
 
       const response = await apiClient.put(`/users/${id}`, userPayload);
       
@@ -209,43 +211,13 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   },
 
   async deactivateUser(id) {
-    if (!id) {
-      console.warn("❗ [usersStore] id no está definido");
-      throw new Error("ID de usuario no está definido");
-    }
-
-    const user = get().users.find((u) => u.id === id);
-    const userName = user?.fullName || user?.email || id;
-
-    try {
-      await get().updateUser(id, { isActive: false });
-      
-      // Registrar en auditoría
-      await logUpdate("users", "User", id, { isActive: true }, { isActive: false }, `Se desactivó el usuario ${userName}`);
-    } catch (error: any) {
-      console.error("🔴 [usersStore] Error al desactivar usuario:", error);
-      throw error;
-    }
+    // isActive no existe en el backend - todos los usuarios son activos
+    throw new Error("La funcionalidad de activar/desactivar usuarios no está disponible en el backend");
   },
 
   async activateUser(id) {
-    if (!id) {
-      console.warn("❗ [usersStore] id no está definido");
-      throw new Error("ID de usuario no está definido");
-    }
-
-    const user = get().users.find((u) => u.id === id);
-    const userName = user?.fullName || user?.email || id;
-
-    try {
-      await get().updateUser(id, { isActive: true });
-      
-      // Registrar en auditoría
-      await logUpdate("users", "User", id, { isActive: false }, { isActive: true }, `Se activó el usuario ${userName}`);
-    } catch (error: any) {
-      console.error("🔴 [usersStore] Error al activar usuario:", error);
-      throw error;
-    }
+    // isActive no existe en el backend - todos los usuarios son activos
+    throw new Error("La funcionalidad de activar/desactivar usuarios no está disponible en el backend");
   },
 }));
 

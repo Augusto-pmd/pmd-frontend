@@ -45,22 +45,22 @@ export function normalizeUser(rawUser: any): AuthUser {
     };
   }
 
-  // Normalizar el rol: el backend ahora devuelve role como string
-  // Pero mantenemos compatibilidad con objetos por si acaso
+  // Normalizar el rol: el backend devuelve role como objeto { id, name }
+  // Asegurar que user.role = rawUser.role.name y user.roleId = rawUser.role.id
   let normalizedRole: string | { id: string; name: string; permissions?: string[] };
   let roleId: string | undefined;
 
   if (rawUser.role && typeof rawUser.role === "object") {
-    // El rol viene como objeto (compatibilidad con versiones anteriores)
-    normalizedRole = {
-      id: String(rawUser.role.id || rawUser.roleId || ""),
-      name: String(rawUser.role.name || rawUser.role.nombre || ""),
-      permissions: Array.isArray(rawUser.role.permissions) ? rawUser.role.permissions : undefined,
-    };
+    // El rol viene como objeto { id, name, permissions? }
+    normalizedRole = String(rawUser.role.name || rawUser.role.nombre || "");
     roleId = String(rawUser.role.id || rawUser.roleId || "");
+  } else if (rawUser.role && typeof rawUser.role === "string") {
+    // El rol viene como string (fallback)
+    normalizedRole = String(rawUser.role);
+    roleId = rawUser.roleId ? String(rawUser.roleId) : undefined;
   } else {
-    // El rol viene como string (formato actual del backend)
-    normalizedRole = String(rawUser.role ?? rawUser.roleId ?? "");
+    // Sin rol
+    normalizedRole = "";
     roleId = rawUser.roleId ? String(rawUser.roleId) : undefined;
   }
 
