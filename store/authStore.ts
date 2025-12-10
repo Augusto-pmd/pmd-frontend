@@ -22,6 +22,7 @@ interface AuthState {
   loadMe: () => Promise<void>;
   refreshSession: () => Promise<void>;
   syncAuth: () => Promise<void>;
+  hydrateUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -443,6 +444,52 @@ export const useAuthStore = create<AuthState>()(
               }
             }
           }
+        }
+      },
+
+      // --- HYDRATE USER ---
+      hydrateUser: async () => {
+        try {
+          // Importar getApiUrl dinámicamente para evitar dependencias circulares
+          const { getApiUrl } = await import("@/lib/api");
+          // getApiUrl() siempre devuelve una string válida
+          const api = getApiUrl();
+
+          const res = await fetch(`${api}/users/me`, {
+            method: "GET",
+            credentials: "include",
+          });
+
+          if (!res.ok) {
+            console.warn("❌ [hydrateUser] /users/me returned", res.status);
+            set({ user: null, isAuthenticated: false });
+            return;
+          }
+
+          const user = await res.json();
+          console.log("🟢 [hydrateUser] Loaded", user);
+
+          // Normalizar el usuario
+          const normalizedUser = normalizeUser(user);
+          
+          // Preservar organizationId existente si el normalizado no lo tiene
+          const currentUser = get().user;
+          if (!normalizedUser.organizationId && currentUser?.organizationId) {
+            console.warn("⚠️ [hydrateUser] organizationId no presente en respuesta, preservando el existente");
+            normalizedUser.organizationId = currentUser.organizationId;
+            if (!normalizedUser.organization && currentUser.organization) {
+              normalizedUser.organization = currentUser.organization;
+            }
+          }
+
+          set({
+            user: normalizedUser,
+            isAuthenticated: true,
+          });
+
+        } catch (err) {
+          console.error("❌ [hydrateUser] error:", err);
+          set({ user: null, isAuthenticated: false });
         }
       },
     }),

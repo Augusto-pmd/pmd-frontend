@@ -38,8 +38,12 @@ import { useRouter } from "next/navigation";
 
 function DashboardContent() {
   const authState = useAuthStore.getState();
+  const user = authState.user;
   const organizationId = authState.user?.organizationId;
   const router = useRouter();
+
+  // Log del usuario final en el dashboard
+  console.log("📌 [DashboardPage] user:", user);
 
   const { works, isLoading: worksLoading } = useWorks();
   const { expenses, isLoading: expensesLoading } = useExpenses();

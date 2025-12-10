@@ -35,7 +35,15 @@ export function ProtectedRoute({
 
   const userRole = user?.role ?? null;
 
-  // --- useEffect: NO debe haber returns antes ---
+  // --- useEffect: Hidratar usuario al montar si no está presente ---
+  useEffect(() => {
+    if (!user) {
+      console.log("🔵 ProtectedRoute: hydrating user...");
+      useAuthStore.getState().hydrateUser();
+    }
+  }, []);
+
+  // --- useEffect: Manejar redirecciones ---
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace(redirectTo);

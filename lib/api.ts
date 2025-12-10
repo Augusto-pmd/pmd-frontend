@@ -5,12 +5,18 @@ import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
 
 // Función universal para obtener API_URL
-export function getApiUrl() {
+export function getApiUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL;
 
   if (!url || typeof url !== "string" || url.trim() === "") {
-    console.error("❌ NEXT_PUBLIC_API_URL no está definida en runtime.");
-    return null;
+    console.error("❌ [getApiUrl] NEXT_PUBLIC_API_URL no está definida en runtime.");
+    console.error("❌ [getApiUrl] Por favor, configura NEXT_PUBLIC_API_URL en tu archivo .env.local");
+    console.error("❌ [getApiUrl] Ejemplo: NEXT_PUBLIC_API_URL=https://pmd-backend-l47d.onrender.com");
+    
+    // Fallback para desarrollo/producción
+    const fallbackUrl = "https://pmd-backend-l47d.onrender.com";
+    console.warn("⚠️ [getApiUrl] Usando URL de fallback:", fallbackUrl);
+    return `${fallbackUrl}/api`;
   }
 
   return url.endsWith("/api") ? url : `${url}/api`;
@@ -21,9 +27,9 @@ if (typeof window !== "undefined") {
   (window as any).__envApiUrl = process.env.NEXT_PUBLIC_API_URL;
 }
 
-// Construir API_URL usando getApiUrl()
+// Construir API_URL usando getApiUrl() - ahora siempre devuelve una string válida
 const API_URL = getApiUrl();
-const baseURL = API_URL || "https://pmd-backend-l47d.onrender.com/api"; // Fallback si getApiUrl() retorna null
+const baseURL = API_URL; // getApiUrl() siempre devuelve una string válida
 
 const api: AxiosInstance = axios.create({
   baseURL: baseURL,
@@ -36,14 +42,8 @@ const api: AxiosInstance = axios.create({
 // Request interceptor - Add auth token and validate URLs
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Validar que API_URL esté definida antes de hacer requests
+    // getApiUrl() siempre devuelve una string válida (con fallback si es necesario)
     const apiUrl = getApiUrl();
-    if (!apiUrl) {
-      console.error("🔴 [API Request Interceptor] NEXT_PUBLIC_API_URL no está definida");
-      return Promise.reject(
-        new Error("NEXT_PUBLIC_API_URL no está configurada. Por favor, configura la variable de entorno.")
-      ) as any;
-    }
     
     const token = useAuthStore.getState().token;
     if (token && config.headers) {
@@ -91,12 +91,8 @@ api.interceptors.response.use(
       try {
         const token = useAuthStore.getState().token;
         if (token) {
+          // getApiUrl() siempre devuelve una string válida
           const apiUrl = getApiUrl();
-          if (!apiUrl) {
-            useAuthStore.getState().logout();
-            return Promise.reject(new Error("URL de refresh inválida"));
-          }
-          
           const refreshURL = `${apiUrl}/auth/refresh`;
           console.log('🔍 [Token Refresh] URL:', refreshURL);
           

@@ -20,14 +20,8 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      // Validar API_URL ANTES de hacer fetch - evitar login colgado
+      // getApiUrl() siempre devuelve una string válida
       const apiBase = getApiUrl();
-      if (!apiBase) {
-        setError("Error interno: API_URL no definida.");
-        setLoading(false);
-        return;
-      }
-
       const loginUrl = `${apiBase}/auth/login`;
       
       console.log("🔵 LOGIN → POST", loginUrl);
@@ -147,6 +141,10 @@ export function LoginForm() {
         console.error("🔴 [LOGIN ERROR] Store no se actualizó correctamente");
         throw new Error("Failed to save authentication state");
       }
+      
+      // Hidratar usuario desde el backend después del login
+      await useAuthStore.getState().hydrateUser();
+      console.log("🟢 LOGIN → hydrateUser completed");
       
       console.log("🟢 [LOGIN SUCCESS] Estado guardado correctamente, redirigiendo a /dashboard");
       
