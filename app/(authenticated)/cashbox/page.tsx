@@ -116,7 +116,6 @@ function CashboxContent() {
 
         {showForm && (
           <CashboxForm
-            initialData={editingCashbox}
             onSuccess={() => {
               setShowForm(false);
               setEditingCashbox(null);
@@ -187,12 +186,12 @@ function CashboxContent() {
                           <tr key={cashbox.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
-                                {cashbox.name || `Caja ${cashbox.id.slice(0, 8)}`}
+                                {`Caja ${cashbox.id.slice(0, 8)}`}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">
-                                {getWorkName(cashbox.workId)}
+                                {(cashbox as any).workId ? getWorkName((cashbox as any).workId) : "-"}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">

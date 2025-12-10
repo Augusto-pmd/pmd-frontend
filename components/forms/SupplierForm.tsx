@@ -26,8 +26,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
     address: "",
     contacto: "",
     contactName: "",
-    estado: "pendiente",
-    status: "pending",
+    existstatus: "provisional", // Backend enum: ["provisional", "approved", "blocked", "rejected"]
     notes: "",
     notas: "",
   });
@@ -48,8 +47,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
         address: initialData.address || initialData.direccion || "",
         contacto: initialData.contacto || initialData.contact || initialData.contactName || "",
         contactName: initialData.contactName || initialData.contact || initialData.contacto || "",
-        estado: initialData.estado || initialData.status || "pendiente",
-        status: initialData.status || initialData.estado || "pending",
+        existstatus: initialData.existstatus || initialData.status || initialData.estado || "provisional",
         notes: initialData.notes || initialData.notas || "",
         notas: initialData.notas || initialData.notes || "",
       });
@@ -100,13 +98,11 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
       telefono: formData.telefono || formData.phone || undefined,
       phone: formData.telefono || formData.phone || undefined, // Compatibilidad
       direccion: formData.direccion || formData.address || undefined,
-      address: formData.direccion || formData.address || undefined, // Compatibilidad
+      address: formData.direccion || formData.address || undefined,
       contacto: formData.contacto || formData.contactName || undefined,
-      contactName: formData.contacto || formData.contactName || undefined, // Compatibilidad
-      estado: formData.estado || formData.status || "pendiente",
-      status: formData.status || formData.estado || "pending", // Compatibilidad
+      contactName: formData.contacto || formData.contactName || undefined,
+      existstatus: formData.existstatus || "provisional", // Backend enum
       notes: formData.notes || formData.notas || undefined,
-      notas: formData.notes || formData.notas || undefined, // Compatibilidad
     };
 
     // Limpiar campos undefined del payload
@@ -199,22 +195,21 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
         />
       </FormField>
 
-      {/* Estado */}
-      <FormField label="Estado">
+      {/* Estado - Backend enum: ["provisional", "approved", "blocked", "rejected"] */}
+      <FormField label="Estado" required>
         <Select
-          value={formData.estado || formData.status}
+          value={formData.existstatus || "provisional"}
           onChange={(e) => {
-            const estado = e.target.value;
             setFormData({ 
               ...formData, 
-              estado: estado,
-              status: estado === "pendiente" ? "pending" : estado === "aprobado" ? "approved" : "rejected"
+              existstatus: e.target.value
             });
           }}
         >
-          <option value="pendiente">Pendiente</option>
-          <option value="aprobado">Aprobado</option>
-          <option value="rechazado">Rechazado</option>
+          <option value="provisional">Provisional</option>
+          <option value="approved">Aprobado</option>
+          <option value="blocked">Bloqueado</option>
+          <option value="rejected">Rechazado</option>
         </Select>
       </FormField>
 

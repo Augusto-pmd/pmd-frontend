@@ -39,7 +39,7 @@ function StaffAlertsContent() {
   }, [organizationId]);
 
   // Filtrar alertas de este empleado
-  const staffAlerts = alerts.filter((alert) => alert.personId === personId);
+  const staffAlerts = alerts.filter((alert) => (alert as any).personId === personId);
 
   const handleCreate = async (data: any) => {
     setIsSubmitting(true);

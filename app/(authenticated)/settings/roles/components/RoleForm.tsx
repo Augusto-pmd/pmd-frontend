@@ -96,12 +96,10 @@ export function RoleForm({ initialData, onSubmit, onCancel, isLoading }: RoleFor
 
   const categories = [
     { key: "works", label: "Obras" },
-    { key: "staff", label: "RRHH" },
     { key: "suppliers", label: "Proveedores" },
     { key: "documents", label: "Documentación" },
     { key: "accounting", label: "Contabilidad" },
     { key: "cashbox", label: "Cajas" },
-    { key: "clients", label: "Clientes" },
     { key: "alerts", label: "Alertas" },
     { key: "audit", label: "Auditoría" },
     { key: "settings", label: "Configuración" },

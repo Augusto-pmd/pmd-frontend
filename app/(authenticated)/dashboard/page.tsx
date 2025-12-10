@@ -9,10 +9,9 @@ import { useContracts } from "@/hooks/api/contracts";
 import { useAlertsStore } from "@/store/alertsStore";
 import { useAccountingStore } from "@/store/accountingStore";
 import { useCashboxStore } from "@/store/cashboxStore";
-import { useClientsStore } from "@/store/clientsStore";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { useSuppliers } from "@/hooks/api/suppliers";
-import { useEmployees } from "@/hooks/api/employees";
+import { useUsers } from "@/hooks/api/users";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/authStore";
@@ -20,13 +19,6 @@ import { CommandBar } from "@/components/ui/CommandBar";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { SecondaryCard } from "@/components/ui/SecondaryCard";
 import { ActivityFeed } from "@/components/ui/ActivityFeed";
-import {
-  calculateTotalStaffCost,
-  calculateOfficeCost,
-  calculateOperativeCost,
-  calculateStaffCostByDepartment,
-  getStaffStatsByDepartment,
-} from "@/lib/financial/staffCosts";
 import { 
   TrendingUp, 
   Bell, 
@@ -56,17 +48,15 @@ function DashboardContent() {
   const { alerts, isLoading: alertsLoading, fetchAlerts } = useAlertsStore();
   const { entries, isLoading: accountingLoading, fetchEntries } = useAccountingStore();
   const { cashboxes, isLoading: cashboxLoading, fetchCashboxes } = useCashboxStore();
-  const { clients, isLoading: clientsLoading, fetchClients } = useClientsStore();
   const { documents, isLoading: documentsLoading, fetchDocuments } = useDocumentsStore();
   const { suppliers, isLoading: suppliersLoading } = useSuppliers();
-  const { employees, isLoading: employeesLoading } = useEmployees();
+  const { users, isLoading: usersLoading } = useUsers();
 
   useEffect(() => {
     if (organizationId) {
       fetchAlerts();
       fetchEntries();
       fetchCashboxes();
-      fetchClients();
       fetchDocuments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,21 +80,19 @@ function DashboardContent() {
   const totalWorks = works?.length || 0;
   const activeSuppliers = suppliers?.filter((s: any) => s.isActive !== false).length || 0;
   const totalSuppliers = suppliers?.length || 0;
-  const activeEmployees = employees?.filter((e: any) => e.isActive !== false).length || 0;
-  const totalEmployees = employees?.length || 0;
-  const activeClients = clients?.filter((c: any) => c.status === "activo").length || 0;
-  const totalClients = clients?.length || 0;
+  const activeUsers = users?.filter((u: any) => u.isActive !== false).length || 0;
+  const totalUsers = users?.length || 0;
   const openCashboxes = cashboxes?.filter((c: any) => !c.isClosed).length || 0;
   const totalCashboxes = cashboxes?.length || 0;
   const pendingDocuments = documents?.filter((d: any) => d.status === "pendiente").length || 0;
   const totalDocuments = documents?.length || 0;
 
-  // Cálculos de costos laborales
-  const totalStaffCost = useMemo(() => calculateTotalStaffCost(employees || []), [employees]);
-  const officeCost = useMemo(() => calculateOfficeCost(employees || []), [employees]);
-  const operativeCost = useMemo(() => calculateOperativeCost(employees || []), [employees]);
-  const staffCostByDepartment = useMemo(() => calculateStaffCostByDepartment(employees || []), [employees]);
-  const staffStatsByDepartment = useMemo(() => getStaffStatsByDepartment(employees || []), [employees]);
+  // Cálculos de costos laborales (deshabilitado - no hay módulo de empleados)
+  const totalStaffCost = 0;
+  const officeCost = 0;
+  const operativeCost = 0;
+  const staffCostByDepartment = {};
+  const staffStatsByDepartment = {};
 
   // Calculate monthly flow (simplified)
   const monthlyFlow = accountingIngresos - accountingEgresos;
@@ -173,7 +161,7 @@ function DashboardContent() {
 
   const isLoading =
     worksLoading || expensesLoading || incomesLoading || contractsLoading || alertsLoading ||
-    accountingLoading || cashboxLoading || clientsLoading || documentsLoading || suppliersLoading || employeesLoading;
+    accountingLoading || cashboxLoading || documentsLoading || suppliersLoading || usersLoading;
 
   if (isLoading) {
     return (
@@ -258,12 +246,12 @@ function DashboardContent() {
           </div>
           <div style={{ marginTop: "4px" }}>
             <KpiCard
-              label="Costo Laboral Mensual"
-              value={formatCurrency(totalStaffCost)}
-              subtitle={`${activeEmployees} empleados`}
+              label="Usuarios Activos"
+              value={activeUsers}
+              subtitle={`de ${totalUsers} totales`}
               icon={Users}
-              sparklineData={generateSparklineData(totalStaffCost, 0.05)}
-              onClick={() => router.push("/rrhh")}
+              sparklineData={generateSparklineData(activeUsers, 0.05)}
+              onClick={() => router.push("/settings/users")}
             />
           </div>
         </div>
@@ -279,14 +267,14 @@ function DashboardContent() {
         >
           <div style={{ marginTop: "0px" }}>
             <SecondaryCard
-              title="RRHH"
-              description={`${activeEmployees} empleados activos`}
+              title="Usuarios"
+              description={`${activeUsers} usuarios activos`}
               icon={Users}
-              route="/rrhh"
-              kpi={activeEmployees}
+              route="/settings/users"
+              kpi={activeUsers}
               preview={
                 <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
-                  {totalEmployees} totales
+                  {totalUsers} totales
                 </div>
               }
             />

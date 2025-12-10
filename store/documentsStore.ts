@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
-import { useAuthStore } from "@/store/authStore";
-import { buildApiRoute } from "@/lib/safeApi";
 
 export interface Document {
   id: string;
@@ -40,28 +38,10 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   error: null,
 
   async fetchDocuments(workId) {
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      set({ error: "No hay organización seleccionada", isLoading: false });
-      console.warn("❗Error: organizationId undefined en documentsStore");
-      return;
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const baseUrl = buildApiRoute(null, "documents");
-    if (!baseUrl) {
-      console.error("🔴 [documentsStore] URL inválida");
-      set({ error: "URL de API inválida", isLoading: false });
-      return;
-    }
-
     // Construir URL con query string de forma segura
-    let url = baseUrl;
+    let url = "/documents";
     if (workId && workId.trim()) {
-      url = `${baseUrl}?workId=${encodeURIComponent(workId)}`;
+      url = `${url}?workId=${encodeURIComponent(workId)}`;
     }
 
     try {
@@ -80,15 +60,6 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en documentsStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
     // Validar campos obligatorios
     if (!payload.name || payload.name.trim() === "") {
       throw new Error("El nombre del documento es obligatorio");
@@ -98,12 +69,6 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
     if (!payload.workId || payload.workId.trim() === "") {
       throw new Error("La obra es obligatoria");
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(null, "documents");
-    if (!url) {
-      throw new Error("URL de API inválida");
     }
 
     try {
@@ -120,12 +85,12 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
         if (payload.notes) formData.append("notes", payload.notes);
 
         // Usar apiClient.post con FormData (axios maneja multipart automáticamente)
-        const response = await apiClient.post(url, formData);
+        const response = await apiClient.post("/documents", formData);
         await get().fetchDocuments(payload.workId);
         return response;
       } else {
         // Si no hay archivo, enviar JSON normal
-        const response = await apiClient.post(url, payload);
+        const response = await apiClient.post("/documents", payload);
         await get().fetchDocuments(payload.workId);
         return response;
       }
@@ -146,21 +111,6 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en documentsStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(null, "documents", id);
-    if (!url) {
-      throw new Error("URL de actualización inválida");
-    }
-
     try {
       // Si hay un archivo nuevo, usar FormData
       if (payload.file && payload.file instanceof File) {
@@ -174,10 +124,10 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
         if (payload.notes) formData.append("notes", payload.notes);
         formData.append("file", payload.file);
 
-        await apiClient.put(url, formData);
+        await apiClient.put(`/documents/${id}`, formData);
       } else {
         // Si no hay archivo, enviar JSON normal
-        await apiClient.put(url, payload);
+        await apiClient.put(`/documents/${id}`, payload);
       }
       
       // Refrescar lista (con workId si está disponible)
@@ -194,27 +144,12 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       throw new Error("ID de documento no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en documentsStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(null, "documents", id);
-    if (!url) {
-      throw new Error("URL de eliminación inválida");
-    }
-
     try {
       // Obtener workId del documento antes de eliminarlo para refrescar correctamente
       const document = get().documents.find((d) => d.id === id);
       const workId = document?.workId;
 
-      await apiClient.delete(url);
+      await apiClient.delete(`/documents/${id}`);
       await get().fetchDocuments(workId);
     } catch (error: any) {
       console.error("🔴 [documentsStore] Error al eliminar documento:", error);

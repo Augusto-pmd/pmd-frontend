@@ -24,7 +24,7 @@ function AlertsContent() {
   const { works } = useWorks();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [severityFilter, setSeverityFilter] = useState<"all" | "alta" | "media" | "baja">("all");
+  const [severityFilter, setSeverityFilter] = useState<"all" | "info" | "warning" | "critical">("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [workFilter, setWorkFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
@@ -70,9 +70,9 @@ function AlertsContent() {
     );
   }
 
-  // Obtener tipos únicos de alertas
-  const alertTypes = Array.from(
-    new Set(alerts.map((alert) => alert.type).filter(Boolean))
+  // Obtener categorías únicas de alertas
+  const alertCategories = Array.from(
+    new Set(alerts.map((alert) => alert.category).filter(Boolean))
   ) as string[];
 
   const unreadCount = alerts.filter((a) => !a.read).length;
@@ -149,13 +149,13 @@ function AlertsContent() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Severidad</label>
                 <select
                   value={severityFilter}
-                  onChange={(e) => setSeverityFilter(e.target.value as "all" | "alta" | "media" | "baja")}
+                  onChange={(e) => setSeverityFilter(e.target.value as "all" | "info" | "warning" | "critical")}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
                 >
                   <option value="all">Todas</option>
-                  <option value="alta">Alta</option>
-                  <option value="media">Media</option>
-                  <option value="baja">Baja</option>
+                  <option value="critical">Crítico</option>
+                  <option value="warning">Advertencia</option>
+                  <option value="info">Info</option>
                 </select>
               </div>
               <div>
@@ -166,11 +166,21 @@ function AlertsContent() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
                 >
                   <option value="all">Todos</option>
-                  {alertTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type === "seguro" ? "Seguro" : type === "documentacion" ? "Documentación" : type === "obra" ? "Obra" : type === "contable" ? "Contable" : "General"}
-                    </option>
-                  ))}
+                  {alertCategories.map((category) => {
+                    const labels: Record<string, string> = {
+                      work: "Obra",
+                      supplier: "Proveedor",
+                      document: "Documento",
+                      accounting: "Contable",
+                      cashbox: "Caja",
+                      general: "General",
+                    };
+                    return (
+                      <option key={category} value={category}>
+                        {labels[category] || category}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div>

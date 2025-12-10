@@ -43,6 +43,29 @@ export function useUser(id: string | null) {
   };
 }
 
+export function useUserRole(userId: string | null) {
+  const { token } = useAuthStore();
+  
+  if (!userId) {
+    console.warn("❗ [useUserRole] userId no está definido");
+    return { role: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token && userId ? `users/${userId}/role` : null,
+    () => {
+      return apiClient.get(`/users/${userId}/role`);
+    }
+  );
+
+  return {
+    role: data?.data || data,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
 export const userApi = {
   create: (data: any) => {
     return apiClient.post("/users", data);
@@ -60,6 +83,17 @@ export const userApi = {
       throw new Error("ID de usuario no está definido");
     }
     return apiClient.delete(`/users/${id}`);
+  },
+  updateRole: (id: string, roleId: string) => {
+    if (!id) {
+      console.warn("❗ [userApi.updateRole] id no está definido");
+      throw new Error("ID de usuario no está definido");
+    }
+    if (!roleId) {
+      console.warn("❗ [userApi.updateRole] roleId no está definido");
+      throw new Error("ID de rol no está definido");
+    }
+    return apiClient.patch(`/users/${id}/role`, { roleId });
   },
 };
 

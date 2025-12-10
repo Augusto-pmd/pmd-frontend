@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
-import { useAuthStore } from "@/store/authStore";
-import { buildApiRoute } from "@/lib/safeApi";
 import { logCreate, logUpdate, logDelete } from "@/lib/auditHelper";
 
 export interface UserPMD {
@@ -41,27 +39,9 @@ export const useUsersStore = create<UsersState>((set, get) => ({
   error: null,
 
   async fetchUsers() {
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en usersStore");
-      set({ error: "No hay organización seleccionada", isLoading: false });
-      return;
-    }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(null, "users");
-    if (!url) {
-      console.error("🔴 [usersStore] URL inválida");
-      set({ error: "URL de API inválida", isLoading: false });
-      return;
-    }
-
     try {
       set({ isLoading: true, error: null });
-      const data = await apiClient.get(url);
+      const data = await apiClient.get("/users");
       set({ users: data?.data || data || [], isLoading: false });
     } catch (error: any) {
       console.error("🔴 [usersStore] Error al obtener usuarios:", error);
@@ -73,15 +53,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     if (!payload) {
       console.warn("❗ [usersStore] payload no está definido");
       throw new Error("Payload no está definido");
-    }
-
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en usersStore");
-      throw new Error("No hay organización seleccionada");
     }
 
     // Validar campos obligatorios
@@ -102,29 +73,24 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     if (payload.password.length < 6) {
       throw new Error("La contraseña debe tener al menos 6 caracteres");
     }
-
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(null, "users");
-    if (!url) {
-      throw new Error("URL de API inválida");
+    if (!payload.roleId) {
+      throw new Error("El rol es obligatorio");
     }
 
     try {
-      // Construir payload exacto según DTO
+      // Construir payload exacto según DTO del backend
       const userPayload: any = {
         fullName: payload.fullName.trim(),
         email: payload.email.trim().toLowerCase(),
         password: payload.password,
-        isActive: payload.isActive !== false,
+        roleId: payload.roleId,
       };
 
-      // Agregar campos opcionales
-      if (payload.roleId) userPayload.roleId = payload.roleId;
-      if (payload.notes) userPayload.notes = payload.notes.trim();
+      // Agregar campos opcionales solo si existen en el backend
       if (payload.phone) userPayload.phone = payload.phone.trim();
       if (payload.position) userPayload.position = payload.position.trim();
 
-      const response = await apiClient.post(url, userPayload);
+      const response = await apiClient.post("/users", userPayload);
       
       // Registrar en auditoría
       await logCreate("users", "User", response?.data?.id || "unknown", `Se creó el usuario ${userPayload.fullName}`);
@@ -148,15 +114,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en usersStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
     // Obtener usuario actual para auditoría
     const currentUser = get().users.find((u) => u.id === id);
     const beforeState = currentUser ? { ...currentUser } : null;
@@ -174,26 +131,18 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("La contraseña debe tener al menos 6 caracteres");
     }
 
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(null, "users", id);
-    if (!url) {
-      throw new Error("URL de actualización inválida");
-    }
-
     try {
-      // Construir payload exacto según DTO
+      // Construir payload exacto según DTO del backend
       const userPayload: any = {};
 
       if (payload.fullName) userPayload.fullName = payload.fullName.trim();
       if (payload.email) userPayload.email = payload.email.trim().toLowerCase();
       if (payload.password) userPayload.password = payload.password;
-      if (payload.roleId !== undefined) userPayload.roleId = payload.roleId || undefined;
-      if (payload.isActive !== undefined) userPayload.isActive = payload.isActive;
-      if (payload.notes !== undefined) userPayload.notes = payload.notes?.trim() || undefined;
-      if (payload.phone !== undefined) userPayload.phone = payload.phone?.trim() || undefined;
-      if (payload.position !== undefined) userPayload.position = payload.position?.trim() || undefined;
+      if (payload.roleId !== undefined) userPayload.roleId = payload.roleId || null;
+      if (payload.phone !== undefined) userPayload.phone = payload.phone?.trim() || null;
+      if (payload.position !== undefined) userPayload.position = payload.position?.trim() || null;
 
-      const response = await apiClient.put(url, userPayload);
+      const response = await apiClient.put(`/users/${id}`, userPayload);
       
       // Registrar en auditoría
       const afterState = { ...beforeState, ...userPayload };
@@ -213,27 +162,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("ID de usuario no está definido");
     }
 
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en usersStore");
-      throw new Error("No hay organización seleccionada");
-    }
-
     // Obtener usuario para auditoría
     const user = get().users.find((u) => u.id === id);
     const userName = user?.fullName || user?.email || id;
 
-    // Regla 2: Actualizar todas las rutas a /api/${orgId}/recurso
-    const url = buildApiRoute(null, "users", id);
-    if (!url) {
-      throw new Error("URL de eliminación inválida");
-    }
-
     try {
-      await apiClient.delete(url);
+      await apiClient.delete(`/users/${id}`);
       
       // Registrar en auditoría
       await logDelete("users", "User", id, `Se eliminó el usuario ${userName}`);
@@ -251,14 +185,8 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       throw new Error("ID de usuario no está definido");
     }
 
-    // roleId puede ser vacío para quitar el rol
-    // Regla 1: Nunca llamar un endpoint sin organizationId
-    const authState = useAuthStore.getState();
-    const orgId = authState.user?.organizationId;
-    
-    if (!orgId) {
-      console.warn("❗Error: organizationId undefined en usersStore");
-      throw new Error("No hay organización seleccionada");
+    if (!roleId) {
+      throw new Error("El roleId es obligatorio");
     }
 
     // Obtener usuario actual para auditoría
@@ -266,14 +194,14 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     const beforeRoleId = user?.roleId || null;
 
     try {
-      await get().updateUser(id, { roleId: roleId || undefined });
+      await apiClient.patch(`/users/${id}/role`, { roleId });
       
       // Registrar cambio de rol específicamente en auditoría
-      const roleChange = roleId 
-        ? `Se cambió el rol del usuario ${user?.fullName || id} de ${beforeRoleId || "sin rol"} a ${roleId}`
-        : `Se removió el rol del usuario ${user?.fullName || id}`;
+      const roleChange = `Se cambió el rol del usuario ${user?.fullName || id} de ${beforeRoleId || "sin rol"} a ${roleId}`;
       
-      await logUpdate("users", "User", id, { roleId: beforeRoleId || undefined }, { roleId: roleId || undefined }, roleChange);
+      await logUpdate("users", "User", id, { roleId: beforeRoleId || null }, { roleId }, roleChange);
+      
+      await get().fetchUsers();
     } catch (error: any) {
       console.error("🔴 [usersStore] Error al cambiar rol:", error);
       throw error;

@@ -1,0 +1,65 @@
+import useSWR from "swr";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
+
+export function useRubrics() {
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token ? "rubrics" : null,
+    () => {
+      return apiClient.get("/rubrics");
+    }
+  );
+
+  return {
+    rubrics: data?.data || data || [],
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
+export function useRubric(id: string | null) {
+  const { token } = useAuthStore();
+  
+  if (!id) {
+    console.warn("❗ [useRubric] id no está definido");
+    return { rubric: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token && id ? `rubrics/${id}` : null,
+    () => {
+      return apiClient.get(`/rubrics/${id}`);
+    }
+  );
+
+  return {
+    rubric: data?.data || data,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
+export const rubricApi = {
+  create: (data: any) => {
+    return apiClient.post("/rubrics", data);
+  },
+  update: (id: string, data: any) => {
+    if (!id) {
+      console.warn("❗ [rubricApi.update] id no está definido");
+      throw new Error("ID de rubro no está definido");
+    }
+    return apiClient.put(`/rubrics/${id}`, data);
+  },
+  delete: (id: string) => {
+    if (!id) {
+      console.warn("❗ [rubricApi.delete] id no está definido");
+      throw new Error("ID de rubro no está definido");
+    }
+    return apiClient.delete(`/rubrics/${id}`);
+  },
+};
+

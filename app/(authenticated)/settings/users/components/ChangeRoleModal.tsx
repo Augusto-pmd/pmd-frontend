@@ -31,8 +31,14 @@ export function ChangeRoleModal({ isOpen, onClose, user, onSuccess }: ChangeRole
   const handleSubmit = async () => {
     if (!user) return;
 
+    if (!selectedRoleId) {
+      toast.error("Debes seleccionar un rol");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // Backend expects: PATCH /api/users/:id/role with { roleId: UUID }
       await changeUserRole(user.id, selectedRoleId);
       toast.success("Rol actualizado correctamente");
       onSuccess?.();
@@ -47,13 +53,10 @@ export function ChangeRoleModal({ isOpen, onClose, user, onSuccess }: ChangeRole
 
   if (!user) return null;
 
-  const roleOptions = [
-    { value: "", label: "Sin rol asignado" },
-    ...roles.map((role: any) => {
-      const roleName = role.name || role.nombre || role.id;
-      return { value: role.id, label: roleName };
-    }),
-  ];
+  const roleOptions = roles.map((role: any) => {
+    const roleName = role.name || role.nombre || role.id;
+    return { value: role.id, label: roleName };
+  });
 
   return (
     <Modal

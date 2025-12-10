@@ -39,7 +39,7 @@ function DocumentAlertsContent() {
   }, [organizationId]);
 
   // Filtrar alertas de este documento
-  const documentAlerts = alerts.filter((alert) => alert.documentId === documentId);
+  const documentAlerts = alerts.filter((alert) => (alert as any).documentId === documentId);
 
   const handleCreate = async (data: any) => {
     setIsSubmitting(true);

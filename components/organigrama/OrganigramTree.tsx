@@ -55,7 +55,7 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
   };
 
   const getEmployeeAlerts = (employeeId: string) => {
-    return alerts.filter((alert) => alert.personId === employeeId);
+    return alerts.filter((alert) => (alert as any).personId === employeeId);
   };
 
   const toggleNode = (nodeId: string) => {

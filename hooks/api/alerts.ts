@@ -45,6 +45,25 @@ export function useAlert(id: string | null) {
   };
 }
 
+export function useUnreadAlerts() {
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token ? "alerts/unread" : null,
+    () => {
+      return apiClient.get("/alerts/unread");
+    }
+  );
+
+  return {
+    unreadAlerts: data?.data || data || [],
+    unreadCount: Array.isArray(data?.data || data) ? (data?.data || data).length : 0,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
 export const alertApi = {
   create: (data: any) => {
     return apiClient.post("/alerts", data);

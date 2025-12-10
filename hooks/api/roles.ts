@@ -43,6 +43,29 @@ export function useRole(id: string | null) {
   };
 }
 
+export function useRolePermissions(roleId: string | null) {
+  const { token } = useAuthStore();
+  
+  if (!roleId) {
+    console.warn("❗ [useRolePermissions] roleId no está definido");
+    return { permissions: [], error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token && roleId ? `roles/${roleId}/permissions` : null,
+    () => {
+      return apiClient.get(`/roles/${roleId}/permissions`);
+    }
+  );
+
+  return {
+    permissions: data?.data || data || [],
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
 export const roleApi = {
   create: (data: any) => {
     return apiClient.post("/roles", data);
@@ -60,6 +83,13 @@ export const roleApi = {
       throw new Error("ID de rol no está definido");
     }
     return apiClient.delete(`/roles/${id}`);
+  },
+  updatePermissions: (id: string, permissions: string[]) => {
+    if (!id) {
+      console.warn("❗ [roleApi.updatePermissions] id no está definido");
+      throw new Error("ID de rol no está definido");
+    }
+    return apiClient.patch(`/roles/${id}/permissions`, { permissions });
   },
 };
 

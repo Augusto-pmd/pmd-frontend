@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useEmployees } from "@/hooks/api/employees";
+import { useUsers } from "@/hooks/api/users";
 import { useAlertsStore } from "@/store/alertsStore";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { OrganigramGrid } from "@/components/organigrama/OrganigramGrid";
@@ -38,7 +38,7 @@ function OrganigramaContent() {
   const router = useRouter();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
-  const { employees, isLoading, error } = useEmployees();
+  const { users, isLoading, error } = useUsers();
   const { alerts, fetchAlerts } = useAlertsStore();
   const { works } = useWorks();
   const { roles } = useRoles();
@@ -102,43 +102,12 @@ function OrganigramaContent() {
     );
   }
 
-  // Filtrar empleados
-  const filteredEmployees = (employees || []).filter((employee: Employee) => {
-    const name = (employee.fullName || employee.name || employee.nombre || "").toLowerCase();
-    const role = employee.role || "";
-    const subrole = employee.subrole || "";
-    const isActive = employee.isActive !== false;
-    const workId = employee.workId || "";
-    const employeeAlerts = alerts.filter((alert) => alert.personId === employee.id);
+  // Filtrar usuarios (nota: organigrama requiere módulo de empleados que no existe)
+  const filteredEmployees: Employee[] = [];
 
-    // Búsqueda
-    if (searchQuery && !name.includes(searchQuery.toLowerCase())) return false;
-
-    // Filtro de rol
-    if (roleFilter !== "all" && role !== roleFilter) return false;
-
-    // Filtro de subrol
-    if (subroleFilter !== "all" && subrole !== subroleFilter) return false;
-
-    // Filtro de obra
-    if (workFilter !== "all" && workId !== workFilter) return false;
-
-    // Filtro de estado
-    if (statusFilter === "active" && !isActive) return false;
-    if (statusFilter === "inactive" && isActive) return false;
-
-    // Filtro de alertas
-    if (alertsFilter === "with" && employeeAlerts.length === 0) return false;
-    if (alertsFilter === "without" && employeeAlerts.length > 0) return false;
-
-    return true;
-  });
-
-  // Obtener valores únicos para filtros desde datos reales
-  const uniqueRoles = Array.from(new Set((employees || []).map((e: Employee) => e.role).filter(Boolean))) as string[];
-  const subroles = Array.from(
-    new Set((employees || []).map((e: Employee) => e.subrole).filter(Boolean))
-  ) as string[];
+  // Obtener valores únicos para filtros (vacío porque no hay empleados)
+  const uniqueRoles: string[] = [];
+  const subroles: string[] = [];
   
   // Obtener nombres de roles desde rolesStore si están disponibles
   const getRoleName = (roleId?: string) => {

@@ -24,10 +24,8 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     fullName: "",
     email: "",
     roleId: "",
-    isActive: true,
     password: "",
     confirmPassword: "",
-    notes: "",
   });
 
   useEffect(() => {
@@ -36,10 +34,8 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         fullName: user.fullName || "",
         email: user.email || "",
         roleId: user.roleId || "",
-        isActive: user.isActive !== false,
         password: "",
         confirmPassword: "",
-        notes: user.notes || "",
       });
     }
   }, [user]);
@@ -66,6 +62,12 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         toast.error("El email no es válido");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.roleId) {
+        toast.error("El rol es obligatorio");
         setIsSubmitting(false);
         return;
       }
@@ -106,15 +108,14 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         }
       }
 
+      // Construir payload exacto según backend DTO
       const payload: any = {
         fullName: formData.fullName.trim(),
-        email: formData.email.trim(),
-        roleId: formData.roleId || undefined,
-        isActive: formData.isActive,
-        notes: formData.notes.trim() || undefined,
+        email: formData.email.trim().toLowerCase(),
+        roleId: formData.roleId,
       };
 
-      // Solo incluir contraseña si se proporcionó
+      // Solo incluir contraseña si se proporcionó (creación o actualización con nueva contraseña)
       if (formData.password) {
         payload.password = formData.password;
       }
@@ -136,18 +137,10 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     }
   };
 
-  const roleOptions = [
-    { value: "", label: "Sin rol asignado" },
-    ...roles.map((role: any) => {
-      const roleName = role.name || role.nombre || role.id;
-      return { value: role.id, label: roleName };
-    }),
-  ];
-
-  const statusOptions = [
-    { value: "active", label: "Activo" },
-    { value: "inactive", label: "Inactivo" },
-  ];
+  const roleOptions = roles.map((role: any) => {
+    const roleName = role.name || role.nombre || role.id;
+    return { value: role.id, label: roleName };
+  });
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
@@ -171,6 +164,7 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
 
       <SelectField
         label="Rol"
+        required
         value={formData.roleId}
         onChange={(e) => setFormData((prev: any) => ({ ...prev, roleId: e.target.value }))}
         options={roleOptions}
@@ -219,21 +213,6 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           )}
         </>
       )}
-
-      <SelectField
-        label="Estado"
-        value={formData.isActive ? "active" : "inactive"}
-        onChange={(e) => setFormData((prev: any) => ({ ...prev, isActive: e.target.value === "active" }))}
-        options={statusOptions}
-      />
-
-      <TextareaField
-        label="Notas Internas (opcional)"
-        value={formData.notes}
-        onChange={(e) => setFormData((prev: any) => ({ ...prev, notes: e.target.value }))}
-        rows={3}
-        placeholder="Notas internas sobre el usuario..."
-      />
 
       <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-sm)" }}>
         <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>

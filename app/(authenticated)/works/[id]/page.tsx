@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useWork, workApi } from "@/hooks/api/works";
-import { useEmployees } from "@/hooks/api/employees";
+import { useUsers } from "@/hooks/api/users";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
@@ -22,7 +22,7 @@ function WorkDetailContent() {
   const router = useRouter();
   const id = params.id as string;
   const { work, isLoading, error, mutate } = useWork(id);
-  const { employees } = useEmployees();
+  const { users } = useUsers();
   const { suppliers } = useSuppliers();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -167,7 +167,7 @@ function WorkDetailContent() {
   };
 
   // Obtener personal asignado a esta obra
-  const assignedEmployees = employees?.filter((emp: any) => {
+  const assignedEmployees = users?.filter((emp: any) => {
     const assignments = emp.assignments || [];
     return assignments.some((assignment: any) => 
       assignment.workId === id || assignment.obraId === id

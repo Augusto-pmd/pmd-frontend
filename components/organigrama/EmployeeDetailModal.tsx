@@ -63,10 +63,10 @@ export function EmployeeDetailModal({
   const isActive = employee.isActive !== false;
   const workName = getWorkName(employee.workId);
   const workId = employee.workId;
-  const employeeAlerts = alerts.filter((alert) => alert.personId === employee.id);
+  const employeeAlerts = alerts.filter((alert) => (alert as any).personId === employee.id);
   const unreadAlerts = employeeAlerts.filter((a) => !a.read).length;
-  const highSeverityAlerts = employeeAlerts.filter((a) => a.severity === "alta").length;
-  const mediumSeverityAlerts = employeeAlerts.filter((a) => a.severity === "media").length;
+  const criticalAlerts = employeeAlerts.filter((a) => a.severity === "critical").length;
+  const warningAlerts = employeeAlerts.filter((a) => a.severity === "warning").length;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Detalle del Personal" size="lg">
@@ -140,24 +140,24 @@ export function EmployeeDetailModal({
               {employeeAlerts.slice(0, 3).map((alert) => (
                 <div
                   key={alert.id}
-                  className={`p-2 rounded border ${
-                    alert.severity === "alta"
+                    className={`p-2 rounded border ${
+                    alert.severity === "critical"
                       ? "border-red-200 bg-red-50"
-                      : alert.severity === "media"
+                      : alert.severity === "warning"
                       ? "border-yellow-200 bg-yellow-50"
                       : "border-blue-200 bg-blue-50"
                   }`}
                   style={{
                     borderColor:
-                      alert.severity === "alta"
+                      alert.severity === "critical"
                         ? "rgba(255,59,48,0.3)"
-                        : alert.severity === "media"
+                        : alert.severity === "warning"
                         ? "rgba(255,193,7,0.3)"
                         : "rgba(0,122,255,0.3)",
                     backgroundColor:
-                      alert.severity === "alta"
+                      alert.severity === "critical"
                         ? "rgba(255,59,48,0.1)"
-                        : alert.severity === "media"
+                        : alert.severity === "warning"
                         ? "rgba(255,193,7,0.1)"
                         : "rgba(0,122,255,0.1)",
                   }}
@@ -165,16 +165,18 @@ export function EmployeeDetailModal({
                   <div className="flex items-start gap-2">
                     <AlertTriangle
                       className={`h-4 w-4 mt-0.5 ${
-                        alert.severity === "alta"
+                        alert.severity === "critical"
                           ? "text-red-600"
-                          : alert.severity === "media"
+                          : alert.severity === "warning"
                           ? "text-yellow-600"
                           : "text-blue-600"
                       }`}
                     />
                     <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-900">{alert.title || alert.message}</p>
-                      <p className="text-xs text-gray-600 mt-0.5">{alert.message}</p>
+                      <p className="text-xs font-medium text-gray-900">{alert.title || alert.description || "Sin título"}</p>
+                      {alert.description && (
+                        <p className="text-xs text-gray-600 mt-0.5">{alert.description}</p>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -27,10 +27,22 @@ const ALERT_TYPES = [
   { value: "general", label: "General" },
 ];
 
+// Backend severity enum: "info" | "warning" | "critical"
 const SEVERITY_OPTIONS = [
-  { value: "alta", label: "Alta" },
-  { value: "media", label: "Media" },
-  { value: "baja", label: "Baja" },
+  { value: "info", label: "Info" },
+  { value: "warning", label: "Advertencia" },
+  { value: "critical", label: "Crítico" },
+];
+
+// Backend category enum - must match backend AlertCategory enum exactly
+// Common categories (adjust based on actual backend enum):
+const CATEGORY_OPTIONS = [
+  { value: "work", label: "Obra" },
+  { value: "supplier", label: "Proveedor" },
+  { value: "document", label: "Documento" },
+  { value: "accounting", label: "Contable" },
+  { value: "cashbox", label: "Caja" },
+  { value: "general", label: "General" },
 ];
 
 export function AlertForm({
@@ -47,54 +59,44 @@ export function AlertForm({
   const { documents } = useDocuments();
   const { suppliers } = useSuppliers();
 
-  const [message, setMessage] = useState("");
-  const [type, setType] = useState<"seguro" | "documentacion" | "obra" | "contable" | "general" | "rrhh">("general");
-  const [severity, setSeverity] = useState<"alta" | "media" | "baja">("media");
-  const [workId, setWorkId] = useState(defaultWorkId || "");
-  const [personId, setPersonId] = useState(defaultPersonId || "");
-  const [documentId, setDocumentId] = useState(defaultDocumentId || "");
-  const [supplierId, setSupplierId] = useState("");
   const [title, setTitle] = useState("");
-  const [notes, setNotes] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("general");
+  const [severity, setSeverity] = useState<"info" | "warning" | "critical">("info");
+  const [workId, setWorkId] = useState(defaultWorkId || "");
+  const [supplierId, setSupplierId] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initialData) {
-      setMessage(initialData.message || "");
-      setType(initialData.type || "general");
-      setSeverity(initialData.severity || "media");
-      setWorkId(initialData.workId || defaultWorkId || "");
-      setPersonId(initialData.personId || defaultPersonId || "");
-      setDocumentId(initialData.documentId || defaultDocumentId || "");
-      setSupplierId(initialData.supplierId || "");
       setTitle(initialData.title || "");
-      setNotes(initialData.notes || "");
-      setDate(initialData.date ? initialData.date.split("T")[0] : new Date().toISOString().split("T")[0]);
+      setDescription(initialData.description || "");
+      setCategory(initialData.category || "general");
+      setSeverity(initialData.severity || "info");
+      setWorkId(initialData.workId || defaultWorkId || "");
+      setSupplierId(initialData.supplierId || "");
     } else {
       if (defaultWorkId) setWorkId(defaultWorkId);
-      if (defaultPersonId) setPersonId(defaultPersonId);
-      if (defaultDocumentId) setDocumentId(defaultDocumentId);
     }
-  }, [initialData, defaultWorkId, defaultPersonId, defaultDocumentId]);
+  }, [initialData, defaultWorkId]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!message || message.trim() === "") {
-      newErrors.message = "El mensaje es obligatorio";
+    if (!title || title.trim() === "") {
+      newErrors.title = "El título es obligatorio";
     }
 
-    if (!type || type.trim() === "") {
-      newErrors.type = "El tipo es obligatorio";
+    if (title.length > 255) {
+      newErrors.title = "El título no puede exceder 255 caracteres";
     }
 
-    if (!severity || !["alta", "media", "baja"].includes(severity)) {
+    if (!category || category.trim() === "") {
+      newErrors.category = "La categoría es obligatoria";
+    }
+
+    if (!severity || !["info", "warning", "critical"].includes(severity)) {
       newErrors.severity = "La severidad es obligatoria";
-    }
-
-    if (!date || date.trim() === "") {
-      newErrors.date = "La fecha es obligatoria";
     }
 
     setErrors(newErrors);
@@ -108,22 +110,17 @@ export function AlertForm({
       return;
     }
 
-    // Construir payload exacto según DTO
+    // Construir payload exacto según backend DTO
     const payload: any = {
-      message: message.trim(),
-      type,
-      severity,
-      date,
-      read: false,
+      title: title.trim(),
+      category: category,
+      severity: severity,
     };
 
     // Agregar campos opcionales
-    if (title.trim()) payload.title = title.trim();
+    if (description.trim()) payload.description = description.trim();
     if (workId) payload.workId = workId;
-    if (personId) payload.personId = personId;
-    if (documentId) payload.documentId = documentId;
     if (supplierId) payload.supplierId = supplierId;
-    if (notes.trim()) payload.notes = notes.trim();
 
     await onSubmit(payload);
   };
@@ -163,30 +160,36 @@ export function AlertForm({
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
       <InputField
-        label="Título (opcional)"
+        label="Título"
         type="text"
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Título breve de la alerta"
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value.length <= 255) {
+            setTitle(value);
+          }
+        }}
+        error={errors.title}
+        required
+        maxLength={255}
+        placeholder="Título de la alerta (máximo 255 caracteres)"
       />
 
       <TextareaField
-        label="Mensaje"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        error={errors.message}
-        required
+        label="Descripción (opcional)"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
         rows={3}
         placeholder="Descripción detallada de la alerta"
       />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
         <SelectField
-          label="Tipo"
-          value={type}
-          onChange={(e) => setType(e.target.value as typeof type)}
-          options={ALERT_TYPES}
-          error={errors.type}
+          label="Categoría"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          options={CATEGORY_OPTIONS}
+          error={errors.category}
           required
         />
         <SelectField
@@ -199,15 +202,6 @@ export function AlertForm({
         />
       </div>
 
-      <InputField
-        label="Fecha"
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        error={errors.date}
-        required
-      />
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
         <SelectField
           label="Obra (opcional)"
@@ -217,37 +211,12 @@ export function AlertForm({
           disabled={!!defaultWorkId}
         />
         <SelectField
-          label="Empleado (opcional)"
-          value={personId}
-          onChange={(e) => setPersonId(e.target.value)}
-          options={userOptions}
-          disabled={!!defaultPersonId}
-        />
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
-        <SelectField
-          label="Documento (opcional)"
-          value={documentId}
-          onChange={(e) => setDocumentId(e.target.value)}
-          options={documentOptions}
-          disabled={!!defaultDocumentId}
-        />
-        <SelectField
           label="Proveedor (opcional)"
           value={supplierId}
           onChange={(e) => setSupplierId(e.target.value)}
           options={supplierOptions}
         />
       </div>
-
-      <TextareaField
-        label="Notas internas (opcional)"
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        rows={2}
-        placeholder="Notas adicionales sobre la alerta"
-      />
 
       <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-md)" }}>
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>

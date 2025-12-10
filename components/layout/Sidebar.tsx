@@ -9,6 +9,7 @@ import { useCashboxStore } from "@/store/cashboxStore";
 import { useCan } from "@/lib/acl";
 import { useEffect, useMemo, memo } from "react";
 import LogoPMD from "@/components/LogoPMD";
+import styles from "./Sidebar.module.css";
 import {
   LayoutDashboard,
   Building2,
@@ -42,11 +43,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
   // Gestión
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "always", section: "Gestión" },
   { label: "Obras", href: "/works", icon: Building2, permission: "works.read", section: "Gestión" },
-  { label: "Clientes", href: "/clients", icon: Users, permission: "clients.read", section: "Gestión" },
   
   // Operaciones
   { label: "Proveedores", href: "/suppliers", icon: Truck, permission: "suppliers.read", section: "Operaciones" },
-  { label: "RRHH", href: "/rrhh", icon: Users, permission: "staff.read", section: "Operaciones" },
   { label: "Cajas", href: "/cashbox", icon: Wallet, permission: "cashbox.read", section: "Operaciones" },
   { label: "Documentación", href: "/documents", icon: FileText, permission: "documents.read", section: "Operaciones" },
   
@@ -72,10 +71,8 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   // ACL hooks - deben ejecutarse siempre antes de cualquier return
   const canWorks = useCan("works.read");
   const canSuppliers = useCan("suppliers.read");
-  const canStaff = useCan("staff.read");
   const canAccounting = useCan("accounting.read");
   const canCashbox = useCan("cashbox.read");
-  const canClients = useCan("clients.read");
   const canDocuments = useCan("documents.read");
   const canAlerts = useCan("alerts.read");
   const canAudit = useCan("audit.read");
@@ -106,14 +103,10 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           return canWorks;
         case "suppliers.read":
           return canSuppliers;
-        case "staff.read":
-          return canStaff;
         case "accounting.read":
           return canAccounting;
         case "cashbox.read":
           return canCashbox;
-        case "clients.read":
-          return canClients;
         case "documents.read":
           return canDocuments;
         case "alerts.read":
@@ -130,7 +123,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           return true;
       }
     });
-  }, [canWorks, canSuppliers, canStaff, canAccounting, canCashbox, canClients, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
+  }, [canWorks, canSuppliers, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
   // Memoizar agrupación por sección - antes del early return
   const itemsBySection = useMemo(() => {
@@ -173,10 +166,10 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
   const getBadgeVariant = (href: string): "error" | "warning" | "info" => {
     if (href === "/alerts") {
-      const highAlerts = alerts.filter((a) => !a.read && a.severity === "alta").length;
-      if (highAlerts > 0) return "error";
-      const mediumAlerts = alerts.filter((a) => !a.read && a.severity === "media").length;
-      if (mediumAlerts > 0) return "warning";
+      const criticalAlerts = alerts.filter((a) => !a.read && a.severity === "critical").length;
+      if (criticalAlerts > 0) return "error";
+      const warningAlerts = alerts.filter((a) => !a.read && a.severity === "warning").length;
+      if (warningAlerts > 0) return "warning";
       return "info";
     }
     if (href === "/documents") return "warning";
@@ -195,19 +188,19 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     <>
       {/* Sidebar */}
       <aside
-        className={
+        className={`${styles.sidebarWrapper} ${
           mobileOpen
-            ? "fixed top-0 left-0 z-[9998] w-64 h-screen bg-[#162F7F]/90 backdrop-blur-2xl border-r border-white/20 translate-x-0 transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] md:static md:translate-x-0 touch-pan-y touch-manipulation overflow-y-auto scrollbar-none text-white touch-none select-none"
-            : "fixed top-0 left-0 z-[9998] w-64 h-screen bg-[#162F7F]/90 backdrop-blur-2xl border-r border-white/20 -translate-x-full transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] md:static md:translate-x-0 touch-pan-y touch-manipulation overflow-y-auto scrollbar-none text-white touch-none select-none"
-        }
+            ? "fixed top-0 left-0 z-[9998] w-64 bg-[#162F7F]/90 backdrop-blur-2xl border-r border-white/20 translate-x-0 transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] md:static md:translate-x-0 touch-pan-y touch-manipulation scrollbar-none text-white touch-none select-none"
+            : "fixed top-0 left-0 z-[9998] w-64 bg-[#162F7F]/90 backdrop-blur-2xl border-r border-white/20 -translate-x-full transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] md:static md:translate-x-0 touch-pan-y touch-manipulation scrollbar-none text-white touch-none select-none"
+        }`}
       >
         {/* Logo Section */}
-        <div className="flex justify-center items-center py-6 border-b border-white/10">
+        <div className={`${styles.logoSection} flex justify-center items-center py-6 border-b border-white/10`}>
           <LogoPMD size={56} className="opacity-95 drop-shadow-md" />
         </div>
 
-        {/* Navigation */}
-        <nav className="flex flex-col gap-1 px-3 py-4">
+        {/* Navigation - Scrollable */}
+        <nav className={`${styles.menuScroll} flex flex-col gap-1 px-3 py-4 scrollbar-none`}>
           {Object.entries(itemsBySection).map(([section, items]) => (
             <div key={section} className="mb-2">
               {/* Section Title */}
@@ -277,13 +270,13 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           ))}
         </nav>
 
-        {/* User Section */}
+        {/* User Section - Anchored at Bottom */}
         {user && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-[#162F7F]/50 backdrop-blur-sm">
+          <div className={styles.userBlock}>
             <p className="text-sm font-semibold text-white truncate">
               {user.fullName || user.email}
             </p>
-            <p className="text-xs text-white/70 mt-0.5 truncate">
+            <p className="text-xs text-white/70 truncate">
               {typeof user.role === "string"
                 ? user.role
                 : user.role?.name || user.roleId || "Sin rol"}

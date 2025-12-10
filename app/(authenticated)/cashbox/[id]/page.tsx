@@ -245,7 +245,7 @@ function CashboxDetailContent() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-md)" }}>
             <div>
               <h1 style={{ font: "var(--font-title)", color: "var(--apple-text-primary)", marginBottom: "var(--space-xs)" }}>
-                {cashbox.name || `Caja ${cashbox.id.slice(0, 8)}`}
+                {`Caja ${cashbox.id.slice(0, 8)}`}
               </h1>
               <p style={{ font: "var(--font-body)", color: "var(--apple-text-secondary)" }}>
                 Gestión de movimientos de caja

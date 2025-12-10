@@ -57,7 +57,7 @@ export function OrganigramGrid({
   };
 
   const getEmployeeAlerts = (employeeId: string) => {
-    return alerts.filter((alert) => alert.personId === employeeId);
+    return alerts.filter((alert) => (alert as any).personId === employeeId);
   };
 
   const getInitials = (name: string) => {
@@ -89,8 +89,8 @@ export function OrganigramGrid({
         const employeeAlerts = getEmployeeAlerts(employee.id);
         const hasAlerts = employeeAlerts.length > 0;
         const unreadAlerts = employeeAlerts.filter((a) => !a.read).length;
-        const highSeverityAlerts = employeeAlerts.filter((a) => a.severity === "alta").length;
-        const mediumSeverityAlerts = employeeAlerts.filter((a) => a.severity === "media").length;
+        const criticalAlerts = employeeAlerts.filter((a) => a.severity === "critical").length;
+        const warningAlerts = employeeAlerts.filter((a) => a.severity === "warning").length;
 
         return (
           <Card
@@ -134,10 +134,10 @@ export function OrganigramGrid({
                   {hasAlerts && (
                     <Badge
                       variant={
-                        highSeverityAlerts > 0 
-                          ? "error" 
-                          : mediumSeverityAlerts > 0 
-                          ? "warning" 
+                        criticalAlerts > 0 
+                          ? "error"
+                          : warningAlerts > 0
+                          ? "warning"
                           : "info"
                       }
                       className="text-xs flex items-center gap-1"

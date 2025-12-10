@@ -56,25 +56,31 @@ function AlertDetailContent() {
     return user.fullName || user.name || user.nombre || userId;
   };
 
-  const getSeverityVariant = (severity: "alta" | "media" | "baja") => {
-    if (severity === "alta") return "error";
-    if (severity === "media") return "warning";
+  const getSeverityVariant = (severity: "info" | "warning" | "critical") => {
+    if (severity === "critical") return "error";
+    if (severity === "warning") return "warning";
     return "info";
   };
 
-  const getSeverityLabel = (severity: "alta" | "media" | "baja") => {
-    return severity.charAt(0).toUpperCase() + severity.slice(1);
+  const getSeverityLabel = (severity: "info" | "warning" | "critical") => {
+    const labels: Record<string, string> = {
+      critical: "Crítico",
+      warning: "Advertencia",
+      info: "Info",
+    };
+    return labels[severity] || severity;
   };
 
-  const getTypeLabel = (type: string) => {
+  const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
-      seguro: "Seguro",
-      documentacion: "Documentación",
-      obra: "Obra",
-      contable: "Contable",
+      work: "Obra",
+      supplier: "Proveedor",
+      document: "Documento",
+      accounting: "Contable",
+      cashbox: "Caja",
       general: "General",
     };
-    return labels[type] || type;
+    return labels[category] || category;
   };
 
   const handleMarkAsRead = async () => {
@@ -151,7 +157,7 @@ function AlertDetailContent() {
                   <Bell className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500">Mensaje</p>
-                    <p className="text-base font-medium text-gray-900">{alert.message}</p>
+                    <p className="text-base font-medium text-gray-900">{alert.description || alert.title || "Sin descripción"}</p>
                   </div>
                 </div>
 
@@ -159,7 +165,7 @@ function AlertDetailContent() {
                   <Tag className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500">Tipo</p>
-                    <p className="text-base font-medium text-gray-900">{getTypeLabel(alert.type)}</p>
+                    <p className="text-base font-medium text-gray-900">{getCategoryLabel(alert.category || "general")}</p>
                   </div>
                 </div>
 
@@ -196,7 +202,7 @@ function AlertDetailContent() {
                   <div>
                     <p className="text-sm text-gray-500">Obra asociada</p>
                     <p className="text-base font-medium text-gray-900">
-                      {alert.workId ? getWorkName(alert.workId) : "-"}
+                      {(alert as any).workId ? getWorkName((alert as any).workId) : "-"}
                     </p>
                   </div>
                 </div>
@@ -206,7 +212,7 @@ function AlertDetailContent() {
                   <div>
                     <p className="text-sm text-gray-500">Personal involucrado</p>
                     <p className="text-base font-medium text-gray-900">
-                      {alert.personId ? getUserName(alert.personId) : "-"}
+                      {(alert as any).personId ? getUserName((alert as any).personId) : "-"}
                     </p>
                   </div>
                 </div>
@@ -216,7 +222,7 @@ function AlertDetailContent() {
                   <div>
                     <p className="text-sm text-gray-500">Fecha</p>
                     <p className="text-base font-medium text-gray-900">
-                      {new Date(alert.date).toLocaleDateString("es-AR", {
+                      {new Date((alert as any).date || alert.createdAt || new Date()).toLocaleDateString("es-AR", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -239,7 +245,7 @@ function AlertDetailContent() {
             <p className="text-gray-700">
               ¿Estás seguro de que deseas eliminar esta alerta?
             </p>
-            <p className="text-sm text-gray-500 font-medium">{alert.message}</p>
+            <p className="text-sm text-gray-500 font-medium">{alert.description || alert.title || "Sin descripción"}</p>
             <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
             <div className="flex gap-3 justify-end pt-4">
               <Button

@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { SelectField } from "@/components/ui/FormField";
 import { useWorks } from "@/hooks/api/works";
-import { employeeApi } from "@/hooks/api/employees";
+// NOTE: employeeApi removed - backend does not have /api/employees endpoint
 import { useToast } from "@/components/ui/Toast";
 
 interface Employee {
@@ -42,9 +42,8 @@ export function AssignWorkModal({
 
     setIsSubmitting(true);
     try {
-      await employeeApi.update(employee.id, { workId: selectedWorkId || null });
-      toast.success("Obra asignada correctamente");
-      onSuccess?.();
+      // NOTE: This functionality is not available - backend does not have /api/employees endpoint
+      toast.error("Esta funcionalidad no está disponible. El módulo de RRHH no existe en el backend.");
       onClose();
     } catch (err: any) {
       console.error("Error al asignar obra:", err);

@@ -211,7 +211,7 @@ export const useAuthStore = create<AuthState>()(
         const API_URL = `${envApiUrl}/api`;
         
         try {
-          const response = await fetch(`${API_URL}/auth/profile`, {
+          const response = await fetch(`${API_URL}/auth/me`, {
             method: "GET",
             headers: {
               "Authorization": `Bearer ${token}`,

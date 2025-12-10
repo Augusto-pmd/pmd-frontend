@@ -1,22 +1,17 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
-import { useAuthStore } from "@/store/authStore";
-import { buildApiRoute } from "@/lib/safeApi";
 
 export interface Alert {
   id: string;
-  type: "seguro" | "documentacion" | "obra" | "contable" | "general" | "rrhh";
-  personId?: string;
+  category: string; // Debe coincidir con enum del backend
   workId?: string;
-  documentId?: string;
   supplierId?: string;
-  message: string;
-  severity: "alta" | "media" | "baja";
-  date: string;
-  title?: string;
+  title: string; // Máximo 255 caracteres
+  description?: string;
+  severity: "info" | "warning" | "critical";
   read: boolean;
   createdAt?: string;
-  notes?: string;
+  updatedAt?: string;
 }
 
 interface AlertsState {
@@ -38,17 +33,9 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   error: null,
 
   async fetchAlerts() {
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "alerts");
-    if (!url) {
-      console.error("🔴 [alertsStore] URL inválida");
-      set({ error: "URL de API inválida", isLoading: false });
-      return;
-    }
-
     try {
       set({ isLoading: true, error: null });
-      const data = await apiClient.get(url);
+      const data = await apiClient.get("/alerts");
       set({ alerts: data?.data || data || [], isLoading: false });
     } catch (error: any) {
       console.error("🔴 [alertsStore] Error al obtener alertas:", error);
@@ -62,14 +49,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("ID de alerta no está definido");
     }
 
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "alerts", id, "read");
-    if (!url) {
-      throw new Error("URL de markAsRead inválida");
-    }
-
     try {
-      await apiClient.patch(url, {});
+      await apiClient.patch(`/alerts/${id}/read`, {});
       await get().fetchAlerts();
     } catch (error: any) {
       console.error("🔴 [alertsStore] Error al marcar alerta como leída:", error);
@@ -83,45 +64,34 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Validar campos obligatorios
-    if (!payload.message || payload.message.trim() === "") {
-      throw new Error("El mensaje de la alerta es obligatorio");
+    // Validar campos obligatorios según backend DTO
+    if (!payload.title || payload.title.trim() === "") {
+      throw new Error("El título es obligatorio");
     }
-    if (!payload.type || payload.type.trim() === "") {
-      throw new Error("El tipo de alerta es obligatorio");
+    if (payload.title.length > 255) {
+      throw new Error("El título no puede exceder 255 caracteres");
     }
-    if (!payload.severity || !["alta", "media", "baja"].includes(payload.severity)) {
-      throw new Error("La severidad debe ser: alta, media o baja");
+    if (!payload.severity || !["info", "warning", "critical"].includes(payload.severity)) {
+      throw new Error("La severidad debe ser: info, warning o critical");
     }
-    if (!payload.date || payload.date.trim() === "") {
-      throw new Error("La fecha es obligatoria");
-    }
-
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "alerts");
-    if (!url) {
-      throw new Error("URL de API inválida");
+    if (!payload.category) {
+      throw new Error("La categoría es obligatoria");
     }
 
     try {
-      // Construir payload exacto según DTO
+      // Construir payload exacto según DTO del backend
       const alertPayload: any = {
-        message: payload.message.trim(),
-        type: payload.type,
+        title: payload.title.trim(),
         severity: payload.severity,
-        date: payload.date,
-        read: false,
+        category: payload.category,
       };
 
       // Agregar campos opcionales
-      if (payload.title) alertPayload.title = payload.title.trim();
+      if (payload.description) alertPayload.description = payload.description.trim();
       if (payload.workId) alertPayload.workId = payload.workId;
-      if (payload.personId) alertPayload.personId = payload.personId;
-      if (payload.documentId) alertPayload.documentId = payload.documentId;
       if (payload.supplierId) alertPayload.supplierId = payload.supplierId;
-      if (payload.notes) alertPayload.notes = payload.notes.trim();
 
-      const response = await apiClient.post(url, alertPayload);
+      const response = await apiClient.post("/alerts", alertPayload);
       await get().fetchAlerts();
       return response;
     } catch (error: any) {
@@ -141,14 +111,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "alerts", id);
-    if (!url) {
-      throw new Error("URL de actualización inválida");
-    }
-
     try {
-      await apiClient.put(url, payload);
+      await apiClient.put(`/alerts/${id}`, payload);
       await get().fetchAlerts();
     } catch (error: any) {
       console.error("🔴 [alertsStore] Error al actualizar alerta:", error);
@@ -162,14 +126,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       throw new Error("ID de alerta no está definido");
     }
 
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "alerts", id);
-    if (!url) {
-      throw new Error("URL de eliminación inválida");
-    }
-
     try {
-      await apiClient.delete(url);
+      await apiClient.delete(`/alerts/${id}`);
       await get().fetchAlerts();
     } catch (error: any) {
       console.error("🔴 [alertsStore] Error al eliminar alerta:", error);
@@ -178,14 +136,10 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   },
 
   async markAllAsRead() {
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "alerts", "read-all");
-    if (!url) {
-      throw new Error("URL de markAllAsRead inválida");
-    }
-
     try {
-      await apiClient.patch(url, {});
+      // Marcar todas como leídas individualmente o usar endpoint si existe
+      const unreadAlerts = get().alerts.filter(a => !a.read);
+      await Promise.all(unreadAlerts.map(alert => apiClient.patch(`/alerts/${alert.id}/read`, {})));
       await get().fetchAlerts();
     } catch (error: any) {
       console.error("🔴 [alertsStore] Error al marcar todas las alertas como leídas:", error);

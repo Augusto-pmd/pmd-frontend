@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
-import { useAuthStore } from "@/store/authStore";
-import { buildApiRoute } from "@/lib/safeApi";
 
 export interface AccountingEntry {
   id: string;
@@ -62,12 +60,7 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       if (filters.category) queryParams.append("category", filters.category);
 
       const queryString = queryParams.toString();
-      // Backend deriva organizationId del JWT token
-      const baseUrl = buildApiRoute(null, "accounting", "transactions");
-      if (!baseUrl) {
-        throw new Error("URL de API inválida");
-      }
-      const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+      const url = queryString ? `/accounting?${queryString}` : "/accounting";
 
       const data = await apiClient.get(url);
       set({ entries: data?.data || data || [], isLoading: false });
@@ -97,14 +90,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("El tipo de movimiento es obligatorio");
     }
 
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "accounting", "transactions");
-    if (!url) {
-      throw new Error("URL de API inválida");
-    }
-
     try {
-      const response = await apiClient.post(url, payload);
+      const response = await apiClient.post("/accounting", payload);
       await get().fetchEntries();
       return response;
     } catch (error: any) {
@@ -129,14 +116,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("El monto debe ser mayor a 0");
     }
 
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "accounting", "transactions", id);
-    if (!url) {
-      throw new Error("URL de actualización inválida");
-    }
-
     try {
-      await apiClient.put(url, payload);
+      await apiClient.put(`/accounting/${id}`, payload);
       await get().fetchEntries();
     } catch (error: any) {
       console.error("🔴 [accountingStore] Error al actualizar movimiento:", error);
@@ -150,14 +131,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("ID de movimiento no está definido");
     }
 
-    // Backend deriva organizationId del JWT token
-    const url = buildApiRoute(null, "accounting", "transactions", id);
-    if (!url) {
-      throw new Error("URL de eliminación inválida");
-    }
-
     try {
-      await apiClient.delete(url);
+      await apiClient.delete(`/accounting/${id}`);
       await get().fetchEntries();
     } catch (error: any) {
       console.error("🔴 [accountingStore] Error al eliminar movimiento:", error);

@@ -39,7 +39,7 @@ function WorkAlertsContent() {
   }, [organizationId]);
 
   // Filtrar alertas de esta obra
-  const workAlerts = alerts.filter((alert) => alert.workId === workId);
+  const workAlerts = alerts.filter((alert) => (alert as any).workId === workId);
 
   const handleCreate = async (data: any) => {
     setIsSubmitting(true);

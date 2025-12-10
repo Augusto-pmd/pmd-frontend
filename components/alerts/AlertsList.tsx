@@ -17,7 +17,7 @@ interface AlertsListProps {
   alerts: Alert[];
   onRefresh?: () => void;
   searchQuery?: string;
-  severityFilter?: "all" | "alta" | "media" | "baja";
+  severityFilter?: "all" | "info" | "warning" | "critical";
   typeFilter?: string;
   workFilter?: string;
   dateFilter?: string;
@@ -48,22 +48,25 @@ export function AlertsList({
     // Búsqueda
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      const matchesMessage = alert.message?.toLowerCase().includes(query);
+      const matchesDescription = alert.description?.toLowerCase().includes(query);
       const matchesTitle = alert.title?.toLowerCase().includes(query);
-      if (!matchesMessage && !matchesTitle) return false;
+      if (!matchesDescription && !matchesTitle) return false;
     }
 
     // Filtro de severidad
     if (severityFilter !== "all" && alert.severity !== severityFilter) return false;
 
-    // Filtro de tipo
-    if (typeFilter !== "all" && alert.type !== typeFilter) return false;
+    // Filtro de categoría
+    if (typeFilter !== "all" && alert.category !== typeFilter) return false;
 
     // Filtro de obra
     if (workFilter !== "all" && alert.workId !== workFilter) return false;
 
-    // Filtro de fecha
-    if (dateFilter && alert.date !== dateFilter) return false;
+    // Filtro de fecha (usar createdAt si date no existe)
+    if (dateFilter) {
+      const alertDate = (alert as any).date || alert.createdAt;
+      if (alertDate && new Date(alertDate).toISOString().split("T")[0] !== dateFilter) return false;
+    }
 
     return true;
   });
@@ -96,25 +99,31 @@ export function AlertsList({
     return supplier.nombre || supplier.name || supplierId;
   };
 
-  const getSeverityVariant = (severity: "alta" | "media" | "baja") => {
-    if (severity === "alta") return "error";
-    if (severity === "media") return "warning";
+  const getSeverityVariant = (severity: "info" | "warning" | "critical") => {
+    if (severity === "critical") return "error";
+    if (severity === "warning") return "warning";
     return "info";
   };
 
-  const getSeverityLabel = (severity: "alta" | "media" | "baja") => {
-    return severity.charAt(0).toUpperCase() + severity.slice(1);
+  const getSeverityLabel = (severity: "info" | "warning" | "critical") => {
+    const labels: Record<string, string> = {
+      critical: "Crítico",
+      warning: "Advertencia",
+      info: "Info",
+    };
+    return labels[severity] || severity;
   };
 
-  const getTypeLabel = (type: string) => {
+  const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
-      seguro: "Seguro",
-      documentacion: "Documentación",
-      obra: "Obra",
-      contable: "Contable",
+      work: "Obra",
+      supplier: "Proveedor",
+      document: "Documento",
+      accounting: "Contable",
+      cashbox: "Caja",
       general: "General",
     };
-    return labels[type] || type;
+    return labels[category] || category;
   };
 
   const handleMarkAsRead = async (id: string) => {
@@ -234,22 +243,22 @@ export function AlertsList({
                   className={`hover:bg-gray-50 transition-colors ${!alert.read ? "bg-blue-50/30" : ""}`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{getTypeLabel(alert.type)}</div>
+                    <div className="text-sm font-medium text-gray-900">{getCategoryLabel(alert.category || "general")}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{alert.message}</div>
-                    {alert.title && (
-                      <div className="text-xs text-gray-500 mt-1">{alert.title}</div>
+                    <div className="text-sm font-medium text-gray-900">{alert.title || "Sin título"}</div>
+                    {alert.description && (
+                      <div className="text-xs text-gray-500 mt-1">{alert.description}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{getWorkName(alert.workId)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{getUserName(alert.personId)}</div>
+                    <div className="text-sm text-gray-600">{getUserName((alert as any).personId)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{getDocumentName(alert.documentId)}</div>
+                    <div className="text-sm text-gray-600">{getDocumentName((alert as any).documentId)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Badge variant={getSeverityVariant(alert.severity)}>
@@ -258,7 +267,7 @@ export function AlertsList({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">
-                      {new Date(alert.date).toLocaleDateString("es-AR")}
+                      {new Date((alert as any).date || alert.createdAt || new Date()).toLocaleDateString("es-AR")}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -321,7 +330,7 @@ export function AlertsList({
             <p className="text-gray-700">
               ¿Estás seguro de que deseas eliminar esta alerta?
             </p>
-            <p className="text-sm text-gray-500 font-medium">{selectedAlert.message}</p>
+            <p className="text-sm text-gray-500 font-medium">{selectedAlert.title || selectedAlert.description || "Sin título"}</p>
             <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
             <div className="flex gap-3 justify-end pt-4">
               <Button

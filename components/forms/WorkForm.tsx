@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
-import { useEmployees } from "@/hooks/api/employees";
-import { useClients } from "@/hooks/api/clients";
+import { useUsers } from "@/hooks/api/users";
 
 interface WorkFormProps {
   initialData?: any;
@@ -17,8 +16,7 @@ interface WorkFormProps {
 }
 
 export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFormProps) {
-  const { employees } = useEmployees();
-  const { clients } = useClients();
+  const { users } = useUsers();
   
   const [formData, setFormData] = useState({
     nombre: "",
@@ -119,8 +117,6 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
       name: (formData.nombre || formData.name).trim(), // Compatibilidad
       direccion: formData.direccion || formData.address || undefined,
       address: formData.direccion || formData.address || undefined, // Compatibilidad
-      clienteId: formData.clienteId || formData.clientId || undefined,
-      clientId: formData.clienteId || formData.clientId || undefined, // Compatibilidad
       fechaInicio: formData.fechaInicio || formData.startDate || undefined,
       startDate: formData.fechaInicio || formData.startDate || undefined, // Compatibilidad
       fechaFin: formData.fechaFin || formData.endDate || undefined,
@@ -175,32 +171,17 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
         />
       </FormField>
 
-      {/* Cliente y Metros cuadrados */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
-        <FormField label="Cliente">
-          <Select
-            value={formData.clienteId || formData.clientId}
-            onChange={(e) => setFormData({ ...formData, clienteId: e.target.value, clientId: e.target.value })}
-          >
-            <option value="">Sin cliente asignado</option>
-            {clients?.map((client: any) => (
-              <option key={client.id} value={client.id}>
-                {client.name || client.nombre || client.fullName || `Cliente ${client.id.slice(0, 8)}`}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-        <FormField label="Metros cuadrados" error={errors.metrosCuadrados}>
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.metrosCuadrados || formData.squareMeters}
-            onChange={(e) => setFormData({ ...formData, metrosCuadrados: e.target.value, squareMeters: e.target.value })}
-            placeholder="m²"
-          />
-        </FormField>
-      </div>
+      {/* Metros cuadrados */}
+      <FormField label="Metros cuadrados" error={errors.metrosCuadrados}>
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          value={formData.metrosCuadrados || formData.squareMeters}
+          onChange={(e) => setFormData({ ...formData, metrosCuadrados: e.target.value, squareMeters: e.target.value })}
+          placeholder="m²"
+        />
+      </FormField>
 
       {/* Estado - OBLIGATORIO */}
       <FormField label="Estado" required>
@@ -253,10 +234,10 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
             onChange={(e) => setFormData({ ...formData, responsableId: e.target.value, managerId: e.target.value })}
           >
             <option value="">Seleccionar responsable</option>
-            {employees?.map((emp: any) => {
-              const nombre = emp.nombre || emp.fullName || emp.name || "Sin nombre";
+            {users?.map((user: any) => {
+              const nombre = user.fullName || user.name || user.nombre || "Sin nombre";
               return (
-                <option key={emp.id} value={emp.id}>
+                <option key={user.id} value={user.id}>
                   {nombre}
                 </option>
               );

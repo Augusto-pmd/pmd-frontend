@@ -110,34 +110,92 @@ export function useAccountingMonth(month: number | null, year: number | null) {
   };
 }
 
+export function useAccountingPurchasesBook(params?: { startDate?: string; endDate?: string }) {
+  const { token } = useAuthStore();
+  
+  const queryString = params
+    ? `?${new URLSearchParams(params as any).toString()}`
+    : "";
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token ? `accounting/purchases-book${queryString}` : null,
+    () => {
+      return apiClient.get(`/accounting/purchases-book${queryString}`);
+    }
+  );
+
+  return {
+    purchasesBook: data?.data || data || [],
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
+export function useAccountingWithholdings(params?: { startDate?: string; endDate?: string }) {
+  const { token } = useAuthStore();
+  
+  const queryString = params
+    ? `?${new URLSearchParams(params as any).toString()}`
+    : "";
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token ? `accounting/withholdings${queryString}` : null,
+    () => {
+      return apiClient.get(`/accounting/withholdings${queryString}`);
+    }
+  );
+
+  return {
+    withholdings: data?.data || data || [],
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
+export function useAccountingPerceptions(params?: { startDate?: string; endDate?: string }) {
+  const { token } = useAuthStore();
+  
+  const queryString = params
+    ? `?${new URLSearchParams(params as any).toString()}`
+    : "";
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token ? `accounting/perceptions${queryString}` : null,
+    () => {
+      return apiClient.get(`/accounting/perceptions${queryString}`);
+    }
+  );
+
+  return {
+    perceptions: data?.data || data || [],
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
 export const accountingApi = {
-  create: (data: any) => {
-    return apiClient.post("/accounting", data);
-  },
-  update: (id: string, data: any) => {
-    if (!id) {
-      console.warn("❗ [accountingApi.update] id no está definido");
-      throw new Error("ID de movimiento contable no está definido");
-    }
-    return apiClient.put(`/accounting/${id}`, data);
-  },
-  delete: (id: string) => {
-    if (!id) {
-      console.warn("❗ [accountingApi.delete] id no está definido");
-      throw new Error("ID de movimiento contable no está definido");
-    }
-    return apiClient.delete(`/accounting/${id}`);
-  },
-  generateReport: (params: any) => {
-    return apiClient.post("/accounting/reports", params);
-  },
-  createTransaction: (data: any) => {
-    return apiClient.post("/accounting/transactions", data);
-  },
-  getSummary: () => {
-    return apiClient.get("/accounting/summary");
-  },
   getMonth: (month: number, year: number) => {
     return apiClient.get(`/accounting/month/${month}/${year}`);
+  },
+  getPurchasesBook: (params?: { startDate?: string; endDate?: string }) => {
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    return apiClient.get(`/accounting/purchases-book${queryString}`);
+  },
+  getWithholdings: (params?: { startDate?: string; endDate?: string }) => {
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    return apiClient.get(`/accounting/withholdings${queryString}`);
+  },
+  getPerceptions: (params?: { startDate?: string; endDate?: string }) => {
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    return apiClient.get(`/accounting/perceptions${queryString}`);
   },
 };

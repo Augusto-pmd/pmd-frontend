@@ -63,5 +63,19 @@ export const supplierApi = {
     }
     return apiClient.delete(`/suppliers/${id}`);
   },
+  approve: (id: string) => {
+    if (!id) {
+      console.warn("❗ [supplierApi.approve] id no está definido");
+      throw new Error("ID de proveedor no está definido");
+    }
+    return apiClient.patch(`/suppliers/${id}/approve`, {});
+  },
+  reject: (id: string) => {
+    if (!id) {
+      console.warn("❗ [supplierApi.reject] id no está definido");
+      throw new Error("ID de proveedor no está definido");
+    }
+    return apiClient.patch(`/suppliers/${id}/reject`, {});
+  },
 };
 
