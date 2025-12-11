@@ -42,19 +42,22 @@ export function normalizeUser(rawUser: any): AuthUser {
     roleId = normalizeId(rawUser.roleId);
   }
 
-  // Organization puede ser null
+  // Organization puede ser null - null-safe
   let organization: { id: string; name: string; [key: string]: any } | null = null;
-  let organizationId: string | null = null;
+  let organizationId: string = "";
 
-  if (rawUser.organization && typeof rawUser.organization === "object") {
+  if (rawUser.organization) {
     organization = {
-      ...rawUser.organization,
-      id: normalizeId(rawUser.organization.id ?? ""),
+      id: String(rawUser.organization.id || ""),
       name: String(rawUser.organization.name || ""),
     };
-    organizationId = organization.id;
-  } else if (rawUser.organizationId) {
+    organizationId = organization.id; // null-safe
+  } 
+  else if (rawUser.organizationId) {
     organizationId = normalizeId(rawUser.organizationId);
+  } 
+  else {
+    organizationId = "";
   }
 
   const normalizedUser: AuthUser = {
@@ -64,13 +67,8 @@ export function normalizeUser(rawUser: any): AuthUser {
     isActive: rawUser.isActive ?? rawUser.is_active ?? undefined,
     role: normalizedRole,
     roleId,
-    organizationId,
-    organization: rawUser.organization
-      ? {
-          id: String(rawUser.organization.id || ""),
-          name: String(rawUser.organization.name || ""),
-        }
-      : null,
+    organizationId: organizationId || null,
+    organization: organization,
     created_at: rawUser.created_at ?? rawUser.createdAt ?? undefined,
     updated_at: rawUser.updated_at ?? rawUser.updatedAt ?? undefined,
   };
