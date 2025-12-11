@@ -33,7 +33,8 @@ export const useAuthStore = create<AuthState>()(
       getUserSafe: () => {
         const u = get().user;
         if (!u) return null;
-        return normalizeUser(u);
+        const normalized = normalizeUser(u);
+        return normalized;
       },
 
       // --- LOGIN ---
@@ -48,6 +49,9 @@ export const useAuthStore = create<AuthState>()(
 
         // Normalizar el usuario
         const normalizedUser = normalizeUser(userRaw);
+        if (!normalizedUser) {
+          throw new Error("login: failed to normalize user");
+        }
 
         set({
           user: normalizedUser,
@@ -103,7 +107,9 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const normalizedUser = normalizeUser(rawUser);
-          set({ user: normalizedUser, isAuthenticated: true });
+          if (normalizedUser) {
+            set({ user: normalizedUser, isAuthenticated: true });
+          }
         } catch (error: unknown) {
           if (typeof window === "undefined") {
             return;
@@ -143,12 +149,22 @@ export const useAuthStore = create<AuthState>()(
 
           if (rawUser) {
             const normalizedUser = normalizeUser(rawUser);
-            set({
-              user: normalizedUser,
-              token: access_token,
-              refreshToken: refresh_token ?? null,
-              isAuthenticated: true,
-            });
+            if (normalizedUser) {
+              set({
+                user: normalizedUser,
+                token: access_token,
+                refreshToken: refresh_token ?? null,
+                isAuthenticated: true,
+              });
+            } else {
+              const currentUser = get().user;
+              set({
+                user: currentUser,
+                token: access_token,
+                refreshToken: refresh_token ?? null,
+                isAuthenticated: currentUser ? true : false,
+              });
+            }
           } else {
             const currentUser = get().user;
             set({
@@ -193,11 +209,14 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         if (state?.user) {
           try {
-            // Normalizar el usuario (normalizeUser ya preserva organizationId y organization)
             const normalizedUser = normalizeUser(state.user);
-            state.user = normalizedUser;
+            if (normalizedUser) {
+              state.user = normalizedUser;
+            } else {
+              state.user = null;
+              state.isAuthenticated = false;
+            }
           } catch {
-            // Si falla la normalización, limpiamos el estado
             state.user = null;
             state.isAuthenticated = false;
           }

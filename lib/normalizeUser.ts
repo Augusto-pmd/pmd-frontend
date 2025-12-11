@@ -13,7 +13,7 @@ export interface AuthUser {
     id: string;
     name: string;
     permissions?: string[];
-  } | null;
+  };
   roleId: string | null;
   organizationId: string | null;
   organization: {
@@ -26,53 +26,47 @@ export interface AuthUser {
   [key: string]: any;
 }
 
-export function normalizeUser(rawUser: any): AuthUser {
-  // Backend estabilizado siempre devuelve role como objeto { id, name } o null
-  let normalizedRole: { id: string; name: string; permissions?: string[] } | null = null;
-  let roleId: string | null = null;
+export function normalizeUser(rawUser: any): AuthUser | null {
+  if (!rawUser) return null;
 
-  if (rawUser.role && typeof rawUser.role === "object") {
-    normalizedRole = {
-      id: normalizeId(rawUser.role.id ?? ""),
-      name: String(rawUser.role.name || ""),
-      permissions: rawUser.role.permissions,
-    };
-    roleId = normalizedRole.id;
-  } else if (rawUser.roleId) {
-    roleId = normalizeId(rawUser.roleId);
-  }
+  const id = normalizeId(rawUser.id);
+  const email = rawUser.email || "";
+  const fullName = rawUser.fullName || rawUser.name || "";
 
-  // Organization puede ser null - null-safe
+  const role = rawUser.role
+    ? {
+        id: normalizeId(rawUser.role.id),
+        name: rawUser.role.name || "ADMINISTRATION",
+      }
+    : {
+        id: "",
+        name: "ADMINISTRATION",
+      };
+
   let organization: { id: string; name: string; [key: string]: any } | null = null;
   let organizationId: string = "";
 
   if (rawUser.organization) {
     organization = {
-      id: String(rawUser.organization.id || ""),
-      name: String(rawUser.organization.name || ""),
+      id: normalizeId(rawUser.organization.id),
+      name: rawUser.organization.name || "",
     };
-    organizationId = organization.id; // null-safe
-  } 
-  else if (rawUser.organizationId) {
+    organizationId = organization.id;
+  } else if (rawUser.organizationId) {
     organizationId = normalizeId(rawUser.organizationId);
-  } 
-  else {
-    organizationId = "";
   }
 
-  const normalizedUser: AuthUser = {
-    id: normalizeId(rawUser.id),
-    email: String(rawUser.email ?? ""),
-    fullName: String(rawUser.fullName ?? rawUser.name ?? ""),
-    isActive: rawUser.isActive ?? rawUser.is_active ?? undefined,
-    role: normalizedRole,
-    roleId,
+  return {
+    id,
+    email,
+    fullName,
+    role,
+    roleId: normalizeId(rawUser.roleId || role.id),
+    organization,
     organizationId: organizationId || null,
-    organization: organization,
+    isActive: rawUser.isActive ?? true,
     created_at: rawUser.created_at ?? rawUser.createdAt ?? undefined,
     updated_at: rawUser.updated_at ?? rawUser.updatedAt ?? undefined,
   };
-
-  return normalizedUser;
 }
 

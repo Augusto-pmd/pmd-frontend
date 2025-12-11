@@ -51,6 +51,7 @@ const api: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 15000,
   withCredentials: false, // Backend usa JWT por header, no cookies
 });
 
@@ -109,12 +110,19 @@ api.interceptors.response.use(
           if (newToken) {
             if (rawUser) {
               const user = normalizeUser(rawUser);
-              useAuthStore.setState({
-                user,
-                token: newToken,
-                refreshToken: newRefreshToken,
-                isAuthenticated: true,
-              });
+              if (user) {
+                useAuthStore.setState({
+                  user,
+                  token: newToken,
+                  refreshToken: newRefreshToken,
+                  isAuthenticated: true,
+                });
+              } else {
+                useAuthStore.setState({
+                  token: newToken,
+                  refreshToken: newRefreshToken,
+                });
+              }
             } else {
               useAuthStore.setState({
                 token: newToken,
@@ -187,10 +195,6 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   // Agregar Authorization Bearer solo si hay token
   if (token) {
     (headers as Record<string, string>).Authorization = `Bearer ${token}`;
-    console.log(`🔵 [apiFetch] ${options.method || "GET"} ${url}`);
-    console.log(`   → Headers: Authorization: Bearer ${token.substring(0, 20)}...`);
-  } else {
-    console.log(`🔵 [apiFetch] ${options.method || "GET"} ${url} (no token available)`);
   }
   
   return fetch(url, {
