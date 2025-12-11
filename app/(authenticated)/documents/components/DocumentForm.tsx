@@ -5,6 +5,7 @@ import { InputField, SelectField, TextareaField } from "@/components/ui/FormFiel
 import { Button } from "@/components/ui/Button";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
+import { normalizeId } from "@/lib/normalizeId";
 import styles from "@/components/ui/form.module.css";
 
 interface DocumentFormProps {
@@ -120,7 +121,7 @@ export function DocumentForm({
     { value: "", label: "Seleccionar obra" },
     ...works.map((work: any) => {
       const workName = work.name || work.title || work.nombre || work.id;
-      return { value: work.id, label: workName };
+      return { value: normalizeId(work.id), label: workName };
     }),
   ];
 
@@ -138,7 +139,7 @@ export function DocumentForm({
     { value: "", label: "Seleccionar responsable" },
     ...users.map((user: any) => {
       const userName = user.fullName || user.name || user.nombre || user.id;
-      return { value: user.id, label: userName };
+      return { value: normalizeId(user.id), label: userName };
     }),
   ];
 

@@ -6,9 +6,9 @@ export interface UserPMD {
   id: string;
   email: string;
   fullName: string;
-  roleId?: string | number;
+  roleId?: string;
   role?: {
-    id: number | string;
+    id: string;
     name: string;
     permissions?: string[];
   };

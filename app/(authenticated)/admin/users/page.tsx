@@ -3,6 +3,7 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useUsers, userApi } from "@/hooks/api/users";
+import { User } from "@/hooks/useUsers";
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { UserForm } from "@/components/forms/UserForm";
@@ -17,7 +18,7 @@ function AdminUsersContent() {
   const { users, isLoading, error, mutate } = useUsers();
   const { mutate: globalMutate } = useSWRConfig();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
@@ -26,7 +27,7 @@ function AdminUsersContent() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (user: any) => {
+  const handleEdit = (user: User) => {
     setEditingUser(user);
     setIsModalOpen(true);
   };
@@ -38,14 +39,15 @@ function AdminUsersContent() {
       await userApi.delete(id);
       mutate();
       globalMutate("/users");
-    } catch (error: any) {
-      alert(error.message || "Failed to delete user");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to delete user";
+      alert(message);
     } finally {
       setDeleteLoading(null);
     }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: { name: string; email: string; password?: string; role: string }) => {
     setIsSubmitting(true);
     try {
       if (editingUser) {
@@ -57,8 +59,9 @@ function AdminUsersContent() {
       globalMutate("/users");
       setIsModalOpen(false);
       setEditingUser(null);
-    } catch (error: any) {
-      alert(error.message || "Failed to save user");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to save user";
+      alert(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -106,13 +109,13 @@ function AdminUsersContent() {
               <div className="bg-gray-50 rounded-pmd p-4">
                 <p className="text-sm text-gray-600 mb-1">Active Users</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {users?.filter((u: any) => u.status !== "inactive").length || 0}
+                  {users?.filter((u: User) => u.status !== "inactive").length || 0}
                 </p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
                 <p className="text-sm text-gray-600 mb-1">Inactive Users</p>
                 <p className="text-2xl font-bold text-gray-600">
-                  {users?.filter((u: any) => u.status === "inactive").length || 0}
+                  {users?.filter((u: User) => u.status === "inactive").length || 0}
                 </p>
               </div>
             </div>
@@ -139,7 +142,7 @@ function AdminUsersContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {users?.map((user: any) => {
+                    {users?.map((user: User) => {
                       // role ahora es SIEMPRE un objeto { id, name }
                       const userRole = user?.role?.name || '';
                       return (
@@ -192,7 +195,11 @@ function AdminUsersContent() {
           title={editingUser ? "Edit User" : "Create User"}
         >
           <UserForm
-            initialData={editingUser}
+            initialData={editingUser ? {
+              name: editingUser.fullName || editingUser.name || "",
+              email: editingUser.email || "",
+              role: editingUser.role?.name || "operator",
+            } : undefined}
             onSubmit={handleSubmit}
             onCancel={() => {
               setIsModalOpen(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { normalizeId } from "@/lib/normalizeId";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
@@ -250,7 +251,7 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
             {users?.map((user: any) => {
               const nombre = user.fullName || user.name || user.nombre || "Sin nombre";
               return (
-                <option key={user.id} value={user.id}>
+                <option key={user.id} value={normalizeId(user.id)}>
                   {nombre}
                 </option>
               );

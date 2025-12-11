@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { FormField, InputField, SelectField, TextareaField } from "@/components/ui/FormField";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
+import { normalizeId } from "@/lib/normalizeId";
 
 interface EntryFormProps {
   initialData?: any;
@@ -32,8 +33,8 @@ export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryF
       // Normalizar datos del backend
       const fecha = initialData.date || initialData.fecha || "";
       setDate(fecha.split("T")[0] || "");
-      setWorkId(initialData.workId || initialData.obraId || "");
-      setSupplierId(initialData.supplierId || initialData.proveedorId || "");
+      setWorkId(normalizeId(initialData.workId || initialData.obraId));
+      setSupplierId(normalizeId(initialData.supplierId || initialData.proveedorId));
       const tipo = initialData.type || initialData.tipo || "egreso";
       setType(tipo === "ingreso" ? "income" : tipo === "egreso" ? "expense" : tipo);
       setAmount((initialData.amount || initialData.monto || 0).toString());
@@ -131,7 +132,7 @@ export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryF
   const workOptions = [
     { value: "", label: "Seleccionar obra" },
     ...(works?.map((work: any) => ({
-      value: work.id,
+      value: normalizeId(work.id),
       label: work.nombre || work.name || work.title || `Obra ${work.id.slice(0, 8)}`,
     })) || []),
   ];
@@ -139,7 +140,7 @@ export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryF
   const supplierOptions = [
     { value: "", label: "Seleccionar proveedor" },
     ...(suppliers?.map((sup: any) => ({
-      value: sup.id,
+      value: normalizeId(sup.id),
       label: sup.nombre || sup.name || `Proveedor ${sup.id.slice(0, 8)}`,
     })) || []),
   ];

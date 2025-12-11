@@ -6,6 +6,7 @@ import { InputField, SelectField, TextareaField } from "@/components/ui/FormFiel
 import { useUsersStore, UserPMD } from "@/store/usersStore";
 import { useRoles } from "@/hooks/api/roles";
 import { useToast } from "@/components/ui/Toast";
+import { normalizeId } from "@/lib/normalizeId";
 import styles from "@/components/ui/form.module.css";
 
 interface UserFormProps {
@@ -33,7 +34,7 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       setFormData({
         fullName: user.fullName || "",
         email: user.email || "",
-        roleId: user.roleId || "",
+        roleId: normalizeId(user.roleId),
         password: "",
         confirmPassword: "",
       });
@@ -139,7 +140,7 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
 
   const roleOptions = roles.map((role: any) => {
     const roleName = role.name || role.nombre || role.id;
-    return { value: role.id, label: roleName };
+    return { value: normalizeId(role.id), label: roleName };
   });
 
   return (

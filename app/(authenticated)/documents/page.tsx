@@ -16,6 +16,7 @@ import { Plus, Search, Filter, X, FileText } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
+import { normalizeId } from "@/lib/normalizeId";
 
 function DocumentsContent() {
   const { documents, isLoading, error, fetchDocuments, createDocument } = useDocumentsStore();
@@ -209,7 +210,7 @@ function DocumentsContent() {
                   {users.map((user: any) => {
                     const userName = user.fullName || user.name || user.nombre || user.id;
                     return (
-                      <option key={user.id} value={user.id}>
+                      <option key={user.id} value={normalizeId(user.id)}>
                         {userName}
                       </option>
                     );

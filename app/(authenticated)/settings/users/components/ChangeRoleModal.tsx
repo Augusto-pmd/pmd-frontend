@@ -7,6 +7,7 @@ import { SelectField } from "@/components/ui/FormField";
 import { useUsersStore, UserPMD } from "@/store/usersStore";
 import { useRoles } from "@/hooks/api/roles";
 import { useToast } from "@/components/ui/Toast";
+import { normalizeId } from "@/lib/normalizeId";
 
 interface ChangeRoleModalProps {
   isOpen: boolean;
@@ -24,7 +25,7 @@ export function ChangeRoleModal({ isOpen, onClose, user, onSuccess }: ChangeRole
 
   useEffect(() => {
     if (user) {
-      setSelectedRoleId(user.roleId || "");
+      setSelectedRoleId(normalizeId(user.roleId));
     }
   }, [user]);
 
@@ -55,7 +56,7 @@ export function ChangeRoleModal({ isOpen, onClose, user, onSuccess }: ChangeRole
 
   const roleOptions = roles.map((role: any) => {
     const roleName = role.name || role.nombre || role.id;
-    return { value: role.id, label: roleName };
+    return { value: normalizeId(role.id), label: roleName };
   });
 
   return (

@@ -7,8 +7,9 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: { id: number | string; name: string; permissions?: string[] };
-  roleId?: number | string;
+  fullName?: string; // Alias para name, usado en algunos componentes
+  role: { id: string; name: string; permissions?: string[] };
+  roleId?: string;
   status?: string;
   createdAt?: string;
   updatedAt?: string;

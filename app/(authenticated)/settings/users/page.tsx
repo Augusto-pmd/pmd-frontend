@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeId } from "@/lib/normalizeId";
+
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -207,7 +209,7 @@ function UsersContent() {
                 >
                   <option value="all">Todos</option>
                   {uniqueRoleIds.map((roleId) => (
-                    <option key={roleId} value={roleId}>
+                    <option key={roleId} value={normalizeId(roleId)}>
                       {getRoleName(roleId)}
                     </option>
                   ))}

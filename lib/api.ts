@@ -209,7 +209,7 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   
   // Agregar Authorization Bearer solo si hay token
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    (headers as Record<string, string>).Authorization = `Bearer ${token}`;
     console.log(`🔵 [apiFetch] ${options.method || "GET"} ${url}`);
     console.log(`   → Headers: Authorization: Bearer ${token.substring(0, 20)}...`);
   } else {

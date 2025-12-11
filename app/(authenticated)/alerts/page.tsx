@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { normalizeId } from "@/lib/normalizeId";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAlertsStore } from "@/store/alertsStore";
@@ -194,7 +195,7 @@ function AlertsContent() {
                   {works.map((work: any) => {
                     const workName = work.name || work.title || work.nombre || work.id;
                     return (
-                      <option key={work.id} value={work.id}>
+                      <option key={work.id} value={normalizeId(work.id)}>
                         {workName}
                       </option>
                     );

@@ -7,6 +7,7 @@ import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
 import { useDocuments } from "@/hooks/api/documents";
 import { useSuppliers } from "@/hooks/api/suppliers";
+import { normalizeId } from "@/lib/normalizeId";
 
 interface AlertFormProps {
   initialData?: any;
@@ -54,10 +55,10 @@ export function AlertForm({
   const [message, setMessage] = useState("");
   const [type, setType] = useState("general");
   const [severity, setSeverity] = useState<"info" | "warning" | "critical">("info");
-  const [workId, setWorkId] = useState(defaultWorkId || "");
+  const [workId, setWorkId] = useState(normalizeId(defaultWorkId));
   const [supplierId, setSupplierId] = useState("");
-  const [userId, setUserId] = useState(defaultPersonId || "");
-  const [documentId, setDocumentId] = useState(defaultDocumentId || "");
+  const [userId, setUserId] = useState(normalizeId(defaultPersonId));
+  const [documentId, setDocumentId] = useState(normalizeId(defaultDocumentId));
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -66,14 +67,14 @@ export function AlertForm({
       setMessage(initialData.message || initialData.description || "");
       setType(initialData.type || initialData.category || "general");
       setSeverity(initialData.severity || "info");
-      setWorkId(initialData.work_id || initialData.workId || defaultWorkId || "");
-      setSupplierId(initialData.supplier_id || initialData.supplierId || "");
-      setUserId(initialData.user_id || initialData.userId || defaultPersonId || "");
-      setDocumentId(initialData.document_id || initialData.documentId || defaultDocumentId || "");
+      setWorkId(normalizeId(initialData.work_id || initialData.workId || defaultWorkId));
+      setSupplierId(normalizeId(initialData.supplier_id || initialData.supplierId));
+      setUserId(normalizeId(initialData.user_id || initialData.userId || defaultPersonId));
+      setDocumentId(normalizeId(initialData.document_id || initialData.documentId || defaultDocumentId));
     } else {
-      if (defaultWorkId) setWorkId(defaultWorkId);
-      if (defaultPersonId) setUserId(defaultPersonId);
-      if (defaultDocumentId) setDocumentId(defaultDocumentId);
+      if (defaultWorkId) setWorkId(normalizeId(defaultWorkId));
+      if (defaultPersonId) setUserId(normalizeId(defaultPersonId));
+      if (defaultDocumentId) setDocumentId(normalizeId(defaultDocumentId));
     }
   }, [initialData, defaultWorkId, defaultPersonId, defaultDocumentId]);
 

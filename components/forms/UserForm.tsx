@@ -4,26 +4,38 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
+interface UserFormData {
+  name: string;
+  email: string;
+  password?: string;
+  role: string;
+}
+
 interface UserFormProps {
-  initialData?: any;
-  onSubmit: (data: any) => Promise<void>;
+  initialData?: Partial<UserFormData>;
+  onSubmit: (data: UserFormData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
 export function UserForm({ initialData, onSubmit, onCancel, isLoading }: UserFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UserFormData>({
     name: "",
     email: "",
     password: "",
     role: "operator",
-    ...initialData,
+    ...(initialData || {}),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initialData) {
-      setFormData({ ...initialData, password: "" });
+      setFormData({ 
+        name: initialData.name || "",
+        email: initialData.email || "",
+        password: "",
+        role: initialData.role || "operator",
+      });
     }
   }, [initialData]);
 

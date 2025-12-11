@@ -15,7 +15,8 @@ export function useAuth() {
       router.push("/login");
       return;
     }
-    if (!allowedRoles.includes(user.role as UserRole)) {
+    const userRoleName = user.role?.name?.toLowerCase() as UserRole | undefined;
+    if (!userRoleName || !allowedRoles.includes(userRoleName)) {
       router.push("/unauthorized");
       return;
     }

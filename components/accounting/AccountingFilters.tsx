@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { Filter, X } from "lucide-react";
+import { normalizeId } from "@/lib/normalizeId";
 
 interface AccountingFiltersProps {
   filters: {
@@ -76,7 +77,7 @@ export function AccountingFilters({
               {works?.map((work: any) => {
                 const nombre = work.nombre || work.name || work.title || "Sin nombre";
                 return (
-                  <option key={work.id} value={work.id}>
+                  <option key={work.id} value={normalizeId(work.id)}>
                     {nombre}
                   </option>
                 );
@@ -95,7 +96,7 @@ export function AccountingFilters({
               {suppliers?.map((sup: any) => {
                 const nombre = sup.nombre || sup.name || "Sin nombre";
                 return (
-                  <option key={sup.id} value={sup.id}>
+                  <option key={sup.id} value={normalizeId(sup.id)}>
                     {nombre}
                   </option>
                 );

@@ -18,7 +18,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   getUserSafe: () => AuthUser | null;
-  login: (userRaw: any, token: string, refreshToken?: string) => void;
+  login: (userRaw: unknown, token: string, refreshToken?: string) => void;
   logout: () => void;
   loadMe: () => Promise<void>;
   refreshSession: () => Promise<void>;
@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       // --- LOGIN ---
-      login: (userRaw: any, token: string, refreshToken?: string) => {
+      login: (userRaw: unknown, token: string, refreshToken?: string) => {
         console.log("🔵 [AUTH STORE BEFORE] Estado ANTES de login():");
         const stateBefore = get();
         console.log("  - isAuthenticated:", stateBefore.isAuthenticated);
@@ -254,7 +254,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           set({ user: normalizedUser, isAuthenticated: true });
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("🔴 [loadMe] Error al cargar perfil:", error);
           
           // Limpiar cookie corrupta si loadMe() falla
@@ -366,7 +366,7 @@ export const useAuthStore = create<AuthState>()(
               }
             }
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("🔴 [refreshSession] Error al refrescar sesión:", error);
           // No crashear SSR, solo loguear el error
           if (typeof window === "undefined") {

@@ -11,7 +11,7 @@ interface User {
   nombre?: string;
   fullName?: string;
   email?: string;
-  role?: { id: number | string; name: string; permissions?: string[] };
+  role?: { id: string; name: string; permissions?: string[] };
   rol?: string;
   status?: string;
   estado?: string;

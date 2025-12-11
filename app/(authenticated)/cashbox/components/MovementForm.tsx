@@ -11,6 +11,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { normalizeId } from "@/lib/normalizeId";
 
 interface MovementFormProps {
   cashboxId: string;
@@ -27,8 +28,8 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
     initialData?.typeDocument || null
   );
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
-  const [supplierId, setSupplierId] = useState(initialData?.supplierId || "");
-  const [workId, setWorkId] = useState(initialData?.workId || "");
+  const [supplierId, setSupplierId] = useState(normalizeId(initialData?.supplierId));
+  const [workId, setWorkId] = useState(normalizeId(initialData?.workId));
   const [category, setCategory] = useState(initialData?.category || "");
   const [date, setDate] = useState(
     initialData?.date ? new Date(initialData.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
@@ -218,7 +219,7 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
               >
                 <option value="">Seleccionar proveedor{documentType === "comprobante" ? " (opcional)" : ""}</option>
                 {suppliers?.map((supplier: any) => (
-                  <option key={supplier.id} value={supplier.id}>
+                  <option key={supplier.id} value={normalizeId(supplier.id)}>
                     {supplier.name || supplier.nombre || `Proveedor ${supplier.id.slice(0, 8)}`}
                   </option>
                 ))}
@@ -237,7 +238,7 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
               >
                 <option value="">Seleccionar obra</option>
                 {works?.map((work: any) => (
-                  <option key={work.id} value={work.id}>
+                  <option key={work.id} value={normalizeId(work.id)}>
                     {work.name || work.nombre || work.title || `Obra ${work.id.slice(0, 8)}`}
                   </option>
                 ))}
