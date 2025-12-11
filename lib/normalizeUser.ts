@@ -65,7 +65,12 @@ export function normalizeUser(rawUser: any): AuthUser {
     role: normalizedRole,
     roleId,
     organizationId,
-    organization,
+    organization: rawUser.organization
+      ? {
+          id: String(rawUser.organization.id || ""),
+          name: String(rawUser.organization.name || ""),
+        }
+      : null,
     created_at: rawUser.created_at ?? rawUser.createdAt ?? undefined,
     updated_at: rawUser.updated_at ?? rawUser.updatedAt ?? undefined,
   };
