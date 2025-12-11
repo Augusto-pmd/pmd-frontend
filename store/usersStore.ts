@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { logCreate, logUpdate, logDelete } from "@/lib/auditHelper";
+import { normalizeId } from "@/lib/normalizeId";
 
 export interface UserPMD {
   id: string;
@@ -46,7 +47,20 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/users");
-      set({ users: data?.data || data || [], isLoading: false });
+      const rawUsers = data?.data || data || [];
+      
+      // Normalizar IDs de usuarios y roles
+      const normalizedUsers = rawUsers.map((user: any) => ({
+        ...user,
+        id: normalizeId(user.id),
+        roleId: user.roleId ? normalizeId(user.roleId) : undefined,
+        role: user.role ? {
+          ...user.role,
+          id: normalizeId(user.role.id),
+        } : undefined,
+      }));
+      
+      set({ users: normalizedUsers, isLoading: false });
     } catch (error: any) {
       console.error("🔴 [usersStore] Error al obtener usuarios:", error);
       set({ error: error.message || "Error al cargar usuarios", isLoading: false });

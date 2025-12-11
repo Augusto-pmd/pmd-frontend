@@ -82,8 +82,8 @@ function UsersContent() {
       if (!matchesName && !matchesEmail) return false;
     }
 
-    // Filtro de rol
-    if (roleFilter !== "all" && user.roleId !== roleFilter) return false;
+    // Filtro de rol - normalizar ambos IDs para comparación
+    if (roleFilter !== "all" && normalizeId(user.roleId) !== normalizeId(roleFilter)) return false;
 
     // Filtro de estado - isActive no existe en el backend, todos los usuarios son activos
     // if (statusFilter === "active" && !user.isActive) return false;

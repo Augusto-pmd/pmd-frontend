@@ -41,8 +41,11 @@ export function ProtectedRoute({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user]);
 
-  // --- useEffect: Manejar redirecciones ---
+  // --- useEffect: Manejar redirecciones (solo en cliente) ---
   useEffect(() => {
+    // Solo ejecutar en cliente
+    if (typeof window === "undefined") return;
+    
     // Si no hay token → redirect a login
     if (!token) {
       router.replace(redirectTo);
@@ -62,14 +65,14 @@ export function ProtectedRoute({
     }
   }, [token, isAuthenticated, userRoleName, allowedRoles, router, redirectTo]);
 
-  // --- Guard: Si no hay token → redirect inmediato ---
-  if (!token) {
+  // --- Guard: Si no hay token → redirect inmediato (solo en cliente) ---
+  if (typeof window !== "undefined" && !token) {
     router.replace(redirectTo);
     return null;
   }
 
-  // --- Guard: Si no está autenticado → redirect ---
-  if (!isAuthenticated) {
+  // --- Guard: Si no está autenticado → redirect (solo en cliente) ---
+  if (typeof window !== "undefined" && !isAuthenticated) {
     router.replace(redirectTo);
     return null;
   }
