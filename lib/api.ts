@@ -41,16 +41,6 @@ export function getApiUrl(): string {
   return `${normalizedUrl}/api`;
 }
 
-// Validación en tiempo de ejecución (solo en cliente)
-if (typeof window !== "undefined") {
-  const apiUrl = getApiUrl();
-  console.log("🔵 [API] API_URL configurada:", apiUrl);
-}
-
-// Exposición global para debug en cliente
-if (typeof window !== "undefined") {
-  (window as any).__envApiUrl = process.env.NEXT_PUBLIC_API_URL;
-}
 
 // Construir API_URL usando getApiUrl() - ahora siempre devuelve una string válida
 const API_URL = getApiUrl();
@@ -61,7 +51,7 @@ const api: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Enable cookies
+  withCredentials: false, // Backend usa JWT por header, no cookies
 });
 
 // Request interceptor - Add auth token and validate URLs
@@ -90,81 +80,56 @@ api.interceptors.request.use(
 // Response interceptor - Handle token refresh and errors
 api.interceptors.response.use(
   (response) => {
-    // Normalize user in all responses
-    if (response.data?.user) {
-      response.data.user = normalizeUser(response.data.user);
-    }
     return response;
   },
   async (error: AxiosError) => {
-    console.error("🔴 [API RESPONSE ERROR]");
-    console.error("  - URL:", error.config?.url);
-    console.error("  - Method:", error.config?.method?.toUpperCase());
-    console.error("  - Status:", error.response?.status);
-    console.error("  - Status Text:", error.response?.statusText);
-    console.error("  - Response Data:", error.response?.data);
-    console.error("  - Error Message:", error.message);
-    
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
 
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized - try refresh token once
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const token = useAuthStore.getState().token;
         if (token) {
-          // getApiUrl() siempre devuelve una string válida
           const apiUrl = getApiUrl();
           const refreshURL = `${apiUrl}/auth/refresh`;
-          console.log('🔍 [Token Refresh] URL:', refreshURL);
           
-          const response = await axios.get(
-            refreshURL,
-            { 
-              withCredentials: true,
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
+          const response = await axios.get(refreshURL, {
+            withCredentials: false,
+            headers: {
+              Authorization: `Bearer ${token}`
             }
-          );
+          });
 
           const { user: rawUser, access_token: newToken, refresh_token: newRefreshToken } = response.data || {};
-          if (rawUser) {
-            const user = normalizeUser(rawUser);
-            // normalizeUser siempre retorna organizationId (con DEFAULT_ORG_ID como fallback)
-            // Si el usuario actualizado tiene DEFAULT_ORG_ID y el usuario actual tiene uno válido, preservarlo
-            const DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001";
-            const currentUser = useAuthStore.getState().user;
-            if (user.organizationId === DEFAULT_ORG_ID && currentUser?.organizationId && currentUser.organizationId !== DEFAULT_ORG_ID) {
-              user.organizationId = currentUser.organizationId;
-              if (currentUser.organization) {
-                user.organization = currentUser.organization;
-              }
+          
+          if (newToken) {
+            if (rawUser) {
+              const user = normalizeUser(rawUser);
+              useAuthStore.setState({
+                user,
+                token: newToken,
+                refreshToken: newRefreshToken,
+                isAuthenticated: true,
+              });
+            } else {
+              useAuthStore.setState({
+                token: newToken,
+                refreshToken: newRefreshToken,
+              });
             }
-            useAuthStore.setState({
-              user,
-              token: newToken,
-              refreshToken: newRefreshToken,
-              isAuthenticated: true,
-            });
-          } else {
-            useAuthStore.setState({
-              token: newToken,
-              refreshToken: newRefreshToken,
-            });
-          }
 
-          // Retry original request with new token
-          if (originalRequest.headers && newToken) {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            // Retry original request with new token
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            }
+            return api(originalRequest);
           }
-          return api(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed, logout user
         useAuthStore.getState().logout();
         return Promise.reject(refreshError);
       }
@@ -186,8 +151,6 @@ api.interceptors.response.use(
       data: error.response?.data,
       originalError: error,
     };
-
-    console.error("🔴 [API ERROR NORMALIZED]", normalizedError);
     
     return Promise.reject(normalizedError);
   }
@@ -196,23 +159,18 @@ api.interceptors.response.use(
 // API helper functions
 export const apiClient = {
   get: <T = any>(url: string, config?: any) => {
-    console.log('🔍 [apiClient.get] url:', url);
     return api.get<T>(url, config).then((res) => res.data);
   },
   post: <T = any>(url: string, data?: any, config?: any) => {
-    console.log('🔍 [apiClient.post] url:', url);
     return api.post<T>(url, data, config).then((res) => res.data);
   },
   put: <T = any>(url: string, data?: any, config?: any) => {
-    console.log('🔍 [apiClient.put] url:', url);
     return api.put<T>(url, data, config).then((res) => res.data);
   },
   patch: <T = any>(url: string, data?: any, config?: any) => {
-    console.log('🔍 [apiClient.patch] url:', url);
     return api.patch<T>(url, data, config).then((res) => res.data);
   },
   delete: <T = any>(url: string, config?: any) => {
-    console.log('🔍 [apiClient.delete] url:', url);
     return api.delete<T>(url, config).then((res) => res.data);
   },
 };
@@ -238,7 +196,7 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   return fetch(url, {
     ...options,
     headers,
-    credentials: "include", // Mantener cookies
+    credentials: "omit", // Backend usa JWT por header, no cookies
   });
 }
 

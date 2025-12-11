@@ -37,3 +37,38 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# IDE
+.cursor/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+.lesshst
+
+# User files (should not be in repo)
+AppData/
+Application Data/
+Contacts/
+CrossDevice/
+Downloads/
+Favorites/
+Links/
+Music/
+NTUSER.DAT*
+ntuser.dat.*
+ntuser.ini
+OneDrive/
+Saved Games/
+Searches/
+Videos/
+
