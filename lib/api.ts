@@ -9,16 +9,22 @@ export function getApiUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL;
 
   if (!url || typeof url !== "string" || url.trim() === "") {
-    console.error("❌ [getApiUrl] NEXT_PUBLIC_API_URL no está definida en runtime.");
-    console.error("❌ [getApiUrl] Por favor, configura NEXT_PUBLIC_API_URL en tu archivo .env.local");
-    console.error("❌ [getApiUrl] Ejemplo: NEXT_PUBLIC_API_URL=https://pmd-backend-l47d.onrender.com");
+    if (typeof window !== "undefined") {
+      // Solo loguear en cliente para evitar ruido en build
+      console.error("❌ [getApiUrl] NEXT_PUBLIC_API_URL no está definida en runtime.");
+      console.error("❌ [getApiUrl] Por favor, configura NEXT_PUBLIC_API_URL en tu archivo .env.local");
+      console.error("❌ [getApiUrl] Ejemplo: NEXT_PUBLIC_API_URL=https://pmd-backend-l47d.onrender.com/api");
+    }
     
     // Fallback para desarrollo/producción
-    const fallbackUrl = "https://pmd-backend-l47d.onrender.com";
-    console.warn("⚠️ [getApiUrl] Usando URL de fallback:", fallbackUrl);
-    return `${fallbackUrl}/api`;
+    const fallbackUrl = "https://pmd-backend-l47d.onrender.com/api";
+    if (typeof window !== "undefined") {
+      console.warn("⚠️ [getApiUrl] Usando URL de fallback:", fallbackUrl);
+    }
+    return fallbackUrl;
   }
 
+  // Asegurar que la URL termine en /api
   return url.endsWith("/api") ? url : `${url}/api`;
 }
 

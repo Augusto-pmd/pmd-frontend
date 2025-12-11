@@ -203,25 +203,16 @@ export const useAuthStore = create<AuthState>()(
 
       // --- LOAD ME ---
       loadMe: async () => {
-        // Validar que NEXT_PUBLIC_API_URL esté definida
-        const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
-          console.error("🔴 [loadMe] NEXT_PUBLIC_API_URL no está definida");
-          throw new Error("NEXT_PUBLIC_API_URL no está configurada");
-        }
-
         const token = get().token;
         if (!token) {
           throw new Error("No token");
         }
-
-        // Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
-        const API_URL = `${envApiUrl}/api`;
         
         try {
-          // Importar apiFetch dinámicamente para evitar dependencias circulares
-          const { apiFetch } = await import("@/lib/api");
-          const response = await apiFetch(`${API_URL}/auth/me`, {
+          // Importar getApiUrl y apiFetch dinámicamente para evitar dependencias circulares
+          const { getApiUrl, apiFetch } = await import("@/lib/api");
+          const apiUrl = getApiUrl();
+          const response = await apiFetch(`${apiUrl}/users/me`, {
             method: "GET",
           });
 
@@ -295,26 +286,17 @@ export const useAuthStore = create<AuthState>()(
 
       // --- REFRESH SESSION ---
       refreshSession: async () => {
-        // Validar que NEXT_PUBLIC_API_URL esté definida
-        const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
-          console.error("🔴 [refreshSession] NEXT_PUBLIC_API_URL no está definida");
-          throw new Error("NEXT_PUBLIC_API_URL no está configurada");
-        }
-
         const { token } = get();
         if (!token) {
           throw new Error("No access token");
         }
-
-        // Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api
-        const API_URL = `${envApiUrl}/api`;
         
         try {
-          // Importar apiFetch dinámicamente para evitar dependencias circulares
-          const { apiFetch } = await import("@/lib/api");
+          // Importar getApiUrl y apiFetch dinámicamente para evitar dependencias circulares
+          const { getApiUrl, apiFetch } = await import("@/lib/api");
+          const apiUrl = getApiUrl();
           // El backend usa GET /api/auth/refresh con JWT en header (apiFetch lo agrega automáticamente)
-          const response = await apiFetch(`${API_URL}/auth/refresh`, {
+          const response = await apiFetch(`${apiUrl}/auth/refresh`, {
             method: "GET",
           });
 

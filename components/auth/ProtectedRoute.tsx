@@ -18,6 +18,8 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
 
   // --- HOOKS SIEMPRE PRIMERO ---
+  const storeState = useAuthStore.getState();
+  const token = storeState.token;
   const { user, isAuthenticated } = useAuthStore((state) => ({
     user: state.user ? state.getUserSafe() : null,
     isAuthenticated: state.isAuthenticated,
@@ -25,49 +27,60 @@ export function ProtectedRoute({
 
   const router = useRouter();
   
-  // Logs de depuración
-  const storeState = useAuthStore.getState();
-  console.log("🔵 [AUTH PROTECTED ROUTE] Estado del store:");
-  console.log("  - isAuthenticated:", isAuthenticated);
-  console.log("  - user:", user ? "PRESENT" : "NULL");
-  console.log("  - token:", storeState.token ? "***PRESENT***" : "NULL");
-  console.log("  - user.role.name:", user?.role?.name || "N/A", "(id:", user?.role?.id || "N/A", ")");
-
-  // role ahora es SIEMPRE un objeto { id, name }, extraer el nombre
+  // role ahora es SIEMPRE un objeto { id, name } o null, extraer el nombre
   const userRoleName = user?.role?.name?.toLowerCase() as UserRole | null;
 
-  // --- useEffect: Hidratar usuario al montar si no está presente ---
+  // --- useEffect: Si hay token pero no user, llamar a loadMe() ---
   useEffect(() => {
-    if (!user) {
-      console.log("🔵 ProtectedRoute: hydrating user...");
-      useAuthStore.getState().hydrateUser();
+    if (token && !user) {
+      console.log("🔵 ProtectedRoute: token presente pero sin user, llamando loadMe()...");
+      storeState.loadMe().catch((error) => {
+        console.error("🔴 ProtectedRoute: Error en loadMe():", error);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [token, user]);
 
   // --- useEffect: Manejar redirecciones ---
   useEffect(() => {
+    // Si no hay token → redirect a login
+    if (!token) {
+      router.replace(redirectTo);
+      return;
+    }
+
+    // Si no está autenticado → redirect a login
     if (!isAuthenticated) {
       router.replace(redirectTo);
       return;
     }
 
+    // Si hay allowedRoles y el usuario no tiene un rol permitido → redirect a unauthorized
     if (allowedRoles && userRoleName && !allowedRoles.includes(userRoleName)) {
       router.replace("/unauthorized");
       return;
     }
-  }, [isAuthenticated, userRoleName, allowedRoles, router, redirectTo]);
+  }, [token, isAuthenticated, userRoleName, allowedRoles, router, redirectTo]);
 
-  // --- Guard DESPUÉS del efecto: Permitir redirect sin bloquear ---
+  // --- Guard: Si no hay token → redirect inmediato ---
+  if (!token) {
+    router.replace(redirectTo);
+    return null;
+  }
+
+  // --- Guard: Si no está autenticado → redirect ---
   if (!isAuthenticated) {
     router.replace(redirectTo);
     return null;
   }
 
-  // Verificar que user existe antes de acceder a sus propiedades
+  // --- Guard: Si hay token pero no user → mostrar loading mientras carga ---
   if (!user) {
-    console.warn("⚠ ProtectedRoute sin user — evitando loading infinito");
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loading size="lg" />
+      </div>
+    );
   }
 
   // Verificar organizationId

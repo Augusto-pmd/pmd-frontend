@@ -5,22 +5,22 @@
 
 /**
  * Extrae el nombre del rol como string
- * @param role - Objeto role { id, name } o undefined
+ * @param role - Objeto role { id, name } o null/undefined
  * @returns Nombre del rol o undefined si no existe
  */
 export const getRoleString = (
-  role?: { id: number | string; name: string; permissions?: string[] }
+  role?: { id: number | string; name: string; permissions?: string[] } | null
 ): string | undefined => {
   return role?.name;
 };
 
 /**
  * Traduce el nombre del rol al español
- * @param role - Objeto role { id, name } o undefined
+ * @param role - Objeto role { id, name } o null/undefined
  * @returns Nombre traducido del rol o "Sin rol" si no existe
  */
 export const translateRole = (
-  role?: { id: number | string; name: string; permissions?: string[] }
+  role?: { id: number | string; name: string; permissions?: string[] } | null
 ): string => {
   const roleStr = getRoleString(role);
   if (!roleStr) return "Sin rol";
@@ -39,11 +39,11 @@ export const translateRole = (
 
 /**
  * Obtiene la variante de Badge según el rol
- * @param role - Objeto role { id, name } o undefined
+ * @param role - Objeto role { id, name } o null/undefined
  * @returns Variante de Badge
  */
 export const getRoleVariant = (
-  role?: { id: number | string; name: string; permissions?: string[] }
+  role?: { id: number | string; name: string; permissions?: string[] } | null
 ): "default" | "success" | "warning" | "error" | "info" => {
   const roleStr = getRoleString(role);
   if (!roleStr) return "default";
