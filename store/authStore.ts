@@ -61,7 +61,16 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string): Promise<AuthUser | null> => {
         try {
           const response = await loginService(email, password);
+          
+          if (!response) {
+            return null;
+          }
+
           const { user, access_token, refresh_token } = response;
+
+          if (!user || !access_token) {
+            return null;
+          }
 
           // Normalize user
           const normalizedUser = normalizeUserWithDefaults(user);
@@ -130,7 +139,12 @@ export const useAuthStore = create<AuthState>()(
         try {
           // Call refreshService
           const result = await refreshService(refreshToken);
-          if (!result || !result.access_token) {
+          
+          if (!result) {
+            return null;
+          }
+
+          if (!result.access_token) {
             return null;
           }
 
@@ -198,7 +212,14 @@ export const useAuthStore = create<AuthState>()(
         try {
           // Call loadMeService
           const response = await loadMeService();
-          if (!response || !response.user) {
+          
+          if (!response) {
+            // Try refresh if loadMe fails
+            const refreshed = await get().refreshSession();
+            return refreshed;
+          }
+
+          if (!response.user) {
             // Try refresh if loadMe fails
             const refreshed = await get().refreshSession();
             return refreshed;
