@@ -87,52 +87,28 @@ api.interceptors.request.use(
 
 // Response interceptor - Handle token refresh and errors
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & {
+    const original = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
 
-    // Handle 401 Unauthorized - try refresh token once
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      const refreshed = await useAuthStore.getState().refresh();
 
-      try {
-        await useAuthStore.getState().refreshSession();
-        
-        // Después del refresh, reintentar el request original
-        const newToken = useAuthStore.getState().token;
-        if (newToken && originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      if (refreshed) {
+        const newToken = localStorage.getItem("access_token");
+        if (newToken && original.headers) {
+          original.headers["Authorization"] = `Bearer ${newToken}`;
         }
-        return api(originalRequest);
-      } catch (refreshError) {
-        // Refresh falló, hacer logout
+        return api(original);
+      } else {
         useAuthStore.getState().logout();
-        return Promise.reject(refreshError);
       }
     }
 
-    // Handle 401 - logout user
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-    }
-
-    // Normalize error response
-    const normalizedError = {
-      message:
-        (error.response?.data as { message?: string })?.message ||
-        (error.response?.data as { error?: string })?.error ||
-        error.message ||
-        "An error occurred",
-      status: error.response?.status || 500,
-      data: error.response?.data,
-      originalError: error,
-    };
-    
-    return Promise.reject(normalizedError);
+    return Promise.reject(error);
   }
 );
 

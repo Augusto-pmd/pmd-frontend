@@ -14,10 +14,10 @@ interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  refresh: () => Promise<void>;
-  loadMe: () => Promise<void>;
+  refresh: () => Promise<AuthUser | null>;
+  loadMe: () => Promise<AuthUser | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,65 +35,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize: Load user from localStorage on mount
   useEffect(() => {
-    const initializeAuth = async () => {
-      if (typeof window === "undefined") {
-        setLoading(false);
-        return;
-      }
-
-      const storedToken = localStorage.getItem("access_token");
-      const storedUser = localStorage.getItem("user");
-
-      if (storedToken && storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          let normalizedUser = normalizeUser(parsedUser);
-          
-          if (normalizedUser) {
-            // Normalize role and organization
-            if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-              normalizedUser.role = {
-                id: normalizedUser.role?.id || "1",
-                name: "ADMINISTRATION",
-              };
-            }
-            if (!normalizedUser.organization) {
-              normalizedUser.organization = {
-                id: normalizedUser.organizationId || "1",
-                name: "PMD Arquitectura",
-              };
-            }
-
-            // Update Zustand store
-            useAuthStore.setState({
-              user: normalizedUser,
-              token: storedToken,
-              refreshToken: localStorage.getItem("refresh_token"),
-              isAuthenticated: true,
-            });
-          }
-        } catch (error) {
-          // Clear invalid data
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          localStorage.removeItem("user");
-        }
-      }
-
+    if (typeof window === "undefined") {
       setLoading(false);
-    };
+      return;
+    }
 
-    initializeAuth();
+    const u = localStorage.getItem("user");
+    const t = localStorage.getItem("access_token");
+
+    if (u && t) {
+      try {
+        const parsedUser = JSON.parse(u);
+        let normalizedUser = normalizeUser(parsedUser);
+        
+        if (normalizedUser) {
+          // Normalize role and organization
+          if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
+            normalizedUser.role = {
+              id: normalizedUser.role?.id || "1",
+              name: "ADMINISTRATION",
+            };
+          }
+          if (!normalizedUser.organization) {
+            normalizedUser.organization = {
+              id: normalizedUser.organizationId || "1",
+              name: "PMD Arquitectura",
+            };
+          }
+
+          useAuthStore.setState({
+            user: normalizedUser,
+            token: t,
+            refreshToken: localStorage.getItem("refresh_token"),
+            isAuthenticated: true,
+          });
+        }
+      } catch (error) {
+        // Clear invalid data
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user");
+      }
+    }
+
+    setLoading(false);
   }, []);
 
   // Login function
   const login = async (email: string, password: string) => {
     setLoading(true);
+
     try {
       const response = await loginService(email, password);
-      
+
+      const { user, access_token, refresh_token } = response;
+
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", refresh_token);
+      localStorage.setItem("user", JSON.stringify(user));
+
       // Normalize user
-      let normalizedUser = normalizeUser(response.user);
+      let normalizedUser = normalizeUser(user);
       if (!normalizedUser) {
         throw new Error("Failed to normalize user");
       }
@@ -112,13 +114,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      // Store in Zustand
-      loginStore(normalizedUser, response.access_token, response.refresh_token);
-    } catch (error) {
+      useAuthStore.setState({
+        user: normalizedUser,
+        token: access_token,
+        refreshToken: refresh_token,
+        isAuthenticated: true,
+      });
+
       setLoading(false);
-      throw error;
+      return true;
+    } catch (err) {
+      setLoading(false);
+      useAuthStore.setState({ isAuthenticated: false });
+      return false;
     }
-    setLoading(false);
   };
 
   // Logout function
@@ -128,55 +137,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Refresh function
   const refresh = async () => {
-    try {
-      const response = await refreshService();
-      if (response) {
-        if (response.user) {
-          let normalizedUser = normalizeUser(response.user);
-          if (normalizedUser) {
-            // Normalize role and organization
-            if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-              normalizedUser.role = {
-                id: normalizedUser.role?.id || "1",
-                name: "ADMINISTRATION",
-              };
-            }
-            if (!normalizedUser.organization) {
-              normalizedUser.organization = {
-                id: normalizedUser.organizationId || "1",
-                name: "PMD Arquitectura",
-              };
-            }
-            useAuthStore.setState({
-              user: normalizedUser,
-              token: response.access_token,
-              refreshToken: response.refresh_token,
-              isAuthenticated: true,
-            });
-          }
-        } else {
-          // Update tokens only
-          useAuthStore.setState({
-            token: response.access_token,
-            refreshToken: response.refresh_token,
-          });
-        }
-      } else {
-        // Refresh failed, logout
-        logoutStore();
-      }
-    } catch (error) {
-      logoutStore();
-      throw error;
-    }
-  };
+    const refreshToken = localStorage.getItem("refresh_token");
 
-  // LoadMe function
-  const loadMe = async () => {
+    if (!refreshToken) {
+      logout();
+      return null;
+    }
+
     try {
-      const response = await loadMeService();
-      if (response && response.user) {
-        let normalizedUser = normalizeUser(response.user);
+      const result = await refreshService(refreshToken);
+
+      if (!result) {
+        logout();
+        return null;
+      }
+
+      const { user, access_token, refresh_token } = result;
+
+      if (!access_token) {
+        logout();
+        return null;
+      }
+
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", refresh_token || refreshToken);
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
+      let normalizedUser: AuthUser | null = null;
+      if (user) {
+        normalizedUser = normalizeUser(user);
         if (normalizedUser) {
           // Normalize role and organization
           if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
@@ -191,18 +182,104 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               name: "PMD Arquitectura",
             };
           }
-          useAuthStore.setState({
-            user: normalizedUser,
-            isAuthenticated: true,
-          });
         }
-      } else {
-        // LoadMe failed, try refresh
-        await refresh();
       }
+
+      // If no user in response, try to get from localStorage or keep current
+      if (!normalizedUser) {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          try {
+            normalizedUser = normalizeUser(JSON.parse(storedUser));
+          } catch {
+            // Keep current user from store
+            normalizedUser = useAuthStore.getState().user;
+          }
+        } else {
+          normalizedUser = useAuthStore.getState().user;
+        }
+      }
+
+      useAuthStore.setState({
+        user: normalizedUser,
+        token: access_token,
+        refreshToken: refresh_token || refreshToken,
+        isAuthenticated: true,
+      });
+
+      return normalizedUser;
     } catch (error) {
-      logoutStore();
-      throw error;
+      logout();
+      return null;
+    }
+  };
+
+  // LoadMe function
+  const loadMe = async () => {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      useAuthStore.setState({ user: null, isAuthenticated: false });
+      setLoading(false);
+      return null;
+    }
+
+    try {
+      const response = await loadMeService();
+      
+      if (!response || !response.user) {
+        // Try refresh
+        try {
+          const refreshedUser = await refresh();
+          return refreshedUser;
+        } catch {
+          logout();
+          return null;
+        }
+      }
+
+      let normalizedUser = normalizeUser(response.user);
+      if (!normalizedUser) {
+        // Try refresh
+        try {
+          const refreshedUser = await refresh();
+          return refreshedUser;
+        } catch {
+          logout();
+          return null;
+        }
+      }
+
+      // Normalize role and organization
+      if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
+        normalizedUser.role = {
+          id: normalizedUser.role?.id || "1",
+          name: "ADMINISTRATION",
+        };
+      }
+      if (!normalizedUser.organization) {
+        normalizedUser.organization = {
+          id: normalizedUser.organizationId || "1",
+          name: "PMD Arquitectura",
+        };
+      }
+
+      useAuthStore.setState({
+        user: normalizedUser,
+        isAuthenticated: true,
+      });
+      setLoading(false);
+
+      return normalizedUser;
+    } catch (err) {
+      // Try refresh
+      try {
+        const refreshedUser = await refresh();
+        return refreshedUser;
+      } catch {
+        logout();
+        return null;
+      }
     }
   };
 

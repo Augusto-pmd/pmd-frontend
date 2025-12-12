@@ -20,6 +20,7 @@ interface AuthState {
   logout: () => void;
   loadMe: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  refresh: () => Promise<AuthUser | null>;
   syncAuth: () => Promise<void>;
   hydrateUser: () => Promise<void>;
 }
@@ -274,6 +275,65 @@ export const useAuthStore = create<AuthState>()(
         } catch (error: unknown) {
           // Re-throw error to be handled by caller
           throw error;
+        }
+      },
+
+      // --- REFRESH (returns user) ---
+      refresh: async () => {
+        const refreshToken = get().refreshToken || (typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null);
+        if (!refreshToken) {
+          return null;
+        }
+        
+        try {
+          const { refresh: refreshService } = await import("@/lib/services/authService");
+          const result = await refreshService(refreshToken);
+          
+          if (!result || !result.access_token) {
+            return null;
+          }
+
+          const { user, access_token, refresh_token } = result;
+
+          // Store tokens
+          set({
+            token: access_token,
+            refreshToken: refresh_token ?? refreshToken,
+          });
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("access_token", access_token);
+            if (refresh_token) {
+              localStorage.setItem("refresh_token", refresh_token);
+            }
+          }
+
+          // If there's a user in response, normalize and update
+          if (user) {
+            let normalizedUser = normalizeUser(user);
+            if (normalizedUser) {
+              // Normalize role and organization
+              if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
+                normalizedUser.role = { id: normalizedUser.role?.id || "1", name: "ADMINISTRATION" };
+              }
+              if (!normalizedUser.organization) {
+                normalizedUser.organization = { id: normalizedUser.organizationId || "1", name: "PMD Arquitectura" };
+              }
+              set({
+                user: normalizedUser,
+                isAuthenticated: true,
+              });
+              if (typeof window !== "undefined") {
+                localStorage.setItem("user", JSON.stringify(normalizedUser));
+              }
+              return normalizedUser;
+            }
+          }
+
+          // If no user in response, return current user
+          return get().user;
+        } catch (error: unknown) {
+          return null;
         }
       },
 

@@ -97,10 +97,10 @@ export async function login(email: string, password: string): Promise<LoginRespo
  * Refresh token service
  * Sends POST /auth/refresh and returns new tokens
  */
-export async function refresh(): Promise<RefreshResponse | null> {
-  const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null;
+export async function refresh(refreshToken?: string | null): Promise<RefreshResponse | null> {
+  const token = refreshToken || (typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null);
   
-  if (!refreshToken) {
+  if (!token) {
     return null;
   }
 
@@ -113,7 +113,7 @@ export async function refresh(): Promise<RefreshResponse | null> {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      body: JSON.stringify({ refresh_token: token }),
     });
 
     if (!response.ok) {
