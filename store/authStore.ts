@@ -45,6 +45,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<AuthUser | null>;
   logout: () => void;
   refreshSession: () => Promise<AuthUser | null>;
+  refresh: () => Promise<AuthUser | null>;
   loadMe: () => Promise<AuthUser | null>;
 }
 
@@ -185,6 +186,11 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           return null;
         }
+      },
+
+      // --- REFRESH (alias for refreshSession, for interceptor use) ---
+      refresh: async (): Promise<AuthUser | null> => {
+        return get().refreshSession();
       },
 
       // --- LOAD ME ---

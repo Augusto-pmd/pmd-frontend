@@ -88,20 +88,16 @@ api.interceptors.request.use(
 // Response interceptor - Handle token refresh and errors
 api.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
-    const original = error.config as InternalAxiosRequestConfig & {
-      _retry?: boolean;
-    };
+  async (error) => {
+    const original = error.config;
 
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
-      const refreshed = await useAuthStore.getState().refreshSession();
+      const refreshed = await useAuthStore.getState().refresh();
 
       if (refreshed) {
-        const newToken = localStorage.getItem("access_token");
-        if (newToken && original.headers) {
-          original.headers["Authorization"] = `Bearer ${newToken}`;
-        }
+        original.headers["Authorization"] = 
+          `Bearer ${localStorage.getItem("access_token")}`;
         return api(original);
       } else {
         useAuthStore.getState().logout();
