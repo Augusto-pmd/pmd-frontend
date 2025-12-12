@@ -100,20 +100,16 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshResult = await useAuthStore.getState().refreshSession();
-        if (refreshResult) {
-          // Refresh exitoso, reintentar request original
-          const newToken = useAuthStore.getState().token;
-          if (newToken && originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          }
-          return api(originalRequest);
-        } else {
-          // Refresh falló, hacer logout
-          useAuthStore.getState().logout();
-          return Promise.reject(error);
+        await useAuthStore.getState().refreshSession();
+        
+        // Después del refresh, reintentar el request original
+        const newToken = useAuthStore.getState().token;
+        if (newToken && originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
+        return api(originalRequest);
       } catch (refreshError) {
+        // Refresh falló, hacer logout
         useAuthStore.getState().logout();
         return Promise.reject(refreshError);
       }

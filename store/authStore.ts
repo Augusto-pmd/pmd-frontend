@@ -222,7 +222,7 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (!response.ok) {
-            return null; // Refresh falló
+            throw new Error("Refresh token failed"); // Refresh falló
           }
 
           const data = await response.json().catch(() => ({}));
@@ -231,7 +231,7 @@ export const useAuthStore = create<AuthState>()(
           const refresh_token = data.refresh_token || data.refreshToken;
           
           if (!access_token) {
-            return null; // No access token en respuesta
+            throw new Error("No access token in refresh response"); // No access token en respuesta
           }
 
           // Almacenar tokens
@@ -265,18 +265,15 @@ export const useAuthStore = create<AuthState>()(
               if (typeof window !== "undefined") {
                 localStorage.setItem("user", JSON.stringify(normalizedUser));
               }
-              return normalizedUser;
+              // No return - function is void
             }
           }
 
-          // Si no hay user, preservar el actual
-          const currentUser = get().user;
-          return currentUser;
+          // Si no hay user, preservar el actual (ya está en el state)
+          // No return - function is void
         } catch (error: unknown) {
-          if (typeof window === "undefined") {
-            return null;
-          }
-          return null; // Refresh falló
+          // Re-throw error to be handled by caller
+          throw error;
         }
       },
 
