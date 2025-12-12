@@ -302,6 +302,11 @@ export const useAuthStore = create<AuthState>()(
 
       // --- REHIDRATACIÓN SEGURA ---
       onRehydrateStorage: () => (state) => {
+        // Ensure state is never undefined
+        if (!state) {
+          return;
+        }
+
         // Intentar cargar desde localStorage si Zustand no tiene datos
         if (typeof window !== "undefined") {
           const storedToken = localStorage.getItem("access_token");
@@ -336,7 +341,7 @@ export const useAuthStore = create<AuthState>()(
         }
         
         // Normalizar user existente en state
-        if (state?.user) {
+        if (state.user) {
           try {
             let normalizedUser = normalizeUser(state.user);
             if (normalizedUser) {
