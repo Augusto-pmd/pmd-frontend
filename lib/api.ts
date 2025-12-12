@@ -20,15 +20,16 @@ export function getApiUrl(): string {
       // Solo loguear en cliente para evitar ruido en build
       console.error("❌ [getApiUrl] NEXT_PUBLIC_API_URL no está definida en runtime.");
       console.error("❌ [getApiUrl] Por favor, configura NEXT_PUBLIC_API_URL en tu archivo .env.local");
-      console.error("❌ [getApiUrl] Ejemplo: NEXT_PUBLIC_API_URL=https://pmd-backend-8d4a.onrender.com/api");
+      console.error("❌ [getApiUrl] Ejemplo: NEXT_PUBLIC_API_URL=https://pmd-backend-8d4a.onrender.com");
     }
     
     // Fallback para desarrollo/producción
-    const fallbackUrl = "https://pmd-backend-8d4a.onrender.com/api";
+    const fallbackUrl = "https://pmd-backend-8d4a.onrender.com";
     if (typeof window !== "undefined") {
       console.warn("⚠️ [getApiUrl] Usando URL de fallback:", fallbackUrl);
     }
-    return fallbackUrl;
+    // Agregar /api al fallback
+    return `${fallbackUrl}/api`;
   }
 
   // Normalizar URL: eliminar /api duplicado si existe
@@ -54,7 +55,7 @@ const API_URL = getApiUrl();
 const baseURL = API_URL; // getApiUrl() siempre devuelve una string válida
 
 const api: AxiosInstance = axios.create({
-  baseURL: baseURL,
+  baseURL: baseURL, // Usa getApiUrl() que incluye /api automáticamente
   headers: {
     "Content-Type": "application/json",
   },

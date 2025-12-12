@@ -40,12 +40,13 @@ function loadEnvLocal() {
 loadEnvLocal();
 
 // Obtener la URL base de la API
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pmd-backend-l47d.onrender.com/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pmd-backend-8d4a.onrender.com';
 
 // Construir la URL completa del endpoint
-// Nota: API_URL ya debe incluir /api (ej: https://pmd-backend-l47d.onrender.com/api)
-// El endpoint completo será: ${API_URL}/auth/login
-const loginUrl = `${API_URL.replace(/\/$/, '')}/auth/login`;
+// Nota: API_URL es la base sin /api (ej: https://pmd-backend-8d4a.onrender.com)
+// El endpoint completo será: ${API_URL}/api/auth/login
+const baseUrl = API_URL.replace(/\/$/, '');
+const loginUrl = `${baseUrl}/api/auth/login`;
 
 // Credenciales de prueba
 const testCredentials = {
