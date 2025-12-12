@@ -4,6 +4,13 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "ax
 import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
 
+// Helper para obtener header de Authorization
+export function getAuthHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem("access_token") || useAuthStore.getState().token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // Función universal para obtener API_URL
 export function getApiUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL;
@@ -58,10 +65,10 @@ const api: AxiosInstance = axios.create({
 // Request interceptor - Add auth token and validate URLs
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // getApiUrl() siempre devuelve una string válida (con fallback si es necesario)
-    const apiUrl = getApiUrl();
+    // Obtener token de Zustand o localStorage
+    const token = useAuthStore.getState().token || 
+                  (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
     
-    const token = useAuthStore.getState().token;
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -93,49 +100,18 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const token = useAuthStore.getState().token;
-        if (token) {
-          const apiUrl = getApiUrl();
-          const refreshURL = `${apiUrl}/auth/refresh`;
-          
-          const response = await axios.get(refreshURL, {
-            withCredentials: false,
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-
-          const { user: rawUser, access_token: newToken, refresh_token: newRefreshToken } = response.data || {};
-          
-          if (newToken) {
-            if (rawUser) {
-              const user = normalizeUser(rawUser);
-              if (user) {
-                useAuthStore.setState({
-                  user,
-                  token: newToken,
-                  refreshToken: newRefreshToken,
-                  isAuthenticated: true,
-                });
-              } else {
-                useAuthStore.setState({
-                  token: newToken,
-                  refreshToken: newRefreshToken,
-                });
-              }
-            } else {
-              useAuthStore.setState({
-                token: newToken,
-                refreshToken: newRefreshToken,
-              });
-            }
-
-            // Retry original request with new token
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            }
-            return api(originalRequest);
+        const refreshResult = await useAuthStore.getState().refreshSession();
+        if (refreshResult) {
+          // Refresh exitoso, reintentar request original
+          const newToken = useAuthStore.getState().token;
+          if (newToken && originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
           }
+          return api(originalRequest);
+        } else {
+          // Refresh falló, hacer logout
+          useAuthStore.getState().logout();
+          return Promise.reject(error);
         }
       } catch (refreshError) {
         useAuthStore.getState().logout();
@@ -185,7 +161,9 @@ export const apiClient = {
 
 // Wrapper universal para fetch con Authorization Bearer token
 export async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = useAuthStore.getState().token;
+  // Obtener token de Zustand o localStorage
+  const token = useAuthStore.getState().token || 
+                (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
   
   const headers: HeadersInit = {
     "Content-Type": "application/json",

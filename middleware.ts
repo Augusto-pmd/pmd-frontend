@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get("token")?.value || null;
-
   const pathname = req.nextUrl.pathname;
 
   const isLogin = pathname.startsWith("/login");
@@ -30,6 +28,14 @@ export function middleware(req: NextRequest) {
 
   // Permitir siempre el login
   if (isLogin) return NextResponse.next();
+
+  // Check for access_token in Authorization header or cookie
+  // Note: Middleware runs on server, so we can't access localStorage directly
+  // The client-side ProtectedRoute component will handle localStorage checks
+  // This middleware only checks cookies as a fallback
+  const token = req.cookies.get("access_token")?.value || 
+                req.headers.get("authorization")?.replace("Bearer ", "") || 
+                null;
 
   // Si es ruta protegida y no hay token → login
   if (isProtected && !token) {

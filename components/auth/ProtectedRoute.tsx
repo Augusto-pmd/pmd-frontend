@@ -19,7 +19,8 @@ export function ProtectedRoute({
 
   // --- HOOKS SIEMPRE PRIMERO ---
   const storeState = useAuthStore.getState();
-  const token = storeState.token;
+  // Check both Zustand store and localStorage for token
+  const token = storeState.token || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
   const { user, isAuthenticated } = useAuthStore((state) => ({
     user: state.user ? state.getUserSafe() : null,
     isAuthenticated: state.isAuthenticated,
@@ -46,14 +47,18 @@ export function ProtectedRoute({
     // Solo ejecutar en cliente
     if (typeof window === "undefined") return;
     
+    // Check localStorage for access_token if Zustand doesn't have it
+    const localToken = localStorage.getItem("access_token");
+    const hasToken = token || localToken;
+    
     // Si no hay token → redirect a login
-    if (!token) {
+    if (!hasToken) {
       router.replace(redirectTo);
       return;
     }
 
     // Si no está autenticado → redirect a login
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !localToken) {
       router.replace(redirectTo);
       return;
     }

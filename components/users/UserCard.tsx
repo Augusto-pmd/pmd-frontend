@@ -35,8 +35,8 @@ export function UserCard({ user }: UserCardProps) {
 
   const getUserRole = (): string | null => {
     if (user.rol) return user.rol;
-    if (user.role) {
-      return user.role.name || null;
+    if (user.role && typeof user.role.name === "string") {
+      return user.role.name;
     }
     return null;
   };

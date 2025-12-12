@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-import { getApiUrl, apiFetch } from "@/lib/api";
+import { login as loginService } from "@/lib/services/authService";
 import LogoPMD from "@/components/LogoPMD";
 
 export function LoginForm() {
@@ -12,7 +12,7 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
+  const loginStore = useAuthStore((state) => state.login);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,48 +20,35 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const apiBase = getApiUrl();
-      const loginUrl = `${apiBase}/auth/login`;
+      // Use authService for API call
+      const response = await loginService(email, password);
+      
+      // Normalize user and store in Zustand
+      const { normalizeUser } = await import("@/lib/normalizeUser");
+      let normalizedUser = normalizeUser(response.user);
+      
+      if (!normalizedUser) {
+        throw new Error("Failed to normalize user");
+      }
 
-      const response = await apiFetch(loginUrl, {
-        method: "POST",
-        body: JSON.stringify({ email, password })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw {
-          response: {
-            status: response.status,
-            data: errorData
-          },
-          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`
+      // Normalize role and organization
+      if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
+        normalizedUser.role = {
+          id: normalizedUser.role?.id || "1",
+          name: "ADMINISTRATION",
+        };
+      }
+      if (!normalizedUser.organization) {
+        normalizedUser.organization = {
+          id: normalizedUser.organizationId || "1",
+          name: "PMD Arquitectura",
         };
       }
 
-      // Backend returns: { user, access_token, refresh_token }
-      const responseData = await response.json();
+      // Store in Zustand (tokens already stored in localStorage by authService)
+      loginStore(normalizedUser, response.access_token, response.refresh_token);
       
-      // Extraer datos del backend estabilizado
-      const access_token = responseData.access_token || responseData.token;
-      const userRaw = responseData.user;
-      const refresh_token = responseData.refresh_token || responseData.refreshToken;
-      
-      if (!userRaw) {
-        throw new Error("Invalid response: missing user");
-      }
-      
-      if (!access_token) {
-        throw new Error("Invalid response: missing access_token or token");
-      }
-
-      // login() normaliza el user internamente
-      login(userRaw, access_token, refresh_token || access_token);
-      
-      // Hidratar usuario desde el backend después del login
-      await useAuthStore.getState().loadMe();
-      
-      // Redirigir a dashboard
+      // Redirect to dashboard
       router.push("/dashboard");
     } catch (err: any) {
       let errorMessage = "Error al iniciar sesión. Por favor, intenta nuevamente.";
