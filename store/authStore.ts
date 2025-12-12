@@ -3,26 +3,49 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AuthUser, normalizeUser } from "@/lib/normalizeUser";
+import { login as loginService, refresh as refreshService, loadMe as loadMeService } from "@/lib/services/authService";
 
 // Re-export AuthUser for convenience
 export type { AuthUser };
 
-// UserRole ahora es el nombre del rol (string) para comparaciones
+// UserRole type
 export type UserRole = "admin" | "operator" | "auditor" | "administrator";
+
+// Helper function to normalize user with role and organization
+function normalizeUserWithDefaults(user: any): AuthUser | null {
+  const normalized = normalizeUser(user);
+  if (!normalized) {
+    return null;
+  }
+
+  // Normalize role
+  if (!normalized.role || typeof normalized.role.name !== "string") {
+    normalized.role = {
+      id: normalized.role?.id || "1",
+      name: "ADMINISTRATION",
+    };
+  }
+
+  // Normalize organization
+  if (!normalized.organization) {
+    normalized.organization = {
+      id: normalized.organizationId || "1",
+      name: "PMD Arquitectura",
+    };
+  }
+
+  return normalized;
+}
 
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  getUserSafe: () => AuthUser | null;
-  login: (userRaw: unknown, token: string, refreshToken?: string) => void;
+  login: (email: string, password: string) => Promise<AuthUser | null>;
   logout: () => void;
-  loadMe: () => Promise<void>;
-  refreshSession: () => Promise<void>;
-  refresh: () => Promise<AuthUser | null>;
-  syncAuth: () => Promise<void>;
-  hydrateUser: () => Promise<void>;
+  refreshSession: () => Promise<AuthUser | null>;
+  loadMe: () => Promise<AuthUser | null>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -33,365 +56,215 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
 
-      // --- SELECTOR SEGURO ---
-      getUserSafe: () => {
-        const u = get().user;
-        if (!u) return null;
-        const normalized = normalizeUser(u);
-        return normalized;
-      },
-
       // --- LOGIN ---
-      login: (userRaw: unknown, token: string, refreshToken?: string) => {
-        if (!userRaw) {
-          throw new Error("login: userRaw is required");
-        }
-        
-        if (!token) {
-          throw new Error("login: token is required");
-        }
+      login: async (email: string, password: string): Promise<AuthUser | null> => {
+        try {
+          const response = await loginService(email, password);
+          const { user, access_token, refresh_token } = response;
 
-        // Normalizar el usuario
-        let normalizedUser = normalizeUser(userRaw);
-        if (!normalizedUser) {
-          throw new Error("login: failed to normalize user");
-        }
-
-        // Normalizar role y organization inmediatamente (evita crashes)
-        if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-          normalizedUser.role = {
-            id: normalizedUser.role?.id || "1",
-            name: "ADMINISTRATION",
-          };
-        }
-        if (!normalizedUser.organization) {
-          normalizedUser.organization = {
-            id: normalizedUser.organizationId || "1",
-            name: "PMD Arquitectura",
-          };
-        }
-
-        // Almacenar en Zustand
-        set({
-          user: normalizedUser,
-          token,
-          refreshToken: refreshToken ?? null,
-          isAuthenticated: true,
-        });
-
-        // Almacenar también en localStorage para compatibilidad
-        if (typeof window !== "undefined") {
-          localStorage.setItem("access_token", token);
-          if (refreshToken) {
-            localStorage.setItem("refresh_token", refreshToken);
+          // Normalize user
+          const normalizedUser = normalizeUserWithDefaults(user);
+          if (!normalizedUser) {
+            return null;
           }
-          localStorage.setItem("user", JSON.stringify(normalizedUser));
+
+          // Store in localStorage
+          if (typeof window !== "undefined") {
+            localStorage.setItem("access_token", access_token);
+            localStorage.setItem("refresh_token", refresh_token);
+            localStorage.setItem("user", JSON.stringify(normalizedUser));
+          }
+
+          // Update Zustand with immutable set
+          set((state) => ({
+            ...state,
+            user: normalizedUser,
+            token: access_token,
+            refreshToken: refresh_token,
+            isAuthenticated: true,
+          }));
+
+          return normalizedUser;
+        } catch (error) {
+          // On error, clear state
+          set((state) => ({
+            ...state,
+            user: null,
+            token: null,
+            refreshToken: null,
+            isAuthenticated: false,
+          }));
+          return null;
         }
       },
 
       // --- LOGOUT ---
       logout: () => {
+        // Clear localStorage
         if (typeof window !== "undefined") {
           localStorage.removeItem("pmd-auth-storage");
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
           localStorage.removeItem("user");
         }
-        set({
+
+        // Update Zustand with immutable set
+        set((state) => ({
+          ...state,
           user: null,
           token: null,
           refreshToken: null,
           isAuthenticated: false,
-        });
-      },
-
-      // --- LOAD ME ---
-      loadMe: async () => {
-        const token = get().token || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
-        if (!token) {
-          throw new Error("No token");
-        }
-        
-        try {
-          const { getApiUrl, apiFetch } = await import("@/lib/api");
-          const apiUrl = getApiUrl();
-          const response = await apiFetch(`${apiUrl}/users/me`, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (!response.ok) {
-            if (response.status === 401) {
-              // Intentar refresh antes de logout
-              try {
-                await get().refreshSession();
-                // Reintentar /users/me después del refresh
-                const retryResponse = await apiFetch(`${apiUrl}/users/me`, {
-                  method: "GET",
-                  headers: {
-                    Authorization: `Bearer ${get().token || localStorage.getItem("access_token")}`,
-                  },
-                });
-                if (retryResponse.ok) {
-                  const retryData = await retryResponse.json().catch(() => ({}));
-                  const retryUser = retryData?.user ?? retryData;
-                  if (retryUser) {
-                    let normalizedUser = normalizeUser(retryUser);
-                    if (normalizedUser) {
-                      // Normalizar role y organization
-                      if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-                        normalizedUser.role = { id: normalizedUser.role?.id || "1", name: "ADMINISTRATION" };
-                      }
-                      if (!normalizedUser.organization) {
-                        normalizedUser.organization = { id: normalizedUser.organizationId || "1", name: "PMD Arquitectura" };
-                      }
-                      set({ user: normalizedUser, isAuthenticated: true });
-                      if (typeof window !== "undefined") {
-                        localStorage.setItem("user", JSON.stringify(normalizedUser));
-                      }
-                    }
-                  }
-                  return;
-                }
-              } catch (refreshError) {
-                // Refresh falló, hacer logout
-                get().logout();
-                if (typeof window !== "undefined") {
-                  window.location.href = "/login";
-                }
-                return;
-              }
-              // Si llegamos aquí, refresh no funcionó
-              get().logout();
-              if (typeof window !== "undefined") {
-                window.location.href = "/login";
-              }
-              return;
-            }
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const data = await response.json().catch(() => ({}));
-          const rawUser = data?.user ?? data;
-
-          if (!rawUser) {
-            return;
-          }
-
-          let normalizedUser = normalizeUser(rawUser);
-          if (normalizedUser) {
-            // Normalizar role y organization inmediatamente
-            if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-              normalizedUser.role = { id: normalizedUser.role?.id || "1", name: "ADMINISTRATION" };
-            }
-            if (!normalizedUser.organization) {
-              normalizedUser.organization = { id: normalizedUser.organizationId || "1", name: "PMD Arquitectura" };
-            }
-            set({ user: normalizedUser, isAuthenticated: true });
-            if (typeof window !== "undefined") {
-              localStorage.setItem("user", JSON.stringify(normalizedUser));
-            }
-          }
-        } catch (error: unknown) {
-          if (typeof window === "undefined") {
-            return;
-          }
-          
-          set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
-          throw error;
-        }
+        }));
       },
 
       // --- REFRESH SESSION ---
-      refreshSession: async () => {
-        const refreshToken = get().refreshToken || (typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null);
-        if (!refreshToken) {
-          throw new Error("No refresh token");
-        }
-        
-        try {
-          const { getApiUrl, apiFetch } = await import("@/lib/api");
-          const apiUrl = getApiUrl();
-          const response = await apiFetch(`${apiUrl}/auth/refresh`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-          });
-
-          if (!response.ok) {
-            throw new Error("Refresh token failed"); // Refresh falló
-          }
-
-          const data = await response.json().catch(() => ({}));
-          const rawUser = data?.user ?? data;
-          const access_token = data.access_token || data.token;
-          const refresh_token = data.refresh_token || data.refreshToken;
-          
-          if (!access_token) {
-            throw new Error("No access token in refresh response"); // No access token en respuesta
-          }
-
-          // Almacenar tokens
-          set({
-            token: access_token,
-            refreshToken: refresh_token ?? refreshToken,
-          });
-
-          if (typeof window !== "undefined") {
-            localStorage.setItem("access_token", access_token);
-            if (refresh_token) {
-              localStorage.setItem("refresh_token", refresh_token);
-            }
-          }
-
-          // Si hay user en la respuesta, normalizarlo y actualizar
-          if (rawUser) {
-            let normalizedUser = normalizeUser(rawUser);
-            if (normalizedUser) {
-              // Normalizar role y organization
-              if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-                normalizedUser.role = { id: normalizedUser.role?.id || "1", name: "ADMINISTRATION" };
-              }
-              if (!normalizedUser.organization) {
-                normalizedUser.organization = { id: normalizedUser.organizationId || "1", name: "PMD Arquitectura" };
-              }
-              set({
-                user: normalizedUser,
-                isAuthenticated: true,
-              });
-              if (typeof window !== "undefined") {
-                localStorage.setItem("user", JSON.stringify(normalizedUser));
-              }
-              // No return - function is void
-            }
-          }
-
-          // Si no hay user, preservar el actual (ya está en el state)
-          // No return - function is void
-        } catch (error: unknown) {
-          // Re-throw error to be handled by caller
-          throw error;
-        }
-      },
-
-      // --- REFRESH (returns user) ---
-      refresh: async () => {
-        const refreshToken = get().refreshToken || (typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null);
+      refreshSession: async (): Promise<AuthUser | null> => {
+        // Read refresh_token from localStorage
+        const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null;
         if (!refreshToken) {
           return null;
         }
-        
+
         try {
-          const { refresh: refreshService } = await import("@/lib/services/authService");
+          // Call refreshService
           const result = await refreshService(refreshToken);
-          
           if (!result || !result.access_token) {
             return null;
           }
 
           const { user, access_token, refresh_token } = result;
 
-          // Store tokens
-          set({
-            token: access_token,
-            refreshToken: refresh_token ?? refreshToken,
-          });
+          // Normalize user if present
+          let normalizedUser: AuthUser | null = null;
+          if (user) {
+            normalizedUser = normalizeUserWithDefaults(user);
+          }
 
+          // If no user in response, try to get from localStorage or keep current
+          if (!normalizedUser) {
+            if (typeof window !== "undefined") {
+              const storedUser = localStorage.getItem("user");
+              if (storedUser) {
+                try {
+                  normalizedUser = normalizeUserWithDefaults(JSON.parse(storedUser));
+                } catch {
+                  // If parsing fails, get current user from state
+                  normalizedUser = null;
+                }
+              }
+            }
+            // If still no user, we'll keep the current user from state
+            if (!normalizedUser) {
+              // Get current user from state using get()
+              normalizedUser = get().user;
+            }
+          }
+
+          // Store tokens in localStorage
           if (typeof window !== "undefined") {
             localStorage.setItem("access_token", access_token);
             if (refresh_token) {
               localStorage.setItem("refresh_token", refresh_token);
             }
-          }
-
-          // If there's a user in response, normalize and update
-          if (user) {
-            let normalizedUser = normalizeUser(user);
             if (normalizedUser) {
-              // Normalize role and organization
-              if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-                normalizedUser.role = { id: normalizedUser.role?.id || "1", name: "ADMINISTRATION" };
-              }
-              if (!normalizedUser.organization) {
-                normalizedUser.organization = { id: normalizedUser.organizationId || "1", name: "PMD Arquitectura" };
-              }
-              set({
-                user: normalizedUser,
-                isAuthenticated: true,
-              });
-              if (typeof window !== "undefined") {
-                localStorage.setItem("user", JSON.stringify(normalizedUser));
-              }
-              return normalizedUser;
+              localStorage.setItem("user", JSON.stringify(normalizedUser));
             }
           }
 
-          // If no user in response, return current user
-          return get().user;
-        } catch (error: unknown) {
+          // Update Zustand with immutable set
+          set((state) => ({
+            ...state,
+            user: normalizedUser || state.user, // Keep current user if no new user
+            token: access_token,
+            refreshToken: refresh_token || refreshToken,
+            isAuthenticated: true,
+          }));
+
+          return normalizedUser || get().user;
+        } catch (error) {
           return null;
         }
       },
 
-      // --- SYNC AUTH ---
-      syncAuth: async () => {
-        const currentToken = get().token;
-        if (!currentToken) {
-          set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
-          return;
-        }
-
+      // --- LOAD ME ---
+      loadMe: async (): Promise<AuthUser | null> => {
         try {
-          await get().loadMe();
-        } catch (error) {
-          set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
-        }
-      },
+          // Call loadMeService
+          const response = await loadMeService();
+          if (!response || !response.user) {
+            // Try refresh if loadMe fails
+            const refreshed = await get().refreshSession();
+            return refreshed;
+          }
 
-      // --- HYDRATE USER --- (alias for loadMe)
-      hydrateUser: async () => {
-        await get().loadMe();
+          // Normalize user
+          const normalizedUser = normalizeUserWithDefaults(response.user);
+          if (!normalizedUser) {
+            // Try refresh if normalization fails
+            const refreshed = await get().refreshSession();
+            return refreshed;
+          }
+
+          // Store in localStorage
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(normalizedUser));
+          }
+
+          // Update Zustand with immutable set
+          set((state) => ({
+            ...state,
+            user: normalizedUser,
+            isAuthenticated: true,
+          }));
+
+          return normalizedUser;
+        } catch (error) {
+          // Try refresh on error
+          try {
+            const refreshed = await get().refreshSession();
+            return refreshed;
+          } catch {
+            // If refresh also fails, clear state and return null
+            set((state) => ({
+              ...state,
+              user: null,
+              token: null,
+              refreshToken: null,
+              isAuthenticated: false,
+            }));
+            return null;
+          }
+        }
       },
     }),
     {
       name: "pmd-auth-storage",
-
-      // --- REHIDRATACIÓN SEGURA ---
       onRehydrateStorage: () => (state) => {
         // Ensure state is never undefined
         if (!state) {
           return;
         }
 
-        // Intentar cargar desde localStorage si Zustand no tiene datos
+        // Try to load from localStorage if Zustand doesn't have data
         if (typeof window !== "undefined") {
           const storedToken = localStorage.getItem("access_token");
           const storedRefreshToken = localStorage.getItem("refresh_token");
           const storedUser = localStorage.getItem("user");
-          
+
           if (storedToken && storedUser) {
             try {
               const parsedUser = JSON.parse(storedUser);
-              let normalizedUser = normalizeUser(parsedUser);
+              const normalizedUser = normalizeUserWithDefaults(parsedUser);
               if (normalizedUser) {
-                // Normalizar role y organization
-                if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-                  normalizedUser.role = { id: normalizedUser.role?.id || "1", name: "ADMINISTRATION" };
-                }
-                if (!normalizedUser.organization) {
-                  normalizedUser.organization = { id: normalizedUser.organizationId || "1", name: "PMD Arquitectura" };
-                }
+                // In onRehydrateStorage, we can mutate state directly (Zustand allows this)
                 state.user = normalizedUser;
                 state.token = storedToken;
                 state.refreshToken = storedRefreshToken;
                 state.isAuthenticated = true;
               }
             } catch {
-              // Si falla, limpiar
+              // If parsing fails, clear state
               state.user = null;
               state.token = null;
               state.refreshToken = null;
@@ -399,19 +272,12 @@ export const useAuthStore = create<AuthState>()(
             }
           }
         }
-        
-        // Normalizar user existente en state
+
+        // Normalize existing user in state
         if (state.user) {
           try {
-            let normalizedUser = normalizeUser(state.user);
+            const normalizedUser = normalizeUserWithDefaults(state.user);
             if (normalizedUser) {
-              // Normalizar role y organization
-              if (!normalizedUser.role || typeof normalizedUser.role.name !== "string") {
-                normalizedUser.role = { id: normalizedUser.role?.id || "1", name: "ADMINISTRATION" };
-              }
-              if (!normalizedUser.organization) {
-                normalizedUser.organization = { id: normalizedUser.organizationId || "1", name: "PMD Arquitectura" };
-              }
               state.user = normalizedUser;
             } else {
               state.user = null;

@@ -95,7 +95,7 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
-      const refreshed = await useAuthStore.getState().refresh();
+      const refreshed = await useAuthStore.getState().refreshSession();
 
       if (refreshed) {
         const newToken = localStorage.getItem("access_token");
