@@ -3,8 +3,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 export function useAuth() {
-  const getUserSafe = useAuthStore((s) => s.getUserSafe);
-  const user = getUserSafe();
+  const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const logout = useAuthStore((s) => s.logout);
   const refreshSession = useAuthStore((s) => s.refreshSession);

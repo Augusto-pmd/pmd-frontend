@@ -26,13 +26,11 @@ function CashboxDetailContent() {
   const { cashboxes, movements, isLoading, error, fetchCashboxes, fetchMovements, closeCashbox, deleteMovement } = useCashboxStore();
   const { suppliers } = useSuppliers();
   const { works } = useWorks();
-  const { getUserSafe } = useAuthStore();
+  const user = useAuthStore.getState().user;
   const [showMovementForm, setShowMovementForm] = useState(false);
   const [editingMovement, setEditingMovement] = useState<CashMovement | null>(null);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const toast = useToast();
-
-  const user = getUserSafe();
   const organizationId = user?.organizationId;
 
   const cashbox = cashboxes.find((c) => c.id === cashboxId);

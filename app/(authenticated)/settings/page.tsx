@@ -9,7 +9,7 @@ import { RecentActivitySection } from "@/components/settings/RecentActivitySecti
 import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function SettingsContent() {
-  const user = useAuthStore((state) => state.getUserSafe());
+  const user = useAuthStore((state) => state.user);
 
   return (
     <MainLayout>

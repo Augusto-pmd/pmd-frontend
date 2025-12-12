@@ -22,7 +22,7 @@ export function ProtectedRoute({
   // Check both Zustand store and localStorage for token
   const token = storeState.token || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
   const { user, isAuthenticated } = useAuthStore((state) => ({
-    user: state.user ? state.getUserSafe() : null,
+    user: state.user,
     isAuthenticated: state.isAuthenticated,
   }));
 

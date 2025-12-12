@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export function Header({ title }: HeaderProps) {
-  const user = useAuthStore.getState().getUserSafe();
+  const user = useAuthStore.getState().user;
   const logout = useAuthStore.getState().logout;
   const router = useRouter();
 

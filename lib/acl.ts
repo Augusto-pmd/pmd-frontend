@@ -37,7 +37,7 @@ export type Permission =
  * @returns Array de permisos del usuario
  */
 function getUserPermissions(): Permission[] {
-  const user = useAuthStore.getState().getUserSafe();
+  const user = useAuthStore.getState().user;
   
   if (!user) {
     return [];

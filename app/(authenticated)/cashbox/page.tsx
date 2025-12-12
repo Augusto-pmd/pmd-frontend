@@ -20,12 +20,10 @@ function CashboxContent() {
   const router = useRouter();
   const { cashboxes, isLoading, error, fetchCashboxes, closeCashbox } = useCashboxStore();
   const { works } = useWorks();
-  const { getUserSafe } = useAuthStore();
+  const user = useAuthStore.getState().user;
   const [showForm, setShowForm] = useState(false);
   const [editingCashbox, setEditingCashbox] = useState<any>(null);
   const toast = useToast();
-
-  const user = getUserSafe();
   const organizationId = (user as any)?.organizationId || (user as any)?.organization?.id;
 
   useEffect(() => {

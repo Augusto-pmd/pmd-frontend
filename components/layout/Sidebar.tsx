@@ -66,7 +66,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const { alerts, fetchAlerts } = useAlertsStore();
   const { documents, fetchDocuments } = useDocumentsStore();
   const { cashboxes, fetchCashboxes } = useCashboxStore();
-  const user = useAuthStore.getState().getUserSafe();
+  const user = useAuthStore.getState().user;
 
   // ACL hooks - deben ejecutarse siempre antes de cualquier return
   const canWorks = useCan("works.read");

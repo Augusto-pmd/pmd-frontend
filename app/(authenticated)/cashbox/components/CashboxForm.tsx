@@ -17,7 +17,7 @@ export function CashboxForm({ onSuccess, onCancel }: CashboxFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { createCashbox } = useCashboxStore();
-  const user = useAuthStore.getState().getUserSafe();
+  const user = useAuthStore.getState().user;
   const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
