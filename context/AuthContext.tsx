@@ -9,6 +9,38 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { useAuthStore, AuthUser } from "@/store/authStore";
 import { login as loginService, refresh as refreshService, loadMe as loadMeService } from "@/lib/services/authService";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { normalizeId } from "@/lib/normalizeId";
+
+// Force AuthUser shape - guarantees all required fields exist
+function forceAuthUserShape(u: any): AuthUser {
+  if (!u) {
+    throw new Error("Cannot force shape of null/undefined user");
+  }
+
+  return {
+    id: normalizeId(u.id) || "1",
+    email: String(u.email || ""),
+    fullName: String(u.fullName || u.name || ""),
+    roleId: normalizeId(u.roleId || u.role?.id || "1") || "1",
+    organizationId: normalizeId(u.organizationId || u.organization?.id || "1") || "1",
+    role: u.role
+      ? { 
+          id: normalizeId(u.role.id || "1") || "1", 
+          name: String(u.role.name || "ADMINISTRATION"),
+          permissions: Array.isArray(u.role.permissions) ? u.role.permissions : undefined,
+        }
+      : { id: "1", name: "ADMINISTRATION" },
+    organization: u.organization
+      ? { 
+          id: normalizeId(u.organization.id || "1") || "1", 
+          name: String(u.organization.name || "PMD Arquitectura"),
+        }
+      : { id: "1", name: "PMD Arquitectura" },
+    isActive: u.isActive ?? true,
+    created_at: u.created_at || u.createdAt || undefined,
+    updated_at: u.updated_at || u.updatedAt || undefined,
+  };
+}
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -68,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("refresh_token", refresh_token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      const normalized = normalizeUser(user) || user;
+      const normalized = forceAuthUserShape(normalizeUser(user) || user);
 
       useAuthStore.setState({
         user: normalized,
@@ -107,14 +139,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("user", JSON.stringify(user));
       }
 
-      const normalized = user ? (normalizeUser(user) || user) : useAuthStore.getState().user;
+      let normalized: AuthUser | null = null;
+      if (user) {
+        normalized = forceAuthUserShape(normalizeUser(user) || user);
+      } else {
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser) {
+          normalized = forceAuthUserShape(currentUser);
+        }
+      }
 
-      useAuthStore.setState({
-        user: normalized,
-        token: access_token,
-        refreshToken: refresh_token,
-        isAuthenticated: true,
-      });
+      if (normalized) {
+        useAuthStore.setState({
+          user: normalized,
+          token: access_token,
+          refreshToken: refresh_token,
+          isAuthenticated: true,
+        });
+      }
 
       return normalized;
     } catch {
@@ -127,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await loadMeService();
       if (response?.user) {
-        const normalized = normalizeUser(response.user) || response.user;
+        const normalized = forceAuthUserShape(normalizeUser(response.user) || response.user);
         useAuthStore.setState({ user: normalized, isAuthenticated: true });
         return normalized;
       }
