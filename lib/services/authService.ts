@@ -4,6 +4,7 @@
  */
 
 import { getApiUrl, apiFetch } from "@/lib/api";
+import api from "@/lib/api";
 
 export interface LoginResponse {
   access_token: string;
@@ -43,54 +44,13 @@ export interface UserMeResponse {
  * Login service
  * Sends POST /auth/login and returns the full response
  */
-export async function login(email: string, password: string): Promise<LoginResponse> {
-  const apiUrl = getApiUrl();
-  const loginUrl = `${apiUrl}/auth/login`;
-
-  const response = await apiFetch(loginUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw {
-      response: {
-        status: response.status,
-        data: errorData,
-      },
-      message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-    };
+export async function login(email: string, password: string): Promise<LoginResponse | null> {
+  try {
+    const res = await api.post("/auth/login", { email, password });
+    return res.data;
+  } catch {
+    return null;
   }
-
-  const data = await response.json();
-
-  // Normalize response format
-  const normalizedResponse: LoginResponse = {
-    access_token: data.access_token || data.token,
-    refresh_token: data.refresh_token || data.refreshToken || data.access_token || data.token,
-    user: data.user || data,
-  };
-
-  if (!normalizedResponse.user) {
-    throw new Error("Invalid response: missing user");
-  }
-
-  if (!normalizedResponse.access_token) {
-    throw new Error("Invalid response: missing access_token");
-  }
-
-  // Store tokens and user in localStorage
-  if (typeof window !== "undefined") {
-    localStorage.setItem("access_token", normalizedResponse.access_token);
-    localStorage.setItem("refresh_token", normalizedResponse.refresh_token);
-    localStorage.setItem("user", JSON.stringify(normalizedResponse.user));
-  }
-
-  return normalizedResponse;
 }
 
 /**

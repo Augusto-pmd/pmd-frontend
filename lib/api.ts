@@ -87,21 +87,27 @@ api.interceptors.request.use(
 
 // Response interceptor - Handle token refresh and errors
 api.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   async (error) => {
     const original = error.config;
 
+    // Skip interceptor for login/auth endpoints to prevent refresh loops
+    if (original.url?.includes("/auth/login") || original.url?.includes("/auth/refresh")) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
+
       const refreshed = await useAuthStore.getState().refresh();
 
       if (refreshed) {
-        original.headers["Authorization"] = 
+        original.headers["Authorization"] =
           `Bearer ${localStorage.getItem("access_token")}`;
         return api(original);
-      } else {
-        useAuthStore.getState().logout();
       }
+
+      useAuthStore.getState().logout();
     }
 
     return Promise.reject(error);

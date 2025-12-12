@@ -9,44 +9,24 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuthContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    setIsLoading(true);
 
-    try {
-      const success = await login(email, password);
-      if (!success) {
-        throw new Error("Error al iniciar sesión. Por favor, intenta nuevamente.");
-      }
-      
-      setLoading(false);
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } catch (err: any) {
-      let errorMessage = "Error al iniciar sesión. Por favor, intenta nuevamente.";
-      
-      if (err.response) {
-        if (err.response.status === 400 || err.response.status === 401) {
-          errorMessage = err.response?.data?.message || 
-                        err.response?.data?.error || 
-                        "Credenciales inválidas. Por favor, verifica tu email y contraseña.";
-        } else if (err.response.status >= 500) {
-          errorMessage = "Error del servidor. Por favor, intenta más tarde.";
-        }
-      } else if (err.message) {
-        errorMessage = err.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      setError(errorMessage);
-      setLoading(false);
+    const ok = await login(email, password);
+
+    setIsLoading(false);
+
+    if (!ok) {
+      setError("Credenciales incorrectas");
+      return;
     }
+
+    router.push("/dashboard");
   };
 
   return (
@@ -189,7 +169,7 @@ export function LoginForm() {
           {/* Login Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             style={{
               width: "100%",
               height: "44px",
@@ -201,11 +181,11 @@ export function LoginForm() {
               fontSize: "14px",
               fontWeight: 500,
               transition: "all 200ms ease",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.5 : 1,
+              cursor: isLoading ? "not-allowed" : "pointer",
+              opacity: isLoading ? 0.5 : 1,
             }}
             onMouseEnter={(e) => {
-              if (!loading) {
+              if (!isLoading) {
                 e.currentTarget.style.backgroundColor = "var(--apple-button-hover)";
               }
             }}
@@ -213,7 +193,7 @@ export function LoginForm() {
               e.currentTarget.style.backgroundColor = "var(--apple-surface)";
             }}
             onMouseDown={(e) => {
-              if (!loading) {
+              if (!isLoading) {
                 e.currentTarget.style.backgroundColor = "var(--apple-button-active)";
               }
             }}
@@ -221,7 +201,7 @@ export function LoginForm() {
               e.currentTarget.style.backgroundColor = "var(--apple-button-hover)";
             }}
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {isLoading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>
