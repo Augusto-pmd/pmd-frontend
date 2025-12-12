@@ -4,6 +4,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AuthUser, normalizeUser } from "@/lib/normalizeUser";
 
+// Re-export AuthUser for convenience
+export type { AuthUser };
+
 // UserRole ahora es el nombre del rol (string) para comparaciones
 export type UserRole = "admin" | "operator" | "auditor" | "administrator";
 
