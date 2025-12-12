@@ -21,11 +21,11 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Plus } from "lucide-react";
 
 function AccountingContent() {
+  const user = useAuthStore.getState().user;
   const { accounting, isLoading: summaryLoading, error: summaryError } = useAccounting();
   const { entries, isLoading, error, fetchEntries, createEntry } = useAccountingStore();
   const { works, isLoading: worksLoading } = useWorks();
   const { suppliers, isLoading: suppliersLoading } = useSuppliers();
-  const { getUserSafe } = useAuthStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filters, setFilters] = useState<{
@@ -38,7 +38,6 @@ function AccountingContent() {
   }>({});
   const toast = useToast();
 
-  const user = getUserSafe();
   const organizationId = user?.organizationId;
 
   useEffect(() => {
