@@ -111,9 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setLoading(false);
       return true;
-    } catch (e) {
+    } catch (e: any) {
       setLoading(false);
-      return false;
+      // Re-throw error with code for explicit handling in LoginForm
+      throw e;
     }
   };
 

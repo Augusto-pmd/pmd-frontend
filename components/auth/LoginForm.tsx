@@ -16,17 +16,31 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    const ok = await login(email, password);
+    try {
+      const ok = await login(email, password);
 
-    setIsLoading(false);
+      setIsLoading(false);
 
-    if (!ok) {
-      setError("Credenciales incorrectas");
-      return;
+      if (!ok) {
+        setError("Credenciales incorrectas");
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (error: any) {
+      setIsLoading(false);
+      
+      // Handle explicit backend error messages
+      if (error?.code === "USER_NOT_FOUND") {
+        setError("Usuario no encontrado");
+      } else if (error?.code === "INVALID_PASSWORD") {
+        setError("Contraseña incorrecta");
+      } else {
+        setError(error?.message || "Credenciales incorrectas");
+      }
     }
-
-    router.push("/dashboard");
   };
 
   return (

@@ -48,8 +48,17 @@ export async function login(email: string, password: string): Promise<LoginRespo
   try {
     const res = await api.post("/auth/login", { email, password });
     return res.data;
-  } catch {
-    return null;
+  } catch (error: any) {
+    // Re-throw error with error code for explicit handling
+    const errorData = error?.response?.data;
+    if (errorData) {
+      const errorCode = errorData.code || errorData.error || errorData.errorCode;
+      const errorMessage = errorData.message || errorData.error || "Error de autenticación";
+      if (errorCode) {
+        throw { code: errorCode, message: errorMessage };
+      }
+    }
+    throw { code: "UNKNOWN_ERROR", message: "Error de conexión" };
   }
 }
 
