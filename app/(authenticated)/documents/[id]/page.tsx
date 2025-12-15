@@ -18,9 +18,9 @@ import { Modal } from "@/components/ui/Modal";
 import { DocumentForm } from "../components/DocumentForm";
 
 function DocumentDetailContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
   const router = useRouter();
-  const documentId = params.id as string;
   const { documents, fetchDocuments, updateDocument, deleteDocument } = useDocumentsStore();
   const { works } = useWorks();
   const { users } = useUsers();
@@ -33,6 +33,14 @@ function DocumentDetailContent() {
     fetchDocuments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Safely extract documentId from params
+  const documentId = typeof params?.id === "string" ? params.id : null;
+
+  // Guard check after all hooks
+  if (!documentId) {
+    return null;
+  }
 
   const document = documents.find((d) => d.id === documentId);
 
