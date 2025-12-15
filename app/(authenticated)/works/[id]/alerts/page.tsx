@@ -19,10 +19,7 @@ import { useAuthStore } from "@/store/authStore";
 function WorkAlertsContent() {
   const params = useParams();
 
-  const workId =
-    typeof params?.id === "string"
-      ? params.id
-      : "";
+  const workId = typeof params?.id === 'string' ? params.id : null;
 
   const { alerts, isLoading, error, fetchAlerts, createAlert } = useAlertsStore();
   const { works } = useWorks();
