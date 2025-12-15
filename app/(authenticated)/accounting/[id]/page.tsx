@@ -18,11 +18,30 @@ import { Edit, Trash2, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 
 function AccountingEntryDetailContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
   const router = useRouter();
-  
-  // Null-safe guard for params
-  if (!params || !params.id || typeof params.id !== "string") {
+  const { entries, isLoading, fetchEntries, updateEntry, deleteEntry } = useAccountingStore();
+  const { works } = useWorks();
+  const { suppliers } = useSuppliers();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
+
+  // Safely extract id from params
+  const id = typeof params?.id === "string" ? params.id : null;
+
+  const entry = id ? entries.find((e) => e.id === id) : undefined;
+
+  useEffect(() => {
+    if (id && !entry && !isLoading) {
+      fetchEntries();
+    }
+  }, [id, entry, isLoading, fetchEntries]);
+
+  // Guard check after all hooks
+  if (!id) {
     return (
       <MainLayout>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
@@ -34,23 +53,6 @@ function AccountingEntryDetailContent() {
       </MainLayout>
     );
   }
-  
-  const id = params.id;
-  const { entries, isLoading, fetchEntries, updateEntry, deleteEntry } = useAccountingStore();
-  const { works } = useWorks();
-  const { suppliers } = useSuppliers();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const toast = useToast();
-
-  const entry = entries.find((e) => e.id === id);
-
-  useEffect(() => {
-    if (!entry && !isLoading) {
-      fetchEntries();
-    }
-  }, [entry, isLoading, fetchEntries]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-AR", {
