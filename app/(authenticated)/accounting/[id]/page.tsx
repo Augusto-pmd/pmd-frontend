@@ -20,7 +20,22 @@ import { useState, useEffect } from "react";
 function AccountingEntryDetailContent() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  
+  // Null-safe guard for params
+  if (!params || !params.id || typeof params.id !== "string") {
+    return (
+      <MainLayout>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+          ID de movimiento inválido
+        </div>
+        <div className="mt-4">
+          <Button onClick={() => router.push("/accounting")}>Volver a Contabilidad</Button>
+        </div>
+      </MainLayout>
+    );
+  }
+  
+  const id = params.id;
   const { entries, isLoading, fetchEntries, updateEntry, deleteEntry } = useAccountingStore();
   const { works } = useWorks();
   const { suppliers } = useSuppliers();
