@@ -19,7 +19,7 @@ import { useAuthStore } from "@/store/authStore";
 function WorkDocumentsContent() {
   const params = useParams();
   const router = useRouter();
-  const workId = params.id as string;
+  const workId = typeof params?.id === 'string' ? params.id : null;
   const { documents, isLoading, error, fetchDocuments, createDocument } = useDocumentsStore();
   const { works } = useWorks();
   const authState = useAuthStore.getState();
@@ -32,15 +32,17 @@ function WorkDocumentsContent() {
   const [showFilters, setShowFilters] = useState(false);
   const toast = useToast();
 
-  const work = works.find((w: any) => w.id === workId);
-  const workName = work ? (work.name || work.title || work.nombre || workId) : workId;
-
   useEffect(() => {
     if (organizationId && workId) {
       fetchDocuments(workId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId, workId]);
+
+  if (!workId) return null;
+
+  const work = works.find((w: any) => w.id === workId);
+  const workName = work ? (work.name || work.title || work.nombre || workId) : workId;
 
   const handleCreate = async (data: any) => {
     setIsSubmitting(true);
@@ -71,16 +73,6 @@ function WorkDocumentsContent() {
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
           <p className="font-semibold mb-2">No se pudo determinar la organización</p>
           <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (!workId) {
-    return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          ID de obra no válido
         </div>
       </MainLayout>
     );
