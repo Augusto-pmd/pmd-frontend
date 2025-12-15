@@ -59,7 +59,7 @@ async function proxyRequest(
     }
 
     // Build target URL: https://pmd-backend-84da.onrender.com/api/auth/login
-    const backendUrl = `${BACKEND_BASE_URL}/${pathSegments.join("/")}`;
+    const backendUrl = `${BACKEND_BASE_URL}/api/${pathSegments.join("/")}`;
 
     // Get request body if present (skip for GET, HEAD, OPTIONS)
     let body: string | undefined;
