@@ -17,19 +17,18 @@ import { Plus } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 function StaffAlertsContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
-  const personId = params.id as string;
   const { alerts, isLoading, error, fetchAlerts, createAlert } = useAlertsStore();
   const { users } = useUsers();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
-
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
-  const user = users?.find((u: any) => u.id === personId);
-  const userName = user ? (user.fullName || user.name || user.nombre || personId) : personId;
+  // Safely extract personId from params
+  const personId = typeof params?.id === "string" ? params.id : null;
 
   useEffect(() => {
     if (organizationId) {
@@ -37,6 +36,14 @@ function StaffAlertsContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
+
+  // Guard check after all hooks
+  if (!personId) {
+    return null;
+  }
+
+  const user = users?.find((u: any) => u.id === personId);
+  const userName = user ? (user.fullName || user.name || user.nombre || personId) : personId;
 
   // Filtrar alertas de este empleado
   const staffAlerts = alerts.filter((alert) => (alert as any).personId === personId);
