@@ -19,9 +19,12 @@ import { MovementForm } from "../components/MovementForm";
 import { useToast } from "@/components/ui/Toast";
 
 function CashboxDetailContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
   const router = useRouter();
-  const cashboxId = params.id as string;
+  
+  // Safely extract cashboxId from params
+  const cashboxId = typeof params?.id === "string" ? params.id : null;
   
   const { cashboxes, movements, isLoading, error, fetchCashboxes, fetchMovements, closeCashbox, deleteMovement } = useCashboxStore();
   const { suppliers } = useSuppliers();
@@ -32,9 +35,6 @@ function CashboxDetailContent() {
   const [showCloseModal, setShowCloseModal] = useState(false);
   const toast = useToast();
   const organizationId = user?.organizationId;
-
-  const cashbox = cashboxes.find((c) => c.id === cashboxId);
-  const cashboxMovements = movements[cashboxId] || [];
 
   useEffect(() => {
     if (organizationId) {
@@ -47,6 +47,14 @@ function CashboxDetailContent() {
       fetchMovements(cashboxId);
     }
   }, [cashboxId, organizationId, fetchMovements]);
+
+  // Guard check after all hooks
+  if (!cashboxId) {
+    return null;
+  }
+
+  const cashbox = cashboxes.find((c) => c.id === cashboxId);
+  const cashboxMovements = movements[cashboxId] || [];
 
   if (!organizationId) {
     return (
