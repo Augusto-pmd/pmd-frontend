@@ -10,11 +10,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function AccountingMonthContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
   const router = useRouter();
-  const month = params.month ? parseInt(params.month as string) : null;
-  const year = params.year ? parseInt(params.year as string) : null;
+  
+  // Safely extract and parse month and year from params
+  const monthStr = typeof params?.month === "string" ? params.month : null;
+  const yearStr = typeof params?.year === "string" ? params.year : null;
+  const month = monthStr ? parseInt(monthStr, 10) : null;
+  const year = yearStr ? parseInt(yearStr, 10) : null;
+  
   const { monthData, isLoading, error } = useAccountingMonth(month, year);
+  
+  // Guard check after all hooks
+  if (!month || !year || isNaN(month) || isNaN(year)) {
+    return (
+      <MainLayout>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+          Parámetros de mes o año inválidos
+        </div>
+        <div className="mt-4">
+          <Button onClick={() => router.push("/accounting")}>Volver a Contabilidad</Button>
+        </div>
+      </MainLayout>
+    );
+  }
 
   const getMonthName = (monthNum: number) => {
     const months = [
