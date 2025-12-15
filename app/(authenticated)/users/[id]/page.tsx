@@ -13,8 +13,14 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 function UserDetailContent() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
-  const { user, isLoading, error } = useUser(id);
+  
+  const id = typeof params?.id === "string" ? params.id : null;
+  
+  const { user, isLoading, error } = useUser(id || "");
+
+  if (!id) {
+    return null;
+  }
 
   if (isLoading) {
     return (
