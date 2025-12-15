@@ -17,9 +17,9 @@ import { Check, Trash2, Bell, Building2, User, Calendar, Tag, AlertTriangle } fr
 import { Modal } from "@/components/ui/Modal";
 
 function AlertDetailContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
   const router = useRouter();
-  const alertId = params.id as string;
   const { alerts, fetchAlerts, markAsRead, deleteAlert } = useAlertsStore();
   const { works } = useWorks();
   const { users } = useUsers();
@@ -27,10 +27,18 @@ function AlertDetailContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
+  // Safely extract alertId from params
+  const alertId = typeof params?.id === "string" ? params.id : null;
+
   useEffect(() => {
     fetchAlerts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Guard check after all hooks
+  if (!alertId) {
+    return null;
+  }
 
   const alert = alerts.find((a) => a.id === alertId);
 
