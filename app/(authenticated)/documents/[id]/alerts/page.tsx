@@ -17,19 +17,18 @@ import { Plus } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 function DocumentAlertsContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
-  const documentId = params.id as string;
   const { alerts, isLoading, error, fetchAlerts, createAlert } = useAlertsStore();
   const { documents } = useDocuments();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
-
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
-  const document = documents?.find((d: any) => d.id === documentId);
-  const documentName = document ? (document.name || document.nombre || documentId) : documentId;
+  // Safely extract documentId from params
+  const documentId = typeof params?.id === "string" ? params.id : null;
 
   useEffect(() => {
     if (organizationId) {
@@ -37,6 +36,14 @@ function DocumentAlertsContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
+
+  // Guard check after all hooks
+  if (!documentId) {
+    return null;
+  }
+
+  const document = documents?.find((d: any) => d.id === documentId);
+  const documentName = document ? (document.name || document.nombre || documentId) : documentId;
 
   // Filtrar alertas de este documento
   const documentAlerts = alerts.filter((alert) => (alert as any).documentId === documentId);
