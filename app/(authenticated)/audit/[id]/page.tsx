@@ -12,11 +12,20 @@ import { Shield, User, Calendar, FileText, ArrowRight } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 function AuditDetailContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
-  const logId = params.id as string;
-  const { log, isLoading, error } = useAuditLog(logId);
+  
+  // Safely extract logId from params
+  const logId = typeof params?.id === "string" ? params.id : null;
+  
+  const { log, isLoading, error } = useAuditLog(logId || "");
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
+
+  // Guard check after all hooks
+  if (!logId) {
+    return null;
+  }
 
   if (!organizationId) {
     return (
