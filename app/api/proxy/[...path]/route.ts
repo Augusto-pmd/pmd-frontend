@@ -37,19 +37,33 @@ export async function DELETE(
   return proxyRequest(request, params.path, "DELETE");
 }
 
+export async function OPTIONS(
+  request: NextRequest,
+  { params }: { params: { path: string[] } }
+) {
+  return proxyRequest(request, params.path, "OPTIONS");
+}
+
 async function proxyRequest(
   request: NextRequest,
   pathSegments: string[],
   method: string
 ) {
   try {
-    // Reconstruct the path: /api/proxy/api/auth/login -> /api/auth/login
-    const path = `/${pathSegments.join("/")}`;
-    const backendUrl = `${BACKEND_BASE_URL}${path}`;
+    // Validate path segments
+    if (!pathSegments || pathSegments.length === 0) {
+      return NextResponse.json(
+        { error: "Invalid proxy path" },
+        { status: 400 }
+      );
+    }
 
-    // Get request body if present
+    // Build target URL: https://pmd-backend-84da.onrender.com/api/auth/login
+    const backendUrl = `${BACKEND_BASE_URL}/${pathSegments.join("/")}`;
+
+    // Get request body if present (skip for GET, HEAD, OPTIONS)
     let body: string | undefined;
-    if (method !== "GET" && method !== "HEAD") {
+    if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
       try {
         body = await request.text();
       } catch {
