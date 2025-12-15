@@ -18,18 +18,19 @@ import { useAuthStore } from "@/store/authStore";
 
 function WorkAlertsContent() {
   const params = useParams();
-  const workId = params.id as string;
+
+  const workId =
+    typeof params?.id === "string"
+      ? params.id
+      : "";
+
   const { alerts, isLoading, error, fetchAlerts, createAlert } = useAlertsStore();
   const { works } = useWorks();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
-
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
-
-  const work = works?.find((w: any) => w.id === workId);
-  const workName = work ? (work.name || work.title || work.nombre || workId) : workId;
 
   useEffect(() => {
     if (organizationId) {
@@ -37,6 +38,13 @@ function WorkAlertsContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
+
+  if (!workId) {
+    return null;
+  }
+
+  const work = works?.find((w: any) => w.id === workId);
+  const workName = work ? (work.name || work.title || work.nombre || workId) : workId;
 
   // Filtrar alertas de esta obra
   const workAlerts = alerts.filter((alert) => (alert as any).workId === workId);
