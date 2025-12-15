@@ -11,55 +11,19 @@ export function getAuthHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// Función universal para obtener API_URL
-export function getApiUrl(): string {
-  // In browser: use Next.js proxy to avoid CORS
-  if (typeof window !== "undefined") {
-    return "/api/proxy";
-  }
-
-  // Server-side: use direct backend URL (for SSR or API routes calling backend)
-  const url = process.env.NEXT_PUBLIC_API_URL;
-
-  if (!url || typeof url !== "string" || url.trim() === "") {
-    // Fallback para desarrollo/producción
-    const fallbackUrl = "https://pmd-backend-84da.onrender.com";
-    // Agregar /api al fallback
-    return `${fallbackUrl}/api`;
-  }
-
-  // Normalizar URL: eliminar /api duplicado si existe
-  let normalizedUrl = url.trim();
-  
-  // Si ya termina en /api, devolverla tal cual
-  if (normalizedUrl.endsWith("/api")) {
-    return normalizedUrl;
-  }
-  
-  // Si termina en /api/, eliminar la barra final
-  if (normalizedUrl.endsWith("/api/")) {
-    return normalizedUrl.slice(0, -1);
-  }
-  
-  // Si no termina en /api, agregarlo
-  return `${normalizedUrl}/api`;
-}
-
-
-// Construir API_URL usando getApiUrl() - ahora siempre devuelve una string válida
-const API_URL = getApiUrl();
-const baseURL = API_URL; // getApiUrl() siempre devuelve una string válida
+// Base URL para todas las llamadas API (same-origin)
+const baseURL = "/api";
 
 const api: AxiosInstance = axios.create({
-  baseURL: baseURL, // Usa getApiUrl() que incluye /api automáticamente
+  baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 15000,
-  withCredentials: false, // Backend usa JWT por header, no cookies
+  withCredentials: false,
 });
 
-// Request interceptor - Add auth token and validate URLs
+// Request interceptor - Add auth token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Obtener token de Zustand o localStorage
@@ -149,11 +113,8 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   return fetch(url, {
     ...options,
     headers,
-    credentials: "omit", // Backend usa JWT por header, no cookies
+    credentials: "omit",
   });
 }
-
-// Exportar API_URL para uso en otros módulos
-export { API_URL };
 
 export default api;

@@ -42,15 +42,36 @@ export interface UserMeResponse {
 
 /**
  * Login service
- * Sends POST /auth/login and returns the full response
+ * Sends POST /api/auth/login and returns the full response
  */
 export async function login(email: string, password: string): Promise<LoginResponse | null> {
   try {
-    const res = await api.post("/auth/login", { email, password });
-    return res.data;
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorCode = errorData.code || errorData.error || errorData.errorCode;
+      const errorMessage = errorData.message || errorData.error || "Error de autenticación";
+      if (errorCode) {
+        throw { code: errorCode, message: errorMessage };
+      }
+      throw { code: "UNKNOWN_ERROR", message: errorMessage || "Error de conexión" };
+    }
+
+    const data = await response.json();
+    return data;
   } catch (error: any) {
     // Re-throw error with error code for explicit handling
-    const errorData = error?.response?.data;
+    if (error.code && error.message) {
+      throw error;
+    }
+    const errorData = error?.response?.data || error;
     if (errorData) {
       const errorCode = errorData.code || errorData.error || errorData.errorCode;
       const errorMessage = errorData.message || errorData.error || "Error de autenticación";
