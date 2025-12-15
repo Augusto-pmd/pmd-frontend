@@ -3,7 +3,7 @@
  * Handles all authentication API calls
  */
 
-import { getApiUrl, apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import api from "@/lib/api";
 
 export interface LoginResponse {
@@ -94,8 +94,7 @@ export async function refresh(refreshToken?: string | null): Promise<RefreshResp
     return null;
   }
 
-  const apiUrl = getApiUrl();
-  const refreshUrl = `${apiUrl}/auth/refresh`;
+  const refreshUrl = "/api/auth/refresh";
 
   try {
     const response = await apiFetch(refreshUrl, {
@@ -150,8 +149,7 @@ export async function loadMe(): Promise<UserMeResponse | null> {
     return null;
   }
 
-  const apiUrl = getApiUrl();
-  const meUrl = `${apiUrl}/users/me`;
+  const meUrl = "/api/users/me";
 
   try {
     const response = await apiFetch(meUrl, {
