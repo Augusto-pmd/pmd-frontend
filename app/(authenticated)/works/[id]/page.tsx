@@ -20,7 +20,7 @@ import { Edit, Archive, Trash2, UserPlus, Building2 } from "lucide-react";
 function WorkDetailContent() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const id = typeof params?.id === 'string' ? params.id : null;
   const { work, isLoading, error, mutate } = useWork(id);
   const { users } = useUsers();
   const { suppliers } = useSuppliers();
@@ -28,6 +28,8 @@ function WorkDetailContent() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+
+  if (!id) return null;
 
   if (isLoading) {
     return (
