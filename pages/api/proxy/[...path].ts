@@ -1,12 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || "https://pmd-backend-84da.onrender.com";
+const BACKEND_BASE_URL = "https://pmd-backend-84da.onrender.com";
 
-// Use custom body parser to preserve raw body for proxying
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '1mb',
+      sizeLimit: "1mb",
     },
   },
 };
@@ -16,22 +15,19 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    // Get path segments from query
     const { path } = req.query;
 
-    // Validate path segments
     if (!path || !Array.isArray(path) || path.length === 0) {
       return res.status(400).json({ error: "Invalid proxy path" });
     }
 
-    // Build target URL: https://pmd-backend-84da.onrender.com/api/auth/login
-    const backendUrl = `${BACKEND_BASE_URL}/api/${path.join("/")}`;
+    // Build target URL with /api prefix
+    const targetUrl = `${BACKEND_BASE_URL}/api/${path.join("/")}`;
 
-    // Prepare headers - exclude host and connection, preserve others
+    // Prepare headers - exclude host and connection
     const headers: Record<string, string> = {};
     Object.keys(req.headers).forEach((key) => {
       const lowerKey = key.toLowerCase();
-      // Exclude headers that shouldn't be forwarded
       if (
         lowerKey !== "host" &&
         lowerKey !== "connection" &&
@@ -46,17 +42,27 @@ export default async function handler(
       }
     });
 
-    // Get request body if present (skip for GET, HEAD, OPTIONS)
+    // Set Content-Type for POST/PUT/PATCH if body exists
+    if (
+      req.method !== "GET" &&
+      req.method !== "HEAD" &&
+      req.method !== "OPTIONS" &&
+      req.body &&
+      !headers["content-type"]
+    ) {
+      headers["content-type"] = "application/json";
+    }
+
+    // Prepare body - JSON.stringify for POST/PUT/PATCH
     let body: string | undefined;
     if (req.method !== "GET" && req.method !== "HEAD" && req.method !== "OPTIONS") {
       if (req.body) {
-        // If body is already a string, use it; otherwise stringify
-        body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+        body = JSON.stringify(req.body);
       }
     }
 
-    // Make request to backend
-    const response = await fetch(backendUrl, {
+    // Forward request to backend
+    const response = await fetch(targetUrl, {
       method: req.method,
       headers,
       body: body || undefined,
@@ -65,10 +71,9 @@ export default async function handler(
     // Get response body
     const responseBody = await response.text();
 
-    // Copy relevant response headers (exclude CORS headers since we're same-origin now)
+    // Forward response headers (exclude CORS headers)
     response.headers.forEach((value, key) => {
       const lowerKey = key.toLowerCase();
-      // Exclude CORS and connection headers
       if (
         lowerKey !== "access-control-allow-origin" &&
         lowerKey !== "access-control-allow-methods" &&
@@ -80,7 +85,7 @@ export default async function handler(
       }
     });
 
-    // Set status and send response
+    // Send response with status code
     res.status(response.status);
     res.send(responseBody);
   } catch (error) {
