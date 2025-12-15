@@ -11,10 +11,19 @@ import { Badge } from "@/components/ui/Badge";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function SupplierDetailContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
-  const { supplier, isLoading, error } = useSupplier(id);
+  
+  // Safely extract id from params
+  const id = typeof params?.id === "string" ? params.id : null;
+  
+  const { supplier, isLoading, error } = useSupplier(id || "");
+
+  // Guard check after all hooks
+  if (!id) {
+    return null;
+  }
 
   if (isLoading) {
     return (
