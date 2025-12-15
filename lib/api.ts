@@ -15,7 +15,7 @@ export function getAuthHeader(): Record<string, string> {
 export function getApiUrl(): string {
   // In browser: use Next.js proxy to avoid CORS
   if (typeof window !== "undefined") {
-    return "/api/proxy/api";
+    return "/api/proxy";
   }
 
   // Server-side: use direct backend URL (for SSR or API routes calling backend)
