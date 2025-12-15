@@ -11,10 +11,19 @@ import { Badge } from "@/components/ui/Badge";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 
 function CashboxDetailContent() {
+  // All hooks must be called unconditionally at the top
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
-  const { cashbox, isLoading, error } = useCashbox(id);
+  
+  // Safely extract cashboxId from params
+  const cashboxId = typeof params?.id === "string" ? params.id : null;
+  
+  const { cashbox, isLoading, error } = useCashbox(cashboxId || "");
+
+  // Guard check after all hooks
+  if (!cashboxId) {
+    return null;
+  }
 
   if (isLoading) {
     return (
