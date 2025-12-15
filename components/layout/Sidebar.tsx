@@ -145,6 +145,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const openCashboxesCount = cashboxes.filter((c) => !c.isClosed).length;
 
   const isActive = (href: string) => {
+    if (!pathname) return false;
     if (href === "/dashboard") {
       return pathname === href;
     }
