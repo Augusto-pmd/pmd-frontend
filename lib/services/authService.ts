@@ -42,7 +42,7 @@ export interface UserMeResponse {
 
 /**
  * Login service
- * Sends POST /api/auth/login and returns the full response
+ * Sends POST /api/auth/login and returns a normalized response
  */
 export async function login(email: string, password: string): Promise<LoginResponse | null> {
   try {
@@ -54,7 +54,8 @@ export async function login(email: string, password: string): Promise<LoginRespo
       body: JSON.stringify({ email, password }),
     });
 
-    if (!response.ok) {
+    // Login success is strictly status 200 + accessToken present
+    if (response.status !== 200) {
       const errorData = await response.json().catch(() => ({}));
       const errorCode = errorData.code || errorData.error || errorData.errorCode;
       const errorMessage = errorData.message || errorData.error || "Error de autenticación";
@@ -65,7 +66,18 @@ export async function login(email: string, password: string): Promise<LoginRespo
     }
 
     const data = await response.json();
-    return data;
+    const accessToken = data.accessToken ?? data.access_token;
+    if (!accessToken) {
+      throw { code: "INVALID_LOGIN_RESPONSE", message: "Token de acceso no encontrado" };
+    }
+
+    const normalizedResponse: LoginResponse = {
+      access_token: accessToken,
+      refresh_token: data.refresh_token ?? data.refreshToken,
+      user: data.user || data.data || data,
+    };
+
+    return normalizedResponse;
   } catch (error: any) {
     // Re-throw error with error code for explicit handling
     if (error.code && error.message) {

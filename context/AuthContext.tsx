@@ -6,6 +6,7 @@
  */
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore, AuthUser } from "@/store/authStore";
 import { login as loginService, refresh as refreshService, loadMe as loadMeService } from "@/lib/services/authService";
 import { normalizeUser } from "@/lib/normalizeUser";
@@ -56,6 +57,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
   
   // Get Zustand store state
   const user = useAuthStore((state) => state.user);
@@ -110,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       setLoading(false);
+      router.push("/dashboard");
       return true;
     } catch (e: any) {
       setLoading(false);
