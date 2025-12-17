@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Eye, Trash2, Check, CheckCheck, Bell, AlertTriangle } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
-import { useDocuments } from "@/hooks/api/documents";
+import { useWorkDocuments } from "@/hooks/api/workDocuments";
 import { useSuppliers } from "@/hooks/api/suppliers";
 
 interface AlertsListProps {
@@ -35,7 +35,7 @@ export function AlertsList({
   const router = useRouter();
   const { works } = useWorks();
   const { users } = useUsers();
-  const { documents } = useDocuments();
+  const { documents } = useWorkDocuments();
   const { suppliers } = useSuppliers();
   const { markAsRead, deleteAlert, markAllAsRead } = useAlertsStore();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

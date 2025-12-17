@@ -5,7 +5,7 @@ import { FormField, InputField, SelectField, TextareaField } from "@/components/
 import { Button } from "@/components/ui/Button";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
-import { useDocuments } from "@/hooks/api/documents";
+import { useWorkDocuments } from "@/hooks/api/workDocuments";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { normalizeId } from "@/lib/normalizeId";
 
@@ -48,7 +48,7 @@ export function AlertForm({
 }: AlertFormProps) {
   const { works } = useWorks();
   const { users } = useUsers();
-  const { documents } = useDocuments();
+  const { documents } = useWorkDocuments();
   const { suppliers } = useSuppliers();
 
   const [title, setTitle] = useState("");

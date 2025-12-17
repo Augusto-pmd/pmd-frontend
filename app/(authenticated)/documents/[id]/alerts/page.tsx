@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAlertsStore } from "@/store/alertsStore";
-import { useDocuments } from "@/hooks/api/documents";
+import { useWorkDocuments } from "@/hooks/api/workDocuments";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { AlertsList } from "@/components/alerts/AlertsList";
 import { BotonVolver } from "@/components/ui/BotonVolver";
@@ -20,7 +20,7 @@ function DocumentAlertsContent() {
   // All hooks must be called unconditionally at the top
   const params = useParams();
   const { alerts, isLoading, error, fetchAlerts, createAlert } = useAlertsStore();
-  const { documents } = useDocuments();
+  const { documents } = useWorkDocuments();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

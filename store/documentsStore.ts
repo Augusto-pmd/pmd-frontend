@@ -39,7 +39,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
 
   async fetchDocuments(workId) {
     // Construir URL con query string de forma segura
-    let url = "/documents";
+    let url = "/work-documents";
     if (workId && workId.trim()) {
       url = `${url}?workId=${encodeURIComponent(workId)}`;
     }
@@ -85,12 +85,12 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
         if (payload.notes) formData.append("notes", payload.notes);
 
         // Usar apiClient.post con FormData (axios maneja multipart automáticamente)
-        const response = await apiClient.post("/documents", formData);
+        const response = await apiClient.post("/work-documents", formData);
         await get().fetchDocuments(payload.workId);
         return response;
       } else {
         // Si no hay archivo, enviar JSON normal
-        const response = await apiClient.post("/documents", payload);
+        const response = await apiClient.post("/work-documents", payload);
         await get().fetchDocuments(payload.workId);
         return response;
       }
@@ -124,10 +124,10 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
         if (payload.notes) formData.append("notes", payload.notes);
         formData.append("file", payload.file);
 
-        await apiClient.put(`/documents/${id}`, formData);
+        await apiClient.put(`/work-documents/${id}`, formData);
       } else {
         // Si no hay archivo, enviar JSON normal
-        await apiClient.put(`/documents/${id}`, payload);
+        await apiClient.put(`/work-documents/${id}`, payload);
       }
       
       // Refrescar lista (con workId si está disponible)
@@ -149,7 +149,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       const document = get().documents.find((d) => d.id === id);
       const workId = document?.workId;
 
-      await apiClient.delete(`/documents/${id}`);
+      await apiClient.delete(`/work-documents/${id}`);
       await get().fetchDocuments(workId);
     } catch (error: any) {
       console.error("🔴 [documentsStore] Error al eliminar documento:", error);
