@@ -8,6 +8,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { useUsers } from "@/hooks/api/users";
+import { mapCreateWorkPayload } from "@/lib/payload-mappers";
 
 interface WorkFormProps {
   initialData?: any;
@@ -111,46 +112,11 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
       return;
     }
 
-    // Preparar payload EXACTO según CreateWorkDto del backend
-    // Solo enviar campos que existen en el backend DTO
-    const payload: any = {
-      nombre: (formData.nombre || formData.name).trim(),
-    };
-
-    // Campos opcionales - solo agregar si tienen valor
-    if (formData.direccion || formData.address) {
-      payload.direccion = (formData.direccion || formData.address).trim();
-    }
-    if (formData.fechaInicio || formData.startDate) {
-      payload.fechaInicio = formData.fechaInicio || formData.startDate;
-    }
-    if (formData.fechaFin || formData.endDate) {
-      payload.fechaFin = formData.fechaFin || formData.endDate;
-    }
-    if (formData.estado || formData.status) {
-      payload.estado = formData.estado || formData.status;
-    }
-    if (formData.descripcion || formData.description) {
-      payload.descripcion = (formData.descripcion || formData.description).trim();
-    }
-    if (formData.metrosCuadrados) {
-      const metros = parseFloat(formData.metrosCuadrados);
-      if (!isNaN(metros) && metros > 0) {
-        payload.metrosCuadrados = metros;
-      }
-    }
-    if (formData.responsableId || formData.managerId) {
-      payload.responsableId = formData.responsableId || formData.managerId;
-    }
-    if (formData.presupuesto) {
-      const presupuesto = parseFloat(formData.presupuesto);
-      if (!isNaN(presupuesto) && presupuesto > 0) {
-        payload.presupuesto = presupuesto;
-      }
-    }
+    // Usar función de mapeo para alinear EXACTAMENTE con el DTO del backend
+    const payload = mapCreateWorkPayload(formData);
 
     // Asegurar que el payload no esté vacío
-    if (Object.keys(payload).length === 0) {
+    if (Object.keys(payload).length === 0 || !payload.nombre) {
       throw new Error("El payload no puede estar vacío. Al menos el nombre es requerido.");
     }
 

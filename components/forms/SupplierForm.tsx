@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
+import { mapCreateSupplierPayload } from "@/lib/payload-mappers";
 
 interface SupplierFormProps {
   initialData?: any;
@@ -87,30 +88,8 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
       return;
     }
 
-    // Preparar payload según lo que el backend espera
-    // El backend puede aceptar tanto nombres en español como en inglés
-    const payload: any = {
-      // Campos principales (usar nombre como estándar, pero también enviar name para compatibilidad)
-      nombre: (formData.nombre || formData.name).trim(),
-      name: (formData.nombre || formData.name).trim(), // Compatibilidad con backend en inglés
-      email: formData.email.trim() || undefined,
-      cuit: formData.cuit.trim() || undefined,
-      telefono: formData.telefono || formData.phone || undefined,
-      phone: formData.telefono || formData.phone || undefined, // Compatibilidad
-      direccion: formData.direccion || formData.address || undefined,
-      address: formData.direccion || formData.address || undefined,
-      contacto: formData.contacto || formData.contactName || undefined,
-      contactName: formData.contacto || formData.contactName || undefined,
-      existstatus: formData.existstatus || "provisional", // Backend enum
-      notes: formData.notes || formData.notas || undefined,
-    };
-
-    // Limpiar campos undefined del payload
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === undefined || payload[key] === "") {
-        delete payload[key];
-      }
-    });
+    // Usar función de mapeo para alinear EXACTAMENTE con el DTO del backend
+    const payload = mapCreateSupplierPayload(formData);
 
     try {
       await onSubmit(payload);

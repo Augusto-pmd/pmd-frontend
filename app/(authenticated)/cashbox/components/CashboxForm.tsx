@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { mapCreateCashboxPayload } from "@/lib/payload-mappers";
 
 interface CashboxFormProps {
   onSuccess: () => void;
@@ -35,11 +36,11 @@ export function CashboxForm({ onSuccess, onCancel }: CashboxFormProps) {
 
     setIsSubmitting(true);
     try {
-      // Backend DTO: { opening_date: ISO8601 string, user_id: UUID }
-      const payload = {
-        opening_date: new Date(opening_date).toISOString(),
-        user_id: user.id,
-      };
+      // Usar función de mapeo para alinear EXACTAMENTE con el DTO del backend
+      const payload = mapCreateCashboxPayload(
+        { opening_date },
+        user.id
+      );
 
       await createCashbox(payload);
       toast.success("Caja creada correctamente");
