@@ -23,9 +23,7 @@ export function Header({ title }: HeaderProps) {
 
   // Apple Header Styles
   const headerStyle: React.CSSProperties = {
-    position: "sticky",
-    top: 0,
-    zIndex: 1000,
+    position: "relative",
     height: "auto",
     padding: "16px 24px",
     backgroundColor: "var(--apple-surface)",
@@ -35,6 +33,7 @@ export function Header({ title }: HeaderProps) {
     alignItems: "center",
     justifyContent: "space-between",
     fontFamily: "Inter, system-ui, sans-serif",
+    width: "100%",
   };
 
   const leftSectionStyle: React.CSSProperties = {

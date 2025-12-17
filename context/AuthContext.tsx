@@ -2,59 +2,13 @@
 
 /**
  * AuthContext - React Context wrapper around Zustand store
- * Provides React Context API compatibility while using Zustand as source of truth
+ * DELEGA COMPLETAMENTE al store - NO duplica lógica
+ * El store es la ÚNICA fuente de verdad
  */
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore, AuthUser } from "@/store/authStore";
-import { login as loginService, refresh as refreshService, loadMe as loadMeService } from "@/lib/services/authService";
-import { normalizeUser } from "@/lib/normalizeUser";
-import { normalizeId } from "@/lib/normalizeId";
-
-// Force AuthUser shape - guarantees all required fields exist
-// Preserva role.permissions explícitas del backend, NO infiere por role.name
-function forceAuthUserShape(u: any): AuthUser {
-  if (!u) {
-    throw new Error("Cannot force shape of null/undefined user");
-  }
-
-  // Preservar permissions explícitas del backend
-  let permissions: string[] = [];
-  if (u.role?.permissions && Array.isArray(u.role.permissions)) {
-    // Filtrar solo strings válidos
-    permissions = u.role.permissions.filter((p: any) => typeof p === "string" && p.length > 0);
-  }
-  // Si el backend no envía permissions, el array queda vacío (pero existe)
-
-  return {
-    id: normalizeId(u.id) || "1",
-    email: String(u.email || ""),
-    fullName: String(u.fullName || u.name || ""),
-    roleId: normalizeId(u.roleId || u.role?.id || "1") || "1",
-    organizationId: normalizeId(u.organizationId || u.organization?.id || "1") || "1",
-    role: u.role
-      ? { 
-          id: normalizeId(u.role.id || "1") || "1", 
-          name: String(u.role.name || "ADMINISTRATION"),
-          permissions, // SIEMPRE presente como array (preservado del backend o vacío)
-        }
-      : { 
-          id: "1", 
-          name: "ADMINISTRATION",
-          permissions: [], // Array vacío si no hay role
-        },
-    organization: u.organization
-      ? { 
-          id: normalizeId(u.organization.id || "1") || "1", 
-          name: String(u.organization.name || "PMD Arquitectura"),
-        }
-      : { id: "1", name: "PMD Arquitectura" },
-    isActive: u.isActive ?? true,
-    created_at: u.created_at || u.createdAt || undefined,
-    updated_at: u.updated_at || u.updatedAt || undefined,
-  };
-}
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -72,10 +26,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   
-  // Get Zustand store state
+  // ✅ FUENTE DE VERDAD ÚNICA: Leer del store
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  
+  // 🔍 AUDITORÍA: Verificar que AuthContext lee del mismo store
+  useEffect(() => {
+    const storeUser = useAuthStore.getState().user;
+    console.log("🟣 [AUTH CONTEXT] user desde store:", storeUser?.id);
+    console.log("🟣 [AUTH CONTEXT] user desde hook:", user?.id);
+    console.log("🟣 [AUTH CONTEXT] ✅ Mismo user:", storeUser?.id === user?.id);
+  }, [user]);
+  
+  // ✅ DELEGAR COMPLETAMENTE al store - NO duplicar lógica
+  const loginStore = useAuthStore((state) => state.login);
   const logoutStore = useAuthStore((state) => state.logout);
+  const refreshStore = useAuthStore((state) => state.refresh);
+  const loadMeStore = useAuthStore((state) => state.loadMe);
 
   // Initialize: Store handles rehydration via persist middleware
   useEffect(() => {
@@ -92,41 +59,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Login function
+  // ✅ Ejecutar loadMe al montar si hay token pero no user
+  useEffect(() => {
+    if (loading) return; // Esperar a que termine la inicialización
+    
+    const token = useAuthStore.getState().token || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
+    if (token && !user) {
+      // Ejecutar loadMe para obtener user con permisos
+      loadMeStore().catch((error) => {
+        console.warn("⚠️ [AuthProvider] Error al cargar perfil:", error);
+      });
+    }
+  }, [user, loading, loadMeStore]);
+
+  // ✅ DELEGAR: Login function - delega al store
   const login = async (email: string, password: string) => {
     setLoading(true);
-
     try {
-      const response = await loginService(email, password);
-
-      if (!response) {
-        setLoading(false);
-        return false;
-      }
-
-      const { user, access_token, refresh_token } = response;
-
-      if (!access_token || !user) {
-        setLoading(false);
-        return false;
-      }
-
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("refresh_token", refresh_token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      const normalized = forceAuthUserShape(normalizeUser(user) || user);
-
-      useAuthStore.setState({
-        user: normalized,
-        token: access_token,
-        refreshToken: refresh_token,
-        isAuthenticated: true,
-      });
-
+      const result = await loginStore(email, password);
       setLoading(false);
-      router.push("/dashboard");
-      return true;
+      if (result) {
+        router.push("/dashboard");
+        return true;
+      }
+      return false;
     } catch (e: any) {
       setLoading(false);
       // Re-throw error with code for explicit handling in LoginForm
@@ -134,68 +90,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Logout function
+  // ✅ DELEGAR: Logout function - delega al store
   const logout = () => {
     logoutStore();
   };
 
-  // Refresh function
+  // ✅ DELEGAR: Refresh function - delega al store
   const refresh = async () => {
-    try {
-      const refreshToken = localStorage.getItem("refresh_token");
-      if (!refreshToken) return null;
-
-      const result = await refreshService(refreshToken);
-      if (!result) return null;
-
-      const { user, access_token, refresh_token } = result;
-
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("refresh_token", refresh_token);
-      if (user) {
-        localStorage.setItem("user", JSON.stringify(user));
-      }
-
-      let normalized: AuthUser | null = null;
-      if (user) {
-        normalized = forceAuthUserShape(normalizeUser(user) || user);
-      } else {
-        const currentUser = useAuthStore.getState().user;
-        if (currentUser) {
-          normalized = forceAuthUserShape(currentUser);
-        }
-      }
-
-      if (normalized) {
-        useAuthStore.setState({
-          user: normalized,
-          token: access_token,
-          refreshToken: refresh_token,
-          isAuthenticated: true,
-        });
-      }
-
-      return normalized;
-    } catch {
-      return null;
-    }
+    return refreshStore();
   };
 
-  // LoadMe function
+  // ✅ DELEGAR: LoadMe function - delega al store
   const loadMe = async () => {
-    try {
-      const response = await loadMeService();
-      if (response?.user) {
-        const normalized = forceAuthUserShape(normalizeUser(response.user) || response.user);
-        useAuthStore.setState({ user: normalized, isAuthenticated: true });
-        return normalized;
-      }
-
-      const refreshed = await refresh();
-      return refreshed;
-    } catch {
-      return null;
-    }
+    return loadMeStore();
   };
 
   const value: AuthContextType = {

@@ -60,6 +60,10 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Configuración", href: "/settings", icon: Settings, permission: "settings.read", section: "Sistema" },
 ];
 
+// 🔍 AUDITORÍA: Contador de renders del Sidebar
+let sidebarRenderCount = 0;
+let lastUserId: string | null = null;
+
 function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -68,17 +72,50 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const { cashboxes, fetchCashboxes } = useCashboxStore();
   // Hook reactivo: el componente re-renderiza cuando user cambia
   const user = useAuthStore((state) => state.user);
-
-  // 🔍 LOGS TEMPORALES PARA DEBUGGING
-  console.log("[SIDEBAR] user:", user);
-  console.log("[SIDEBAR] permissions:", user?.role?.permissions);
-  console.log("[SIDEBAR] permissions type:", typeof user?.role?.permissions);
-  console.log("[SIDEBAR] permissions isArray:", Array.isArray(user?.role?.permissions));
-  if (Array.isArray(user?.role?.permissions)) {
-    console.log("[SIDEBAR] permissions length:", user.role.permissions.length);
-    console.log("[SIDEBAR] permissions values:", user.role.permissions);
-    console.log("[SIDEBAR] permissions sample:", user.role.permissions.slice(0, 5));
+  
+  // 🔍 AUDITORÍA: Detectar re-render cuando user cambia
+  sidebarRenderCount++;
+  const currentUserId = user?.id || null;
+  const userChanged = currentUserId !== lastUserId;
+  if (userChanged) {
+    console.log("🟡 [SIDEBAR] ⚡ RE-RENDER DETECTADO: user cambió");
+    console.log("🟡 [SIDEBAR] lastUserId:", lastUserId);
+    console.log("🟡 [SIDEBAR] currentUserId:", currentUserId);
+    lastUserId = currentUserId;
   }
+  console.log(`🟡 [SIDEBAR] Render #${sidebarRenderCount} | user.id: ${currentUserId} | userChanged: ${userChanged}`);
+
+  // 🔍 AUDITORÍA: Validar un solo user y permissions no vacío
+  console.log("🔵 [AUDIT] ========================================");
+  console.log("🔵 [AUDIT] 1. UN SOLO USER:");
+  console.log("🔵 [AUDIT]    user existe:", !!user);
+  console.log("🔵 [AUDIT]    user.id:", user?.id);
+  console.log("🔵 [AUDIT]    user.email:", user?.email);
+  
+  console.log("🔵 [AUDIT] 2. PERMISSIONS NO VACÍO:");
+  const permissions = user?.role?.permissions;
+  const permissionsLength = Array.isArray(permissions) ? permissions.length : 0;
+  console.log("🔵 [AUDIT]    permissions existe:", !!permissions);
+  console.log("🔵 [AUDIT]    permissions es Array:", Array.isArray(permissions));
+  console.log("🔵 [AUDIT]    permissions.length:", permissionsLength);
+  if (permissionsLength > 0) {
+    console.log("🔵 [AUDIT]    ✅ PASS: permissions no vacío");
+    console.log("🔵 [AUDIT]    permissions sample:", permissions.slice(0, 5));
+  } else {
+    console.error("🔵 [AUDIT]    ❌ FAIL: permissions vacío o no existe");
+  }
+  
+  console.log("🔵 [AUDIT] 3. RE-RENDER CUANDO USER CAMBIA:");
+  console.log("🔵 [AUDIT]    renderCount:", sidebarRenderCount);
+  console.log("🔵 [AUDIT]    userChanged:", userChanged);
+  if (userChanged && sidebarRenderCount > 1) {
+    console.log("🔵 [AUDIT]    ✅ PASS: Sidebar re-renderiza cuando user cambia");
+  } else if (sidebarRenderCount === 1) {
+    console.log("🔵 [AUDIT]    ⏳ PENDING: Primer render, esperando cambio de user");
+  } else {
+    console.log("🔵 [AUDIT]    ⚠️ WARNING: user no cambió en este render");
+  }
+  console.log("🔵 [AUDIT] ========================================");
 
   // 🔍 AUDITORÍA RUNTIME: Validaciones explícitas
   console.log("🔵 [SIDEBAR AUDIT] ========================================");

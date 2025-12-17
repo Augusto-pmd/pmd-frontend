@@ -94,13 +94,21 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // Update Zustand with immutable set
-          set((state) => ({
-            ...state,
-            user: normalizedUser,
-            token: access_token,
-            refreshToken: refresh_token,
-            isAuthenticated: true,
-          }));
+          set((state) => {
+            // 🔍 AUDITORÍA: Verificar un solo user
+            console.log("🟢 [AUTH STORE] login() → set(user)");
+            console.log("🟢 [AUTH STORE] user.id:", normalizedUser.id);
+            console.log("🟢 [AUTH STORE] user.role.permissions.length:", normalizedUser.role?.permissions?.length || 0);
+            console.log("🟢 [AUTH STORE] user.role.permissions:", normalizedUser.role?.permissions);
+            
+            return {
+              ...state,
+              user: normalizedUser,
+              token: access_token,
+              refreshToken: refresh_token,
+              isAuthenticated: true,
+            };
+          });
 
           return normalizedUser;
         } catch (error) {
@@ -196,13 +204,24 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // Update Zustand with immutable set
-          set((state) => ({
-            ...state,
-            user: normalizedUser || state.user, // Keep current user if no new user
-            token: access_token,
-            refreshToken: refresh_token || refreshToken,
-            isAuthenticated: true,
-          }));
+          set((state) => {
+            const finalUser = normalizedUser || state.user;
+            // 🔍 AUDITORÍA: Verificar un solo user
+            if (finalUser) {
+              console.log("🟢 [AUTH STORE] refreshSession() → set(user)");
+              console.log("🟢 [AUTH STORE] user.id:", finalUser.id);
+              console.log("🟢 [AUTH STORE] user.role.permissions.length:", finalUser.role?.permissions?.length || 0);
+              console.log("🟢 [AUTH STORE] user.role.permissions:", finalUser.role?.permissions);
+            }
+            
+            return {
+              ...state,
+              user: finalUser, // Keep current user if no new user
+              token: access_token,
+              refreshToken: refresh_token || refreshToken,
+              isAuthenticated: true,
+            };
+          });
 
           return normalizedUser || get().user;
         } catch (error) {
@@ -247,11 +266,19 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // Update Zustand with immutable set
-          set((state) => ({
-            ...state,
-            user: normalizedUser,
-            isAuthenticated: true,
-          }));
+          set((state) => {
+            // 🔍 AUDITORÍA: Verificar un solo user
+            console.log("🟢 [AUTH STORE] loadMe() → set(user)");
+            console.log("🟢 [AUTH STORE] user.id:", normalizedUser.id);
+            console.log("🟢 [AUTH STORE] user.role.permissions.length:", normalizedUser.role?.permissions?.length || 0);
+            console.log("🟢 [AUTH STORE] user.role.permissions:", normalizedUser.role?.permissions);
+            
+            return {
+              ...state,
+              user: normalizedUser,
+              isAuthenticated: true,
+            };
+          });
 
           return normalizedUser;
         } catch (error) {
