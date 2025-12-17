@@ -194,14 +194,14 @@ function DashboardContent() {
         }}
       >
         {/* LAYER 1: COMMAND BAR */}
-        <div style={{ padding: "var(--space-lg) var(--space-lg) var(--space-md)" }}>
+        <div>
           <CommandBar />
         </div>
 
         {/* LAYER 2: PRIMARY KPIs - Staggered Layout */}
         <div
           style={{
-            padding: "0 var(--space-lg) var(--space-lg)",
+            padding: "0 0 var(--space-lg)",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: "var(--space-lg)",
@@ -263,7 +263,7 @@ function DashboardContent() {
         {/* LAYER 3: SECONDARY MODULE CARDS - Staggered Grid */}
         <div
           style={{
-            padding: "0 var(--space-lg) var(--space-lg)",
+            padding: "0 0 var(--space-lg)",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
             gap: "var(--space-lg)",
@@ -355,7 +355,7 @@ function DashboardContent() {
         </div>
 
         {/* LAYER 4: ACTIVITY FEED */}
-        <div style={{ padding: "0 var(--space-lg) var(--space-xl)" }}>
+        <div style={{ padding: "0 0 var(--space-xl)" }}>
           <ActivityFeed items={activityItems} />
         </div>
       </div>

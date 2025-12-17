@@ -101,11 +101,11 @@ function AccountingMonthContent() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 py-6">
-        <div className="px-1">
+      <div className="space-y-6">
+        <div>
           <BotonVolver />
         </div>
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">
               Detalle de Contabilidad — {month ? getMonthName(month) : ""} {year}

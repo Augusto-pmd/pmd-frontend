@@ -86,8 +86,8 @@ function AuditDetailContent() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 py-6">
-        <div className="px-1">
+      <div className="space-y-6">
+        <div>
           <BotonVolver />
           <div className="mb-6">
             <h1 className="text-2xl font-semibold text-gray-900 mb-2">Detalle de Auditoría</h1>
@@ -175,7 +175,7 @@ function AuditDetailContent() {
                   )}
 
                   {log.before && log.after && (
-                    <div className="flex items-center justify-center pt-2">
+                    <div className="flex items-center pt-2">
                       <ArrowRight className="h-5 w-5 text-gray-400" />
                     </div>
                   )}

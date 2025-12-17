@@ -30,8 +30,8 @@ function UsersContent() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 py-6">
-        <div className="px-1">
+      <div className="space-y-6">
+        <div>
           <BotonVolver />
           <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Usuarios</h1>
           <p className="text-gray-600">Listado de usuarios registrados en PMD</p>

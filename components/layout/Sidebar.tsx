@@ -92,10 +92,12 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   console.log("🔵 [AUDIT]    user.id:", user?.id);
   console.log("🔵 [AUDIT]    user.email:", user?.email);
   
+  // ✅ Variable normalizada: siempre es string[]
+  const permissions: string[] = user?.role?.permissions ?? [];
+  
   console.log("🔵 [AUDIT] 2. PERMISSIONS NO VACÍO:");
-  const permissions = user?.role?.permissions;
-  const permissionsLength = Array.isArray(permissions) ? permissions.length : 0;
-  console.log("🔵 [AUDIT]    permissions existe:", !!permissions);
+  const permissionsLength = permissions.length;
+  console.log("🔵 [AUDIT]    permissions existe:", permissions.length > 0);
   console.log("🔵 [AUDIT]    permissions es Array:", Array.isArray(permissions));
   console.log("🔵 [AUDIT]    permissions.length:", permissionsLength);
   if (permissionsLength > 0) {
@@ -134,24 +136,24 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
       console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role existe");
       console.log("🔵 [SIDEBAR AUDIT] user.role.name:", user.role.name);
       
-      // VALIDACIÓN 3: user.role.permissions existe
-      if (!user.role.permissions) {
-        console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role.permissions no existe");
+      // VALIDACIÓN 3: permissions existe (usando variable normalizada)
+      if (permissions.length === 0) {
+        console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions no existe o está vacío");
       } else {
-        console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role.permissions existe");
+        console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: permissions existe");
         
-        // VALIDACIÓN 4: user.role.permissions es Array
-        if (!Array.isArray(user.role.permissions)) {
-          console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role.permissions no es Array. Tipo:", typeof user.role.permissions);
+        // VALIDACIÓN 4: permissions es Array (usando variable normalizada)
+        if (!Array.isArray(permissions)) {
+          console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions no es Array. Tipo:", typeof permissions);
         } else {
-          console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role.permissions es Array");
+          console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: permissions es Array");
           
-          // VALIDACIÓN 5: user.role.permissions no es vacío
-          if (user.role.permissions.length === 0) {
-            console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role.permissions está vacío (length: 0)");
+          // VALIDACIÓN 5: permissions no es vacío (usando variable normalizada)
+          if (permissions.length === 0) {
+            console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions está vacío (length: 0)");
           } else {
-            console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role.permissions no está vacío (length:", user.role.permissions.length, ")");
-            console.log("🔵 [SIDEBAR AUDIT] user.role.permissions:", user.role.permissions);
+            console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: permissions no está vacío (length:", permissions.length, ")");
+            console.log("🔵 [SIDEBAR AUDIT] permissions:", permissions);
           }
         }
       }

@@ -77,8 +77,8 @@ function AuditContent() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 py-6">
-        <div className="px-1">
+      <div className="space-y-6">
+        <div>
           <BotonVolver />
           <div className="mb-6">
             <h1 className="text-2xl font-semibold text-gray-900 mb-2">Auditoría</h1>

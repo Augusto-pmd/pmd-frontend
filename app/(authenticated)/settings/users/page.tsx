@@ -140,8 +140,8 @@ function UsersContent() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 py-6">
-        <div className="px-1">
+      <div className="space-y-6">
+        <div>
           <BotonVolver />
           <div className="flex items-center justify-between mb-6">
             <div>

@@ -183,11 +183,11 @@ function WorkDetailContent() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 py-6">
-        <div className="px-1">
+      <div className="space-y-6">
+        <div>
           <BotonVolver backTo="/works" />
         </div>
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900 mb-2">Detalle de la obra</h1>
             <p className="text-gray-600">Información completa de la obra seleccionada</p>
