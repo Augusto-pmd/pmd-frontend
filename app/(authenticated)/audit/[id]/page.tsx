@@ -59,11 +59,13 @@ function AuditDetailContent() {
   if (!log) {
     return (
       <MainLayout>
-        <div style={{ backgroundColor: "var(--apple-surface)", border: "1px solid var(--apple-border)", borderRadius: "var(--radius-xl)", padding: "var(--space-xl)", textAlign: "center" }}>
-          <Shield className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--apple-text-secondary)" }} />
-          <p style={{ font: "var(--font-body)", color: "var(--apple-text-secondary)" }}>
-            Registro de auditoría no encontrado
-          </p>
+        <div style={{ backgroundColor: "var(--apple-surface)", border: "1px solid var(--apple-border)", borderRadius: "var(--radius-xl)", padding: "var(--space-xl)" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+            <Shield className="w-12 h-12 mb-4" style={{ color: "var(--apple-text-secondary)" }} />
+            <p style={{ font: "var(--font-body)", color: "var(--apple-text-secondary)" }}>
+              Registro de auditoría no encontrado
+            </p>
+          </div>
         </div>
       </MainLayout>
     );
