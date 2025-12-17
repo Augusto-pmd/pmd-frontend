@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useWork, workApi } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
@@ -33,35 +32,33 @@ function WorkDetailContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando obra…" />
-      </MainLayout>
+      <LoadingState message="Cargando obra…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           Error al cargar la obra: {error.message || "Error desconocido"}
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/works")}>Volver a Obras</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!work) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
           Obra no encontrada
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/works")}>Volver a Obras</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -182,8 +179,7 @@ function WorkDetailContent() {
   }) || [];
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver backTo="/works" />
         </div>
@@ -566,7 +562,6 @@ function WorkDetailContent() {
           </div>
         </div>
       </Modal>
-    </MainLayout>
   );
 }
 

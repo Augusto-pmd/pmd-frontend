@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useCashMovement } from "@/hooks/api/cashboxes";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -27,35 +26,33 @@ function CashMovementDetailContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando movimiento…" />
-      </MainLayout>
+      <LoadingState message="Cargando movimiento…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
           Error al cargar el movimiento: {error.message || "Error desconocido"}
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/cash-movements")}>Volver a Movimientos de Caja</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!movement) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
           Movimiento no encontrado
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/cash-movements")}>Volver a Movimientos de Caja</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -131,8 +128,7 @@ function CashMovementDetailContent() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver backTo="/cash-movements" />
         </div>
@@ -259,7 +255,6 @@ function CashMovementDetailContent() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
   );
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useCashbox } from "@/hooks/api/cashboxes";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -27,35 +26,33 @@ function CashboxDetailContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando caja…" />
-      </MainLayout>
+      <LoadingState message="Cargando caja…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
           Error al cargar la caja: {error.message || "Error desconocido"}
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/cashboxes")}>Volver a Cajas</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!cashbox) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
           Caja no encontrada
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/cashboxes")}>Volver a Cajas</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -123,8 +120,7 @@ function CashboxDetailContent() {
   const status = getCashboxStatus();
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
         </div>
@@ -262,7 +258,6 @@ function CashboxDetailContent() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
   );
 }
 

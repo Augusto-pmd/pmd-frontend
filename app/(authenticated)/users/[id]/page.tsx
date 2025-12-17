@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useUser } from "@/hooks/api/users";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -24,35 +23,33 @@ function UserDetailContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando usuario…" />
-      </MainLayout>
+      <LoadingState message="Cargando usuario…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
           Error al cargar el usuario: {error.message || "Error desconocido"}
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/users")}>Volver a Usuarios</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!user) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
           Usuario no encontrado
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/users")}>Volver a Usuarios</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -129,8 +126,7 @@ function UserDetailContent() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver backTo="/users" />
         </div>
@@ -238,7 +234,6 @@ function UserDetailContent() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
   );
 }
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { useWorks } from "@/hooks/api/works";
@@ -69,35 +68,28 @@ function WorkDocumentsContent() {
 
   if (!organizationId) {
     return (
-      <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
-          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
-        </div>
-      </MainLayout>
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+        <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando documentos de la obra…" />
-      </MainLayout>
+      <LoadingState message="Cargando documentos de la obra…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          Error al cargar los documentos: {error}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        Error al cargar los documentos: {error}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
       <div className="space-y-6">
         <div>
           <BotonVolver backTo={`/works/${workId}`} />
@@ -202,7 +194,6 @@ function WorkDocumentsContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useRole } from "@/hooks/api/roles";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -27,35 +26,33 @@ function RoleDetailContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando rol…" />
-      </MainLayout>
+      <LoadingState message="Cargando rol…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
           Error al cargar el rol: {error.message || "Error desconocido"}
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/roles")}>Volver a Roles</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!role) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
           Rol no encontrado
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/roles")}>Volver a Roles</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -104,8 +101,7 @@ function RoleDetailContent() {
   const isPermissionsArray = Array.isArray(permissions);
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
         </div>
@@ -212,7 +208,6 @@ function RoleDetailContent() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
   );
 }
 

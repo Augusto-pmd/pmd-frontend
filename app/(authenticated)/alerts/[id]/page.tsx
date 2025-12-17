@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAlertsStore } from "@/store/alertsStore";
 import { useWorks } from "@/hooks/api/works";
@@ -44,9 +43,7 @@ function AlertDetailContent() {
 
   if (!alert) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando alerta…" />
-      </MainLayout>
+      <LoadingState message="Cargando alerta…" />
     );
   }
 
@@ -121,8 +118,7 @@ function AlertDetailContent() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver backTo="/alerts" />
           <div className="flex items-center justify-between mb-6">
@@ -276,7 +272,6 @@ function AlertDetailContent() {
           </div>
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

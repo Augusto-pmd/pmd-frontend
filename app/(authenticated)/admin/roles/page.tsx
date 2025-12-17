@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useRoles, roleApi } from "@/hooks/api/roles";
 import { useState } from "react";
@@ -73,24 +72,19 @@ function AdminRolesContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Loading roles..." />
-      </MainLayout>
+      <LoadingState message="Loading roles..." />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error loading roles: {error.message || "Unknown error"}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        Error loading roles: {error.message || "Unknown error"}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
       <div className="space-y-6">
         <div>
           <BotonVolver />
@@ -232,7 +226,6 @@ function AdminRolesContent() {
           </form>
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

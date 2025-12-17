@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Card, CardContent } from "@/components/ui/Card";
 
@@ -8,8 +7,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 // Backend does not have /api/employees endpoint
 function EmployeeDetailContent() {
   return (
-    <MainLayout>
-      <Card>
+    <Card>
         <CardContent style={{ padding: "var(--space-xl)", textAlign: "center" }}>
           <h2 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "var(--space-md)", color: "var(--apple-text-primary)" }}>
             Módulo no disponible
@@ -22,7 +20,6 @@ function EmployeeDetailContent() {
           </p>
         </CardContent>
       </Card>
-    </MainLayout>
   );
 }
 

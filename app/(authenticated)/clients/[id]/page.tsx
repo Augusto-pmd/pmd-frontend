@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Card, CardContent } from "@/components/ui/Card";
 
@@ -10,8 +9,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 function ClientDetailContent() {
   const router = useRouter();
   return (
-    <MainLayout>
-      <Card>
+    <Card>
         <CardContent style={{ padding: "var(--space-xl)", textAlign: "center" }}>
           <h2 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "var(--space-md)", color: "var(--apple-text-primary)" }}>
             Módulo no disponible
@@ -24,7 +22,6 @@ function ClientDetailContent() {
           </p>
         </CardContent>
       </Card>
-    </MainLayout>
   );
 }
 

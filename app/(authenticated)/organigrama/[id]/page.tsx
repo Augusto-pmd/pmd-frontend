@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 // NOTE: This module is not available in the backend
 // Backend does not have /api/employees endpoint
@@ -21,8 +20,7 @@ import { can } from "@/lib/acl";
 function EmployeeDetailContent() {
   const router = useRouter();
   return (
-    <MainLayout>
-      <Card>
+    <Card>
         <CardContent style={{ padding: "var(--space-xl)", textAlign: "center" }}>
           <h2 style={{ fontSize: "24px", fontWeight: 600, marginBottom: "var(--space-md)", color: "var(--apple-text-primary)" }}>
             Módulo no disponible
@@ -35,7 +33,6 @@ function EmployeeDetailContent() {
           </p>
         </CardContent>
       </Card>
-    </MainLayout>
   );
 }
 

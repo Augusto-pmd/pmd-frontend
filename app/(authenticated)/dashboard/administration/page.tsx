@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
@@ -12,8 +11,7 @@ export default function AdministrationDashboard() {
   }, [requireRole]);
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Administration Dashboard</h1>
           <p className="text-gray-600">Administrative tasks and management</p>
@@ -68,7 +66,6 @@ export default function AdministrationDashboard() {
           </div>
         </div>
       </div>
-    </MainLayout>
   );
 }
 

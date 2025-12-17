@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { useWorks } from "@/hooks/api/works";
@@ -46,9 +45,7 @@ function DocumentDetailContent() {
 
   if (!document) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando documento…" />
-      </MainLayout>
+      <LoadingState message="Cargando documento…" />
     );
   }
 
@@ -116,8 +113,7 @@ function DocumentDetailContent() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
           <div className="flex items-center justify-between mb-6">
@@ -287,7 +283,6 @@ function DocumentDetailContent() {
           </div>
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useSupplier } from "@/hooks/api/suppliers";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -27,35 +26,33 @@ function SupplierDetailContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando proveedor…" />
-      </MainLayout>
+      <LoadingState message="Cargando proveedor…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
           Error al cargar el proveedor: {error.message || "Error desconocido"}
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/suppliers")}>Volver a Proveedores</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!supplier) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
           Proveedor no encontrado
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/suppliers")}>Volver a Proveedores</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -116,8 +113,7 @@ function SupplierDetailContent() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver backTo="/suppliers" />
         </div>
@@ -195,7 +191,6 @@ function SupplierDetailContent() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
   );
 }
 

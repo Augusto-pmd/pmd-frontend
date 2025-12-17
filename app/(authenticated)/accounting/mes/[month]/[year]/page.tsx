@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAccountingMonth } from "@/hooks/api/accounting";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -25,14 +24,14 @@ function AccountingMonthContent() {
   // Guard check after all hooks
   if (!month || !year || isNaN(month) || isNaN(year)) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
           Parámetros de mes o año inválidos
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/accounting")}>Volver a Contabilidad</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -65,42 +64,39 @@ function AccountingMonthContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando datos del mes…" />
-      </MainLayout>
+      <LoadingState message="Cargando datos del mes…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
           Error al cargar los datos del mes: {error.message || "Error desconocido"}
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/accounting")}>Volver a Contabilidad</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!monthData || (typeof monthData === "object" && Object.keys(monthData).length === 0)) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
           No hay datos disponibles para este mes
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/accounting")}>Volver a Contabilidad</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   const data = monthData && typeof monthData === "object" ? monthData : {};
 
   return (
-    <MainLayout>
       <div className="space-y-6">
         <div>
           <BotonVolver />

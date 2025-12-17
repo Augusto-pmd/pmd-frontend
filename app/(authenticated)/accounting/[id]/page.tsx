@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAccountingStore, AccountingEntry } from "@/store/accountingStore";
 import { useWorks } from "@/hooks/api/works";
@@ -43,14 +42,14 @@ function AccountingEntryDetailContent() {
   // Guard check after all hooks
   if (!id) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
           ID de movimiento inválido
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/accounting")}>Volver a Contabilidad</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -137,22 +136,20 @@ function AccountingEntryDetailContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando movimiento contable…" />
-      </MainLayout>
+      <LoadingState message="Cargando movimiento contable…" />
     );
   }
 
   if (!entry) {
     return (
-      <MainLayout>
+      <>
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-pmd">
           Movimiento contable no encontrado
         </div>
         <div className="mt-4">
           <Button onClick={() => router.push("/accounting")}>Volver a Contabilidad</Button>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
@@ -167,8 +164,7 @@ function AccountingEntryDetailContent() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
         </div>
@@ -337,7 +333,6 @@ function AccountingEntryDetailContent() {
           </div>
         </div>
       </Modal>
-    </MainLayout>
   );
 }
 

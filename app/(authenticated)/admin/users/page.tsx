@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useUsers, userApi } from "@/hooks/api/users";
 import { User } from "@/hooks/useUsers";
@@ -69,24 +68,19 @@ function AdminUsersContent() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Loading users..." />
-      </MainLayout>
+      <LoadingState message="Loading users..." />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error loading users: {error.message || "Unknown error"}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        Error loading users: {error.message || "Unknown error"}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
       <div className="space-y-6">
         <div>
           <BotonVolver />
@@ -209,7 +203,6 @@ function AdminUsersContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAlertsStore } from "@/store/alertsStore";
 import { useWorkDocuments } from "@/hooks/api/workDocuments";
@@ -65,35 +64,28 @@ function DocumentAlertsContent() {
 
   if (!organizationId) {
     return (
-      <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
-          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
-        </div>
-      </MainLayout>
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+        <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando alertas del documento…" />
-      </MainLayout>
+      <LoadingState message="Cargando alertas del documento…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
-          Error al cargar las alertas: {error}
-        </div>
-      </MainLayout>
+      <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
+        Error al cargar las alertas: {error}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
         <div>
           <BotonVolver />
@@ -135,7 +127,6 @@ function DocumentAlertsContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { normalizeId } from "@/lib/normalizeId";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useUsers } from "@/hooks/api/users";
 import { useAlertsStore } from "@/store/alertsStore";
@@ -66,40 +65,32 @@ function OrganigramaContent() {
   // Verificar permisos ACL
   if (!can("staff.read")) {
     return (
-      <MainLayout>
-        <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
-          No tienes permisos para acceder al Organigrama
-        </div>
-      </MainLayout>
+      <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
+        No tienes permisos para acceder al Organigrama
+      </div>
     );
   }
 
   if (!organizationId) {
     return (
-      <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
-          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
-        </div>
-      </MainLayout>
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+        <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <LoadingState message="Cargando organigrama…" />
-      </MainLayout>
+      <LoadingState message="Cargando organigrama…" />
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
-          Error al cargar el organigrama: {error?.message || "Error desconocido"}
-        </div>
-      </MainLayout>
+      <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
+        Error al cargar el organigrama: {error?.message || "Error desconocido"}
+      </div>
     );
   }
 
@@ -136,8 +127,7 @@ function OrganigramaContent() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
           <div className="flex items-center justify-between mb-6">
@@ -333,7 +323,6 @@ function OrganigramaContent() {
           }}
         />
       </div>
-    </MainLayout>
   );
 }
 
