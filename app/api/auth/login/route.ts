@@ -2,13 +2,24 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    // Read body with error handling
-    let body;
-    try {
-      body = await request.json();
-    } catch (parseError) {
+    // Read body as text (NO parsear con request.json())
+    const bodyText = await request.text();
+    
+    // Validar que el body no esté vacío
+    if (!bodyText || bodyText.trim() === "") {
       return NextResponse.json(
-        { error: "Invalid request body", message: "Request body must be valid JSON" },
+        { error: "Request body is required" },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que sea JSON válido antes de forwardear
+    try {
+      JSON.parse(bodyText);
+    } catch (parseError) {
+      console.error("[API AUTH LOGIN] Invalid JSON body:", bodyText);
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
         { status: 400 }
       );
     }
@@ -22,11 +33,11 @@ export async function POST(request: Request) {
       "Content-Type": "application/json",
     };
 
-    // Forward request to backend
+    // Forward request to backend (forwardear el texto original, NO re-stringificar)
     const response = await fetch(targetUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(body),
+      body: bodyText, // Forwardear el texto original tal cual
     });
 
     // Read response as text first

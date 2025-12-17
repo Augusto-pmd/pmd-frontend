@@ -49,10 +49,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar que sea JSON válido antes de forwardear
-    let bodyData;
+    // Verificar que sea JSON válido antes de forwardear (sin guardar el resultado)
     try {
-      bodyData = JSON.parse(bodyText);
+      JSON.parse(bodyText);
     } catch (parseError) {
       console.error("[API SUPPLIERS POST] Invalid JSON body:", bodyText);
       return NextResponse.json(
