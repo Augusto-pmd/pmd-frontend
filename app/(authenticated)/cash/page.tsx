@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useState } from "react";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 
@@ -8,8 +7,7 @@ export default function CashPage() {
   const [activeTab, setActiveTab] = useState<"cashbox" | "expenses">("cashbox");
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
           <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Caja y Gastos</h1>
@@ -80,7 +78,6 @@ export default function CashPage() {
           </div>
         </div>
       </div>
-    </MainLayout>
   );
 }
 

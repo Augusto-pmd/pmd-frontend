@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useContracts, contractApi } from "@/hooks/api/contracts";
 import { useState } from "react";
@@ -36,26 +35,19 @@ function ContractsContent() {
   };
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Loading contracts..." />
-      </MainLayout>
-    );
+    return <LoadingState message="Loading contracts..." />;
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error loading contracts: {error.message || "Unknown error"}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        Error loading contracts: {error.message || "Unknown error"}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Contracts – PMD Backend Integration</h1>
@@ -152,7 +144,6 @@ function ContractsContent() {
           </div>
         </div>
       </div>
-    </MainLayout>
   );
 }
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useIncomes, incomeApi } from "@/hooks/api/incomes";
 import { useState } from "react";
@@ -72,26 +71,19 @@ function IncomesContent() {
   };
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Loading incomes..." />
-      </MainLayout>
-    );
+    return <LoadingState message="Loading incomes..." />;
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error loading incomes: {error.message || "Unknown error"}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        Error loading incomes: {error.message || "Unknown error"}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Incomes – PMD Backend Integration</h1>
@@ -198,7 +190,6 @@ function IncomesContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

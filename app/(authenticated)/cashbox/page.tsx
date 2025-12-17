@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useCashboxStore } from "@/store/cashboxStore";
 import { useWorks } from "@/hooks/api/works";
@@ -35,21 +34,15 @@ function CashboxContent() {
 
   if (!organizationId) {
     return (
-      <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
-          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
-        </div>
-      </MainLayout>
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+        <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+      </div>
     );
   }
 
   if (isLoading && cashboxes.length === 0) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando cajas..." />
-      </MainLayout>
-    );
+    return <LoadingState message="Cargando cajas..." />;
   }
 
   const handleCloseCashbox = async (id: string) => {
@@ -91,8 +84,7 @@ function CashboxContent() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
           <div className="flex items-center justify-between mb-2">
@@ -243,7 +235,6 @@ function CashboxContent() {
           </>
         )}
       </div>
-    </MainLayout>
   );
 }
 

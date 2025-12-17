@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useExpenses, expenseApi } from "@/hooks/api/expenses";
 import { useState } from "react";
@@ -72,26 +71,19 @@ function ExpensesContent() {
   };
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Loading expenses..." />
-      </MainLayout>
-    );
+    return <LoadingState message="Loading expenses..." />;
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error loading expenses: {error.message || "Unknown error"}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        Error loading expenses: {error.message || "Unknown error"}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Expenses – PMD Backend Integration</h1>
@@ -198,7 +190,6 @@ function ExpensesContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

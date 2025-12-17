@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useCashMovements } from "@/hooks/api/cashboxes";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -11,35 +10,27 @@ function CashMovementsContent() {
   const { movements, isLoading, error } = useCashMovements();
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando movimientos…" />
-      </MainLayout>
-    );
+    return <LoadingState message="Cargando movimientos…" />;
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-          Error al cargar los movimientos: {error.message || "Error desconocido"}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
+        Error al cargar los movimientos: {error.message || "Error desconocido"}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <BotonVolver />
-          <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Movimientos de Caja</h1>
-          <p className="text-gray-600">Registro de ingresos y egresos</p>
-        </div>
-
-        <MovementsList movements={movements || []} />
+    <div className="space-y-6">
+      <div>
+        <BotonVolver />
+        <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Movimientos de Caja</h1>
+        <p className="text-gray-600">Registro de ingresos y egresos</p>
       </div>
-    </MainLayout>
+
+      <MovementsList movements={movements || []} />
+    </div>
   );
 }
 
