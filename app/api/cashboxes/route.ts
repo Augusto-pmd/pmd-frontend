@@ -36,3 +36,84 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/cashboxes`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API CASHBOXES POST ERROR]", error);
+    return NextResponse.json(
+      { error: "Cashboxes create failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/cashboxes`, {
+      method: "PATCH",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API CASHBOXES PATCH ERROR]", error);
+    return NextResponse.json(
+      { error: "Cashboxes update failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/cashboxes`, {
+      method: "DELETE",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API CASHBOXES DELETE ERROR]", error);
+    return NextResponse.json(
+      { error: "Cashboxes delete failed" },
+      { status: 500 }
+    );
+  }
+}
+

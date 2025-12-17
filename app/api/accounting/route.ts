@@ -36,3 +36,84 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/accounting`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API ACCOUNTING POST ERROR]", error);
+    return NextResponse.json(
+      { error: "Accounting create failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/accounting`, {
+      method: "PATCH",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API ACCOUNTING PATCH ERROR]", error);
+    return NextResponse.json(
+      { error: "Accounting update failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/accounting`, {
+      method: "DELETE",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API ACCOUNTING DELETE ERROR]", error);
+    return NextResponse.json(
+      { error: "Accounting delete failed" },
+      { status: 500 }
+    );
+  }
+}
+

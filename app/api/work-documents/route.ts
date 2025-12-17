@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
 
-    const response = await fetch(`${BACKEND_URL}/suppliers`, {
+    const response = await fetch(`${BACKEND_URL}/work-documents`, {
       method: "GET",
       headers: {
         Authorization: authHeader ?? "",
@@ -16,9 +16,9 @@ export async function GET(request: Request) {
     // Aseguramos que la respuesta no esté vacía y que sea JSON
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[API SUPPLIERS ERROR]", errorText);
+      console.error("[API WORK-DOCUMENTS ERROR]", errorText);
       return NextResponse.json(
-        { error: "Error al obtener los proveedores", message: errorText },
+        { error: "Error al obtener los documentos de obra", message: errorText },
         { status: response.status }
       );
     }
@@ -28,9 +28,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API SUPPLIERS GET ERROR]", error);
+    console.error("[API WORK-DOCUMENTS GET ERROR]", error);
     return NextResponse.json(
-      { error: "Suppliers fetch failed" },
+      { error: "Work documents fetch failed" },
       { status: 500 }
     );
   }
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get("authorization");
     const body = await request.text();
 
-    const response = await fetch(`${BACKEND_URL}/suppliers`, {
+    const response = await fetch(`${BACKEND_URL}/work-documents`, {
       method: "POST",
       headers: {
         Authorization: authHeader ?? "",
@@ -55,9 +55,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API SUPPLIERS POST ERROR]", error);
+    console.error("[API WORK-DOCUMENTS POST ERROR]", error);
     return NextResponse.json(
-      { error: "Suppliers create failed" },
+      { error: "Work documents create failed" },
       { status: 500 }
     );
   }
@@ -68,7 +68,7 @@ export async function PATCH(request: Request) {
     const authHeader = request.headers.get("authorization");
     const body = await request.text();
 
-    const response = await fetch(`${BACKEND_URL}/suppliers`, {
+    const response = await fetch(`${BACKEND_URL}/work-documents`, {
       method: "PATCH",
       headers: {
         Authorization: authHeader ?? "",
@@ -82,9 +82,9 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API SUPPLIERS PATCH ERROR]", error);
+    console.error("[API WORK-DOCUMENTS PATCH ERROR]", error);
     return NextResponse.json(
-      { error: "Suppliers update failed" },
+      { error: "Work documents update failed" },
       { status: 500 }
     );
   }
@@ -95,7 +95,7 @@ export async function DELETE(request: Request) {
     const authHeader = request.headers.get("authorization");
     const body = await request.text();
 
-    const response = await fetch(`${BACKEND_URL}/suppliers`, {
+    const response = await fetch(`${BACKEND_URL}/work-documents`, {
       method: "DELETE",
       headers: {
         Authorization: authHeader ?? "",
@@ -109,9 +109,9 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API SUPPLIERS DELETE ERROR]", error);
+    console.error("[API WORK-DOCUMENTS DELETE ERROR]", error);
     return NextResponse.json(
-      { error: "Suppliers delete failed" },
+      { error: "Work documents delete failed" },
       { status: 500 }
     );
   }

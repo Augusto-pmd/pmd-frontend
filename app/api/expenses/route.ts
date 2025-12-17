@@ -36,3 +36,84 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/expenses`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API EXPENSES POST ERROR]", error);
+    return NextResponse.json(
+      { error: "Expenses create failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/expenses`, {
+      method: "PATCH",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API EXPENSES PATCH ERROR]", error);
+    return NextResponse.json(
+      { error: "Expenses update failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/expenses`, {
+      method: "DELETE",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API EXPENSES DELETE ERROR]", error);
+    return NextResponse.json(
+      { error: "Expenses delete failed" },
+      { status: 500 }
+    );
+  }
+}
+

@@ -36,3 +36,84 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/works`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API WORKS POST ERROR]", error);
+    return NextResponse.json(
+      { error: "Works create failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/works`, {
+      method: "PATCH",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API WORKS PATCH ERROR]", error);
+    return NextResponse.json(
+      { error: "Works update failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/works`, {
+      method: "DELETE",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API WORKS DELETE ERROR]", error);
+    return NextResponse.json(
+      { error: "Works delete failed" },
+      { status: 500 }
+    );
+  }
+}
+

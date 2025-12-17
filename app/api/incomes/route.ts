@@ -36,3 +36,84 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/incomes`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API INCOMES POST ERROR]", error);
+    return NextResponse.json(
+      { error: "Incomes create failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/incomes`, {
+      method: "PATCH",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API INCOMES PATCH ERROR]", error);
+    return NextResponse.json(
+      { error: "Incomes update failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const body = await request.text();
+
+    const response = await fetch(`${BACKEND_URL}/incomes`, {
+      method: "DELETE",
+      headers: {
+        Authorization: authHeader ?? "",
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("[API INCOMES DELETE ERROR]", error);
+    return NextResponse.json(
+      { error: "Incomes delete failed" },
+      { status: 500 }
+    );
+  }
+}
+
