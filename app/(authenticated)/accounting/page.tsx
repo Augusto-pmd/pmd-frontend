@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAccounting } from "@/hooks/api/accounting";
 import { useAccountingStore } from "@/store/accountingStore";
@@ -49,12 +48,10 @@ function AccountingContent() {
   // If organizationId is still missing (shouldn't happen), show friendly error
   if (!organizationId) {
     return (
-      <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
-          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
-        </div>
-      </MainLayout>
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+        <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+      </div>
     );
   }
 
@@ -81,11 +78,7 @@ function AccountingContent() {
   };
 
   if (isLoading || summaryLoading || worksLoading || suppliersLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando datos de contabilidad…" />
-      </MainLayout>
-    );
+    return <LoadingState message="Cargando datos de contabilidad…" />;
   }
 
   if (error || summaryError) {
@@ -94,11 +87,9 @@ function AccountingContent() {
       (typeof summaryError === 'string' ? summaryError : (summaryError as any)?.message) ||
       "Error desconocido";
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          Error al cargar los datos de contabilidad: {errorMessage}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        Error al cargar los datos de contabilidad: {errorMessage}
+      </div>
     );
   }
 
@@ -113,8 +104,7 @@ function AccountingContent() {
   const cierres = accountingData.cierres || accountingData.monthlyClosures || [];
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
           <div className="flex items-center justify-between">
@@ -167,7 +157,6 @@ function AccountingContent() {
           isLoading={isSubmitting}
         />
       </Modal>
-    </MainLayout>
   );
 }
 

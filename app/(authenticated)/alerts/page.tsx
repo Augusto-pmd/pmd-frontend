@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { normalizeId } from "@/lib/normalizeId";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAlertsStore } from "@/store/alertsStore";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -44,30 +43,22 @@ function AlertsContent() {
 
   if (!organizationId) {
     return (
-      <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
-          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
-        </div>
-      </MainLayout>
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+        <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+      </div>
     );
   }
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando alertas…" />
-      </MainLayout>
-    );
+    return <LoadingState message="Cargando alertas…" />;
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          Error al cargar las alertas: {error}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        Error al cargar las alertas: {error}
+      </div>
     );
   }
 
@@ -251,7 +242,6 @@ function AlertsContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

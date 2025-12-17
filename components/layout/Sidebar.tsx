@@ -65,6 +65,10 @@ let sidebarRenderCount = 0;
 let lastUserId: string | null = null;
 
 function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
+  useEffect(() => {
+    console.log("[SIDEBAR REAL] mounted");
+  }, []);
+
   const pathname = usePathname();
   const router = useRouter();
   const { alerts, fetchAlerts } = useAlertsStore();

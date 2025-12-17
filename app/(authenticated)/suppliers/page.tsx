@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useSuppliers, supplierApi } from "@/hooks/api/suppliers";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -35,26 +34,19 @@ function SuppliersContent() {
   };
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando proveedores…" />
-      </MainLayout>
-    );
+    return <LoadingState message="Cargando proveedores…" />;
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          Error al cargar los proveedores: {error.message || "Error desconocido"}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        Error al cargar los proveedores: {error.message || "Error desconocido"}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
           <div className="flex items-center justify-between">
@@ -88,7 +80,6 @@ function SuppliersContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

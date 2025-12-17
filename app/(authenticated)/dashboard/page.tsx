@@ -1,6 +1,5 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useWorks } from "@/hooks/api/works";
 import { useExpenses } from "@/hooks/api/expenses";
@@ -168,11 +167,7 @@ function DashboardContent() {
     accountingLoading || cashboxLoading || documentsLoading || suppliersLoading || usersLoading;
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando panel de control…" />
-      </MainLayout>
-    );
+    return <LoadingState message="Cargando panel de control…" />;
   }
 
   const formatCurrency = (amount: number) => {
@@ -185,14 +180,13 @@ function DashboardContent() {
   };
 
   return (
-    <MainLayout>
-      <div
-        style={{
-          width: "100%",
-          backgroundColor: "var(--apple-canvas)",
-          fontFamily: "Inter, system-ui, sans-serif",
-        }}
-      >
+    <div
+      style={{
+        width: "100%",
+        backgroundColor: "var(--apple-canvas)",
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
         {/* LAYER 1: COMMAND BAR */}
         <div>
           <CommandBar />
@@ -359,7 +353,6 @@ function DashboardContent() {
           <ActivityFeed items={activityItems} />
         </div>
       </div>
-    </MainLayout>
   );
 }
 

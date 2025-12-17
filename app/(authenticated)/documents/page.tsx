@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -64,36 +63,27 @@ function DocumentsContent() {
 
   if (!organizationId) {
     return (
-      <MainLayout>
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-          <p className="font-semibold mb-2">No se pudo determinar la organización</p>
-          <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
-        </div>
-      </MainLayout>
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <p className="font-semibold mb-2">No se pudo determinar la organización</p>
+        <p className="text-sm">Por favor, vuelve a iniciar sesión para continuar.</p>
+      </div>
     );
   }
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando documentos…" />
-      </MainLayout>
-    );
+    return <LoadingState message="Cargando documentos…" />;
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          Error al cargar los documentos: {error}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        Error al cargar los documentos: {error}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
           <div className="flex items-center justify-between mb-6">
@@ -244,7 +234,6 @@ function DocumentsContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 

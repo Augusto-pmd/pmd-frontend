@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useWorks, workApi } from "@/hooks/api/works";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -35,26 +34,19 @@ function WorksContent() {
   };
 
   if (isLoading) {
-    return (
-      <MainLayout>
-        <LoadingState message="Cargando obras…" />
-      </MainLayout>
-    );
+    return <LoadingState message="Cargando obras…" />;
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          Error al cargar las obras: {error.message || "Error desconocido"}
-        </div>
-      </MainLayout>
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        Error al cargar las obras: {error.message || "Error desconocido"}
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <BotonVolver />
           <div className="flex items-center justify-between">
@@ -88,7 +80,6 @@ function WorksContent() {
           />
         </Modal>
       </div>
-    </MainLayout>
   );
 }
 
