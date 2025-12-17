@@ -13,14 +13,24 @@ export async function GET(request: Request) {
       },
     });
 
+    // Aseguramos que la respuesta no esté vacía y que sea JSON
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[API USERS ERROR]", errorText);
+      return NextResponse.json(
+        { error: "Error al obtener los usuarios", message: errorText },
+        { status: response.status }
+      );
+    }
+
     const text = await response.text();
     const data = text ? JSON.parse(text) : [];
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error(`[API users GET ERROR]`, error);
+    console.error("[API USERS GET ERROR]", error);
     return NextResponse.json(
-      { error: "users fetch failed" },
+      { error: "Users fetch failed" },
       { status: 500 }
     );
   }
