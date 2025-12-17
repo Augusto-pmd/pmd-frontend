@@ -16,6 +16,7 @@
  * - roles.read, roles.create, roles.update, roles.delete, roles.manage
  */
 
+import { useMemo } from "react";
 import { useAuthStore } from "@/store/authStore";
 
 export type Permission = 
@@ -100,14 +101,61 @@ function getUserPermissions(): Permission[] {
  * @returns true si el usuario tiene el permiso, false en caso contrario
  */
 export function useCan(permission: Permission): boolean {
-  const permissions = getUserPermissions();
+  // 🔍 HACER REACTIVO: Usar selector reactivo en lugar de getState()
+  const user = useAuthStore((state) => state.user);
+  
+  // Obtener permisos de forma reactiva
+  const permissions: Permission[] = useMemo(() => {
+    if (!user?.role?.permissions) {
+      return [];
+    }
+    
+    if (!Array.isArray(user.role.permissions)) {
+      return [];
+    }
+    
+    // Filtrar solo strings válidos
+    return user.role.permissions.filter((p: string): p is Permission => 
+      typeof p === "string" && p.length > 0
+    );
+  }, [user?.role?.permissions]);
+  
+  // 🔍 LOGS TEMPORALES PARA DEBUGGING
+  console.log("[ACL] checking permission:", permission);
+  console.log("[ACL] available permissions:", permissions);
+  console.log("[ACL] permissions length:", permissions.length);
+  console.log("[ACL] permission type:", typeof permission);
+  if (permissions.length > 0) {
+    console.log("[ACL] permissions types:", permissions.map(p => typeof p));
+    console.log("[ACL] permissions sample:", permissions.slice(0, 5));
+  }
+  
+  // Verificar coincidencia exacta (case-sensitive)
   const hasPermission = permissions.includes(permission);
   
-  // Log solo para permisos críticos del sidebar (evitar spam)
-  const criticalPermissions = ["works.read", "suppliers.read", "accounting.read", "cashbox.read", "documents.read", "alerts.read"];
-  if (criticalPermissions.includes(permission)) {
-    console.log(`🟡 [ACL AUDIT] useCan("${permission}"): ${hasPermission ? "✅ TRUE" : "❌ FALSE"}`);
+  // Si no hay coincidencia, verificar si hay problemas de formato
+  if (!hasPermission && permissions.length > 0) {
+    const lowerPermission = permission.toLowerCase();
+    const lowerPermissions = permissions.map(p => String(p).toLowerCase());
+    const hasLowerMatch = lowerPermissions.includes(lowerPermission);
+    
+    console.log("[ACL] ❌ No match found for:", permission);
+    console.log("[ACL] Checking lowercase match:", hasLowerMatch);
+    if (hasLowerMatch) {
+      const matchingPermission = permissions.find(p => String(p).toLowerCase() === lowerPermission);
+      console.log("[ACL] ⚠️ Found lowercase match:", matchingPermission, "vs requested:", permission);
+    }
+    
+    // Verificar si hay permisos similares
+    const similarPermissions = permissions.filter(p => 
+      String(p).toLowerCase().includes(permission.split('.')[0].toLowerCase())
+    );
+    if (similarPermissions.length > 0) {
+      console.log("[ACL] Similar permissions found:", similarPermissions);
+    }
   }
+  
+  console.log(`[ACL] useCan("${permission}"): ${hasPermission ? "✅ TRUE" : "❌ FALSE"}`);
   
   return hasPermission;
 }

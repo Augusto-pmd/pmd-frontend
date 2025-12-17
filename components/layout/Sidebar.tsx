@@ -69,6 +69,17 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   // Hook reactivo: el componente re-renderiza cuando user cambia
   const user = useAuthStore((state) => state.user);
 
+  // 🔍 LOGS TEMPORALES PARA DEBUGGING
+  console.log("[SIDEBAR] user:", user);
+  console.log("[SIDEBAR] permissions:", user?.role?.permissions);
+  console.log("[SIDEBAR] permissions type:", typeof user?.role?.permissions);
+  console.log("[SIDEBAR] permissions isArray:", Array.isArray(user?.role?.permissions));
+  if (Array.isArray(user?.role?.permissions)) {
+    console.log("[SIDEBAR] permissions length:", user.role.permissions.length);
+    console.log("[SIDEBAR] permissions values:", user.role.permissions);
+    console.log("[SIDEBAR] permissions sample:", user.role.permissions.slice(0, 5));
+  }
+
   // 🔍 AUDITORÍA RUNTIME: Validaciones explícitas
   console.log("🔵 [SIDEBAR AUDIT] ========================================");
   console.log("🔵 [SIDEBAR AUDIT] user completo:", JSON.stringify(user, null, 2));
