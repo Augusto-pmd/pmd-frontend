@@ -45,11 +45,14 @@ function normalizeUserWithDefaults(user: any): AuthUser | null {
   return normalized;
 }
 
+export type AuthStatus = "pending" | "authenticated" | "unauthenticated";
+
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  status: AuthStatus;
   login: (email: string, password: string) => Promise<AuthUser | null>;
   logout: () => void;
   refreshSession: () => Promise<AuthUser | null>;
@@ -64,25 +67,57 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       refreshToken: null,
       isAuthenticated: false,
+      status: "unauthenticated" as AuthStatus,
 
       // --- LOGIN ---
       login: async (email: string, password: string): Promise<AuthUser | null> => {
+        // Set status to pending at start
+        set((state) => ({ ...state, status: "pending" as AuthStatus }));
+        console.log("[AUTH] status: pending (login started)");
+        
         try {
           const response = await loginService(email, password);
           
           if (!response) {
+            set((state) => ({
+              ...state,
+              user: null,
+              token: null,
+              refreshToken: null,
+              isAuthenticated: false,
+              status: "unauthenticated" as AuthStatus,
+            }));
+            console.log("[AUTH] status: unauthenticated (login failed - no response)");
             return null;
           }
 
           const { user, access_token, refresh_token } = response;
 
           if (!user || !access_token) {
+            set((state) => ({
+              ...state,
+              user: null,
+              token: null,
+              refreshToken: null,
+              isAuthenticated: false,
+              status: "unauthenticated" as AuthStatus,
+            }));
+            console.log("[AUTH] status: unauthenticated (login failed - no user/token)");
             return null;
           }
 
           // Normalize user
           const normalizedUser = normalizeUserWithDefaults(user);
           if (!normalizedUser) {
+            set((state) => ({
+              ...state,
+              user: null,
+              token: null,
+              refreshToken: null,
+              isAuthenticated: false,
+              status: "unauthenticated" as AuthStatus,
+            }));
+            console.log("[AUTH] status: unauthenticated (login failed - normalization failed)");
             return null;
           }
 
@@ -107,9 +142,11 @@ export const useAuthStore = create<AuthState>()(
               token: access_token,
               refreshToken: refresh_token,
               isAuthenticated: true,
+              status: "authenticated" as AuthStatus,
             };
           });
 
+          console.log("[AUTH] status: authenticated (login success)");
           return normalizedUser;
         } catch (error) {
           // On error, clear state
@@ -119,7 +156,9 @@ export const useAuthStore = create<AuthState>()(
             token: null,
             refreshToken: null,
             isAuthenticated: false,
+            status: "unauthenticated" as AuthStatus,
           }));
+          console.log("[AUTH] status: unauthenticated (login error)", error);
           return null;
         }
       },
@@ -141,7 +180,9 @@ export const useAuthStore = create<AuthState>()(
           token: null,
           refreshToken: null,
           isAuthenticated: false,
+          status: "unauthenticated" as AuthStatus,
         }));
+        console.log("[AUTH] status: unauthenticated (logout)");
       },
 
       // --- REFRESH SESSION ---
@@ -149,18 +190,37 @@ export const useAuthStore = create<AuthState>()(
         // Read refresh_token from localStorage
         const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null;
         if (!refreshToken) {
+          set((state) => ({
+            ...state,
+            status: "unauthenticated" as AuthStatus,
+          }));
+          console.log("[AUTH] status: unauthenticated (refresh failed - no refresh token)");
           return null;
         }
+
+        // Set status to pending
+        set((state) => ({ ...state, status: "pending" as AuthStatus }));
+        console.log("[AUTH] status: pending (refresh started)");
 
         try {
           // Call refreshService
           const result = await refreshService(refreshToken);
           
           if (!result) {
+            set((state) => ({
+              ...state,
+              status: "unauthenticated" as AuthStatus,
+            }));
+            console.log("[AUTH] status: unauthenticated (refresh failed - no result)");
             return null;
           }
 
           if (!result.access_token) {
+            set((state) => ({
+              ...state,
+              status: "unauthenticated" as AuthStatus,
+            }));
+            console.log("[AUTH] status: unauthenticated (refresh failed - no access token)");
             return null;
           }
 
@@ -220,11 +280,18 @@ export const useAuthStore = create<AuthState>()(
               token: access_token,
               refreshToken: refresh_token || refreshToken,
               isAuthenticated: true,
+              status: "authenticated" as AuthStatus,
             };
           });
 
+          console.log("[AUTH] status: authenticated (refresh success)");
           return normalizedUser || get().user;
         } catch (error) {
+          set((state) => ({
+            ...state,
+            status: "unauthenticated" as AuthStatus,
+          }));
+          console.log("[AUTH] status: unauthenticated (refresh error)", error);
           return null;
         }
       },
@@ -236,6 +303,10 @@ export const useAuthStore = create<AuthState>()(
 
       // --- LOAD ME ---
       loadMe: async (): Promise<AuthUser | null> => {
+        // Set status to pending at start
+        set((state) => ({ ...state, status: "pending" as AuthStatus }));
+        console.log("[AUTH] status: pending (loadMe started)");
+        
         try {
           // Call loadMeService
           const response = await loadMeService();
@@ -277,9 +348,11 @@ export const useAuthStore = create<AuthState>()(
               ...state,
               user: normalizedUser,
               isAuthenticated: true,
+              status: "authenticated" as AuthStatus,
             };
           });
 
+          console.log("[AUTH] status: authenticated (loadMe success)");
           return normalizedUser;
         } catch (error) {
           // Try refresh on error
@@ -294,7 +367,9 @@ export const useAuthStore = create<AuthState>()(
               token: null,
               refreshToken: null,
               isAuthenticated: false,
+              status: "unauthenticated" as AuthStatus,
             }));
+            console.log("[AUTH] status: unauthenticated (loadMe error - refresh also failed)");
             return null;
           }
         }
@@ -306,6 +381,11 @@ export const useAuthStore = create<AuthState>()(
         // Ensure state is never undefined
         if (!state) {
           return;
+        }
+
+        // Initialize status if not present
+        if (!state.status) {
+          state.status = "unauthenticated" as AuthStatus;
         }
 
         // Try to load from localStorage if Zustand doesn't have data
@@ -324,6 +404,11 @@ export const useAuthStore = create<AuthState>()(
                 state.token = storedToken;
                 state.refreshToken = storedRefreshToken;
                 state.isAuthenticated = true;
+                state.status = "authenticated" as AuthStatus;
+                console.log("[AUTH] status: authenticated (rehydrated from localStorage)");
+              } else {
+                state.status = "unauthenticated" as AuthStatus;
+                console.log("[AUTH] status: unauthenticated (rehydration failed - normalization failed)");
               }
             } catch {
               // If parsing fails, clear state
@@ -331,7 +416,13 @@ export const useAuthStore = create<AuthState>()(
               state.token = null;
               state.refreshToken = null;
               state.isAuthenticated = false;
+              state.status = "unauthenticated" as AuthStatus;
+              console.log("[AUTH] status: unauthenticated (rehydration failed - parse error)");
             }
+          } else {
+            // No token or user in localStorage
+            state.status = "unauthenticated" as AuthStatus;
+            console.log("[AUTH] status: unauthenticated (rehydration - no token/user in localStorage)");
           }
         }
 
@@ -341,14 +432,31 @@ export const useAuthStore = create<AuthState>()(
             const normalizedUser = normalizeUserWithDefaults(state.user);
             if (normalizedUser) {
               state.user = normalizedUser;
+              // If we have user and token, set authenticated
+              if (state.token) {
+                state.isAuthenticated = true;
+                state.status = "authenticated" as AuthStatus;
+                console.log("[AUTH] status: authenticated (rehydrated from state)");
+              } else {
+                state.status = "unauthenticated" as AuthStatus;
+                console.log("[AUTH] status: unauthenticated (rehydration - user exists but no token)");
+              }
             } else {
               state.user = null;
               state.isAuthenticated = false;
+              state.status = "unauthenticated" as AuthStatus;
+              console.log("[AUTH] status: unauthenticated (rehydration - normalization failed)");
             }
           } catch {
             state.user = null;
             state.isAuthenticated = false;
+            state.status = "unauthenticated" as AuthStatus;
+            console.log("[AUTH] status: unauthenticated (rehydration - error normalizing)");
           }
+        } else if (!state.token) {
+          // No user and no token - definitely unauthenticated
+          state.status = "unauthenticated" as AuthStatus;
+          console.log("[AUTH] status: unauthenticated (rehydration - no user, no token)");
         }
       },
     }
