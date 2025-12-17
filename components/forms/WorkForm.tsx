@@ -164,131 +164,171 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-      {/* Nombre de la obra - OBLIGATORIO */}
-      <FormField label="Nombre de la obra" required error={errors.nombre}>
-        <Input
-          type="text"
-          value={formData.nombre || formData.name}
-          onChange={(e) => setFormData({ ...formData, nombre: e.target.value, name: e.target.value })}
-          placeholder="Ej: Edificio Residencial Centro"
-          required
-        />
-      </FormField>
-
-      {/* Dirección */}
-      <FormField label="Dirección">
-        <Input
-          type="text"
-          value={formData.direccion || formData.address}
-          onChange={(e) => setFormData({ ...formData, direccion: e.target.value, address: e.target.value })}
-          placeholder="Dirección completa de la obra"
-        />
-      </FormField>
-
-      {/* Metros cuadrados */}
-      <FormField label="Metros cuadrados" error={errors.metrosCuadrados}>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          value={formData.metrosCuadrados || formData.squareMeters}
-          onChange={(e) => setFormData({ ...formData, metrosCuadrados: e.target.value, squareMeters: e.target.value })}
-          placeholder="m²"
-        />
-      </FormField>
-
-      {/* Estado - OBLIGATORIO */}
-      <FormField label="Estado" required>
-        <Select
-          value={formData.estado || formData.status}
-          onChange={(e) => {
-            const estado = e.target.value;
-            let status = "planned";
-            if (estado === "planificada") status = "planned";
-            else if (estado === "en-ejecucion" || estado === "activa") status = "active";
-            else if (estado === "pausada") status = "paused";
-            else if (estado === "finalizada" || estado === "completada") status = "completed";
-            setFormData({ ...formData, estado: estado, status: status });
-          }}
-          required
-        >
-          <option value="planificada">Planificada</option>
-          <option value="en-ejecucion">En ejecución</option>
-          <option value="activa">Activa</option>
-          <option value="pausada">Pausada</option>
-          <option value="finalizada">Finalizada</option>
-          <option value="completada">Completada</option>
-        </Select>
-      </FormField>
-
-      {/* Fechas */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
-        <FormField label="Fecha de inicio">
+      {/* Sección: Información Básica */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        <div style={{ borderBottom: "1px solid var(--apple-border)", paddingBottom: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--apple-text-primary)" }}>Información Básica</h3>
+        </div>
+        
+        {/* Nombre de la obra - OBLIGATORIO */}
+        <FormField label="Nombre de la obra" required error={errors.nombre}>
           <Input
-            type="date"
-            value={formData.fechaInicio || formData.startDate}
-            onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value, startDate: e.target.value })}
+            type="text"
+            value={formData.nombre || formData.name}
+            onChange={(e) => setFormData({ ...formData, nombre: e.target.value, name: e.target.value })}
+            placeholder="Ej: Edificio Residencial Centro"
+            required
           />
         </FormField>
-        <FormField label="Fecha estimada de finalización" error={errors.fechaFin}>
+
+        {/* Dirección */}
+        <FormField label="Dirección">
           <Input
-            type="date"
-            value={formData.fechaFin || formData.endDate}
-            onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value, endDate: e.target.value })}
-            min={formData.fechaInicio || formData.startDate}
+            type="text"
+            value={formData.direccion || formData.address}
+            onChange={(e) => setFormData({ ...formData, direccion: e.target.value, address: e.target.value })}
+            placeholder="Dirección completa de la obra"
           />
         </FormField>
-      </div>
 
-      {/* Responsable y Presupuesto */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
-        <FormField label="Responsable">
-          <Select
-            value={formData.responsableId || formData.managerId}
-            onChange={(e) => setFormData({ ...formData, responsableId: e.target.value, managerId: e.target.value })}
-          >
-            <option value="">Seleccionar responsable</option>
-            {users?.map((user: any) => {
-              const nombre = user.fullName || user.name || user.nombre || "Sin nombre";
-              return (
-                <option key={user.id} value={normalizeId(user.id)}>
-                  {nombre}
-                </option>
-              );
-            })}
-          </Select>
-        </FormField>
-        <FormField label="Presupuesto" error={errors.presupuesto}>
+        {/* Metros cuadrados */}
+        <FormField label="Metros cuadrados" error={errors.metrosCuadrados}>
           <Input
             type="number"
             step="0.01"
             min="0"
-            value={formData.presupuesto || formData.budget}
-            onChange={(e) => setFormData({ ...formData, presupuesto: e.target.value, budget: e.target.value })}
-            placeholder="0.00"
+            value={formData.metrosCuadrados || formData.squareMeters}
+            onChange={(e) => setFormData({ ...formData, metrosCuadrados: e.target.value, squareMeters: e.target.value })}
+            placeholder="m²"
           />
         </FormField>
       </div>
 
-      {/* Descripción */}
-      <FormField label="Descripción">
-        <Textarea
-          value={formData.descripcion || formData.description}
-          onChange={(e) => setFormData({ ...formData, descripcion: e.target.value, description: e.target.value })}
-          rows={4}
-          placeholder="Descripción detallada de la obra"
-        />
-      </FormField>
+      {/* Sección: Estado y Fechas */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        <div style={{ borderBottom: "1px solid var(--apple-border)", paddingBottom: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--apple-text-primary)" }}>Estado y Fechas</h3>
+        </div>
+        
+        {/* Estado - OBLIGATORIO */}
+        <FormField label="Estado" required>
+          <Select
+            value={formData.estado || formData.status}
+            onChange={(e) => {
+              const estado = e.target.value;
+              let status = "planned";
+              if (estado === "planificada") status = "planned";
+              else if (estado === "en-ejecucion" || estado === "activa") status = "active";
+              else if (estado === "pausada") status = "paused";
+              else if (estado === "finalizada" || estado === "completada") status = "completed";
+              setFormData({ ...formData, estado: estado, status: status });
+            }}
+            required
+          >
+            <option value="planificada">Planificada</option>
+            <option value="en-ejecucion">En ejecución</option>
+            <option value="activa">Activa</option>
+            <option value="pausada">Pausada</option>
+            <option value="finalizada">Finalizada</option>
+            <option value="completada">Completada</option>
+          </Select>
+        </FormField>
 
-      {/* Botones */}
-      <div style={{ display: "flex", gap: "var(--space-sm)", paddingTop: "var(--space-md)" }}>
+        {/* Fechas */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+          <FormField label="Fecha de inicio">
+            <Input
+              type="date"
+              value={formData.fechaInicio || formData.startDate}
+              onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value, startDate: e.target.value })}
+            />
+          </FormField>
+          <FormField label="Fecha estimada de finalización" error={errors.fechaFin}>
+            <Input
+              type="date"
+              value={formData.fechaFin || formData.endDate}
+              onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value, endDate: e.target.value })}
+              min={formData.fechaInicio || formData.startDate}
+            />
+          </FormField>
+        </div>
+      </div>
+
+      {/* Sección: Asignación y Presupuesto */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        <div style={{ borderBottom: "1px solid var(--apple-border)", paddingBottom: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--apple-text-primary)" }}>Asignación y Presupuesto</h3>
+        </div>
+        
+        {/* Responsable y Presupuesto */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+          <FormField label="Responsable">
+            <Select
+              value={formData.responsableId || formData.managerId}
+              onChange={(e) => setFormData({ ...formData, responsableId: e.target.value, managerId: e.target.value })}
+            >
+              <option value="">Seleccionar responsable</option>
+              {users?.map((user: any) => {
+                const nombre = user.fullName || user.name || user.nombre || "Sin nombre";
+                return (
+                  <option key={user.id} value={normalizeId(user.id)}>
+                    {nombre}
+                  </option>
+                );
+              })}
+            </Select>
+          </FormField>
+          <FormField label="Presupuesto" error={errors.presupuesto}>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.presupuesto || formData.budget}
+              onChange={(e) => setFormData({ ...formData, presupuesto: e.target.value, budget: e.target.value })}
+              placeholder="0.00"
+            />
+          </FormField>
+        </div>
+      </div>
+
+      {/* Sección: Descripción */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        <div style={{ borderBottom: "1px solid var(--apple-border)", paddingBottom: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--apple-text-primary)" }}>Descripción</h3>
+        </div>
+        
+        <FormField label="Descripción">
+          <Textarea
+            value={formData.descripcion || formData.description}
+            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value, description: e.target.value })}
+            rows={4}
+            placeholder="Descripción detallada de la obra"
+          />
+        </FormField>
+      </div>
+
+      {/* Botones - Sticky en mobile */}
+      <div 
+        style={{ 
+          display: "flex", 
+          gap: "var(--space-sm)", 
+          position: "sticky",
+          bottom: 0,
+          backgroundColor: "var(--apple-surface)",
+          paddingTop: "var(--space-md)",
+          paddingBottom: "var(--space-md)",
+          marginTop: "var(--space-md)",
+          borderTop: "1px solid var(--apple-border)",
+        }}
+        className="md:static md:border-0 md:bg-transparent md:pb-0"
+      >
         <Button
           type="submit"
           variant="primary"
-          disabled={isLoading}
+          loading={isLoading}
           style={{ flex: 1 }}
         >
-          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear Obra"}
+          {initialData ? "Actualizar" : "Crear Obra"}
         </Button>
         <Button
           type="button"

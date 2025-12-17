@@ -75,7 +75,7 @@ export const userApi = {
       console.warn("❗ [userApi.update] id no está definido");
       throw new Error("ID de usuario no está definido");
     }
-    return apiClient.put(`/users/${id}`, data);
+    return apiClient.patch(`/users/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {

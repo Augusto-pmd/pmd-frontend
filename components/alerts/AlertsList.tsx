@@ -331,7 +331,9 @@ export function AlertsList({
               ¿Estás seguro de que deseas eliminar esta alerta?
             </p>
             <p className="text-sm text-gray-500 font-medium">{selectedAlert.title || selectedAlert.description || "Sin título"}</p>
-            <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+            <p className="text-sm text-red-600 font-medium">
+              ⚠️ Esta acción no se puede deshacer.
+            </p>
             <div className="flex gap-3 justify-end pt-4">
               <Button
                 variant="outline"
@@ -344,12 +346,12 @@ export function AlertsList({
                 Cancelar
               </Button>
               <Button
-                variant="primary"
+                variant="danger"
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                className="bg-red-600 hover:bg-red-700"
+                loading={isSubmitting}
               >
-                {isSubmitting ? "Eliminando..." : "Eliminar"}
+                Eliminar
               </Button>
             </div>
           </div>

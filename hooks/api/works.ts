@@ -54,7 +54,7 @@ export const workApi = {
       console.warn("❗ [workApi.update] id no está definido");
       throw new Error("ID de obra no está definido");
     }
-    return apiClient.put(`/works/${id}`, data);
+    return apiClient.patch(`/works/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {

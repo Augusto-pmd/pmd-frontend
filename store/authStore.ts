@@ -12,18 +12,26 @@ export type { AuthUser };
 export type UserRole = "admin" | "operator" | "auditor" | "administrator";
 
 // Helper function to normalize user with role and organization
+// NO sobrescribe permissions si ya existen - solo preserva lo que viene del backend
 function normalizeUserWithDefaults(user: any): AuthUser | null {
   const normalized = normalizeUser(user);
   if (!normalized) {
     return null;
   }
 
-  // Normalize role
+  // Normalize role - NO sobrescribir permissions si ya existen
   if (!normalized.role || typeof normalized.role.name !== "string") {
     normalized.role = {
       id: normalized.role?.id || "1",
       name: "ADMINISTRATION",
+      permissions: normalized.role?.permissions || [], // Preservar permissions existentes o array vacío
     };
+  } else {
+    // Asegurar que permissions siempre esté presente como array (pero NO sobrescribir si ya existe)
+    if (!normalized.role.permissions || !Array.isArray(normalized.role.permissions)) {
+      normalized.role.permissions = []; // Solo inicializar si no existe, no inferir
+    }
+    // Si permissions ya existe y es array válido, se preserva tal cual
   }
 
   // Normalize organization

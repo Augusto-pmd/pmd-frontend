@@ -4,6 +4,8 @@ import { useState } from "react";
 import Sidebar from "./Sidebar";
 import { Topbar } from "./Topbar";
 import SidebarToggle from "./SidebarToggle";
+// Importar script de auditoría para que esté disponible globalmente
+import "@/lib/audit-permissions";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);

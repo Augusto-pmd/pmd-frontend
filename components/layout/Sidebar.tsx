@@ -66,7 +66,49 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const { alerts, fetchAlerts } = useAlertsStore();
   const { documents, fetchDocuments } = useDocumentsStore();
   const { cashboxes, fetchCashboxes } = useCashboxStore();
-  const user = useAuthStore.getState().user;
+  // Hook reactivo: el componente re-renderiza cuando user cambia
+  const user = useAuthStore((state) => state.user);
+
+  // 🔍 AUDITORÍA RUNTIME: Validaciones explícitas
+  console.log("🔵 [SIDEBAR AUDIT] ========================================");
+  console.log("🔵 [SIDEBAR AUDIT] user completo:", JSON.stringify(user, null, 2));
+  
+  // VALIDACIÓN 1: user existe
+  if (!user) {
+    console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user no existe");
+  } else {
+    console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user existe");
+    
+    // VALIDACIÓN 2: user.role existe
+    if (!user.role) {
+      console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role no existe");
+    } else {
+      console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role existe");
+      console.log("🔵 [SIDEBAR AUDIT] user.role.name:", user.role.name);
+      
+      // VALIDACIÓN 3: user.role.permissions existe
+      if (!user.role.permissions) {
+        console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role.permissions no existe");
+      } else {
+        console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role.permissions existe");
+        
+        // VALIDACIÓN 4: user.role.permissions es Array
+        if (!Array.isArray(user.role.permissions)) {
+          console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role.permissions no es Array. Tipo:", typeof user.role.permissions);
+        } else {
+          console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role.permissions es Array");
+          
+          // VALIDACIÓN 5: user.role.permissions no es vacío
+          if (user.role.permissions.length === 0) {
+            console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role.permissions está vacío (length: 0)");
+          } else {
+            console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role.permissions no está vacío (length:", user.role.permissions.length, ")");
+            console.log("🔵 [SIDEBAR AUDIT] user.role.permissions:", user.role.permissions);
+          }
+        }
+      }
+    }
+  }
 
   // ACL hooks - deben ejecutarse siempre antes de cualquier return
   const canWorks = useCan("works.read");
@@ -80,49 +122,86 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const canRoles = useCan("roles.read");
   const canSettings = useCan("settings.read");
 
+  // 🔍 DIAGNÓSTICO: Log de todos los permisos
+  console.log("🔵 [SIDEBAR] Permisos verificados:");
+  console.log("  - canWorks:", canWorks);
+  console.log("  - canSuppliers:", canSuppliers);
+  console.log("  - canAccounting:", canAccounting);
+  console.log("  - canCashbox:", canCashbox);
+  console.log("  - canDocuments:", canDocuments);
+  console.log("  - canAlerts:", canAlerts);
+  console.log("  - canAudit:", canAudit);
+  console.log("  - canUsers:", canUsers);
+  console.log("  - canRoles:", canRoles);
+  console.log("  - canSettings:", canSettings);
+
+  // Hook reactivo para organizationId
+  const organizationId = useAuthStore((state) => state.user?.organizationId);
+
   useEffect(() => {
-    const authState = useAuthStore.getState();
-    const organizationId = authState.user?.organizationId;
     if (organizationId) {
       fetchAlerts();
       fetchDocuments();
       fetchCashboxes();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [organizationId]);
 
   // Memoizar items visibles según permisos ACL - antes del early return
   const visibleItems = useMemo(() => {
-    return ALL_NAV_ITEMS.filter((item) => {
+    const filtered = ALL_NAV_ITEMS.filter((item) => {
       // Dashboard siempre visible si hay usuario
-      if (item.permission === "always" || item.href === "/dashboard") return true;
+      if (item.permission === "always" || item.href === "/dashboard") {
+        console.log(`🔵 [SIDEBAR] Item "${item.label}" visible (always/dashboard)`);
+        return true;
+      }
       
       // Verificar permiso específico
+      let hasPermission = false;
       switch (item.permission) {
         case "works.read":
-          return canWorks;
+          hasPermission = canWorks;
+          break;
         case "suppliers.read":
-          return canSuppliers;
+          hasPermission = canSuppliers;
+          break;
         case "accounting.read":
-          return canAccounting;
+          hasPermission = canAccounting;
+          break;
         case "cashbox.read":
-          return canCashbox;
+          hasPermission = canCashbox;
+          break;
         case "documents.read":
-          return canDocuments;
+          hasPermission = canDocuments;
+          break;
         case "alerts.read":
-          return canAlerts;
+          hasPermission = canAlerts;
+          break;
         case "audit.read":
-          return canAudit;
+          hasPermission = canAudit;
+          break;
         case "users.read":
-          return canUsers;
+          hasPermission = canUsers;
+          break;
         case "roles.read":
-          return canRoles;
+          hasPermission = canRoles;
+          break;
         case "settings.read":
-          return canSettings;
+          hasPermission = canSettings;
+          break;
         default:
-          return true;
+          hasPermission = true;
       }
+      
+      console.log(`🔵 [SIDEBAR] Item "${item.label}" (${item.permission}): ${hasPermission ? "✅ VISIBLE" : "❌ OCULTO"}`);
+      return hasPermission;
     });
+    
+    console.log("🔵 [SIDEBAR] Total items visibles:", filtered.length, "de", ALL_NAV_ITEMS.length);
+    console.log("🔵 [SIDEBAR] Items visibles:", filtered.map(i => i.label));
+    console.log("🔵 [SIDEBAR] ========================================");
+    
+    return filtered;
   }, [canWorks, canSuppliers, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
   // Memoizar agrupación por sección - antes del early return
@@ -138,7 +217,10 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   }, [visibleItems]);
 
   // Early return después de todos los hooks
-  if (!user) return null;
+  if (!user) {
+    console.log("🔴 [SIDEBAR] EARLY RETURN: user no existe");
+    return null;
+  }
 
   const unreadAlertsCount = alerts.filter((a) => !a.read).length;
   const pendingDocsCount = documents.filter((d) => d.status === "pendiente").length;
@@ -189,11 +271,24 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     <>
       {/* Sidebar */}
       <aside
-        className={`${styles.sidebarWrapper} ${
-          mobileOpen
-            ? "fixed top-0 left-0 z-[9998] w-64 bg-[#162F7F]/90 backdrop-blur-2xl border-r border-white/20 translate-x-0 transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] md:static md:translate-x-0 touch-pan-y touch-manipulation scrollbar-none text-white touch-none select-none"
-            : "fixed top-0 left-0 z-[9998] w-64 bg-[#162F7F]/90 backdrop-blur-2xl border-r border-white/20 -translate-x-full transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] md:static md:translate-x-0 touch-pan-y touch-manipulation scrollbar-none text-white touch-none select-none"
-        }`}
+        className={`${styles.sidebarWrapper} 
+          /* Base styles - siempre aplicados */
+          bg-[#162F7F] border-r border-white/20 
+          touch-pan-y touch-manipulation scrollbar-none text-white touch-none select-none
+          /* Desktop (md+): siempre visible, static, ancho fijo */
+          md:static md:translate-x-0 md:w-64 md:z-auto
+          /* Mobile: fixed, condicional según mobileOpen */
+          fixed top-0 left-0 z-[9998] 
+          transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]
+          ${
+            mobileOpen
+              ? "translate-x-0" /* Mobile: visible cuando mobileOpen es true */
+              : "-translate-x-full" /* Mobile: oculto cuando mobileOpen es false */
+          }
+        `}
+        style={{ 
+          width: mobileOpen ? "min(85vw, 256px)" : undefined 
+        }}
       >
         {/* Logo Section */}
         <div className={`${styles.logoSection} flex justify-center items-center py-6 border-b border-white/10`}>
@@ -201,11 +296,11 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation - Scrollable */}
-        <nav className={`${styles.menuScroll} flex flex-col gap-1 px-3 py-4 scrollbar-none`}>
+        <nav className={`${styles.menuScroll} flex flex-col gap-2 px-3 py-4 scrollbar-none`}>
           {Object.entries(itemsBySection).map(([section, items]) => (
             <div key={section} className="mb-2">
               {/* Section Title */}
-              <p className="px-5 mt-4 mb-1 text-xs uppercase tracking-wide text-white/50 font-medium">
+              <p className="px-5 mt-4 mb-1 text-xs uppercase tracking-wide text-white font-medium">
                 {section}
               </p>
 
@@ -225,7 +320,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                       handleItemClick(item.href);
                     }}
                     className={`
-                      flex items-center gap-3 px-5 py-3
+                      flex items-center gap-3 px-5 py-4
                       rounded-xl
                       transition-all duration-200
                       cursor-pointer
@@ -238,9 +333,10 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                           : "hover:bg-white/15"
                       }
                     `}
+                    style={{ minHeight: "48px" }}
                   >
                     {/* Icon */}
-                    <Icon className="w-5 h-5 text-white/90 flex-shrink-0" />
+                    <Icon className="w-5 h-5 text-white flex-shrink-0" />
 
                     {/* Label */}
                     <span className="flex-1">{item.label}</span>
@@ -277,7 +373,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
             <p className="text-sm font-semibold text-white truncate">
               {user.fullName || user.email}
             </p>
-            <p className="text-xs text-white/70 truncate">
+            <p className="text-xs text-white truncate opacity-90">
               {user.role?.name || user.roleId || "Sin rol"}
             </p>
           </div>

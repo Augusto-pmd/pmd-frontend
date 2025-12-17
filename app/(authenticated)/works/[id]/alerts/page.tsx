@@ -94,7 +94,7 @@ function WorkAlertsContent() {
     <MainLayout>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
         <div>
-          <BotonVolver />
+          <BotonVolver backTo={`/works/${workId}`} />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-md)" }}>
             <div>
               <h1 style={{ font: "var(--font-title)", color: "var(--apple-text-primary)", marginBottom: "var(--space-xs)" }}>

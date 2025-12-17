@@ -12,7 +12,7 @@ export interface AuthUser {
   role: {
     id: string;
     name: string;
-    permissions?: string[];
+    permissions: string[]; // SIEMPRE presente como array (puede estar vacío si backend no envía)
   };
   roleId: string | null;
   organizationId: string | null;
@@ -26,6 +26,10 @@ export interface AuthUser {
   [key: string]: any;
 }
 
+/**
+ * Normaliza un usuario del backend preservando explícitamente role.permissions
+ * NO infiere permisos por role.name - solo preserva lo que viene del backend
+ */
 export function normalizeUser(rawUser: any): AuthUser | null {
   if (!rawUser) return null;
 
@@ -33,14 +37,24 @@ export function normalizeUser(rawUser: any): AuthUser | null {
   const email = rawUser.email || "";
   const fullName = rawUser.fullName || rawUser.name || "";
 
+  // Preservar permissions explícitas del backend
+  let permissions: string[] = [];
+  if (rawUser.role?.permissions && Array.isArray(rawUser.role.permissions)) {
+    // Filtrar solo strings válidos
+    permissions = rawUser.role.permissions.filter((p: any) => typeof p === "string" && p.length > 0);
+  }
+  // Si el backend no envía permissions, el array queda vacío (pero existe)
+
   const role = rawUser.role
     ? {
         id: normalizeId(rawUser.role.id),
         name: rawUser.role.name || "ADMINISTRATION",
+        permissions, // SIEMPRE presente como array (preservado del backend o vacío)
       }
     : {
         id: "",
         name: "ADMINISTRATION",
+        permissions: [], // Array vacío si no hay role
       };
 
   let organization: { id: string; name: string; [key: string]: any } | null = null;

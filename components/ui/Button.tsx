@@ -1,10 +1,12 @@
 import { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "icon";
+  variant?: "primary" | "secondary" | "outline" | "danger" | "ghost" | "icon";
   size?: "sm" | "md" | "lg";
   children: ReactNode;
+  loading?: boolean; // Muestra spinner y deshabilita botón
 }
 
 export function Button({
@@ -12,8 +14,11 @@ export function Button({
   size = "md",
   className,
   children,
+  loading = false,
+  disabled,
   ...props
 }: ButtonProps) {
+  const isDisabled = disabled || loading;
   const baseStyles = {
     fontFamily: "Inter, system-ui, sans-serif",
     fontWeight: 500,
@@ -38,6 +43,12 @@ export function Button({
         boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
       };
     }
+    if (variant === "danger") {
+      return {
+        backgroundColor: "rgba(255, 59, 48, 0.1)",
+        boxShadow: "0 2px 8px rgba(255, 59, 48, 0.2)",
+      };
+    }
     return {
       backgroundColor: "var(--apple-button-hover)",
       boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
@@ -58,6 +69,12 @@ export function Button({
     },
     secondary: baseStyles,
     outline: baseStyles,
+    danger: {
+      ...baseStyles,
+      borderColor: "#FF3B30",
+      color: "#FF3B30",
+      backgroundColor: "transparent",
+    },
     ghost: {
       ...baseStyles,
       border: "none",
@@ -77,12 +94,12 @@ export function Button({
     sm: {
       padding: "0 var(--space-sm)",
       fontSize: "13px",
-      height: "36px",
+      height: "48px", // Aumentado de 36px a 48px para mobile
     },
     md: {
       padding: "0 var(--space-md)",
       fontSize: "14px",
-      height: "44px",
+      height: "48px", // Aumentado de 44px a 48px para mobile
     },
     lg: {
       padding: "0 var(--space-lg)",
@@ -94,7 +111,7 @@ export function Button({
   const combinedStyle = {
     ...variants[variant],
     ...sizes[size],
-    ...(props.disabled && { opacity: 0.5, cursor: "not-allowed" }),
+    ...(isDisabled && { opacity: 0.5, cursor: "not-allowed" }),
   };
 
   return (
@@ -102,7 +119,7 @@ export function Button({
       className={cn(className)}
       style={combinedStyle}
       onMouseEnter={(e) => {
-        if (!props.disabled) {
+        if (!isDisabled) {
           Object.assign(e.currentTarget.style, getHoverStyles(variant));
         }
       }}
@@ -110,26 +127,34 @@ export function Button({
         Object.assign(e.currentTarget.style, combinedStyle);
       }}
       onMouseDown={(e) => {
-        if (!props.disabled) {
+        if (!isDisabled) {
           Object.assign(e.currentTarget.style, activeStyles);
         }
       }}
       onMouseUp={(e) => {
-        if (!props.disabled) {
+        if (!isDisabled) {
           Object.assign(e.currentTarget.style, getHoverStyles(variant));
         }
       }}
       onFocus={(e) => {
-        if (!props.disabled) {
+        if (!isDisabled) {
           e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,122,255,0.25)";
         }
       }}
       onBlur={(e) => {
         e.currentTarget.style.boxShadow = combinedStyle.boxShadow || "none";
       }}
+      disabled={isDisabled}
       {...props}
     >
-      {children}
+      {loading ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          <span>{typeof children === "string" && children.includes("Guardar") ? "Guardando..." : "Procesando..."}</span>
+        </>
+      ) : (
+        children
+      )}
     </button>
   );
 }

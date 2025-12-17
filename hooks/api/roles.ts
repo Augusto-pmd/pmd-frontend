@@ -75,7 +75,7 @@ export const roleApi = {
       console.warn("❗ [roleApi.update] id no está definido");
       throw new Error("ID de rol no está definido");
     }
-    return apiClient.put(`/roles/${id}`, data);
+    return apiClient.patch(`/roles/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {

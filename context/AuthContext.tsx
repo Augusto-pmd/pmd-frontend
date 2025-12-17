@@ -13,10 +13,19 @@ import { normalizeUser } from "@/lib/normalizeUser";
 import { normalizeId } from "@/lib/normalizeId";
 
 // Force AuthUser shape - guarantees all required fields exist
+// Preserva role.permissions explícitas del backend, NO infiere por role.name
 function forceAuthUserShape(u: any): AuthUser {
   if (!u) {
     throw new Error("Cannot force shape of null/undefined user");
   }
+
+  // Preservar permissions explícitas del backend
+  let permissions: string[] = [];
+  if (u.role?.permissions && Array.isArray(u.role.permissions)) {
+    // Filtrar solo strings válidos
+    permissions = u.role.permissions.filter((p: any) => typeof p === "string" && p.length > 0);
+  }
+  // Si el backend no envía permissions, el array queda vacío (pero existe)
 
   return {
     id: normalizeId(u.id) || "1",
@@ -28,9 +37,13 @@ function forceAuthUserShape(u: any): AuthUser {
       ? { 
           id: normalizeId(u.role.id || "1") || "1", 
           name: String(u.role.name || "ADMINISTRATION"),
-          permissions: Array.isArray(u.role.permissions) ? u.role.permissions : undefined,
+          permissions, // SIEMPRE presente como array (preservado del backend o vacío)
         }
-      : { id: "1", name: "ADMINISTRATION" },
+      : { 
+          id: "1", 
+          name: "ADMINISTRATION",
+          permissions: [], // Array vacío si no hay role
+        },
     organization: u.organization
       ? { 
           id: normalizeId(u.organization.id || "1") || "1", 

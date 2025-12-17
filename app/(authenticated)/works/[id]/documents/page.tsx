@@ -100,7 +100,7 @@ function WorkDocumentsContent() {
     <MainLayout>
       <div className="space-y-6 py-6">
         <div className="px-1">
-          <BotonVolver />
+          <BotonVolver backTo={`/works/${workId}`} />
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900 mb-2">

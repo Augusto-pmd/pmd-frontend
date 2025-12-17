@@ -52,7 +52,7 @@ export const cashboxApi = {
       console.warn("❗ [cashboxApi.update] id no está definido");
       throw new Error("ID de caja no está definido");
     }
-    return apiClient.put(`/cashboxes/${id}`, data);
+    return apiClient.patch(`/cashboxes/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
@@ -120,7 +120,7 @@ export const cashMovementApi = {
       console.warn("❗ [cashMovementApi.update] id no está definido");
       throw new Error("ID de movimiento no está definido");
     }
-    return apiClient.put(`/cash-movements/${id}`, data);
+    return apiClient.patch(`/cash-movements/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {

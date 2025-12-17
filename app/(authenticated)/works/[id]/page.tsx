@@ -185,7 +185,7 @@ function WorkDetailContent() {
     <MainLayout>
       <div className="space-y-6 py-6">
         <div className="px-1">
-          <BotonVolver />
+          <BotonVolver backTo="/works" />
         </div>
         <div className="flex items-center justify-between px-1">
           <div>

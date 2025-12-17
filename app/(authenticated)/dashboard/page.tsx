@@ -188,20 +188,20 @@ function DashboardContent() {
     <MainLayout>
       <div
         style={{
-          minHeight: "100vh",
-          background: "linear-gradient(to bottom, #f5f5f7, #f0f1f4 35%, #e9e9ef)",
+          width: "100%",
+          backgroundColor: "var(--apple-canvas)",
           fontFamily: "Inter, system-ui, sans-serif",
         }}
       >
         {/* LAYER 1: COMMAND BAR */}
-        <div style={{ padding: "var(--space-xl)" }}>
+        <div style={{ padding: "var(--space-lg) var(--space-lg) var(--space-md)" }}>
           <CommandBar />
         </div>
 
         {/* LAYER 2: PRIMARY KPIs - Staggered Layout */}
         <div
           style={{
-            padding: "0 var(--space-xl) var(--space-xl)",
+            padding: "0 var(--space-lg) var(--space-lg)",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: "var(--space-lg)",
@@ -263,7 +263,7 @@ function DashboardContent() {
         {/* LAYER 3: SECONDARY MODULE CARDS - Staggered Grid */}
         <div
           style={{
-            padding: "0 var(--space-xl) var(--space-xl)",
+            padding: "0 var(--space-lg) var(--space-lg)",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
             gap: "var(--space-lg)",
@@ -355,7 +355,7 @@ function DashboardContent() {
         </div>
 
         {/* LAYER 4: ACTIVITY FEED */}
-        <div style={{ padding: "0 var(--space-xl) var(--space-xl)" }}>
+        <div style={{ padding: "0 var(--space-lg) var(--space-xl)" }}>
           <ActivityFeed items={activityItems} />
         </div>
       </div>

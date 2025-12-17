@@ -225,9 +225,9 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
                 Editar
               </Button>
               <Button
-                variant="outline"
+                variant="danger"
                 size="sm"
-                className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                className="flex-1 flex items-center justify-center gap-1"
                 onClick={() => setIsDeleteModalOpen(true)}
               >
                 <Archive className="h-4 w-4" />
@@ -262,6 +262,9 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
           <p className="text-gray-700">
             ¿Qué acción deseas realizar con la obra <strong>{getWorkName(work)}</strong>?
           </p>
+          <p className="text-sm text-red-600 font-medium">
+            ⚠️ Esta acción no se puede deshacer.
+          </p>
           <div className="space-y-2">
             <Button
               variant="outline"
@@ -273,10 +276,11 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
               Archivar (marcar como finalizada)
             </Button>
             <Button
-              variant="outline"
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300"
+              variant="danger"
+              className="w-full justify-start"
               onClick={handleDelete}
               disabled={isSubmitting}
+              loading={isSubmitting}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Eliminar permanentemente
