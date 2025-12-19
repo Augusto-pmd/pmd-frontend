@@ -88,31 +88,6 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
   // ✅ Variable normalizada: siempre es string[]
   const permissions: string[] = user?.role?.permissions ?? [];
-  
-  // VALIDACIÓN 1: user existe
-  if (!user) {
-    console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user no existe");
-  } else {
-    // VALIDACIÓN 2: user.role existe
-    if (!user.role) {
-      console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role no existe");
-    } else {
-      // VALIDACIÓN 3: permissions existe (usando variable normalizada)
-      if (permissions.length === 0) {
-        console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions no existe o está vacío");
-      } else {
-        // VALIDACIÓN 4: permissions es Array (usando variable normalizada)
-        if (!Array.isArray(permissions)) {
-          console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions no es Array. Tipo:", typeof permissions);
-        } else {
-          // VALIDACIÓN 5: permissions no es vacío (usando variable normalizada)
-          if (permissions.length === 0) {
-            console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions está vacío (length: 0)");
-          }
-        }
-      }
-    }
-  }
 
   // ACL hooks - deben ejecutarse siempre antes de cualquier return
   const canWorks = useCan("works.read");
