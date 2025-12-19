@@ -111,8 +111,8 @@ export function ProtectedRoute({
       return;
     }
 
-    // Si el usuario es admin/administration, tiene acceso total (ignorar allowedRoles)
-    const isAdmin = userRoleName === "admin" || userRoleName === "administration" || userRoleName === "administrator";
+    // Si el usuario es admin/administrator, tiene acceso total (ignorar allowedRoles)
+    const isAdmin = userRoleName === "admin" || userRoleName === "administrator";
     
     // Si hay allowedRoles y el usuario no es admin y no tiene un rol permitido → redirect a unauthorized
     if (!isAdmin && allowedRoles && userRoleName && !allowedRoles.includes(userRoleName)) {

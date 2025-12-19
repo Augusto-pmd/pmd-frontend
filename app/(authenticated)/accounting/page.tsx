@@ -104,7 +104,8 @@ function AccountingContent() {
   const cierres = accountingData.cierres || accountingData.monthlyClosures || [];
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
         <div>
           <BotonVolver />
           <div className="flex items-center justify-between">
@@ -157,6 +158,7 @@ function AccountingContent() {
           isLoading={isSubmitting}
         />
       </Modal>
+    </>
   );
 }
 

@@ -179,7 +179,8 @@ function WorkDetailContent() {
   }) || [];
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
         <div>
           <BotonVolver backTo="/works" />
         </div>
@@ -562,6 +563,7 @@ function WorkDetailContent() {
           </div>
         </div>
       </Modal>
+    </>
   );
 }
 

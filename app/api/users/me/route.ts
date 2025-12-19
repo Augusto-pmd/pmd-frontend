@@ -4,6 +4,9 @@ import { getBackendUrl } from "@/lib/env";
 
 const BACKEND_URL = getBackendUrl();
 
+// Esta ruta debe ser siempre dinámica porque usa request.headers
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
