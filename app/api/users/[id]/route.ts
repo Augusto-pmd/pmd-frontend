@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
+import { getBackendUrl } from "@/lib/env";
+
+const BACKEND_URL = getBackendUrl();
 
 export async function GET(
   request: Request,
@@ -8,7 +10,7 @@ export async function GET(
 ) {
   try {
     const authHeader = request.headers.get("authorization");
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/users/${params.id}`, {
       method: "GET",
       headers: {
         Authorization: authHeader ?? "",
@@ -64,7 +66,7 @@ export async function PATCH(
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/users/${params.id}`, {
       method: "PATCH",
       headers: {
         Authorization: authHeader ?? "",
@@ -93,7 +95,7 @@ export async function DELETE(
   try {
     const authHeader = request.headers.get("authorization");
 
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/users/${params.id}`, {
       method: "DELETE",
       headers: {
         Authorization: authHeader ?? "",

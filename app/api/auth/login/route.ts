@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getBackendUrl } from "@/lib/env";
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     }
 
     // Build target URL using environment variable
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const backendUrl = getBackendUrl();
     // El backend tiene el prefijo /api configurado en main.ts
     const targetUrl = `${backendUrl}/api/auth/login`;
 

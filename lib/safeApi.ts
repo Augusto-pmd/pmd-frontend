@@ -78,7 +78,9 @@ export function buildSafeApiUrl(...parts: (string | null | undefined)[]): string
  * @returns URL base o null si no está definida
  */
 export function getApiBaseUrl(): string | null {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  // Usar el helper que carga correctamente desde .env.local
+  const { getBackendUrl } = require('./env');
+  const apiUrl = getBackendUrl();
   
   if (!apiUrl || apiUrl.includes("undefined") || apiUrl.includes("null")) {
     console.error("🔴 [safeApi] NEXT_PUBLIC_API_URL no está definida en variables de entorno");

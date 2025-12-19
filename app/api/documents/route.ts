@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
+import { getBackendUrl } from "@/lib/env";
+
+const BACKEND_URL = getBackendUrl();
 
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
 
-    const response = await fetch(`${BACKEND_URL}/documents`, {
+    const response = await fetch(`${BACKEND_URL}/api/documents`, {
       method: "GET",
       headers: {
         Authorization: authHeader ?? "",

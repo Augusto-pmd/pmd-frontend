@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { getBackendUrl } from "@/lib/env";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
+const BACKEND_URL = getBackendUrl();
 
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
 
-    const response = await fetch(`${BACKEND_URL}/roles`, {
+    const response = await fetch(`${BACKEND_URL}/api/roles`, {
       method: "GET",
       headers: {
         Authorization: authHeader ?? "",
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/roles`, {
+    const response = await fetch(`${BACKEND_URL}/api/roles`, {
       method: "POST",
       headers: {
         Authorization: authHeader ?? "",

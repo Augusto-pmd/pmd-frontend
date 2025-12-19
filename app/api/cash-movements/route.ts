@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
+import { getBackendUrl } from "@/lib/env";
+
+const BACKEND_URL = getBackendUrl();
 
 export async function GET(request: Request) {
   try {
@@ -8,7 +10,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const cashboxId = searchParams.get("cashboxId");
 
-    let url = `${BACKEND_URL}/cash-movements`;
+    let url = `${BACKEND_URL}/api/cash-movements`;
     if (cashboxId) {
       url += `?cashboxId=${encodeURIComponent(cashboxId)}`;
     }
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/cash-movements`, {
+    const response = await fetch(`${BACKEND_URL}/api/cash-movements`, {
       method: "POST",
       headers: {
         Authorization: authHeader ?? "",

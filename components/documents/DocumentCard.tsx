@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { getBackendUrl } from "@/lib/env";
 
 interface Document {
   id: string;
@@ -79,7 +80,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
       window.open(fileUrl, "_blank");
     } else {
       // Si no hay URL, intentar descargar desde la API
-      const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const envApiUrl = getBackendUrl();
       if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
         console.error("🔴 [DocumentCard] NEXT_PUBLIC_API_URL no está definida");
         return;

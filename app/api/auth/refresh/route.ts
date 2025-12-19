@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { getBackendUrl } from "@/lib/env";
+
+const BACKEND_URL = getBackendUrl();
 
 export async function POST(request: Request) {
   try {
