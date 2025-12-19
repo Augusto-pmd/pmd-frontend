@@ -30,7 +30,6 @@ function loadEnvIfNeeded(): void {
       const result = dotenv.config({ path: envLocalPath });
       if (result && !result.error) {
         envLoaded = true;
-        console.log('[ENV] Variables cargadas desde .env.local');
       }
     }
   } catch (error) {

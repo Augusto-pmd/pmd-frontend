@@ -23,6 +23,8 @@ import {
   Settings,
   UserCog,
   BookOpen,
+  Receipt,
+  FileCheck,
 } from "lucide-react";
 
 interface NavItem {
@@ -31,6 +33,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   permission: string;
   section?: string;
+  hasPermission?: boolean; // Indica si el usuario tiene permiso para este módulo
 }
 
 interface SidebarProps {
@@ -46,6 +49,8 @@ const ALL_NAV_ITEMS: NavItem[] = [
   
   // Operaciones
   { label: "Proveedores", href: "/suppliers", icon: Truck, permission: "suppliers.read", section: "Operaciones" },
+  { label: "Gastos", href: "/expenses", icon: Receipt, permission: "expenses.read", section: "Operaciones" },
+  { label: "Contratos", href: "/contracts", icon: FileCheck, permission: "contracts.read", section: "Operaciones" },
   { label: "Cajas", href: "/cashbox", icon: Wallet, permission: "cashbox.read", section: "Operaciones" },
   { label: "Documentación", href: "/documents", icon: FileText, permission: "documents.read", section: "Operaciones" },
   
@@ -65,10 +70,6 @@ let sidebarRenderCount = 0;
 let lastUserId: string | null = null;
 
 function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
-  useEffect(() => {
-    console.log("[SIDEBAR REAL] mounted");
-  }, []);
-
   const pathname = usePathname();
   const router = useRouter();
   const { alerts, fetchAlerts } = useAlertsStore();
@@ -82,82 +83,31 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const currentUserId = user?.id || null;
   const userChanged = currentUserId !== lastUserId;
   if (userChanged) {
-    console.log("🟡 [SIDEBAR] ⚡ RE-RENDER DETECTADO: user cambió");
-    console.log("🟡 [SIDEBAR] lastUserId:", lastUserId);
-    console.log("🟡 [SIDEBAR] currentUserId:", currentUserId);
     lastUserId = currentUserId;
   }
-  console.log(`🟡 [SIDEBAR] Render #${sidebarRenderCount} | user.id: ${currentUserId} | userChanged: ${userChanged}`);
 
-  // 🔍 AUDITORÍA: Validar un solo user y permissions no vacío
-  console.log("🔵 [AUDIT] ========================================");
-  console.log("🔵 [AUDIT] 1. UN SOLO USER:");
-  console.log("🔵 [AUDIT]    user existe:", !!user);
-  console.log("🔵 [AUDIT]    user.id:", user?.id);
-  console.log("🔵 [AUDIT]    user.email:", user?.email);
-  
   // ✅ Variable normalizada: siempre es string[]
   const permissions: string[] = user?.role?.permissions ?? [];
-  
-  console.log("🔵 [AUDIT] 2. PERMISSIONS NO VACÍO:");
-  const permissionsLength = permissions.length;
-  console.log("🔵 [AUDIT]    permissions existe:", permissions.length > 0);
-  console.log("🔵 [AUDIT]    permissions es Array:", Array.isArray(permissions));
-  console.log("🔵 [AUDIT]    permissions.length:", permissionsLength);
-  if (permissionsLength > 0) {
-    console.log("🔵 [AUDIT]    ✅ PASS: permissions no vacío");
-    console.log("🔵 [AUDIT]    permissions sample:", permissions.slice(0, 5));
-  } else {
-    console.error("🔵 [AUDIT]    ❌ FAIL: permissions vacío o no existe");
-  }
-  
-  console.log("🔵 [AUDIT] 3. RE-RENDER CUANDO USER CAMBIA:");
-  console.log("🔵 [AUDIT]    renderCount:", sidebarRenderCount);
-  console.log("🔵 [AUDIT]    userChanged:", userChanged);
-  if (userChanged && sidebarRenderCount > 1) {
-    console.log("🔵 [AUDIT]    ✅ PASS: Sidebar re-renderiza cuando user cambia");
-  } else if (sidebarRenderCount === 1) {
-    console.log("🔵 [AUDIT]    ⏳ PENDING: Primer render, esperando cambio de user");
-  } else {
-    console.log("🔵 [AUDIT]    ⚠️ WARNING: user no cambió en este render");
-  }
-  console.log("🔵 [AUDIT] ========================================");
-
-  // 🔍 AUDITORÍA RUNTIME: Validaciones explícitas
-  console.log("🔵 [SIDEBAR AUDIT] ========================================");
-  console.log("🔵 [SIDEBAR AUDIT] user completo:", JSON.stringify(user, null, 2));
   
   // VALIDACIÓN 1: user existe
   if (!user) {
     console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user no existe");
   } else {
-    console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user existe");
-    
     // VALIDACIÓN 2: user.role existe
     if (!user.role) {
       console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: user.role no existe");
     } else {
-      console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: user.role existe");
-      console.log("🔵 [SIDEBAR AUDIT] user.role.name:", user.role.name);
-      
       // VALIDACIÓN 3: permissions existe (usando variable normalizada)
       if (permissions.length === 0) {
         console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions no existe o está vacío");
       } else {
-        console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: permissions existe");
-        
         // VALIDACIÓN 4: permissions es Array (usando variable normalizada)
         if (!Array.isArray(permissions)) {
           console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions no es Array. Tipo:", typeof permissions);
         } else {
-          console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: permissions es Array");
-          
           // VALIDACIÓN 5: permissions no es vacío (usando variable normalizada)
           if (permissions.length === 0) {
             console.error("🔵 [SIDEBAR AUDIT] ❌ FAIL: permissions está vacío (length: 0)");
-          } else {
-            console.log("🔵 [SIDEBAR AUDIT] ✅ PASS: permissions no está vacío (length:", permissions.length, ")");
-            console.log("🔵 [SIDEBAR AUDIT] permissions:", permissions);
           }
         }
       }
@@ -167,6 +117,8 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   // ACL hooks - deben ejecutarse siempre antes de cualquier return
   const canWorks = useCan("works.read");
   const canSuppliers = useCan("suppliers.read");
+  const canExpenses = useCan("expenses.read");
+  const canContracts = useCan("contracts.read");
   const canAccounting = useCan("accounting.read");
   const canCashbox = useCan("cashbox.read");
   const canDocuments = useCan("documents.read");
@@ -175,19 +127,6 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const canUsers = useCan("users.read");
   const canRoles = useCan("roles.read");
   const canSettings = useCan("settings.read");
-
-  // 🔍 DIAGNÓSTICO: Log de todos los permisos
-  console.log("🔵 [SIDEBAR] Permisos verificados:");
-  console.log("  - canWorks:", canWorks);
-  console.log("  - canSuppliers:", canSuppliers);
-  console.log("  - canAccounting:", canAccounting);
-  console.log("  - canCashbox:", canCashbox);
-  console.log("  - canDocuments:", canDocuments);
-  console.log("  - canAlerts:", canAlerts);
-  console.log("  - canAudit:", canAudit);
-  console.log("  - canUsers:", canUsers);
-  console.log("  - canRoles:", canRoles);
-  console.log("  - canSettings:", canSettings);
 
   // Hook reactivo para organizationId
   const organizationId = useAuthStore((state) => state.user?.organizationId);
@@ -201,13 +140,13 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
-  // Memoizar items visibles según permisos ACL - antes del early return
+  // Memoizar items con información de permisos - mostrar TODOS los módulos
   const visibleItems = useMemo(() => {
-    const filtered = ALL_NAV_ITEMS.filter((item) => {
-      // Dashboard siempre visible si hay usuario
+    // Mostrar TODOS los módulos, pero marcar cuáles tienen permisos
+    const itemsWithPermissions = ALL_NAV_ITEMS.map((item) => {
+      // Dashboard siempre tiene permiso
       if (item.permission === "always" || item.href === "/dashboard") {
-        console.log(`🔵 [SIDEBAR] Item "${item.label}" visible (always/dashboard)`);
-        return true;
+        return { ...item, hasPermission: true };
       }
       
       // Verificar permiso específico
@@ -218,6 +157,12 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           break;
         case "suppliers.read":
           hasPermission = canSuppliers;
+          break;
+        case "expenses.read":
+          hasPermission = canExpenses;
+          break;
+        case "contracts.read":
+          hasPermission = canContracts;
           break;
         case "accounting.read":
           hasPermission = canAccounting;
@@ -247,16 +192,11 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           hasPermission = true;
       }
       
-      console.log(`🔵 [SIDEBAR] Item "${item.label}" (${item.permission}): ${hasPermission ? "✅ VISIBLE" : "❌ OCULTO"}`);
-      return hasPermission;
+      return { ...item, hasPermission };
     });
     
-    console.log("🔵 [SIDEBAR] Total items visibles:", filtered.length, "de", ALL_NAV_ITEMS.length);
-    console.log("🔵 [SIDEBAR] Items visibles:", filtered.map(i => i.label));
-    console.log("🔵 [SIDEBAR] ========================================");
-    
-    return filtered;
-  }, [canWorks, canSuppliers, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
+    return itemsWithPermissions;
+  }, [canWorks, canSuppliers, canExpenses, canContracts, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
   // Memoizar agrupación por sección - antes del early return
   const itemsBySection = useMemo(() => {
@@ -272,7 +212,6 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
   // Early return después de todos los hooks
   if (!user) {
-    console.log("🔴 [SIDEBAR] EARLY RETURN: user no existe");
     return null;
   }
 
@@ -364,12 +303,19 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                 const active = isActive(item.href);
                 const badgeCount = getBadgeCount(item.href);
                 const badgeVariant = badgeCount ? getBadgeVariant(item.href) : null;
+                const hasPermission = item.hasPermission !== false; // Por defecto true si no está definido
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={(e) => {
+                      if (!hasPermission) {
+                        e.preventDefault();
+                        // Opcional: mostrar mensaje de que no tiene permisos
+                        console.warn(`⚠️ [SIDEBAR] Usuario intentó acceder a ${item.label} sin permisos`);
+                        return;
+                      }
                       e.preventDefault();
                       handleItemClick(item.href);
                     }}
@@ -377,26 +323,32 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                       flex items-center gap-3 px-5 py-4
                       rounded-xl
                       transition-all duration-200
-                      cursor-pointer
-                      text-sm font-semibold text-white
+                      text-sm font-semibold
                       touch-none select-none
-                      active:scale-95
                       ${
-                        active
+                        hasPermission
+                          ? "cursor-pointer active:scale-95 text-white"
+                          : "cursor-not-allowed opacity-50 text-white/60"
+                      }
+                      ${
+                        active && hasPermission
                           ? "bg-white/25 border-l-4 border-white shadow-[0_0_10px_rgba(255,255,255,0.15)]"
-                          : "hover:bg-white/15"
+                          : hasPermission
+                          ? "hover:bg-white/15"
+                          : ""
                       }
                     `}
                     style={{ minHeight: "48px" }}
+                    title={!hasPermission ? `No tienes permisos para acceder a ${item.label}` : undefined}
                   >
                     {/* Icon */}
-                    <Icon className="w-5 h-5 text-white flex-shrink-0" />
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${hasPermission ? "text-white" : "text-white/60"}`} />
 
                     {/* Label */}
                     <span className="flex-1">{item.label}</span>
 
                     {/* Badge */}
-                    {badgeCount !== null && badgeCount > 0 && (
+                    {badgeCount !== null && badgeCount > 0 && hasPermission && (
                       <span
                         className={`
                           flex items-center justify-center
@@ -412,6 +364,16 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                         `}
                       >
                         {badgeCount > 99 ? "99+" : badgeCount}
+                      </span>
+                    )}
+
+                    {/* Indicador de sin permisos */}
+                    {!hasPermission && (
+                      <span
+                        className="flex items-center justify-center w-4 h-4 rounded-full bg-yellow-500/20 border border-yellow-500/40"
+                        title="Sin permisos"
+                      >
+                        <span className="text-[8px] text-yellow-400">!</span>
                       </span>
                     )}
                   </Link>

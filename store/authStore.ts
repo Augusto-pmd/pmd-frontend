@@ -73,7 +73,6 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string): Promise<AuthUser | null> => {
         // Set status to pending at start
         set((state) => ({ ...state, status: "pending" as AuthStatus }));
-        console.log("[AUTH] status: pending (login started)");
         
         try {
           const response = await loginService(email, password);
@@ -87,7 +86,6 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: false,
               status: "unauthenticated" as AuthStatus,
             }));
-            console.log("[AUTH] status: unauthenticated (login failed - no response)");
             return null;
           }
 
@@ -102,7 +100,6 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: false,
               status: "unauthenticated" as AuthStatus,
             }));
-            console.log("[AUTH] status: unauthenticated (login failed - no user/token)");
             return null;
           }
 
@@ -117,7 +114,6 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: false,
               status: "unauthenticated" as AuthStatus,
             }));
-            console.log("[AUTH] status: unauthenticated (login failed - normalization failed)");
             return null;
           }
 
@@ -130,12 +126,6 @@ export const useAuthStore = create<AuthState>()(
 
           // Update Zustand with immutable set
           set((state) => {
-            // 🔍 AUDITORÍA: Verificar un solo user
-            console.log("🟢 [AUTH STORE] login() → set(user)");
-            console.log("🟢 [AUTH STORE] user.id:", normalizedUser.id);
-            console.log("🟢 [AUTH STORE] user.role.permissions.length:", normalizedUser.role?.permissions?.length || 0);
-            console.log("🟢 [AUTH STORE] user.role.permissions:", normalizedUser.role?.permissions);
-            
             return {
               ...state,
               user: normalizedUser,
@@ -146,7 +136,6 @@ export const useAuthStore = create<AuthState>()(
             };
           });
 
-          console.log("[AUTH] status: authenticated (login success)");
           return normalizedUser;
         } catch (error) {
           // On error, clear state
@@ -158,7 +147,6 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             status: "unauthenticated" as AuthStatus,
           }));
-          console.log("[AUTH] status: unauthenticated (login error)", error);
           return null;
         }
       },
@@ -182,7 +170,6 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           status: "unauthenticated" as AuthStatus,
         }));
-        console.log("[AUTH] status: unauthenticated (logout)");
       },
 
       // --- REFRESH SESSION ---
@@ -194,13 +181,11 @@ export const useAuthStore = create<AuthState>()(
             ...state,
             status: "unauthenticated" as AuthStatus,
           }));
-          console.log("[AUTH] status: unauthenticated (refresh failed - no refresh token)");
           return null;
         }
 
         // Set status to pending
         set((state) => ({ ...state, status: "pending" as AuthStatus }));
-        console.log("[AUTH] status: pending (refresh started)");
 
         try {
           // Call refreshService
@@ -211,7 +196,6 @@ export const useAuthStore = create<AuthState>()(
               ...state,
               status: "unauthenticated" as AuthStatus,
             }));
-            console.log("[AUTH] status: unauthenticated (refresh failed - no result)");
             return null;
           }
 
@@ -220,7 +204,6 @@ export const useAuthStore = create<AuthState>()(
               ...state,
               status: "unauthenticated" as AuthStatus,
             }));
-            console.log("[AUTH] status: unauthenticated (refresh failed - no access token)");
             return null;
           }
 
@@ -266,13 +249,6 @@ export const useAuthStore = create<AuthState>()(
           // Update Zustand with immutable set
           set((state) => {
             const finalUser = normalizedUser || state.user;
-            // 🔍 AUDITORÍA: Verificar un solo user
-            if (finalUser) {
-              console.log("🟢 [AUTH STORE] refreshSession() → set(user)");
-              console.log("🟢 [AUTH STORE] user.id:", finalUser.id);
-              console.log("🟢 [AUTH STORE] user.role.permissions.length:", finalUser.role?.permissions?.length || 0);
-              console.log("🟢 [AUTH STORE] user.role.permissions:", finalUser.role?.permissions);
-            }
             
             return {
               ...state,
@@ -284,14 +260,12 @@ export const useAuthStore = create<AuthState>()(
             };
           });
 
-          console.log("[AUTH] status: authenticated (refresh success)");
           return normalizedUser || get().user;
         } catch (error) {
           set((state) => ({
             ...state,
             status: "unauthenticated" as AuthStatus,
           }));
-          console.log("[AUTH] status: unauthenticated (refresh error)", error);
           return null;
         }
       },
@@ -305,7 +279,6 @@ export const useAuthStore = create<AuthState>()(
       loadMe: async (): Promise<AuthUser | null> => {
         // Set status to pending at start
         set((state) => ({ ...state, status: "pending" as AuthStatus }));
-        console.log("[AUTH] status: pending (loadMe started)");
         
         try {
           // Call loadMeService
@@ -338,12 +311,6 @@ export const useAuthStore = create<AuthState>()(
 
           // Update Zustand with immutable set
           set((state) => {
-            // 🔍 AUDITORÍA: Verificar un solo user
-            console.log("🟢 [AUTH STORE] loadMe() → set(user)");
-            console.log("🟢 [AUTH STORE] user.id:", normalizedUser.id);
-            console.log("🟢 [AUTH STORE] user.role.permissions.length:", normalizedUser.role?.permissions?.length || 0);
-            console.log("🟢 [AUTH STORE] user.role.permissions:", normalizedUser.role?.permissions);
-            
             return {
               ...state,
               user: normalizedUser,
@@ -352,7 +319,6 @@ export const useAuthStore = create<AuthState>()(
             };
           });
 
-          console.log("[AUTH] status: authenticated (loadMe success)");
           return normalizedUser;
         } catch (error) {
           // Try refresh on error
@@ -369,7 +335,6 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: false,
               status: "unauthenticated" as AuthStatus,
             }));
-            console.log("[AUTH] status: unauthenticated (loadMe error - refresh also failed)");
             return null;
           }
         }
@@ -405,10 +370,8 @@ export const useAuthStore = create<AuthState>()(
                 state.refreshToken = storedRefreshToken;
                 state.isAuthenticated = true;
                 state.status = "authenticated" as AuthStatus;
-                console.log("[AUTH] status: authenticated (rehydrated from localStorage)");
               } else {
                 state.status = "unauthenticated" as AuthStatus;
-                console.log("[AUTH] status: unauthenticated (rehydration failed - normalization failed)");
               }
             } catch {
               // If parsing fails, clear state
@@ -417,12 +380,10 @@ export const useAuthStore = create<AuthState>()(
               state.refreshToken = null;
               state.isAuthenticated = false;
               state.status = "unauthenticated" as AuthStatus;
-              console.log("[AUTH] status: unauthenticated (rehydration failed - parse error)");
             }
           } else {
             // No token or user in localStorage
             state.status = "unauthenticated" as AuthStatus;
-            console.log("[AUTH] status: unauthenticated (rehydration - no token/user in localStorage)");
           }
         }
 
@@ -436,27 +397,22 @@ export const useAuthStore = create<AuthState>()(
               if (state.token) {
                 state.isAuthenticated = true;
                 state.status = "authenticated" as AuthStatus;
-                console.log("[AUTH] status: authenticated (rehydrated from state)");
               } else {
                 state.status = "unauthenticated" as AuthStatus;
-                console.log("[AUTH] status: unauthenticated (rehydration - user exists but no token)");
               }
             } else {
               state.user = null;
               state.isAuthenticated = false;
               state.status = "unauthenticated" as AuthStatus;
-              console.log("[AUTH] status: unauthenticated (rehydration - normalization failed)");
             }
           } catch {
             state.user = null;
             state.isAuthenticated = false;
             state.status = "unauthenticated" as AuthStatus;
-            console.log("[AUTH] status: unauthenticated (rehydration - error normalizing)");
           }
         } else if (!state.token) {
           // No user and no token - definitely unauthenticated
           state.status = "unauthenticated" as AuthStatus;
-          console.log("[AUTH] status: unauthenticated (rehydration - no user, no token)");
         }
       },
     }

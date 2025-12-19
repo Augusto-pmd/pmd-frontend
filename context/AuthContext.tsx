@@ -30,13 +30,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
-  // 🔍 AUDITORÍA: Verificar que AuthContext lee del mismo store
-  useEffect(() => {
-    const storeUser = useAuthStore.getState().user;
-    console.log("🟣 [AUTH CONTEXT] user desde store:", storeUser?.id);
-    console.log("🟣 [AUTH CONTEXT] user desde hook:", user?.id);
-    console.log("🟣 [AUTH CONTEXT] ✅ Mismo user:", storeUser?.id === user?.id);
-  }, [user]);
   
   // ✅ DELEGAR COMPLETAMENTE al store - NO duplicar lógica
   const loginStore = useAuthStore((state) => state.login);

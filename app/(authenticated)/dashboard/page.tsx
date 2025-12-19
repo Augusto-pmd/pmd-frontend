@@ -41,9 +41,6 @@ function DashboardContent() {
   const organizationId = authState.user?.organizationId;
   const router = useRouter();
 
-  // Log del usuario final en el dashboard
-  console.log("📌 [DashboardPage] user:", user);
-
   const { works, isLoading: worksLoading } = useWorks();
   const { expenses, isLoading: expensesLoading } = useExpenses();
   const { incomes, isLoading: incomesLoading } = useIncomes();

@@ -8,10 +8,6 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    console.log("[AUTH LAYOUT] mounted");
-  }, []);
-
   return (
     <MainLayout>
       {children}

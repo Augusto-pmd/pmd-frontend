@@ -4,24 +4,28 @@ import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Button } from "./Button";
+import { useEffect, useState } from "react";
 
 interface HeaderProps {
   title?: string;
 }
 
 export function Header({ title }: HeaderProps) {
-  const user = useAuthStore.getState().user;
-  const logout = useAuthStore.getState().logout;
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
-  if (!user) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
     logout();
     router.push("/login");
   };
 
-  // Apple Header Styles
+  // Apple Header Styles - Always the same structure
   const headerStyle: React.CSSProperties = {
     position: "relative",
     height: "auto",
@@ -101,18 +105,19 @@ export function Header({ title }: HeaderProps) {
     flexShrink: 0,
   };
 
+  // Always render the same structure to avoid hydration mismatches
   return (
-    <header style={headerStyle}>
+    <div style={headerStyle} role="banner">
       {/* Left Section */}
       <div style={leftSectionStyle}>
         {/* Title */}
-        {title && <h1 style={titleStyle}>{title}</h1>}
+        {mounted && title && <h1 style={titleStyle}>{title}</h1>}
       </div>
 
       {/* Right Section */}
       <div style={rightSectionStyle}>
         {/* User Info */}
-        {user && (
+        {mounted && user && (
           <div style={userInfoStyle} className="hidden sm:flex">
             <div style={userTextStyle}>
               <p style={userNameStyle}>{user.fullName}</p>
@@ -127,26 +132,28 @@ export function Header({ title }: HeaderProps) {
         )}
 
         {/* Logout Button */}
-        <Button
-          variant="outline"
-          size="md"
-          onClick={handleLogout}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <LogOut 
-            className="w-4 h-4"
+        {mounted && (
+          <Button
+            variant="outline"
+            size="md"
+            onClick={handleLogout}
             style={{
-              transition: "opacity var(--apple-duration-fast) var(--apple-ease)",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
             }}
-          />
-          <span className="hidden sm:inline">Logout</span>
-        </Button>
+          >
+            <LogOut 
+              className="w-4 h-4"
+              style={{
+                transition: "opacity var(--apple-duration-fast) var(--apple-ease)",
+              }}
+            />
+            <span className="hidden sm:inline">Logout</span>
+          </Button>
+        )}
       </div>
-    </header>
+    </div>
   );
 }
 
