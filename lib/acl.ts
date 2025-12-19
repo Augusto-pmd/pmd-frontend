@@ -7,6 +7,7 @@
  * - suppliers.read, suppliers.create, suppliers.update, suppliers.delete, suppliers.manage
  * - expenses.read, expenses.create, expenses.update, expenses.delete, expenses.manage
  * - contracts.read, contracts.create, contracts.update, contracts.delete, contracts.manage
+ * - incomes.read, incomes.create, incomes.update, incomes.delete, incomes.manage
  * - documents.read, documents.create, documents.update, documents.delete, documents.manage
  * - accounting.read, accounting.create, accounting.update, accounting.delete, accounting.manage
  * - cashbox.read, cashbox.create, cashbox.update, cashbox.delete, cashbox.manage
@@ -27,6 +28,7 @@ export type Permission =
   | "suppliers.read" | "suppliers.create" | "suppliers.update" | "suppliers.delete" | "suppliers.manage"
   | "expenses.read" | "expenses.create" | "expenses.update" | "expenses.delete" | "expenses.manage"
   | "contracts.read" | "contracts.create" | "contracts.update" | "contracts.delete" | "contracts.manage"
+  | "incomes.read" | "incomes.create" | "incomes.update" | "incomes.delete" | "incomes.manage"
   | "documents.read" | "documents.create" | "documents.update" | "documents.delete" | "documents.manage"
   | "accounting.read" | "accounting.create" | "accounting.update" | "accounting.delete" | "accounting.manage"
   | "cashbox.read" | "cashbox.create" | "cashbox.update" | "cashbox.delete" | "cashbox.manage"
@@ -70,6 +72,7 @@ function getUserPermissions(): Permission[] {
       "suppliers.read", "suppliers.create", "suppliers.update", "suppliers.delete", "suppliers.manage",
       "expenses.read", "expenses.create", "expenses.update", "expenses.delete", "expenses.manage",
       "contracts.read", "contracts.create", "contracts.update", "contracts.delete", "contracts.manage",
+      "incomes.read", "incomes.create", "incomes.update", "incomes.delete", "incomes.manage",
       "documents.read", "documents.create", "documents.update", "documents.delete", "documents.manage",
       "accounting.read", "accounting.create", "accounting.update", "accounting.delete", "accounting.manage",
       "cashbox.read", "cashbox.create", "cashbox.update", "cashbox.delete", "cashbox.manage",
@@ -134,9 +137,10 @@ export function useCan(permission: Permission): boolean {
         "works.read", "works.create", "works.update", "works.delete", "works.manage",
         "staff.read", "staff.create", "staff.update", "staff.delete", "staff.manage",
         "suppliers.read", "suppliers.create", "suppliers.update", "suppliers.delete", "suppliers.manage",
-        "expenses.read", "expenses.create", "expenses.update", "expenses.delete", "expenses.manage",
-        "contracts.read", "contracts.create", "contracts.update", "contracts.delete", "contracts.manage",
-        "documents.read", "documents.create", "documents.update", "documents.delete", "documents.manage",
+      "expenses.read", "expenses.create", "expenses.update", "expenses.delete", "expenses.manage",
+      "contracts.read", "contracts.create", "contracts.update", "contracts.delete", "contracts.manage",
+      "incomes.read", "incomes.create", "incomes.update", "incomes.delete", "incomes.manage",
+      "documents.read", "documents.create", "documents.update", "documents.delete", "documents.manage",
         "accounting.read", "accounting.create", "accounting.update", "accounting.delete", "accounting.manage",
         "cashbox.read", "cashbox.create", "cashbox.update", "cashbox.delete", "cashbox.manage",
         "clients.read", "clients.create", "clients.update", "clients.delete", "clients.manage",

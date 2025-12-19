@@ -25,6 +25,7 @@ import {
   BookOpen,
   Receipt,
   FileCheck,
+  TrendingUp,
 } from "lucide-react";
 
 interface NavItem {
@@ -51,6 +52,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Proveedores", href: "/suppliers", icon: Truck, permission: "suppliers.read", section: "Operaciones" },
   { label: "Gastos", href: "/expenses", icon: Receipt, permission: "expenses.read", section: "Operaciones" },
   { label: "Contratos", href: "/contracts", icon: FileCheck, permission: "contracts.read", section: "Operaciones" },
+  { label: "Ingresos", href: "/incomes", icon: TrendingUp, permission: "incomes.read", section: "Operaciones" },
   { label: "Cajas", href: "/cashbox", icon: Wallet, permission: "cashbox.read", section: "Operaciones" },
   { label: "Documentación", href: "/documents", icon: FileText, permission: "documents.read", section: "Operaciones" },
   
@@ -94,6 +96,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const canSuppliers = useCan("suppliers.read");
   const canExpenses = useCan("expenses.read");
   const canContracts = useCan("contracts.read");
+  const canIncomes = useCan("incomes.read");
   const canAccounting = useCan("accounting.read");
   const canCashbox = useCan("cashbox.read");
   const canDocuments = useCan("documents.read");
@@ -139,6 +142,9 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
         case "contracts.read":
           hasPermission = canContracts;
           break;
+        case "incomes.read":
+          hasPermission = canIncomes;
+          break;
         case "accounting.read":
           hasPermission = canAccounting;
           break;
@@ -171,7 +177,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     });
     
     return itemsWithPermissions;
-  }, [canWorks, canSuppliers, canExpenses, canContracts, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
+  }, [canWorks, canSuppliers, canExpenses, canContracts, canIncomes, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
   // Memoizar agrupación por sección - antes del early return
   const itemsBySection = useMemo(() => {
