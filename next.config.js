@@ -55,13 +55,19 @@ const nextConfig = {
   },
   webpack: (config, { isServer, dev }) => {
     // Configurar cache de webpack para evitar errores de memoria
-    if (!isServer && dev) {
-      // En desarrollo, usar cache más ligero para evitar errores de buffer
+    if (dev) {
+      // En desarrollo, deshabilitar completamente el PackFileCacheStrategy
+      // que causa errores de "Array buffer allocation failed"
       if (config.cache) {
+        // Usar FileSystemCacheStrategy en lugar de PackFileCacheStrategy
         config.cache = {
-          ...config.cache,
-          // Deshabilitar PackFileCacheStrategy que causa el warning
-          maxMemoryGenerations: 0,
+          type: 'filesystem',
+          buildDependencies: {
+            config: [__filename],
+          },
+          cacheDirectory: path.join(__dirname, '.next/cache/webpack'),
+          // Deshabilitar compresión que causa problemas de memoria
+          compression: false,
         };
       }
     }
