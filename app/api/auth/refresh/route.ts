@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
     const body = await request.text();
 
-    const response = await fetch(`${BACKEND_URL}/auth/refresh`, {
+    const response = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
       method: "POST",
       headers: {
         Authorization: authHeader ?? "",

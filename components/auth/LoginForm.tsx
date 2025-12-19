@@ -61,7 +61,7 @@ export function LoginForm() {
       >
         {/* Logo */}
         <div className="flex flex-col items-center mb-6">
-          <LogoPMD size={90} className="opacity-95" />
+          <LogoPMD size={60} className="opacity-95" />
         </div>
 
         {/* Form */}

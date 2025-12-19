@@ -35,9 +35,39 @@ export function ProtectedRoute({
   useEffect(() => {
     if (token && !user) {
       console.log("🔵 ProtectedRoute: token presente pero sin user, llamando loadMe()...");
-      storeState.loadMe().catch((error) => {
-        console.error("🔴 ProtectedRoute: Error en loadMe():", error);
-      });
+      let isMounted = true;
+      const loadUser = async () => {
+        try {
+          const loadedUser = await storeState.loadMe();
+          if (!isMounted) return;
+          
+          // Si loadMe falla después de 5 segundos, redirigir a login
+          if (!loadedUser) {
+            console.warn("⚠️ ProtectedRoute: loadMe() no devolvió usuario, redirigiendo a login");
+            setTimeout(() => {
+              if (isMounted && !storeState.user) {
+                router.replace(redirectTo);
+              }
+            }, 1000);
+          }
+        } catch (error) {
+          console.error("🔴 ProtectedRoute: Error en loadMe():", error);
+          if (isMounted) {
+            // Si hay error, esperar un poco y redirigir si aún no hay user
+            setTimeout(() => {
+              if (isMounted && !storeState.user) {
+                router.replace(redirectTo);
+              }
+            }, 2000);
+          }
+        }
+      };
+      
+      loadUser();
+      
+      return () => {
+        isMounted = false;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user]);
@@ -82,8 +112,23 @@ export function ProtectedRoute({
     return null;
   }
 
+  // --- useEffect: Timeout para evitar loading infinito ---
+  useEffect(() => {
+    if (!user && token) {
+      const timeout = setTimeout(() => {
+        const currentUser = useAuthStore.getState().user;
+        if (!currentUser) {
+          console.warn("⚠️ [ProtectedRoute] Timeout esperando user (10s), redirigiendo a login");
+          router.replace(redirectTo);
+        }
+      }, 10000); // 10 segundos máximo
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [user, token, router, redirectTo]);
+
   // --- Guard: Si hay token pero no user → mostrar loading mientras carga ---
-  if (!user) {
+  if (!user && token) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />
@@ -91,9 +136,14 @@ export function ProtectedRoute({
     );
   }
 
-  // Verificar organizationId
-  if (!user.organizationId) {
-    console.warn("⚠️ [ProtectedRoute] user.organizationId no está presente");
+  // Verificar organizationId (pero no bloquear indefinidamente)
+  if (user && !user.organizationId) {
+    console.warn("⚠️ [ProtectedRoute] user.organizationId no está presente, pero continuando");
+    // No bloquear, solo advertir - el backend puede manejar esto
+  }
+
+  // Verificar que user existe antes de acceder a sus propiedades
+  if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />

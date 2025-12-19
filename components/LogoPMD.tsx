@@ -13,6 +13,7 @@ const LogoPMD = ({ size = 60, className = "" }: LogoPMDProps) => {
       width={size}
       height={size}
       className={`select-none pointer-events-none ${className}`}
+      style={{ width: "auto", height: "auto" }}
       priority
     />
   );
