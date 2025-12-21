@@ -391,45 +391,8 @@ export const useAuthStore = create<AuthState>()(
           state.status = "unauthenticated" as AuthStatus;
         }
 
-        // Try to load from localStorage if Zustand doesn't have data
-        if (typeof window !== "undefined") {
-          const storedToken = localStorage.getItem("access_token");
-          const storedRefreshToken = localStorage.getItem("refresh_token");
-          const storedUser = localStorage.getItem("user");
-
-          if (storedToken && storedUser) {
-            try {
-              const parsedUser = JSON.parse(storedUser);
-              const normalizedUser = normalizeUserWithDefaults(parsedUser);
-              if (normalizedUser) {
-                // In onRehydrateStorage, we can mutate state directly (Zustand allows this)
-                state.user = normalizedUser;
-                state.token = storedToken;
-                state.refreshToken = storedRefreshToken;
-                state.isAuthenticated = true;
-                state.status = "authenticated" as AuthStatus;
-                console.log("[AUTH] status: authenticated (rehydrated from localStorage)");
-              } else {
-                state.status = "unauthenticated" as AuthStatus;
-                console.log("[AUTH] status: unauthenticated (rehydration failed - normalization failed)");
-              }
-            } catch {
-              // If parsing fails, clear state
-              state.user = null;
-              state.token = null;
-              state.refreshToken = null;
-              state.isAuthenticated = false;
-              state.status = "unauthenticated" as AuthStatus;
-              console.log("[AUTH] status: unauthenticated (rehydration failed - parse error)");
-            }
-          } else {
-            // No token or user in localStorage
-            state.status = "unauthenticated" as AuthStatus;
-            console.log("[AUTH] status: unauthenticated (rehydration - no token/user in localStorage)");
-          }
-        }
-
-        // Normalize existing user in state
+        // PRIORIDAD 1: Confiar en el estado que Zustand persist YA hidrató desde "pmd-auth-storage"
+        // Normalizar el user existente en el estado (si existe)
         if (state.user) {
           try {
             const normalizedUser = normalizeUserWithDefaults(state.user);
@@ -439,7 +402,7 @@ export const useAuthStore = create<AuthState>()(
               if (state.token) {
                 state.isAuthenticated = true;
                 state.status = "authenticated" as AuthStatus;
-                console.log("[AUTH] status: authenticated (rehydrated from state)");
+                console.log("[AUTH] status: authenticated (rehydrated from pmd-auth-storage)");
               } else {
                 state.status = "unauthenticated" as AuthStatus;
                 console.log("[AUTH] status: unauthenticated (rehydration - user exists but no token)");
@@ -455,6 +418,43 @@ export const useAuthStore = create<AuthState>()(
             state.isAuthenticated = false;
             state.status = "unauthenticated" as AuthStatus;
             console.log("[AUTH] status: unauthenticated (rehydration - error normalizing)");
+          }
+        } else if (typeof window !== "undefined") {
+          // PRIORIDAD 2: Fallback - intentar cargar desde keys individuales solo si el estado no tiene user
+          // (esto puede pasar si "pmd-auth-storage" no existe o está corrupto)
+          const storedToken = localStorage.getItem("access_token");
+          const storedRefreshToken = localStorage.getItem("refresh_token");
+          const storedUser = localStorage.getItem("user");
+
+          if (storedToken && storedUser) {
+            try {
+              const parsedUser = JSON.parse(storedUser);
+              const normalizedUser = normalizeUserWithDefaults(parsedUser);
+              if (normalizedUser) {
+                // In onRehydrateStorage, we can mutate state directly (Zustand allows this)
+                state.user = normalizedUser;
+                state.token = storedToken;
+                state.refreshToken = storedRefreshToken;
+                state.isAuthenticated = true;
+                state.status = "authenticated" as AuthStatus;
+                console.log("[AUTH] status: authenticated (rehydrated from individual localStorage keys)");
+              } else {
+                state.status = "unauthenticated" as AuthStatus;
+                console.log("[AUTH] status: unauthenticated (rehydration failed - normalization failed)");
+              }
+            } catch {
+              // If parsing fails, clear state
+              state.user = null;
+              state.token = null;
+              state.refreshToken = null;
+              state.isAuthenticated = false;
+              state.status = "unauthenticated" as AuthStatus;
+              console.log("[AUTH] status: unauthenticated (rehydration failed - parse error)");
+            }
+          } else if (!state.token) {
+            // No user and no token - definitely unauthenticated
+            state.status = "unauthenticated" as AuthStatus;
+            console.log("[AUTH] status: unauthenticated (rehydration - no user, no token)");
           }
         } else if (!state.token) {
           // No user and no token - definitely unauthenticated
