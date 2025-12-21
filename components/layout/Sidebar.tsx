@@ -74,7 +74,9 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const { alerts, fetchAlerts } = useAlertsStore();
   const { documents, fetchDocuments } = useDocumentsStore();
   const { cashboxes, fetchCashboxes } = useCashboxStore();
-  // Hook reactivo: el componente re-renderiza cuando user cambia
+  // ✅ FUENTE ÚNICA DE VERDAD: useAuthStore desde @/store/authStore
+  // Este hook está conectado al store persistido en localStorage con key "pmd-auth-storage"
+  // El componente se re-renderiza reactivamente cuando state.user cambia
   const user = useAuthStore((state) => state.user);
   
   // 🔍 AUDITORÍA: Detectar re-render cuando user cambia
