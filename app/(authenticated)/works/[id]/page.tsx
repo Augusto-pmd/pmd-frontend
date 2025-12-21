@@ -15,6 +15,7 @@ import { WorkForm } from "@/components/forms/WorkForm";
 import { useToast } from "@/components/ui/Toast";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Edit, Archive, Trash2, UserPlus, Building2 } from "lucide-react";
+import { parseBackendError } from "@/lib/parse-backend-error";
 
 function WorkDetailContent() {
   const params = useParams();
@@ -120,7 +121,8 @@ function WorkDetailContent() {
       setIsEditModalOpen(false);
     } catch (err: any) {
       console.error("Error al actualizar obra:", err);
-      toast.error(err.message || "Error al actualizar la obra");
+      const errorMessage = parseBackendError(err);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

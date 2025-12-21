@@ -7,7 +7,7 @@ import { useAlertsStore } from "@/store/alertsStore";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { useCashboxStore } from "@/store/cashboxStore";
 import { useCan } from "@/lib/acl";
-import { useEffect, useMemo, memo } from "react";
+import { useEffect, useMemo, memo, useState } from "react";
 import LogoPMD from "@/components/LogoPMD";
 import styles from "./Sidebar.module.css";
 import {
@@ -77,7 +77,35 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   // ✅ FUENTE ÚNICA DE VERDAD: useAuthStore desde @/store/authStore
   // Este hook está conectado al store persistido en localStorage con key "pmd-auth-storage"
   // El componente se re-renderiza reactivamente cuando state.user cambia
-  const user = useAuthStore((state) => state.user);
+  const userFromStore = useAuthStore((state) => state.user);
+  
+  // 🔍 SONDA TEMPORAL DE DIAGNÓSTICO: Leer user directamente desde localStorage
+  const [userFromStorage, setUserFromStorage] = useState<any>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("pmd-auth-storage");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const storageUser = parsed?.state?.user || null;
+          console.log("🔍 [SIDEBAR STORAGE PROBE] Raw localStorage:", stored);
+          console.log("🔍 [SIDEBAR STORAGE PROBE] Parsed state:", parsed?.state);
+          console.log("🔍 [SIDEBAR STORAGE USER]:", storageUser);
+          console.log("🔍 [SIDEBAR STORAGE USER ID]:", storageUser?.id);
+          console.log("🔍 [SIDEBAR STORAGE USER ROLE]:", storageUser?.role);
+          console.log("🔍 [SIDEBAR STORAGE USER PERMISSIONS]:", storageUser?.role?.permissions);
+          setUserFromStorage(storageUser);
+        } else {
+          console.log("🔍 [SIDEBAR STORAGE PROBE] No hay datos en localStorage bajo 'pmd-auth-storage'");
+        }
+      } catch (error) {
+        console.error("🔍 [SIDEBAR STORAGE PROBE] Error al leer localStorage:", error);
+      }
+    }
+  }, []);
+  
+  // 🔍 TEMPORAL: Usar userFromStorage si existe, sino usar userFromStore
+  const user = userFromStorage || userFromStore;
   
   // 🔍 AUDITORÍA: Detectar re-render cuando user cambia
   sidebarRenderCount++;

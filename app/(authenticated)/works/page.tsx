@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import { WorkForm } from "@/components/forms/WorkForm";
 import { useToast } from "@/components/ui/Toast";
 import { Plus } from "lucide-react";
+import { parseBackendError } from "@/lib/parse-backend-error";
 
 function WorksContent() {
   const { works, isLoading, error, mutate } = useWorks();
@@ -27,7 +28,8 @@ function WorksContent() {
       setIsCreateModalOpen(false);
     } catch (err: any) {
       console.error("Error al crear obra:", err);
-      toast.error(err.message || "Error al crear la obra");
+      const errorMessage = parseBackendError(err);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
