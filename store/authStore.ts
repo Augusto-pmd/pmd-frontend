@@ -121,9 +121,10 @@ export const useAuthStore = create<AuthState>()(
             return null;
           }
 
-          // Store in localStorage
+          // Store in localStorage - guardar tanto "access_token" como "token" para compatibilidad
           if (typeof window !== "undefined") {
             localStorage.setItem("access_token", access_token);
+            localStorage.setItem("token", access_token); // También guardar como "token" para compatibilidad
             localStorage.setItem("refresh_token", refresh_token);
             localStorage.setItem("user", JSON.stringify(normalizedUser));
           }
@@ -169,6 +170,7 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== "undefined") {
           localStorage.removeItem("pmd-auth-storage");
           localStorage.removeItem("access_token");
+          localStorage.removeItem("token"); // También borrar "token" para compatibilidad
           localStorage.removeItem("refresh_token");
           localStorage.removeItem("user");
         }
@@ -252,9 +254,10 @@ export const useAuthStore = create<AuthState>()(
             }
           }
 
-          // Store tokens in localStorage
+          // Store tokens in localStorage - guardar tanto "access_token" como "token" para compatibilidad
           if (typeof window !== "undefined") {
             localStorage.setItem("access_token", access_token);
+            localStorage.setItem("token", access_token); // También guardar como "token" para compatibilidad
             if (refresh_token) {
               localStorage.setItem("refresh_token", refresh_token);
             }
