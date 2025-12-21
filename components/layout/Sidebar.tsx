@@ -201,8 +201,14 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
-  // Memoizar items visibles según permisos ACL - antes del early return
+  // Memoizar items visibles según permisos ACL - solo se calcula cuando user existe
   const visibleItems = useMemo(() => {
+    // Si no hay user, retornar solo Dashboard para evitar cálculo innecesario
+    if (!user) {
+      const dashboardItem = ALL_NAV_ITEMS.find(item => item.href === "/dashboard");
+      return dashboardItem ? [dashboardItem] : [];
+    }
+
     const filtered = ALL_NAV_ITEMS.filter((item) => {
       // Dashboard siempre visible si hay usuario
       if (item.permission === "always" || item.href === "/dashboard") {
@@ -265,7 +271,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     }
     
     return filtered;
-  }, [canWorks, canSuppliers, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
+  }, [user, canWorks, canSuppliers, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
   // Memoizar agrupación por sección - antes del early return
   const itemsBySection = useMemo(() => {
