@@ -240,7 +240,7 @@ function AccountingMonthContent() {
             </CardContent>
           </Card>
         )}
-    </div>
+      </div>
   );
 }
 

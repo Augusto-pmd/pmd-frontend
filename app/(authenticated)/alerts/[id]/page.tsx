@@ -118,7 +118,8 @@ function AlertDetailContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
         <div>
           <BotonVolver backTo="/alerts" />
           <div className="flex items-center justify-between mb-6">
@@ -272,6 +273,7 @@ function AlertDetailContent() {
           </div>
         </Modal>
       </div>
+    </>
   );
 }
 

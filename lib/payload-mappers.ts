@@ -102,38 +102,65 @@ export function mapCreateSupplierPayload(form: any): {
  * Mapea los datos del formulario de Work al payload exacto del DTO del backend.
  * 
  * DTO esperado (CreateWorkDto):
- * - nombre: string (requerido)
- * - direccion?: string
- * - fechaInicio?: string (ISO date: YYYY-MM-DD)
- * - fechaFin?: string (ISO date: YYYY-MM-DD)
- * - estado?: string
- * - descripcion?: string
- * - metrosCuadrados?: number
- * - responsableId?: string (UUID)
- * - presupuesto?: number
+ * - name: string (requerido)
+ * - client: string (requerido)
+ * - address: string (requerido)
+ * - start_date: string (requerido, ISO date: YYYY-MM-DD)
+ * - end_date?: string (opcional, ISO date: YYYY-MM-DD)
+ * - status?: WorkStatus (opcional, enum: "active" | "paused" | "finished" | "administratively_closed" | "archived")
+ * - currency: Currency (requerido, enum: "ARS" | "USD")
+ * - supervisor_id?: string (opcional, UUID)
+ * - total_budget?: number (opcional)
  */
 export function mapCreateWorkPayload(form: any): {
-  nombre: string;
-  direccion?: string;
-  fechaInicio?: string;
-  fechaFin?: string;
-  estado?: string;
-  descripcion?: string;
-  metrosCuadrados?: number;
-  responsableId?: string;
-  presupuesto?: number;
+  name: string;
+  client: string;
+  address: string;
+  start_date: string;
+  end_date?: string;
+  status?: string;
+  currency: string;
+  supervisor_id?: string;
+  total_budget?: number;
 } {
-  return {
-    nombre: (form.nombre || form.name || "").trim(),
-    direccion: (form.direccion || form.address)?.trim() || undefined,
-    fechaInicio: formatDateYYYYMMDD(form.fechaInicio || form.startDate),
-    fechaFin: form.fechaFin || form.endDate ? formatDateYYYYMMDD(form.fechaFin || form.endDate) : undefined,
-    estado: (form.estado || form.status) || undefined,
-    descripcion: (form.descripcion || form.description)?.trim() || undefined,
-    metrosCuadrados: form.metrosCuadrados || form.squareMeters ? Number(form.metrosCuadrados || form.squareMeters) || undefined : undefined,
-    responsableId: (form.responsableId || form.managerId)?.trim() || undefined,
-    presupuesto: form.presupuesto || form.budget ? Number(form.presupuesto || form.budget) || undefined : undefined,
+  // ✅ Formulario ahora usa modelo único alineado al backend (start_date directamente)
+  const startDate = formatDateYYYYMMDD(form.start_date);
+  if (!startDate) {
+    throw new Error("La fecha de inicio es requerida y debe ser válida");
+  }
+
+  const payload: any = {
+    name: (form.name || "").trim(),
+    client: (form.client || "").trim(),
+    address: (form.address || "").trim(),
+    start_date: startDate,
+    currency: form.currency || "USD",
   };
+
+  // Campos opcionales - solo incluir si tienen valor
+  const endDate = formatDateYYYYMMDD(form.end_date);
+  if (endDate) {
+    payload.end_date = endDate;
+  }
+
+  const status = form.status;
+  if (status && ["active", "paused", "finished", "administratively_closed", "archived"].includes(status)) {
+    payload.status = status;
+  }
+
+  const supervisorId = form.supervisor_id?.trim();
+  if (supervisorId) {
+    payload.supervisor_id = supervisorId;
+  }
+
+  if (form.total_budget !== undefined && form.total_budget !== null && form.total_budget !== "") {
+    const budgetNum = Number(form.total_budget);
+    if (!isNaN(budgetNum) && budgetNum >= 0) {
+      payload.total_budget = budgetNum;
+    }
+  }
+
+  return payload;
 }
 
 /**

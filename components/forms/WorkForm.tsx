@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
-import { Textarea } from "@/components/ui/Textarea";
 import { useUsers } from "@/hooks/api/users";
 import { mapCreateWorkPayload } from "@/lib/payload-mappers";
 
@@ -20,89 +19,128 @@ interface WorkFormProps {
 export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFormProps) {
   const { users } = useUsers();
   
+  // ✅ Modelo interno único alineado al backend (sin duplicados)
   const [formData, setFormData] = useState({
-    nombre: "",
-    name: "",
-    direccion: "",
-    address: "",
-    clienteId: "",
-    clientId: "",
-    fechaInicio: "",
-    startDate: "",
-    fechaFin: "",
-    endDate: "",
-    estado: "planificada",
-    status: "planned",
-    descripcion: "",
-    description: "",
-    metrosCuadrados: "",
-    squareMeters: "",
-    responsableId: "",
-    managerId: "",
-    presupuesto: "",
-    budget: "",
+    name: "", // Nombre de la obra
+    client: "", // Cliente (requerido)
+    address: "", // Dirección (requerido)
+    currency: "USD" as "USD" | "ARS", // Moneda (requerido)
+    start_date: "", // Fecha de inicio (requerido, formato YYYY-MM-DD)
+    end_date: "", // Fecha de fin (opcional, formato YYYY-MM-DD)
+    status: "active" as "active" | "paused" | "finished" | "administratively_closed" | "archived", // Estado
+    supervisor_id: "", // Responsable (opcional, UUID)
+    total_budget: "", // Presupuesto (opcional)
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initialData) {
-      // Normalizar datos del backend
+      // ✅ Normalizar datos del backend al modelo único interno
+      // Mapear estado del backend a valores válidos del enum
+      const backendStatus = initialData.status || initialData.estado || "active";
+      const validStatus: "active" | "paused" | "finished" | "administratively_closed" | "archived" = 
+        ["active", "paused", "finished", "administratively_closed", "archived"].includes(backendStatus)
+          ? (backendStatus as any)
+          : "active";
+      
+      // Normalizar fechas a formato YYYY-MM-DD
+      const normalizeDate = (date: any): string => {
+        if (!date) return "";
+        try {
+          const d = new Date(date);
+          if (isNaN(d.getTime())) return "";
+          return d.toISOString().split("T")[0];
+        } catch {
+          return "";
+        }
+      };
+      
       setFormData({
-        nombre: initialData.nombre || initialData.name || "",
         name: initialData.name || initialData.nombre || "",
-        direccion: initialData.direccion || initialData.address || "",
+        client: initialData.client || "",
         address: initialData.address || initialData.direccion || "",
-        clienteId: initialData.clienteId || initialData.clientId || "",
-        clientId: initialData.clientId || initialData.clienteId || "",
-        fechaInicio: initialData.fechaInicio || initialData.startDate || initialData.estimatedStartDate || "",
-        startDate: initialData.startDate || initialData.fechaInicio || initialData.estimatedStartDate || "",
-        fechaFin: initialData.fechaFin || initialData.endDate || "",
-        endDate: initialData.endDate || initialData.fechaFin || "",
-        estado: initialData.estado || initialData.status || "planificada",
-        status: initialData.status || initialData.estado || "planned",
-        descripcion: initialData.descripcion || initialData.description || "",
-        description: initialData.description || initialData.descripcion || "",
-        metrosCuadrados: initialData.metrosCuadrados || initialData.squareMeters || "",
-        squareMeters: initialData.squareMeters || initialData.metrosCuadrados || "",
-        responsableId: initialData.responsableId || initialData.managerId || "",
-        managerId: initialData.managerId || initialData.responsableId || "",
-        presupuesto: initialData.presupuesto || initialData.budget || "",
-        budget: initialData.budget || initialData.presupuesto || "",
+        currency: (initialData.currency === "ARS" || initialData.currency === "USD") 
+          ? initialData.currency 
+          : "USD",
+        start_date: normalizeDate(initialData.start_date || initialData.startDate || initialData.fechaInicio || initialData.estimatedStartDate),
+        end_date: normalizeDate(initialData.end_date || initialData.endDate || initialData.fechaFin),
+        status: validStatus,
+        supervisor_id: initialData.supervisor_id || initialData.managerId || initialData.responsableId || "",
+        total_budget: initialData.total_budget !== undefined && initialData.total_budget !== null
+          ? String(initialData.total_budget)
+          : (initialData.budget !== undefined && initialData.budget !== null ? String(initialData.budget) : (initialData.presupuesto || "")),
       });
     }
   }, [initialData]);
 
-  const validate = (): boolean => {
+  // ✅ Validación UUID
+  const isValidUUID = (uuid: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+
+  // ✅ Validación reactiva - se ejecuta cuando cambian los campos
+  useEffect(() => {
     const newErrors: Record<string, string> = {};
     
-    // Validación obligatoria: nombre
-    const nombre = formData.nombre || formData.name;
-    if (!nombre?.trim()) {
-      newErrors.nombre = "El nombre de la obra es obligatorio";
+    // Validación obligatoria: name
+    if (!formData.name?.trim()) {
+      newErrors.name = "El nombre de la obra es obligatorio";
     }
     
-    // Validar fechas si están presentes
-    if (formData.fechaInicio && formData.fechaFin) {
-      const inicio = new Date(formData.fechaInicio);
-      const fin = new Date(formData.fechaFin);
-      if (inicio > fin) {
-        newErrors.fechaFin = "La fecha de fin debe ser posterior a la fecha de inicio";
+    // Validación obligatoria: client
+    if (!formData.client?.trim()) {
+      newErrors.client = "El cliente es obligatorio";
+    }
+    
+    // Validación obligatoria: address
+    if (!formData.address?.trim()) {
+      newErrors.address = "La dirección es obligatoria";
+    }
+    
+    // Validación obligatoria: start_date
+    if (!formData.start_date?.trim()) {
+      newErrors.start_date = "La fecha de inicio es obligatoria";
+    }
+    
+    // Validación obligatoria: currency
+    if (!formData.currency || (formData.currency !== "ARS" && formData.currency !== "USD")) {
+      newErrors.currency = "La moneda es obligatoria (ARS o USD)";
+    }
+    
+    // ✅ Validación reactiva: fechaFin no puede ser < fechaInicio
+    if (formData.start_date && formData.end_date) {
+      const inicio = new Date(formData.start_date);
+      const fin = new Date(formData.end_date);
+      if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+        // Fechas inválidas ya se manejan arriba
+      } else if (inicio > fin) {
+        newErrors.end_date = "La fecha de fin debe ser posterior a la fecha de inicio";
       }
     }
     
-    // Validar metros cuadrados si está presente
-    if (formData.metrosCuadrados && parseFloat(formData.metrosCuadrados) < 0) {
-      newErrors.metrosCuadrados = "Los metros cuadrados deben ser un valor positivo";
+    // ✅ Validación: supervisor_id debe ser UUID válido si existe
+    if (formData.supervisor_id && formData.supervisor_id.trim() !== "") {
+      if (!isValidUUID(formData.supervisor_id.trim())) {
+        newErrors.supervisor_id = "El ID del responsable debe ser un UUID válido";
+      }
     }
     
-    // Validar presupuesto si está presente
-    if (formData.presupuesto && parseFloat(formData.presupuesto) < 0) {
-      newErrors.presupuesto = "El presupuesto debe ser un valor positivo";
+    // ✅ Validación: total_budget no puede ser negativo
+    if (formData.total_budget && formData.total_budget.trim() !== "") {
+      const budgetNum = parseFloat(formData.total_budget);
+      if (isNaN(budgetNum) || budgetNum < 0) {
+        newErrors.total_budget = "El presupuesto debe ser un número positivo";
+      }
     }
     
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  const validate = (): boolean => {
+    // Las validaciones ya se ejecutan reactivamente, solo verificar si hay errores
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,9 +153,9 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
     // Usar función de mapeo para alinear EXACTAMENTE con el DTO del backend
     const payload = mapCreateWorkPayload(formData);
 
-    // Asegurar que el payload no esté vacío
-    if (Object.keys(payload).length === 0 || !payload.nombre) {
-      throw new Error("El payload no puede estar vacío. Al menos el nombre es requerido.");
+    // Validar campos requeridos del payload (ya validados en validate() pero doble verificación)
+    if (!payload.name || !payload.client || !payload.address || !payload.start_date || !payload.currency) {
+      throw new Error("Faltan campos requeridos: nombre, cliente, dirección, fecha de inicio o moneda");
     }
 
     try {
@@ -137,36 +175,48 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
         </div>
         
         {/* Nombre de la obra - OBLIGATORIO */}
-        <FormField label="Nombre de la obra" required error={errors.nombre}>
+        <FormField label="Nombre de la obra" required error={errors.name}>
           <Input
             type="text"
-            value={formData.nombre || formData.name}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value, name: e.target.value })}
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Ej: Edificio Residencial Centro"
             required
           />
         </FormField>
 
-        {/* Dirección */}
-        <FormField label="Dirección">
+        {/* Cliente - OBLIGATORIO */}
+        <FormField label="Cliente" required error={errors.client}>
           <Input
             type="text"
-            value={formData.direccion || formData.address}
-            onChange={(e) => setFormData({ ...formData, direccion: e.target.value, address: e.target.value })}
-            placeholder="Dirección completa de la obra"
+            value={formData.client}
+            onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+            placeholder="Nombre del cliente"
+            required
           />
         </FormField>
 
-        {/* Metros cuadrados */}
-        <FormField label="Metros cuadrados" error={errors.metrosCuadrados}>
+        {/* Dirección - OBLIGATORIO */}
+        <FormField label="Dirección" required error={errors.address}>
           <Input
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.metrosCuadrados || formData.squareMeters}
-            onChange={(e) => setFormData({ ...formData, metrosCuadrados: e.target.value, squareMeters: e.target.value })}
-            placeholder="m²"
+            type="text"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            placeholder="Dirección completa de la obra"
+            required
           />
+        </FormField>
+
+        {/* Moneda - OBLIGATORIO */}
+        <FormField label="Moneda" required error={errors.currency}>
+          <Select
+            value={formData.currency}
+            onChange={(e) => setFormData({ ...formData, currency: e.target.value as "USD" | "ARS" })}
+            required
+          >
+            <option value="USD">USD (Dólar Estadounidense)</option>
+            <option value="ARS">ARS (Peso Argentino)</option>
+          </Select>
         </FormField>
       </div>
 
@@ -176,45 +226,40 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
           <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--apple-text-primary)" }}>Estado y Fechas</h3>
         </div>
         
-        {/* Estado - OBLIGATORIO */}
+        {/* Estado - OBLIGATORIO - Valores alineados con enum WorkStatus del backend */}
         <FormField label="Estado" required>
           <Select
-            value={formData.estado || formData.status}
+            value={formData.status}
             onChange={(e) => {
-              const estado = e.target.value;
-              let status = "planned";
-              if (estado === "planificada") status = "planned";
-              else if (estado === "en-ejecucion" || estado === "activa") status = "active";
-              else if (estado === "pausada") status = "paused";
-              else if (estado === "finalizada" || estado === "completada") status = "completed";
-              setFormData({ ...formData, estado: estado, status: status });
+              const status = e.target.value as "active" | "paused" | "finished" | "administratively_closed" | "archived";
+              setFormData({ ...formData, status });
             }}
             required
           >
-            <option value="planificada">Planificada</option>
-            <option value="en-ejecucion">En ejecución</option>
-            <option value="activa">Activa</option>
-            <option value="pausada">Pausada</option>
-            <option value="finalizada">Finalizada</option>
-            <option value="completada">Completada</option>
+            <option value="active">Activa</option>
+            <option value="paused">Pausada</option>
+            <option value="finished">Finalizada</option>
+            <option value="administratively_closed">Cerrada Administrativamente</option>
+            <option value="archived">Archivada</option>
           </Select>
         </FormField>
 
         {/* Fechas */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
-          <FormField label="Fecha de inicio">
+          <FormField label="Fecha de inicio" required error={errors.start_date}>
             <Input
               type="date"
-              value={formData.fechaInicio || formData.startDate}
-              onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value, startDate: e.target.value })}
+              value={formData.start_date}
+              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              required
             />
           </FormField>
-          <FormField label="Fecha estimada de finalización" error={errors.fechaFin}>
+          <FormField label="Fecha estimada de finalización" error={errors.end_date}>
             <Input
               type="date"
-              value={formData.fechaFin || formData.endDate}
-              onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value, endDate: e.target.value })}
-              min={formData.fechaInicio || formData.startDate}
+              value={formData.end_date}
+              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              min={formData.start_date}
             />
           </FormField>
         </div>
@@ -228,10 +273,10 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
         
         {/* Responsable y Presupuesto */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
-          <FormField label="Responsable">
+          <FormField label="Responsable" error={errors.supervisor_id}>
             <Select
-              value={formData.responsableId || formData.managerId}
-              onChange={(e) => setFormData({ ...formData, responsableId: e.target.value, managerId: e.target.value })}
+              value={formData.supervisor_id}
+              onChange={(e) => setFormData({ ...formData, supervisor_id: e.target.value })}
             >
               <option value="">Seleccionar responsable</option>
               {users?.map((user: any) => {
@@ -244,34 +289,25 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
               })}
             </Select>
           </FormField>
-          <FormField label="Presupuesto" error={errors.presupuesto}>
+          <FormField label="Presupuesto" error={errors.total_budget}>
             <Input
               type="number"
               step="0.01"
               min="0"
-              value={formData.presupuesto || formData.budget}
-              onChange={(e) => setFormData({ ...formData, presupuesto: e.target.value, budget: e.target.value })}
+              value={formData.total_budget}
+              onChange={(e) => {
+                const value = e.target.value;
+                // ✅ Prevenir valores negativos en tiempo real
+                if (value === "" || (!isNaN(parseFloat(value)) && parseFloat(value) >= 0)) {
+                  setFormData({ ...formData, total_budget: value });
+                }
+              }}
               placeholder="0.00"
             />
           </FormField>
         </div>
       </div>
 
-      {/* Sección: Descripción */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-        <div style={{ borderBottom: "1px solid var(--apple-border)", paddingBottom: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
-          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--apple-text-primary)" }}>Descripción</h3>
-        </div>
-        
-        <FormField label="Descripción">
-          <Textarea
-            value={formData.descripcion || formData.description}
-            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value, description: e.target.value })}
-            rows={4}
-            placeholder="Descripción detallada de la obra"
-          />
-        </FormField>
-      </div>
 
       {/* Botones - Sticky en mobile */}
       <div 

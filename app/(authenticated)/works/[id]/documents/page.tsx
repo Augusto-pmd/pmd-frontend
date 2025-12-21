@@ -90,6 +90,7 @@ function WorkDocumentsContent() {
   }
 
   return (
+    <>
       <div className="space-y-6">
         <div>
           <BotonVolver backTo={`/works/${workId}`} />
@@ -194,6 +195,7 @@ function WorkDocumentsContent() {
           />
         </Modal>
       </div>
+    </>
   );
 }
 

@@ -105,7 +105,8 @@ function RolesContent() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
+    <>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
         <div>
           <BotonVolver />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-md)" }}>
@@ -273,6 +274,7 @@ function RolesContent() {
           </Modal>
         )}
       </div>
+    </>
   );
 }
 

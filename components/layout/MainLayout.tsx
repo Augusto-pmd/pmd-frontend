@@ -11,7 +11,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full bg-[var(--apple-canvas)] font-[Inter,system-ui,sans-serif]">
+    <div className="flex h-screen w-full bg-[var(--apple-canvas)] font-[Inter,system-ui,sans-serif]">
       {/* Mobile Sidebar Toggle Button - Fixed and always visible */}
       <SidebarToggle
         open={mobileSidebarOpen}

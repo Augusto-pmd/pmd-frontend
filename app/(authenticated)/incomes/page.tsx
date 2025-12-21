@@ -83,7 +83,8 @@ function IncomesContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Incomes – PMD Backend Integration</h1>
@@ -190,6 +191,7 @@ function IncomesContent() {
           />
         </Modal>
       </div>
+    </>
   );
 }
 

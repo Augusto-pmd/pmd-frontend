@@ -7,7 +7,7 @@ import { useAlertsStore } from "@/store/alertsStore";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { useCashboxStore } from "@/store/cashboxStore";
 import { useCan } from "@/lib/acl";
-import { useEffect, useMemo, memo } from "react";
+import { useEffect, useMemo, memo, useState } from "react";
 import LogoPMD from "@/components/LogoPMD";
 import styles from "./Sidebar.module.css";
 import {
@@ -77,8 +77,38 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const { alerts, fetchAlerts } = useAlertsStore();
   const { documents, fetchDocuments } = useDocumentsStore();
   const { cashboxes, fetchCashboxes } = useCashboxStore();
-  // Hook reactivo: el componente re-renderiza cuando user cambia
-  const user = useAuthStore((state) => state.user);
+  // ✅ FUENTE ÚNICA DE VERDAD: useAuthStore desde @/store/authStore
+  // Este hook está conectado al store persistido en localStorage con key "pmd-auth-storage"
+  // El componente se re-renderiza reactivamente cuando state.user cambia
+  const userFromStore = useAuthStore((state) => state.user);
+  
+  // 🔍 SONDA TEMPORAL DE DIAGNÓSTICO: Leer user directamente desde localStorage
+  const [userFromStorage, setUserFromStorage] = useState<any>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("pmd-auth-storage");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const storageUser = parsed?.state?.user || null;
+          console.log("🔍 [SIDEBAR STORAGE PROBE] Raw localStorage:", stored);
+          console.log("🔍 [SIDEBAR STORAGE PROBE] Parsed state:", parsed?.state);
+          console.log("🔍 [SIDEBAR STORAGE USER]:", storageUser);
+          console.log("🔍 [SIDEBAR STORAGE USER ID]:", storageUser?.id);
+          console.log("🔍 [SIDEBAR STORAGE USER ROLE]:", storageUser?.role);
+          console.log("🔍 [SIDEBAR STORAGE USER PERMISSIONS]:", storageUser?.role?.permissions);
+          setUserFromStorage(storageUser);
+        } else {
+          console.log("🔍 [SIDEBAR STORAGE PROBE] No hay datos en localStorage bajo 'pmd-auth-storage'");
+        }
+      } catch (error) {
+        console.error("🔍 [SIDEBAR STORAGE PROBE] Error al leer localStorage:", error);
+      }
+    }
+  }, []);
+  
+  // 🔍 TEMPORAL: Usar userFromStorage si existe, sino usar userFromStore
+  const user = userFromStorage || userFromStore;
   
   // 🔍 AUDITORÍA: Detectar re-render cuando user cambia
   sidebarRenderCount++;
@@ -118,11 +148,16 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
-  // Memoizar items con información de permisos - mostrar TODOS los módulos
+  // Memoizar items visibles según permisos ACL - solo se calcula cuando user existe
   const visibleItems = useMemo(() => {
-    // Mostrar TODOS los módulos, pero marcar cuáles tienen permisos
-    const itemsWithPermissions = ALL_NAV_ITEMS.map((item) => {
-      // Dashboard siempre tiene permiso
+    // Si no hay user, retornar solo Dashboard para evitar cálculo innecesario
+    if (!user) {
+      const dashboardItem = ALL_NAV_ITEMS.find(item => item.href === "/dashboard");
+      return dashboardItem ? [dashboardItem] : [];
+    }
+
+    const filtered = ALL_NAV_ITEMS.filter((item) => {
+      // Dashboard siempre visible si hay usuario
       if (item.permission === "always" || item.href === "/dashboard") {
         return { ...item, hasPermission: true };
       }
@@ -176,8 +211,21 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
       return { ...item, hasPermission };
     });
     
-    return itemsWithPermissions;
-  }, [canWorks, canSuppliers, canExpenses, canContracts, canIncomes, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
+    console.log("🔵 [SIDEBAR] Total items visibles:", filtered.length, "de", ALL_NAV_ITEMS.length);
+    console.log("🔵 [SIDEBAR] Items visibles:", filtered.map(i => i.label));
+    console.log("🔵 [SIDEBAR] ========================================");
+    
+    // Fallback defensivo: asegurar que al menos Dashboard esté visible
+    if (filtered.length === 0) {
+      const dashboardItem = ALL_NAV_ITEMS.find(item => item.href === "/dashboard");
+      if (dashboardItem) {
+        console.log("🔵 [SIDEBAR] ⚠️ Fallback: agregando Dashboard como último recurso");
+        return [dashboardItem];
+      }
+    }
+    
+    return filtered;
+  }, [user, canWorks, canSuppliers, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
   // Memoizar agrupación por sección - antes del early return
   const itemsBySection = useMemo(() => {

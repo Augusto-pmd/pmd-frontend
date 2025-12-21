@@ -166,8 +166,27 @@ export function useCan(permission: Permission): boolean {
     );
   }, [user?.role?.name, user?.role?.permissions]);
   
-  // Verificar coincidencia exacta (case-sensitive)
-  const hasPermission = permissions.includes(permission);
+  // Normalizar a lowercase para comparación case-insensitive
+  const lowerPermission = permission.toLowerCase();
+  const lowerPermissions = permissions.map(p => String(p).toLowerCase());
+  const hasPermission = lowerPermissions.includes(lowerPermission);
+  
+  // Logging para debugging (mantener logs existentes)
+  if (!hasPermission && permissions.length > 0) {
+    console.log("[ACL] ❌ No match found for:", permission);
+    console.log("[ACL] Normalized permission:", lowerPermission);
+    console.log("[ACL] Available normalized permissions:", lowerPermissions.slice(0, 10));
+    
+    // Verificar si hay permisos similares
+    const similarPermissions = permissions.filter(p => 
+      String(p).toLowerCase().includes(permission.split('.')[0].toLowerCase())
+    );
+    if (similarPermissions.length > 0) {
+      console.log("[ACL] Similar permissions found:", similarPermissions);
+    }
+  }
+  
+  console.log(`[ACL] useCan("${permission}"): ${hasPermission ? "✅ TRUE" : "❌ FALSE"}`);
   
   return hasPermission;
 }
@@ -179,6 +198,9 @@ export function useCan(permission: Permission): boolean {
  */
 export function can(permission: Permission): boolean {
   const permissions = getUserPermissions();
-  return permissions.includes(permission);
+  // Normalizar a lowercase para comparación case-insensitive (consistente con useCan)
+  const lowerPermission = permission.toLowerCase();
+  const lowerPermissions = permissions.map(p => String(p).toLowerCase());
+  return lowerPermissions.includes(lowerPermission);
 }
 
