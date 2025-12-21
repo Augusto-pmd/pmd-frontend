@@ -130,21 +130,16 @@ export function useCan(permission: Permission): boolean {
     console.log("[ACL] permissions sample:", permissions.slice(0, 5));
   }
   
-  // Verificar coincidencia exacta (case-sensitive)
-  const hasPermission = permissions.includes(permission);
+  // Normalizar a lowercase para comparación case-insensitive
+  const lowerPermission = permission.toLowerCase();
+  const lowerPermissions = permissions.map(p => String(p).toLowerCase());
+  const hasPermission = lowerPermissions.includes(lowerPermission);
   
-  // Si no hay coincidencia, verificar si hay problemas de formato
+  // Logging para debugging (mantener logs existentes)
   if (!hasPermission && permissions.length > 0) {
-    const lowerPermission = permission.toLowerCase();
-    const lowerPermissions = permissions.map(p => String(p).toLowerCase());
-    const hasLowerMatch = lowerPermissions.includes(lowerPermission);
-    
     console.log("[ACL] ❌ No match found for:", permission);
-    console.log("[ACL] Checking lowercase match:", hasLowerMatch);
-    if (hasLowerMatch) {
-      const matchingPermission = permissions.find(p => String(p).toLowerCase() === lowerPermission);
-      console.log("[ACL] ⚠️ Found lowercase match:", matchingPermission, "vs requested:", permission);
-    }
+    console.log("[ACL] Normalized permission:", lowerPermission);
+    console.log("[ACL] Available normalized permissions:", lowerPermissions.slice(0, 10));
     
     // Verificar si hay permisos similares
     const similarPermissions = permissions.filter(p => 
@@ -167,6 +162,9 @@ export function useCan(permission: Permission): boolean {
  */
 export function can(permission: Permission): boolean {
   const permissions = getUserPermissions();
-  return permissions.includes(permission);
+  // Normalizar a lowercase para comparación case-insensitive (consistente con useCan)
+  const lowerPermission = permission.toLowerCase();
+  const lowerPermissions = permissions.map(p => String(p).toLowerCase());
+  return lowerPermissions.includes(lowerPermission);
 }
 

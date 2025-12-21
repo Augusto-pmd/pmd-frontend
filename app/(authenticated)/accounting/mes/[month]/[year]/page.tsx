@@ -241,7 +241,6 @@ function AccountingMonthContent() {
           </Card>
         )}
       </div>
-    </MainLayout>
   );
 }
 

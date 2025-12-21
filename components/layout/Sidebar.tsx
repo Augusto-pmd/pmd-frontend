@@ -255,6 +255,15 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     console.log("🔵 [SIDEBAR] Items visibles:", filtered.map(i => i.label));
     console.log("🔵 [SIDEBAR] ========================================");
     
+    // Fallback defensivo: asegurar que al menos Dashboard esté visible
+    if (filtered.length === 0) {
+      const dashboardItem = ALL_NAV_ITEMS.find(item => item.href === "/dashboard");
+      if (dashboardItem) {
+        console.log("🔵 [SIDEBAR] ⚠️ Fallback: agregando Dashboard como último recurso");
+        return [dashboardItem];
+      }
+    }
+    
     return filtered;
   }, [canWorks, canSuppliers, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
