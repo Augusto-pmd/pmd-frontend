@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Expense, CreateExpenseData } from "@/lib/types/expense";
 
 interface ExpenseFormProps {
-  initialData?: any;
-  onSubmit: (data: any) => Promise<void>;
+  initialData?: Expense | null;
+  onSubmit: (data: CreateExpenseData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }

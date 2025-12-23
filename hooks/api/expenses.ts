@@ -1,21 +1,23 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { Expense, CreateExpenseData, UpdateExpenseData } from "@/lib/types/expense";
 
 export function useExpenses() {
   const { token } = useAuthStore();
   
-  const fetcher = () => {
-    return apiClient.get("/expenses");
+  const fetcher = async (): Promise<Expense[]> => {
+    const response = await apiClient.get<Expense[]>("/expenses");
+    return response?.data || response || [];
   };
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<Expense[]>(
     token ? "expenses" : null,
     fetcher
   );
 
   return {
-    expenses: data?.data || data || [],
+    expenses: data || [],
     error,
     isLoading,
     mutate,
@@ -30,15 +32,18 @@ export function useExpense(id: string | null) {
     return { expense: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const fetcher = async (): Promise<Expense> => {
+    const response = await apiClient.get<Expense>(`/expenses/${id}`);
+    return response?.data || response;
+  };
+  
+  const { data, error, isLoading, mutate } = useSWR<Expense>(
     token && id ? `expenses/${id}` : null,
-    () => {
-      return apiClient.get(`/expenses/${id}`);
-    }
+    fetcher
   );
 
   return {
-    expense: data?.data || data,
+    expense: data || null,
     error,
     isLoading,
     mutate,
@@ -46,15 +51,15 @@ export function useExpense(id: string | null) {
 }
 
 export const expenseApi = {
-  create: (data: any) => {
-    return apiClient.post("/expenses", data);
+  create: (data: CreateExpenseData) => {
+    return apiClient.post<Expense>("/expenses", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: UpdateExpenseData) => {
     if (!id) {
       console.warn("❗ [expenseApi.update] id no está definido");
       throw new Error("ID de gasto no está definido");
     }
-    return apiClient.put(`/expenses/${id}`, data);
+    return apiClient.put<Expense>(`/expenses/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
@@ -68,7 +73,7 @@ export const expenseApi = {
       console.warn("❗ [expenseApi.validate] id no está definido");
       throw new Error("ID de gasto no está definido");
     }
-    return apiClient.patch(`/expenses/${id}/validate`, {
+    return apiClient.patch<Expense>(`/expenses/${id}/validate`, {
       state,
       observations,
     });

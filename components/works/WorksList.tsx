@@ -13,23 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Edit, Trash2, Eye, Archive, DollarSign, Lock } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
-
-interface Work {
-  id: string;
-  name?: string;
-  nombre?: string;
-  title?: string;
-  description?: string;
-  descripcion?: string;
-  status?: string;
-  estado?: string;
-  client?: string;
-  cliente?: string;
-  startDate?: string;
-  fechaInicio?: string;
-  estimatedStartDate?: string;
-  [key: string]: any;
-}
+import { Work, UpdateWorkData } from "@/lib/types/work";
 
 interface WorksListProps {
   works: Work[];
@@ -133,7 +117,7 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
       await workApi.close(work.id);
       await onRefresh?.();
       toast.success("Obra cerrada correctamente");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al cerrar obra:", err);
       const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
@@ -152,16 +136,17 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
     }).format(amount);
   };
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: UpdateWorkData) => {
     setIsSubmitting(true);
     try {
       await workApi.update(work.id, data);
       await onRefresh?.();
       toast.success("Obra actualizada correctamente");
       setIsEditModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al actualizar obra:", err);
-      toast.error(err.message || "Error al actualizar la obra");
+      const errorMessage = err instanceof Error ? err.message : "Error al actualizar la obra";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -179,9 +164,10 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
       await onRefresh?.();
       toast.success("Obra archivada correctamente");
       setIsDeleteModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al archivar obra:", err);
-      toast.error(err.message || "Error al archivar la obra");
+      const errorMessage = err instanceof Error ? err.message : "Error al archivar la obra";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -194,9 +180,10 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
       await onRefresh?.();
       toast.success("Obra eliminada correctamente");
       setIsDeleteModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al eliminar obra:", err);
-      toast.error(err.message || "Error al eliminar la obra");
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar la obra";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -1,21 +1,23 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { Work, CreateWorkData, UpdateWorkData } from "@/lib/types/work";
 
 export function useWorks() {
   const { token } = useAuthStore();
   
-  const fetcher = () => {
-    return apiClient.get("/works");
+  const fetcher = async (): Promise<Work[]> => {
+    const response = await apiClient.get<Work[]>("/works");
+    return response?.data || response || [];
   };
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<Work[]>(
     token ? "works" : null,
     fetcher
   );
 
   return {
-    works: data?.data || data || [],
+    works: data || [],
     error,
     isLoading,
     mutate,
@@ -30,15 +32,18 @@ export function useWork(id: string | null) {
     return { work: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const fetcher = async (): Promise<Work> => {
+    const response = await apiClient.get<Work>(`/works/${id}`);
+    return response?.data || response;
+  };
+  
+  const { data, error, isLoading, mutate } = useSWR<Work>(
     token && id ? `works/${id}` : null,
-    () => {
-      return apiClient.get(`/works/${id}`);
-    }
+    fetcher
   );
 
   return {
-    work: data?.data || data,
+    work: data || null,
     error,
     isLoading,
     mutate,
@@ -46,15 +51,15 @@ export function useWork(id: string | null) {
 }
 
 export const workApi = {
-  create: (data: any) => {
-    return apiClient.post("/works", data);
+  create: (data: CreateWorkData) => {
+    return apiClient.post<Work>("/works", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: UpdateWorkData) => {
     if (!id) {
       console.warn("❗ [workApi.update] id no está definido");
       throw new Error("ID de obra no está definido");
     }
-    return apiClient.patch(`/works/${id}`, data);
+    return apiClient.patch<Work>(`/works/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
@@ -68,7 +73,7 @@ export const workApi = {
       console.warn("❗ [workApi.close] id no está definido");
       throw new Error("ID de obra no está definido");
     }
-    return apiClient.post(`/works/${id}/close`);
+    return apiClient.post<Work>(`/works/${id}/close`);
   },
 };
 

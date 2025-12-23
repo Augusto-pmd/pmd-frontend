@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useSWRConfig } from "swr";
 import { useToast } from "@/components/ui/Toast";
+import { Expense, CreateExpenseData } from "@/lib/types/expense";
 
 function ExpensesContent() {
   const router = useRouter();
@@ -23,7 +24,7 @@ function ExpensesContent() {
   const user = useAuthStore.getState().user;
   const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [validatingExpenseId, setValidatingExpenseId] = useState<string | null>(null);
@@ -34,21 +35,21 @@ function ExpensesContent() {
   // Verificar permisos para validar gastos
   const canValidate = user?.role?.name === "ADMINISTRATION" || user?.role?.name === "DIRECTION";
 
-  const totalExpenses = expenses?.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0) || 0;
+  const totalExpenses = expenses?.reduce((sum: number, exp: Expense) => sum + (exp.amount || 0), 0) || 0;
   const thisMonth = new Date().getMonth();
   const thisYear = new Date().getFullYear();
   const thisMonthExpenses =
-    expenses?.filter((exp: any) => {
-      const expDate = new Date(exp.date);
+    expenses?.filter((exp: Expense) => {
+      const expDate = new Date(exp.date || exp.purchase_date);
       return expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear;
-    }).reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0) || 0;
+    }).reduce((sum: number, exp: Expense) => sum + (exp.amount || 0), 0) || 0;
 
   const handleCreate = () => {
     setEditingExpense(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (expense: any) => {
+  const handleEdit = (expense: Expense) => {
     setEditingExpense(expense);
     setIsModalOpen(true);
   };
@@ -61,14 +62,15 @@ function ExpensesContent() {
       mutate();
       globalMutate("/expenses");
       toast.success("Gasto eliminado correctamente");
-    } catch (error: any) {
-      toast.error(error.message || "Error al eliminar el gasto");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al eliminar el gasto";
+      toast.error(errorMessage);
     } finally {
       setDeleteLoading(null);
     }
   };
 
-  const handleValidateClick = (expense: any, state: "validated" | "observed" | "annulled") => {
+  const handleValidateClick = (expense: Expense, state: "validated" | "observed" | "annulled") => {
     setEditingExpense(expense);
     setValidateState(state);
     setValidateObservations("");
@@ -104,8 +106,9 @@ function ExpensesContent() {
       setShowValidateModal(false);
       setEditingExpense(null);
       setValidateObservations("");
-    } catch (error: any) {
-      toast.error(error.message || "Error al validar el gasto");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al validar el gasto";
+      toast.error(errorMessage);
     } finally {
       setValidatingExpenseId(null);
     }
@@ -113,7 +116,7 @@ function ExpensesContent() {
 
   const getContractName = (contractId?: string) => {
     if (!contractId) return "-";
-    const contract = contracts?.find((c: any) => c.id === contractId);
+    const contract = contracts?.find((c) => c.id === contractId);
     return contract?.contract_number || contract?.number || `Contrato ${contractId.slice(0, 8)}`;
   };
 
@@ -135,7 +138,7 @@ function ExpensesContent() {
     return state;
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: CreateExpenseData) => {
     setIsSubmitting(true);
     try {
       if (editingExpense) {
@@ -148,9 +151,9 @@ function ExpensesContent() {
       setIsModalOpen(false);
       setEditingExpense(null);
       toast.success(editingExpense ? "Gasto actualizado correctamente" : "Gasto creado correctamente");
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Manejar errores específicos del backend
-      const errorMessage = error.message || "Error al guardar el gasto";
+      const errorMessage = error instanceof Error ? error.message : "Error al guardar el gasto";
       
       // Verificar si el error es por proveedor bloqueado
       if (errorMessage.toLowerCase().includes("blocked") || 
@@ -246,7 +249,7 @@ function ExpensesContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {expenses?.map((expense: any) => {
+                    {expenses?.map((expense: Expense) => {
                       const expenseState = expense.state || expense.estado || "pending";
                       const isPending = expenseState.toLowerCase() === "pending";
                       

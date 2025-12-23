@@ -8,10 +8,11 @@ import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
 import { useUsers } from "@/hooks/api/users";
 import { mapCreateWorkPayload } from "@/lib/payload-mappers";
+import { Work, CreateWorkData, UpdateWorkData } from "@/lib/types/work";
 
 interface WorkFormProps {
-  initialData?: any;
-  onSubmit: (data: any) => Promise<void>;
+  initialData?: Work | null;
+  onSubmit: (data: CreateWorkData | UpdateWorkData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
