@@ -91,18 +91,24 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
         if (stored) {
           const parsed = JSON.parse(stored);
           const storageUser = parsed?.state?.user || null;
-          console.log("🔍 [SIDEBAR STORAGE PROBE] Raw localStorage:", stored);
-          console.log("🔍 [SIDEBAR STORAGE PROBE] Parsed state:", parsed?.state);
-          console.log("🔍 [SIDEBAR STORAGE USER]:", storageUser);
-          console.log("🔍 [SIDEBAR STORAGE USER ID]:", storageUser?.id);
-          console.log("🔍 [SIDEBAR STORAGE USER ROLE]:", storageUser?.role);
-          console.log("🔍 [SIDEBAR STORAGE USER PERMISSIONS]:", storageUser?.role?.permissions);
+          if (process.env.NODE_ENV === "development") {
+            console.log("🔍 [SIDEBAR STORAGE PROBE] Raw localStorage:", stored);
+            console.log("🔍 [SIDEBAR STORAGE PROBE] Parsed state:", parsed?.state);
+            console.log("🔍 [SIDEBAR STORAGE USER]:", storageUser);
+            console.log("🔍 [SIDEBAR STORAGE USER ID]:", storageUser?.id);
+            console.log("🔍 [SIDEBAR STORAGE USER ROLE]:", storageUser?.role);
+            console.log("🔍 [SIDEBAR STORAGE USER PERMISSIONS]:", storageUser?.role?.permissions);
+          }
           setUserFromStorage(storageUser);
         } else {
-          console.log("🔍 [SIDEBAR STORAGE PROBE] No hay datos en localStorage bajo 'pmd-auth-storage'");
+          if (process.env.NODE_ENV === "development") {
+            console.log("🔍 [SIDEBAR STORAGE PROBE] No hay datos en localStorage bajo 'pmd-auth-storage'");
+          }
         }
       } catch (error) {
-        console.error("🔍 [SIDEBAR STORAGE PROBE] Error al leer localStorage:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("🔍 [SIDEBAR STORAGE PROBE] Error al leer localStorage:", error);
+        }
       }
     }
   }, []);
@@ -347,7 +353,9 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                       if (!hasPermission) {
                         e.preventDefault();
                         // Opcional: mostrar mensaje de que no tiene permisos
-                        console.warn(`⚠️ [SIDEBAR] Usuario intentó acceder a ${item.label} sin permisos`);
+                        if (process.env.NODE_ENV === "development") {
+                          console.warn(`⚠️ [SIDEBAR] Usuario intentó acceder a ${item.label} sin permisos`);
+                        }
                         return;
                       }
                       e.preventDefault();

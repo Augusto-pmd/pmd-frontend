@@ -367,22 +367,30 @@ export const useAuthStore = create<AuthState>()(
               if (state.token) {
                 state.isAuthenticated = true;
                 state.status = "authenticated" as AuthStatus;
-                console.log("[AUTH] status: authenticated (rehydrated from pmd-auth-storage)");
+                if (process.env.NODE_ENV === "development") {
+                  console.log("[AUTH] status: authenticated (rehydrated from pmd-auth-storage)");
+                }
               } else {
                 state.status = "unauthenticated" as AuthStatus;
-                console.log("[AUTH] status: unauthenticated (rehydration - user exists but no token)");
+                if (process.env.NODE_ENV === "development") {
+                  console.log("[AUTH] status: unauthenticated (rehydration - user exists but no token)");
+                }
               }
             } else {
               state.user = null;
               state.isAuthenticated = false;
               state.status = "unauthenticated" as AuthStatus;
-              console.log("[AUTH] status: unauthenticated (rehydration - normalization failed)");
+              if (process.env.NODE_ENV === "development") {
+                console.log("[AUTH] status: unauthenticated (rehydration - normalization failed)");
+              }
             }
           } catch {
             state.user = null;
             state.isAuthenticated = false;
             state.status = "unauthenticated" as AuthStatus;
-            console.log("[AUTH] status: unauthenticated (rehydration - error normalizing)");
+            if (process.env.NODE_ENV === "development") {
+              console.log("[AUTH] status: unauthenticated (rehydration - error normalizing)");
+            }
           }
         } else if (typeof window !== "undefined") {
           // PRIORIDAD 2: Fallback - intentar cargar desde keys individuales solo si el estado no tiene user
@@ -402,7 +410,9 @@ export const useAuthStore = create<AuthState>()(
                 state.refreshToken = storedRefreshToken;
                 state.isAuthenticated = true;
                 state.status = "authenticated" as AuthStatus;
-                console.log("[AUTH] status: authenticated (rehydrated from individual localStorage keys)");
+                if (process.env.NODE_ENV === "development") {
+                  console.log("[AUTH] status: authenticated (rehydrated from individual localStorage keys)");
+                }
               } else {
                 state.status = "unauthenticated" as AuthStatus;
               }
@@ -417,7 +427,9 @@ export const useAuthStore = create<AuthState>()(
           } else if (!state.token) {
             // No user and no token - definitely unauthenticated
             state.status = "unauthenticated" as AuthStatus;
-            console.log("[AUTH] status: unauthenticated (rehydration - no user, no token)");
+            if (process.env.NODE_ENV === "development") {
+              console.log("[AUTH] status: unauthenticated (rehydration - no user, no token)");
+            }
           }
         } else if (!state.token) {
           // No user and no token - definitely unauthenticated

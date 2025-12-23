@@ -50,13 +50,17 @@ function getUserPermissions(): Permission[] {
   const user = useAuthStore.getState().user;
   
   if (!user) {
-    console.error("🟡 [ACL AUDIT] ❌ FAIL: user no existe");
+    if (process.env.NODE_ENV === "development") {
+      console.error("🟡 [ACL AUDIT] ❌ FAIL: user no existe");
+    }
     return [];
   }
 
   // VALIDACIÓN 1: user.role existe
   if (!user.role) {
-    console.error("🟡 [ACL AUDIT] ❌ FAIL: user.role no existe");
+    if (process.env.NODE_ENV === "development") {
+      console.error("🟡 [ACL AUDIT] ❌ FAIL: user.role no existe");
+    }
     return [];
   }
 
@@ -87,19 +91,25 @@ function getUserPermissions(): Permission[] {
 
   // VALIDACIÓN 2: user.role.permissions existe
   if (!user.role.permissions) {
-    console.error("🟡 [ACL AUDIT] ❌ FAIL: user.role.permissions no existe");
+    if (process.env.NODE_ENV === "development") {
+      console.error("🟡 [ACL AUDIT] ❌ FAIL: user.role.permissions no existe");
+    }
     return [];
   }
 
   // VALIDACIÓN 3: user.role.permissions es Array
   if (!Array.isArray(user.role.permissions)) {
-    console.error("🟡 [ACL AUDIT] ❌ FAIL: user.role.permissions no es Array. Tipo:", typeof user.role.permissions);
+    if (process.env.NODE_ENV === "development") {
+      console.error("🟡 [ACL AUDIT] ❌ FAIL: user.role.permissions no es Array. Tipo:", typeof user.role.permissions);
+    }
     return [];
   }
 
   // VALIDACIÓN 4: user.role.permissions no es vacío
   if (user.role.permissions.length === 0) {
-    console.error("🟡 [ACL AUDIT] ❌ FAIL: user.role.permissions está vacío (length: 0)");
+    if (process.env.NODE_ENV === "development") {
+      console.error("🟡 [ACL AUDIT] ❌ FAIL: user.role.permissions está vacío (length: 0)");
+    }
     return [];
   }
 
@@ -109,7 +119,9 @@ function getUserPermissions(): Permission[] {
   );
 
   if (permissions.length === 0) {
-    console.error("🟡 [ACL AUDIT] ❌ FAIL: No hay permisos válidos después del filtro");
+    if (process.env.NODE_ENV === "development") {
+      console.error("🟡 [ACL AUDIT] ❌ FAIL: No hay permisos válidos después del filtro");
+    }
     return [];
   }
   

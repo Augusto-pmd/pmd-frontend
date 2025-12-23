@@ -42,7 +42,9 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       const data = await apiClient.get("/cashboxes");
       set({ cashboxes: data?.data || data || [], isLoading: false });
     } catch (error: unknown) {
-      console.error("🔴 [cashboxStore] Error al obtener cajas:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al obtener cajas:", error);
+      }
       const errorMessage = error instanceof Error ? error.message : "Error al cargar cajas";
       set({ error: errorMessage, isLoading: false });
     }
@@ -50,7 +52,9 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
 
   async createCashbox(payload) {
     if (!payload) {
-      console.warn("❗ [cashboxStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -76,19 +80,25 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       await get().fetchCashboxes();
       return response;
     } catch (error: unknown) {
-      console.error("🔴 [cashboxStore] Error al crear caja:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al crear caja:", error);
+      }
       throw error;
     }
   },
 
   async updateCashbox(id, payload) {
     if (!id) {
-      console.warn("❗ [cashboxStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] id no está definido");
+      }
       throw new Error("ID de caja no está definido");
     }
 
     if (!payload) {
-      console.warn("❗ [cashboxStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -96,14 +106,18 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       await apiClient.put(`/cashboxes/${id}`, payload);
       await get().fetchCashboxes();
     } catch (error: unknown) {
-      console.error("🔴 [cashboxStore] Error al actualizar caja:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al actualizar caja:", error);
+      }
       throw error;
     }
   },
 
   async closeCashbox(id) {
     if (!id) {
-      console.warn("❗ [cashboxStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] id no está definido");
+      }
       throw new Error("ID de caja no está definido");
     }
 
@@ -111,14 +125,18 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       await apiClient.patch(`/cashboxes/${id}`, { isClosed: true, closedAt: new Date().toISOString() });
       await get().fetchCashboxes();
     } catch (error: unknown) {
-      console.error("🔴 [cashboxStore] Error al cerrar caja:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al cerrar caja:", error);
+      }
       throw error;
     }
   },
 
   async fetchMovements(cashboxId) {
     if (!cashboxId) {
-      console.error("🔴 [cashboxStore] cashboxId inválido");
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] cashboxId inválido");
+      }
       set({ error: "ID de caja inválido", isLoading: false });
       return;
     }
@@ -133,7 +151,9 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
         isLoading: false,
       }));
     } catch (error: unknown) {
-      console.error("🔴 [cashboxStore] Error al obtener movimientos:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al obtener movimientos:", error);
+      }
       const errorMessage = error instanceof Error ? error.message : "Error al cargar movimientos";
       set({ error: errorMessage, isLoading: false });
     }
@@ -141,12 +161,16 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
 
   async createMovement(cashboxId, payload) {
     if (!cashboxId) {
-      console.warn("❗ [cashboxStore] cashboxId no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] cashboxId no está definido");
+      }
       throw new Error("ID de caja no está definido");
     }
 
     if (!payload) {
-      console.warn("❗ [cashboxStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -188,24 +212,32 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
         await get().fetchCashboxes();
       }
     } catch (error: unknown) {
-      console.error("🔴 [cashboxStore] Error al crear movimiento:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al crear movimiento:", error);
+      }
       throw error;
     }
   },
 
   async updateMovement(cashboxId, id, payload) {
     if (!cashboxId) {
-      console.warn("❗ [cashboxStore] cashboxId no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] cashboxId no está definido");
+      }
       throw new Error("ID de caja no está definido");
     }
 
     if (!id) {
-      console.warn("❗ [cashboxStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] id no está definido");
+      }
       throw new Error("ID de movimiento no está definido");
     }
 
     if (!payload) {
-      console.warn("❗ [cashboxStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -230,19 +262,25 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       await apiClient.put(`/cash-movements/${id}`, movementPayload);
       await get().fetchMovements(cashboxId);
     } catch (error: unknown) {
-      console.error("🔴 [cashboxStore] Error al actualizar movimiento:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al actualizar movimiento:", error);
+      }
       throw error;
     }
   },
 
   async deleteMovement(cashboxId, id) {
     if (!cashboxId) {
-      console.warn("❗ [cashboxStore] cashboxId no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] cashboxId no está definido");
+      }
       throw new Error("ID de caja no está definido");
     }
 
     if (!id) {
-      console.warn("❗ [cashboxStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] id no está definido");
+      }
       throw new Error("ID de movimiento no está definido");
     }
 
@@ -250,7 +288,9 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       await apiClient.delete(`/cash-movements/${id}`);
       await get().fetchMovements(cashboxId);
     } catch (error: unknown) {
-      console.error("🔴 [cashboxStore] Error al eliminar movimiento:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al eliminar movimiento:", error);
+      }
       throw error;
     }
   },
