@@ -63,4 +63,14 @@ export const expenseApi = {
     }
     return apiClient.delete(`/expenses/${id}`);
   },
+  validate: (id: string, state: "validated" | "observed" | "annulled", observations?: string) => {
+    if (!id) {
+      console.warn("❗ [expenseApi.validate] id no está definido");
+      throw new Error("ID de gasto no está definido");
+    }
+    return apiClient.patch(`/expenses/${id}/validate`, {
+      state,
+      observations,
+    });
+  },
 };
