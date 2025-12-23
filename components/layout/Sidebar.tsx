@@ -211,21 +211,26 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
       return { ...item, hasPermission };
     });
     
-    console.log("🔵 [SIDEBAR] Total items visibles:", filtered.length, "de", ALL_NAV_ITEMS.length);
-    console.log("🔵 [SIDEBAR] Items visibles:", filtered.map(i => i.label));
-    console.log("🔵 [SIDEBAR] ========================================");
+    // Logging solo en desarrollo
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔵 [SIDEBAR] Total items visibles:", filtered.length, "de", ALL_NAV_ITEMS.length);
+      console.log("🔵 [SIDEBAR] Items visibles:", filtered.map(i => i.label));
+      console.log("🔵 [SIDEBAR] ========================================");
+    }
     
     // Fallback defensivo: asegurar que al menos Dashboard esté visible
     if (filtered.length === 0) {
       const dashboardItem = ALL_NAV_ITEMS.find(item => item.href === "/dashboard");
       if (dashboardItem) {
-        console.log("🔵 [SIDEBAR] ⚠️ Fallback: agregando Dashboard como último recurso");
+        if (process.env.NODE_ENV === "development") {
+          console.log("🔵 [SIDEBAR] ⚠️ Fallback: agregando Dashboard como último recurso");
+        }
         return [dashboardItem];
       }
     }
     
     return filtered;
-  }, [user, canWorks, canSuppliers, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
+  }, [user, canWorks, canSuppliers, canExpenses, canContracts, canIncomes, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
   // Memoizar agrupación por sección - antes del early return
   const itemsBySection = useMemo(() => {

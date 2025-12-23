@@ -12,7 +12,6 @@ import { parseBackendError } from "@/lib/parse-backend-error";
 import { useToast } from "@/components/ui/Toast";
 import { Edit, Trash2, Eye, Archive, DollarSign, Lock } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { UserRole } from "@/lib/normalizeUser";
 import { cn } from "@/lib/utils";
 
 interface Work {
@@ -68,7 +67,7 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   const [isClosing, setIsClosing] = useState(false);
   const toast = useToast();
   const user = useAuthStore.getState().user;
-  const isDirection = user?.role?.name === UserRole.DIRECTION;
+  const isDirection = user?.role?.name === "direction" || user?.role?.name === "administration";
 
   const getWorkName = (work: Work) => {
     return work.nombre || work.name || work.title || "Sin nombre";

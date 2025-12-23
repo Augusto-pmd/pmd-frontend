@@ -429,7 +429,7 @@ function ContractDetailContent() {
                         : "Info"}
                     </Badge>
                     {!alert.read && (
-                      <Badge variant="info" style={{ fontSize: "10px" }}>
+                      <Badge variant="info" className="text-[10px]">
                         Nuevo
                       </Badge>
                     )}

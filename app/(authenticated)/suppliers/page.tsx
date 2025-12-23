@@ -128,7 +128,7 @@ function SuppliersContent() {
               >
                 {filterLabels[f]}
                 {filterCounts[f] > 0 && (
-                  <Badge variant={filter === f ? "default" : "info"} style={{ fontSize: "11px", padding: "2px 6px" }}>
+                  <Badge variant={filter === f ? "default" : "info"} className="text-[11px] px-[6px] py-[2px]">
                     {filterCounts[f]}
                   </Badge>
                 )}

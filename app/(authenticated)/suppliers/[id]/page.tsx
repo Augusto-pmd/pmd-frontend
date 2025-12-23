@@ -34,10 +34,6 @@ function SupplierDetailContent() {
   const canApproveReject = user?.role?.name === "ADMINISTRATION" || isDirection;
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
-  
-  const isProvisional = getSupplierStatus().toLowerCase() === "provisional" || 
-                        getSupplierStatus().toLowerCase() === "pending" || 
-                        getSupplierStatus().toLowerCase() === "pendiente";
 
   useEffect(() => {
     if (id) {
@@ -88,6 +84,10 @@ function SupplierDetailContent() {
   const getSupplierStatus = () => {
     return supplier.estado || supplier.status || "pendiente";
   };
+
+  const isProvisional = getSupplierStatus().toLowerCase() === "provisional" || 
+                        getSupplierStatus().toLowerCase() === "pending" || 
+                        getSupplierStatus().toLowerCase() === "pendiente";
 
   const getStatusVariant = (status: string) => {
     const statusLower = status.toLowerCase();
@@ -443,7 +443,7 @@ function SupplierDetailContent() {
                           : "Info"}
                       </Badge>
                       {!alert.read && (
-                        <Badge variant="info" style={{ fontSize: "10px" }}>
+                        <Badge variant="info" className="text-[10px]">
                           Nuevo
                         </Badge>
                       )}

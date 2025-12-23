@@ -89,7 +89,7 @@ function ExpensesContent() {
       if (hasContract && (validateState === "observed" || validateState === "annulled")) {
         toast.success(
           `${validateState === "observed" ? "Gasto observado" : "Gasto anulado"}. El saldo del contrato se ha revertido automáticamente.`,
-          { duration: 5000 }
+          5000
         );
       } else {
         toast.success(
@@ -159,7 +159,7 @@ function ExpensesContent() {
           errorMessage.toLowerCase().includes("vencida")) {
         toast.error(
           "No se puede crear el gasto: El proveedor está bloqueado debido a ART vencida. Por favor, contacta a Dirección para desbloquear el proveedor.",
-          { duration: 6000 }
+          6000
         );
       } 
       // Verificar si el error es por obra cerrada
@@ -169,7 +169,7 @@ function ExpensesContent() {
                errorMessage.toLowerCase().includes("finalizada")) {
         toast.error(
           "No se puede crear el gasto: La obra está cerrada. Solo Dirección puede crear gastos en obras cerradas. Contacta a Dirección para más información.",
-          { duration: 6000 }
+          6000
         );
       } else {
         toast.error(errorMessage);

@@ -391,9 +391,11 @@ function CashboxDetailContent() {
                   <div style={{ font: "var(--font-section-title)", color: getDifferenceColor(differenceArs) }}>
                     {formatCurrency(differenceArs)}
                   </div>
-                  <Badge variant={getDifferenceBadgeVariant(differenceArs)} style={{ marginTop: "var(--space-xs)" }}>
-                    {differenceArs === 0 ? "Sin diferencia" : differenceArs > 0 ? "Sobrante" : "Faltante"}
-                  </Badge>
+                  <div style={{ marginTop: "var(--space-xs)" }}>
+                    <Badge variant={getDifferenceBadgeVariant(differenceArs)}>
+                      {differenceArs === 0 ? "Sin diferencia" : differenceArs > 0 ? "Sobrante" : "Faltante"}
+                    </Badge>
+                  </div>
                 </CardContent>
               </Card>
               {differenceUsd !== 0 && (
@@ -405,7 +407,7 @@ function CashboxDetailContent() {
                     <div style={{ font: "var(--font-section-title)", color: getDifferenceColor(differenceUsd) }}>
                       {formatCurrency(differenceUsd)}
                     </div>
-                    <Badge variant={getDifferenceBadgeVariant(differenceUsd)} style={{ marginTop: "var(--space-xs)" }}>
+                    <Badge variant={getDifferenceBadgeVariant(differenceUsd)} className="mt-[var(--space-xs)]">
                       {differenceUsd === 0 ? "Sin diferencia" : differenceUsd > 0 ? "Sobrante" : "Faltante"}
                     </Badge>
                   </CardContent>
@@ -461,7 +463,7 @@ function CashboxDetailContent() {
                           : "Info"}
                       </Badge>
                       {!alert.read && (
-                        <Badge variant="info" style={{ fontSize: "10px" }}>
+                        <Badge variant="info" className="text-[10px]">
                           Nuevo
                         </Badge>
                       )}

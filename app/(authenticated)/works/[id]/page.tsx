@@ -17,7 +17,6 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Edit, Archive, Trash2, UserPlus, Building2, DollarSign, TrendingUp, TrendingDown, Lock } from "lucide-react";
 import { parseBackendError } from "@/lib/parse-backend-error";
 import { useAuthStore } from "@/store/authStore";
-import { UserRole } from "@/lib/normalizeUser";
 
 function WorkDetailContent() {
   const params = useParams();
@@ -32,7 +31,7 @@ function WorkDetailContent() {
   const [isClosing, setIsClosing] = useState(false);
   const toast = useToast();
   const user = useAuthStore.getState().user;
-  const isDirection = user?.role?.name === UserRole.DIRECTION;
+  const isDirection = user?.role?.name === "direction" || user?.role?.name === "administration";
 
   if (!id) return null;
 

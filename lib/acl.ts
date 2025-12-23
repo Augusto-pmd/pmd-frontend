@@ -171,22 +171,24 @@ export function useCan(permission: Permission): boolean {
   const lowerPermissions = permissions.map(p => String(p).toLowerCase());
   const hasPermission = lowerPermissions.includes(lowerPermission);
   
-  // Logging para debugging (mantener logs existentes)
-  if (!hasPermission && permissions.length > 0) {
-    console.log("[ACL] ❌ No match found for:", permission);
-    console.log("[ACL] Normalized permission:", lowerPermission);
-    console.log("[ACL] Available normalized permissions:", lowerPermissions.slice(0, 10));
-    
-    // Verificar si hay permisos similares
-    const similarPermissions = permissions.filter(p => 
-      String(p).toLowerCase().includes(permission.split('.')[0].toLowerCase())
-    );
-    if (similarPermissions.length > 0) {
-      console.log("[ACL] Similar permissions found:", similarPermissions);
+  // Logging para debugging (solo en desarrollo)
+  if (process.env.NODE_ENV === "development") {
+    if (!hasPermission && permissions.length > 0) {
+      console.log("[ACL] ❌ No match found for:", permission);
+      console.log("[ACL] Normalized permission:", lowerPermission);
+      console.log("[ACL] Available normalized permissions:", lowerPermissions.slice(0, 10));
+      
+      // Verificar si hay permisos similares
+      const similarPermissions = permissions.filter(p => 
+        String(p).toLowerCase().includes(permission.split('.')[0].toLowerCase())
+      );
+      if (similarPermissions.length > 0) {
+        console.log("[ACL] Similar permissions found:", similarPermissions);
+      }
     }
+    
+    console.log(`[ACL] useCan("${permission}"): ${hasPermission ? "✅ TRUE" : "❌ FALSE"}`);
   }
-  
-  console.log(`[ACL] useCan("${permission}"): ${hasPermission ? "✅ TRUE" : "❌ FALSE"}`);
   
   return hasPermission;
 }

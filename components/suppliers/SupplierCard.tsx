@@ -42,7 +42,6 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   
   // Verificar permisos para aprobar/rechazar
   const canApproveReject = user?.role?.name === "ADMINISTRATION" || user?.role?.name === "DIRECTION";
-  const isProvisional = getSupplierStatus().toLowerCase() === "provisional" || getSupplierStatus().toLowerCase() === "pending" || getSupplierStatus().toLowerCase() === "pendiente";
 
   const getSupplierName = () => {
     return supplier.nombre || supplier.name || "Sin nombre";
@@ -59,6 +58,8 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   const getSupplierStatus = () => {
     return supplier.estado || supplier.status || "pendiente";
   };
+
+  const isProvisional = getSupplierStatus().toLowerCase() === "provisional" || getSupplierStatus().toLowerCase() === "pending" || getSupplierStatus().toLowerCase() === "pendiente";
 
   const getStatusVariant = (status: string) => {
     const statusLower = status.toLowerCase();
