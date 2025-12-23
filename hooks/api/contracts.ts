@@ -54,7 +54,8 @@ export const contractApi = {
       console.warn("❗ [contractApi.update] id no está definido");
       throw new Error("ID de contrato no está definido");
     }
-    return apiClient.put(`/contracts/${id}`, data);
+    // Usar PATCH en lugar de PUT para actualizaciones parciales (el backend usa @Patch)
+    return apiClient.patch(`/contracts/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {

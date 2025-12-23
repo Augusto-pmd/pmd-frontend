@@ -2,16 +2,22 @@
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useContracts, contractApi } from "@/hooks/api/contracts";
+import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useSWRConfig } from "swr";
+import { useToast } from "@/components/ui/Toast";
 
 function ContractsContent() {
+  const router = useRouter();
   const { contracts, isLoading, error, mutate } = useContracts();
   const { mutate: globalMutate } = useSWRConfig();
+  const user = useAuthStore.getState().user;
+  const toast = useToast();
   const [filter, setFilter] = useState<"all" | "active" | "expired" | "pending">("all");
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
@@ -112,28 +118,44 @@ function ContractsContent() {
                         <td className="px-4 py-3 text-sm text-gray-900">
                           ${contract.value?.toFixed(2) || "0.00"}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <Badge
-                            variant={
-                              contract.status === "active"
-                                ? "success"
-                                : contract.status === "expired"
-                                ? "error"
-                                : "warning"
-                            }
-                          >
-                            {contract.status}
-                          </Badge>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex flex-wrap gap-2">
+                            {contract.is_blocked && (
+                              <Badge variant="error">Bloqueado</Badge>
+                            )}
+                            {contract.status && (
+                              <Badge
+                                variant={
+                                  contract.status === "active"
+                                    ? "success"
+                                    : contract.status === "expired"
+                                    ? "error"
+                                    : "warning"
+                                }
+                              >
+                                {contract.status}
+                              </Badge>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDelete(contract.id)}
-                            disabled={deleteLoading === contract.id}
-                          >
-                            {deleteLoading === contract.id ? "Deleting..." : "Delete"}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/contracts/${contract.id}`)}
+                            >
+                              Ver
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDelete(contract.id)}
+                              disabled={deleteLoading === contract.id}
+                            >
+                              {deleteLoading === contract.id ? "Eliminando..." : "Eliminar"}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
