@@ -7,6 +7,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { SuppliersList } from "@/components/suppliers/SuppliersList";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { SupplierForm } from "@/components/forms/SupplierForm";
 import { useToast } from "@/components/ui/Toast";
@@ -16,7 +17,27 @@ function SuppliersContent() {
   const { suppliers, isLoading, error, mutate } = useSuppliers();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filter, setFilter] = useState<"all" | "provisional" | "approved" | "blocked" | "rejected">("all");
   const toast = useToast();
+
+  // Filtrar proveedores según el filtro seleccionado
+  const filteredSuppliers = suppliers?.filter((supplier: any) => {
+    if (filter === "all") return true;
+    const status = (supplier.estado || supplier.status || "pendiente").toLowerCase();
+    if (filter === "provisional") {
+      return status === "provisional" || status === "pending" || status === "pendiente";
+    }
+    if (filter === "approved") {
+      return status === "approved" || status === "active";
+    }
+    if (filter === "blocked") {
+      return status === "blocked" || status === "bloqueado";
+    }
+    if (filter === "rejected") {
+      return status === "rejected" || status === "inactive";
+    }
+    return true;
+  }) || [];
 
   const handleCreate = async (data: any) => {
     setIsSubmitting(true);
@@ -66,7 +87,57 @@ function SuppliersContent() {
           </div>
         </div>
 
-        <SuppliersList suppliers={suppliers || []} onRefresh={mutate} />
+        {/* Filtros */}
+        <div className="mb-6 flex gap-2 flex-wrap">
+          {(["all", "provisional", "approved", "blocked", "rejected"] as const).map((f) => {
+            const filterLabels: Record<typeof f, string> = {
+              all: "Todos",
+              provisional: "Provisionales",
+              approved: "Aprobados",
+              blocked: "Bloqueados",
+              rejected: "Rechazados",
+            };
+            const filterCounts: Record<typeof f, number> = {
+              all: suppliers?.length || 0,
+              provisional: suppliers?.filter((s: any) => {
+                const status = (s.estado || s.status || "pendiente").toLowerCase();
+                return status === "provisional" || status === "pending" || status === "pendiente";
+              }).length || 0,
+              approved: suppliers?.filter((s: any) => {
+                const status = (s.estado || s.status || "pendiente").toLowerCase();
+                return status === "approved" || status === "active";
+              }).length || 0,
+              blocked: suppliers?.filter((s: any) => {
+                const status = (s.estado || s.status || "pendiente").toLowerCase();
+                return status === "blocked" || status === "bloqueado";
+              }).length || 0,
+              rejected: suppliers?.filter((s: any) => {
+                const status = (s.estado || s.status || "pendiente").toLowerCase();
+                return status === "rejected" || status === "inactive";
+              }).length || 0,
+            };
+            return (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors capitalize flex items-center gap-2 ${
+                  filter === f
+                    ? "bg-pmd-darkBlue text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {filterLabels[f]}
+                {filterCounts[f] > 0 && (
+                  <Badge variant={filter === f ? "default" : "info"} style={{ fontSize: "11px", padding: "2px 6px" }}>
+                    {filterCounts[f]}
+                  </Badge>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <SuppliersList suppliers={filteredSuppliers} onRefresh={mutate} />
 
         <Modal
           isOpen={isCreateModalOpen}

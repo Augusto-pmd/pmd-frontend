@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { SupplierForm } from "@/components/forms/SupplierForm";
 import { supplierApi } from "@/hooks/api/suppliers";
+import { useAuthStore } from "@/store/authStore";
 import { useToast } from "@/components/ui/Toast";
-import { Edit, Trash2, Eye } from "lucide-react";
+import { Edit, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
 
 interface Supplier {
   id: string;
@@ -31,10 +32,17 @@ interface SupplierCardProps {
 
 export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   const router = useRouter();
+  const user = useAuthStore.getState().user;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const toast = useToast();
+  
+  // Verificar permisos para aprobar/rechazar
+  const canApproveReject = user?.role?.name === "ADMINISTRATION" || user?.role?.name === "DIRECTION";
+  const isProvisional = getSupplierStatus().toLowerCase() === "provisional" || getSupplierStatus().toLowerCase() === "pending" || getSupplierStatus().toLowerCase() === "pendiente";
 
   const getSupplierName = () => {
     return supplier.nombre || supplier.name || "Sin nombre";
@@ -57,10 +65,13 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
     if (statusLower === "aprobado" || statusLower === "approved" || statusLower === "active") {
       return "success";
     }
-    if (statusLower === "pendiente" || statusLower === "pending") {
+    if (statusLower === "pendiente" || statusLower === "pending" || statusLower === "provisional") {
       return "warning";
     }
     if (statusLower === "rechazado" || statusLower === "rejected" || statusLower === "inactive") {
+      return "error";
+    }
+    if (statusLower === "bloqueado" || statusLower === "blocked") {
       return "error";
     }
     return "default";
@@ -70,9 +81,10 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
     const statusLower = status.toLowerCase();
     if (statusLower === "approved") return "Aprobado";
     if (statusLower === "active") return "Aprobado";
-    if (statusLower === "pending") return "Pendiente";
+    if (statusLower === "pending" || statusLower === "provisional") return "Pendiente";
     if (statusLower === "rejected") return "Rechazado";
     if (statusLower === "inactive") return "Rechazado";
+    if (statusLower === "blocked" || statusLower === "bloqueado") return "Bloqueado";
     return status;
   };
 
@@ -106,6 +118,42 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
     }
   };
 
+  const handleApprove = async () => {
+    if (!confirm(`¿Estás seguro de aprobar el proveedor "${getSupplierName()}"?`)) {
+      return;
+    }
+    
+    setIsApproving(true);
+    try {
+      await supplierApi.approve(supplier.id);
+      await onRefresh?.();
+      toast.success("Proveedor aprobado correctamente");
+    } catch (err: any) {
+      console.error("Error al aprobar proveedor:", err);
+      toast.error(err.message || "Error al aprobar el proveedor");
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!confirm(`¿Estás seguro de rechazar el proveedor "${getSupplierName()}"? Se enviará una alerta al operador que lo creó.`)) {
+      return;
+    }
+    
+    setIsRejecting(true);
+    try {
+      await supplierApi.reject(supplier.id);
+      await onRefresh?.();
+      toast.success("Proveedor rechazado correctamente. Se ha enviado una alerta al operador.");
+    } catch (err: any) {
+      console.error("Error al rechazar proveedor:", err);
+      toast.error(err.message || "Error al rechazar el proveedor");
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
   return (
     <>
       <Card className="border-l-4 border-[#162F7F]/40 hover:bg-white/15 transition-all">
@@ -134,40 +182,74 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Estado:</span>
-                <Badge variant={getStatusVariant(getSupplierStatus())}>
-                  {getStatusLabel(getSupplierStatus())}
-                </Badge>
+                <div className="flex gap-2">
+                  {(getSupplierStatus().toLowerCase() === "blocked" || getSupplierStatus().toLowerCase() === "bloqueado") && (
+                    <Badge variant="error">Bloqueado</Badge>
+                  )}
+                  <Badge variant={getStatusVariant(getSupplierStatus())}>
+                    {getStatusLabel(getSupplierStatus())}
+                  </Badge>
+                </div>
               </div>
             </div>
 
-            <div className="pt-2 flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 flex items-center justify-center gap-1"
-                onClick={() => router.push(`/suppliers/${supplier.id}`)}
-              >
-                <Eye className="h-4 w-4" />
-                Ver
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 flex items-center justify-center gap-1"
-                onClick={() => setIsEditModalOpen(true)}
-              >
-                <Edit className="h-4 w-4" />
-                Editar
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-                Eliminar
-              </Button>
+            <div className="pt-2 space-y-2">
+              {/* Botones de aprobación/rechazo para proveedores provisionales */}
+              {canApproveReject && isProvisional && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="flex-1 flex items-center justify-center gap-1"
+                    onClick={handleApprove}
+                    disabled={isApproving || isRejecting}
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    {isApproving ? "Aprobando..." : "Aprobar"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                    onClick={handleReject}
+                    disabled={isApproving || isRejecting}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    {isRejecting ? "Rechazando..." : "Rechazar"}
+                  </Button>
+                </div>
+              )}
+              
+              {/* Botones de acción generales */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-1"
+                  onClick={() => router.push(`/suppliers/${supplier.id}`)}
+                >
+                  <Eye className="h-4 w-4" />
+                  Ver
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-1"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  <Edit className="h-4 w-4" />
+                  Editar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

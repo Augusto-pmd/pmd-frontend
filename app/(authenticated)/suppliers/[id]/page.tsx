@@ -1,24 +1,49 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useSupplier } from "@/hooks/api/suppliers";
+import { useSupplier, supplierApi } from "@/hooks/api/suppliers";
+import { useAlertsStore } from "@/store/alertsStore";
+import { useAuthStore } from "@/store/authStore";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { useToast } from "@/components/ui/Toast";
+import { AlertCircle, Unlock, FileText, CheckCircle, XCircle } from "lucide-react";
 
 function SupplierDetailContent() {
   const params = useParams();
   const router = useRouter();
+  const user = useAuthStore.getState().user;
+  const toast = useToast();
+  const { alerts, fetchAlerts } = useAlertsStore();
+  const [isUnblocking, setIsUnblocking] = useState(false);
 
   const id =
     typeof params?.id === "string"
       ? params.id
       : "";
 
-  const { supplier, isLoading, error } = useSupplier(id);
+  const { supplier, isLoading, error, mutate } = useSupplier(id);
+  
+  // Verificar permisos
+  const isDirection = user?.role?.name === "DIRECTION";
+  const canApproveReject = user?.role?.name === "ADMINISTRATION" || isDirection;
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  
+  const isProvisional = getSupplierStatus().toLowerCase() === "provisional" || 
+                        getSupplierStatus().toLowerCase() === "pending" || 
+                        getSupplierStatus().toLowerCase() === "pendiente";
+
+  useEffect(() => {
+    if (id) {
+      fetchAlerts();
+    }
+  }, [id, fetchAlerts]);
 
   if (!id) {
     return null;
@@ -69,10 +94,13 @@ function SupplierDetailContent() {
     if (statusLower === "aprobado" || statusLower === "approved" || statusLower === "active") {
       return "success";
     }
-    if (statusLower === "pendiente" || statusLower === "pending") {
+    if (statusLower === "pendiente" || statusLower === "pending" || statusLower === "provisional") {
       return "warning";
     }
     if (statusLower === "rechazado" || statusLower === "rejected" || statusLower === "inactive") {
+      return "error";
+    }
+    if (statusLower === "bloqueado" || statusLower === "blocked") {
       return "error";
     }
     return "default";
@@ -82,11 +110,83 @@ function SupplierDetailContent() {
     const statusLower = status.toLowerCase();
     if (statusLower === "approved") return "Aprobado";
     if (statusLower === "active") return "Aprobado";
-    if (statusLower === "pending") return "Pendiente";
+    if (statusLower === "pending" || statusLower === "provisional") return "Pendiente";
     if (statusLower === "rejected") return "Rechazado";
     if (statusLower === "inactive") return "Rechazado";
+    if (statusLower === "blocked" || statusLower === "bloqueado") return "Bloqueado";
     return status;
   };
+
+  // Función para desbloquear proveedor (solo Direction)
+  const handleUnblock = async () => {
+    if (!id || !isDirection) return;
+    
+    if (!confirm("¿Estás seguro de desbloquear este proveedor? Asegúrate de que el ART esté actualizado.")) {
+      return;
+    }
+
+    setIsUnblocking(true);
+    try {
+      await supplierApi.update(id, { status: "APPROVED" });
+      await mutate();
+      toast.success("Proveedor desbloqueado correctamente");
+    } catch (error: any) {
+      toast.error(error.message || "Error al desbloquear el proveedor");
+    } finally {
+      setIsUnblocking(false);
+    }
+  };
+
+  // Función para aprobar proveedor
+  const handleApprove = async () => {
+    if (!id || !canApproveReject) return;
+    
+    if (!confirm(`¿Estás seguro de aprobar el proveedor "${getSupplierName()}"?`)) {
+      return;
+    }
+
+    setIsApproving(true);
+    try {
+      await supplierApi.approve(id);
+      await mutate();
+      toast.success("Proveedor aprobado correctamente");
+    } catch (error: any) {
+      toast.error(error.message || "Error al aprobar el proveedor");
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  // Función para rechazar proveedor
+  const handleReject = async () => {
+    if (!id || !canApproveReject) return;
+    
+    if (!confirm(`¿Estás seguro de rechazar el proveedor "${getSupplierName()}"? Se enviará una alerta al operador que lo creó.`)) {
+      return;
+    }
+
+    setIsRejecting(true);
+    try {
+      await supplierApi.reject(id);
+      await mutate();
+      toast.success("Proveedor rechazado correctamente. Se ha enviado una alerta al operador.");
+    } catch (error: any) {
+      toast.error(error.message || "Error al rechazar el proveedor");
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  // Obtener información de ART del proveedor
+  const artDocument = supplier?.documents?.find(
+    (doc: any) => doc.document_type === "ART" || doc.document_type === "art"
+  );
+  const isBlocked = getSupplierStatus().toLowerCase() === "blocked" || getSupplierStatus().toLowerCase() === "bloqueado";
+  
+  // Filtrar alertas relacionadas con este proveedor
+  const supplierAlerts = alerts.filter(
+    (alert) => alert.supplier_id === id
+  );
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "No especificada";
@@ -122,21 +222,78 @@ function SupplierDetailContent() {
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Detalle del proveedor</h1>
             <p className="text-gray-600">Información completa del proveedor seleccionado</p>
           </div>
-          <Button variant="outline" onClick={() => router.push("/suppliers")}>
-            Volver a Proveedores
-          </Button>
+          <div className="flex gap-2">
+            {canApproveReject && isProvisional && (
+              <>
+                <Button
+                  variant="primary"
+                  onClick={handleApprove}
+                  disabled={isApproving || isRejecting}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  {isApproving ? "Aprobando..." : "Aprobar"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleReject}
+                  disabled={isApproving || isRejecting}
+                  style={{ borderColor: "rgba(255, 59, 48, 1)", color: "rgba(255, 59, 48, 1)" }}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  {isRejecting ? "Rechazando..." : "Rechazar"}
+                </Button>
+              </>
+            )}
+            <Button variant="outline" onClick={() => router.push("/suppliers")}>
+              Volver a Proveedores
+            </Button>
+          </div>
         </div>
 
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">{getSupplierName()}</CardTitle>
-              <Badge variant={getStatusVariant(getSupplierStatus())}>
-                {getStatusLabel(getSupplierStatus())}
-              </Badge>
+              <div className="flex gap-2">
+                {isBlocked && (
+                  <Badge variant="error">Bloqueado</Badge>
+                )}
+                <Badge variant={getStatusVariant(getSupplierStatus())}>
+                  {getStatusLabel(getSupplierStatus())}
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Mensaje informativo cuando el proveedor está bloqueado */}
+            {isBlocked && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-red-900 mb-1">
+                      Proveedor Bloqueado
+                    </p>
+                    <p className="text-sm text-red-700 mb-3">
+                      Este proveedor ha sido bloqueado automáticamente porque su ART está vencida. 
+                      No se pueden crear gastos con este proveedor hasta que sea desbloqueado.
+                    </p>
+                    {isDirection && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleUnblock}
+                        disabled={isUnblocking}
+                        style={{ borderColor: "rgba(255, 59, 48, 1)", color: "rgba(255, 59, 48, 1)" }}
+                      >
+                        <Unlock className="h-4 w-4 mr-2" />
+                        {isUnblocking ? "Desbloqueando..." : "Desbloquear Proveedor"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {renderField("Nombre", supplier.nombre || supplier.name)}
               {renderField("Email", supplier.email)}
@@ -148,6 +305,53 @@ function SupplierDetailContent() {
               {renderField("Fecha de creación", supplier.createdAt, formatDate)}
               {renderField("Última actualización", supplier.updatedAt, formatDate)}
             </div>
+
+            {/* Información de ART */}
+            {artDocument && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="h-5 w-5 text-gray-400" />
+                  <h3 className="text-lg font-semibold text-gray-900">Información de ART</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {renderField("Fecha de vencimiento", artDocument.expiration_date, formatDate)}
+                  {renderField("Estado del documento", artDocument.is_valid ? "Válido" : "Inválido")}
+                  {artDocument.expiration_date && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Estado de vencimiento</h3>
+                      {(() => {
+                        const expirationDate = new Date(artDocument.expiration_date);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        expirationDate.setHours(0, 0, 0, 0);
+                        const isExpired = expirationDate < today;
+                        const daysUntilExpiration = Math.ceil((expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        
+                        if (isExpired) {
+                          return (
+                            <Badge variant="error">
+                              Vencido hace {Math.abs(daysUntilExpiration)} día(s)
+                            </Badge>
+                          );
+                        } else if (daysUntilExpiration <= 30) {
+                          return (
+                            <Badge variant="warning">
+                              Vence en {daysUntilExpiration} día(s)
+                            </Badge>
+                          );
+                        } else {
+                          return (
+                            <Badge variant="success">
+                              Válido hasta {formatDate(artDocument.expiration_date)}
+                            </Badge>
+                          );
+                        }
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Mostrar campos adicionales si existen */}
             {Object.keys(supplier).some(
@@ -190,6 +394,73 @@ function SupplierDetailContent() {
             )}
           </CardContent>
         </Card>
+
+        {/* Alertas relacionadas */}
+        {supplierAlerts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl">Alertas</CardTitle>
+                <Badge variant="info">{supplierAlerts.length}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {supplierAlerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className={`p-4 rounded-lg border ${
+                      alert.severity === "critical"
+                        ? "bg-red-50 border-red-200"
+                        : alert.severity === "warning"
+                        ? "bg-yellow-50 border-yellow-200"
+                        : "bg-blue-50 border-blue-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle
+                        className={`h-4 w-4 ${
+                          alert.severity === "critical"
+                            ? "text-red-600"
+                            : alert.severity === "warning"
+                            ? "text-yellow-600"
+                            : "text-blue-600"
+                        }`}
+                      />
+                      <Badge
+                        variant={
+                          alert.severity === "critical"
+                            ? "error"
+                            : alert.severity === "warning"
+                            ? "warning"
+                            : "info"
+                        }
+                      >
+                        {alert.severity === "critical"
+                          ? "Crítico"
+                          : alert.severity === "warning"
+                          ? "Advertencia"
+                          : "Info"}
+                      </Badge>
+                      {!alert.read && (
+                        <Badge variant="info" style={{ fontSize: "10px" }}>
+                          Nuevo
+                        </Badge>
+                      )}
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-1">{alert.title}</h4>
+                    <p className="text-sm text-gray-700">{alert.message}</p>
+                    {alert.createdAt && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        {formatDate(alert.createdAt)}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
   );
 }
