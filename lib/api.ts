@@ -1,6 +1,6 @@
 "use client";
 
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
 
@@ -77,19 +77,19 @@ api.interceptors.response.use(
 
 // API helper functions
 export const apiClient = {
-  get: <T = any>(url: string, config?: any) => {
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig) => {
     return api.get<T>(url, config).then((res) => res.data);
   },
-  post: <T = any>(url: string, data?: any, config?: any) => {
+  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
     return api.post<T>(url, data, config).then((res) => res.data);
   },
-  put: <T = any>(url: string, data?: any, config?: any) => {
+  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
     return api.put<T>(url, data, config).then((res) => res.data);
   },
-  patch: <T = any>(url: string, data?: any, config?: any) => {
+  patch: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
     return api.patch<T>(url, data, config).then((res) => res.data);
   },
-  delete: <T = any>(url: string, config?: any) => {
+  delete: <T = unknown>(url: string, config?: AxiosRequestConfig) => {
     return api.delete<T>(url, config).then((res) => res.data);
   },
 };

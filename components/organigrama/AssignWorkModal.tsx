@@ -7,15 +7,8 @@ import { SelectField } from "@/components/ui/FormField";
 import { useWorks } from "@/hooks/api/works";
 // NOTE: employeeApi removed - backend does not have /api/employees endpoint
 import { useToast } from "@/components/ui/Toast";
-
-interface Employee {
-  id: string;
-  fullName?: string;
-  name?: string;
-  nombre?: string;
-  workId?: string;
-  [key: string]: any;
-}
+import { Employee } from "@/lib/types/employee";
+import { Work } from "@/lib/types/work";
 
 interface AssignWorkModalProps {
   isOpen: boolean;
@@ -45,9 +38,10 @@ export function AssignWorkModal({
       // NOTE: This functionality is not available - backend does not have /api/employees endpoint
       toast.error("Esta funcionalidad no está disponible. El módulo de RRHH no existe en el backend.");
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al asignar obra:", err);
-      toast.error(err.message || "Error al asignar la obra");
+      const errorMessage = err instanceof Error ? err.message : "Error al asignar la obra";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -59,8 +53,8 @@ export function AssignWorkModal({
 
   const workOptions = [
     { value: "", label: "Sin obra asignada" },
-    ...works.map((work: any) => {
-      const workName = work.name || work.title || work.nombre || work.id;
+    ...works.map((work: Work) => {
+      const workName = work.name || work.id;
       return { value: work.id, label: workName };
     }),
   ];

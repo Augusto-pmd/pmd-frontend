@@ -1,6 +1,6 @@
 // Common types used across the application
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   success: boolean;
@@ -17,6 +17,6 @@ export interface PaginatedResponse<T> {
 export interface ErrorResponse {
   message: string;
   status: number;
-  data?: any;
+  data?: unknown;
 }
 
