@@ -1,48 +1,18 @@
 import { create } from "zustand";
 import { apiClient } from "@/lib/api";
 import { accountingApi } from "@/hooks/api/accounting";
+import { 
+  Cashbox, 
+  CashMovement, 
+  CreateCashboxData, 
+  CreateCashMovementData, 
+  UpdateCashMovementData, 
+  CashMovementType, 
+  Currency 
+} from "@/lib/types/cashbox";
 
-export interface Cashbox {
-  id: string;
-  opening_date: string; // ISO8601 string
-  user_id: string; // UUID
-  createdAt?: string;
-  closedAt?: string;
-  isClosed?: boolean;
-  balance?: number; // Campo genérico para compatibilidad
-  opening_balance_ars?: number; // Saldo inicial en ARS (actualizado automáticamente al crear refuerzo)
-  opening_balance_usd?: number; // Saldo inicial en USD (actualizado automáticamente al crear refuerzo)
-  closing_balance_ars?: number;
-  closing_balance_usd?: number;
-  difference_ars?: number;
-  difference_usd?: number;
-  status?: string;
-}
-
-export interface CashMovement {
-  id: string;
-  cashboxId: string;
-  cashbox_id?: string; // Backend field
-  type: "ingreso" | "egreso" | "income" | "expense";
-  amount: number;
-  currency?: "ARS" | "USD"; // Backend field
-  category?: string;
-  date: string;
-  notes?: string;
-  description?: string;
-  expense_id?: string; // Backend field
-  income_id?: string; // Backend field
-  supplierId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  // Nuevos campos
-  typeDocument?: "factura" | "comprobante" | null;
-  invoiceNumber?: string; // obligatorio si factura
-  isIncome?: boolean; // true en refuerzo
-  responsible?: string; // responsable del refuerzo
-  workId?: string; // obra asociada (para facturas)
-  attachmentUrl?: string; // URL del archivo adjunto (comprobantes)
-}
+// Re-exportar tipos para compatibilidad con código existente
+export type { Cashbox, CashMovement };
 
 interface CashboxState {
   cashboxes: Cashbox[];
@@ -71,9 +41,10 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/cashboxes");
       set({ cashboxes: data?.data || data || [], isLoading: false });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("🔴 [cashboxStore] Error al obtener cajas:", error);
-      set({ error: error.message || "Error al cargar cajas", isLoading: false });
+      const errorMessage = error instanceof Error ? error.message : "Error al cargar cajas";
+      set({ error: errorMessage, isLoading: false });
     }
   },
 
@@ -93,15 +64,18 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO del backend
-      const cashboxPayload: any = {
+      const cashboxPayload: CreateCashboxData = {
         opening_date: payload.opening_date, // ISO8601 string
         user_id: payload.user_id, // UUID
+        ...(payload.status && { status: payload.status }),
+        ...(payload.opening_balance_ars !== undefined && { opening_balance_ars: payload.opening_balance_ars }),
+        ...(payload.opening_balance_usd !== undefined && { opening_balance_usd: payload.opening_balance_usd }),
       };
 
       const response = await apiClient.post("/cashboxes", cashboxPayload);
       await get().fetchCashboxes();
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("🔴 [cashboxStore] Error al crear caja:", error);
       throw error;
     }
@@ -121,7 +95,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     try {
       await apiClient.put(`/cashboxes/${id}`, payload);
       await get().fetchCashboxes();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("🔴 [cashboxStore] Error al actualizar caja:", error);
       throw error;
     }
@@ -136,7 +110,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     try {
       await apiClient.patch(`/cashboxes/${id}`, { isClosed: true, closedAt: new Date().toISOString() });
       await get().fetchCashboxes();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("🔴 [cashboxStore] Error al cerrar caja:", error);
       throw error;
     }
@@ -158,9 +132,10 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
         movements: { ...state.movements, [cashboxId]: movements },
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("🔴 [cashboxStore] Error al obtener movimientos:", error);
-      set({ error: error.message || "Error al cargar movimientos", isLoading: false });
+      const errorMessage = error instanceof Error ? error.message : "Error al cargar movimientos";
+      set({ error: errorMessage, isLoading: false });
     }
   },
 
@@ -177,18 +152,26 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
 
     try {
       // Construir payload exacto según CreateCashMovementDto del backend
-      const movementPayload: any = {
-        cashbox_id: cashboxId, // required, UUID
-        type: payload.type === "ingreso" || payload.type === "income" ? "income" : "expense", // required, CashMovementType enum
-        amount: payload.amount, // required, number
-        currency: payload.currency || "ARS", // required, "ARS" | "USD"
-        date: payload.date ? (typeof payload.date === "string" ? payload.date : new Date(payload.date).toISOString()) : new Date().toISOString(), // required, ISO8601
-      };
+      const movementType: CashMovementType = payload.type === "ingreso" || payload.type === "income" 
+        ? CashMovementType.INCOME 
+        : CashMovementType.EXPENSE;
+      
+      const movementCurrency: Currency = (payload.currency === "USD" ? Currency.USD : Currency.ARS);
+      
+      const movementDate: string = payload.date 
+        ? (typeof payload.date === "string" ? payload.date : new Date(payload.date).toISOString())
+        : new Date().toISOString();
 
-      // Campos opcionales
-      if (payload.description) movementPayload.description = payload.description.trim();
-      if (payload.expense_id) movementPayload.expense_id = payload.expense_id;
-      if (payload.income_id) movementPayload.income_id = payload.income_id;
+      const movementPayload: CreateCashMovementData = {
+        cashbox_id: cashboxId, // required, UUID
+        type: movementType, // required, CashMovementType enum
+        amount: payload.amount, // required, number
+        currency: movementCurrency, // required, Currency enum
+        date: movementDate, // required, ISO8601
+        ...(payload.description && { description: payload.description.trim() }),
+        ...(payload.expense_id && { expense_id: payload.expense_id }),
+        ...(payload.income_id && { income_id: payload.income_id }),
+      };
       
       const createdMovement = await apiClient.post("/cash-movements", movementPayload);
       
@@ -204,7 +187,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       if (isRefill) {
         await get().fetchCashboxes();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("🔴 [cashboxStore] Error al crear movimiento:", error);
       throw error;
     }
@@ -228,14 +211,15 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
 
     try {
       // Construir payload exacto según UpdateCashMovementDto del backend
-      const movementPayload: any = {};
+      const movementPayload: UpdateCashMovementData = {};
 
       // Campos opcionales para actualización
       if (payload.type !== undefined) {
-        movementPayload.type = payload.type === "ingreso" || payload.type === "income" ? "income" : "expense";
+        movementPayload.type = payload.type === "ingreso" || payload.type === "income" 
+          ? CashMovementType.INCOME 
+          : CashMovementType.EXPENSE;
       }
       if (payload.amount !== undefined) movementPayload.amount = payload.amount;
-      if (payload.currency !== undefined) movementPayload.currency = payload.currency;
       if (payload.date !== undefined) {
         movementPayload.date = typeof payload.date === "string" ? payload.date : new Date(payload.date).toISOString();
       }
@@ -245,7 +229,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       
       await apiClient.put(`/cash-movements/${id}`, movementPayload);
       await get().fetchMovements(cashboxId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("🔴 [cashboxStore] Error al actualizar movimiento:", error);
       throw error;
     }
@@ -265,7 +249,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     try {
       await apiClient.delete(`/cash-movements/${id}`);
       await get().fetchMovements(cashboxId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("🔴 [cashboxStore] Error al eliminar movimiento:", error);
       throw error;
     }
