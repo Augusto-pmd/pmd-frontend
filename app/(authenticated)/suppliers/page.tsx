@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/Modal";
 import { SupplierForm } from "@/components/forms/SupplierForm";
 import { useToast } from "@/components/ui/Toast";
 import { Plus } from "lucide-react";
+import { Supplier, CreateSupplierData } from "@/lib/types/supplier";
 
 function SuppliersContent() {
   const { suppliers, isLoading, error, mutate } = useSuppliers();
@@ -21,7 +22,7 @@ function SuppliersContent() {
   const toast = useToast();
 
   // Filtrar proveedores según el filtro seleccionado
-  const filteredSuppliers = suppliers?.filter((supplier: any) => {
+  const filteredSuppliers = suppliers?.filter((supplier: Supplier) => {
     if (filter === "all") return true;
     const status = (supplier.estado || supplier.status || "pendiente").toLowerCase();
     if (filter === "provisional") {
@@ -39,16 +40,17 @@ function SuppliersContent() {
     return true;
   }) || [];
 
-  const handleCreate = async (data: any) => {
+  const handleCreate = async (data: CreateSupplierData) => {
     setIsSubmitting(true);
     try {
       await supplierApi.create(data);
       await mutate();
       toast.success("Proveedor creado correctamente");
       setIsCreateModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al crear proveedor:", err);
-      toast.error(err.message || "Error al crear el proveedor");
+      const errorMessage = err instanceof Error ? err.message : "Error al crear el proveedor";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -99,19 +101,19 @@ function SuppliersContent() {
             };
             const filterCounts: Record<typeof f, number> = {
               all: suppliers?.length || 0,
-              provisional: suppliers?.filter((s: any) => {
+              provisional: suppliers?.filter((s: Supplier) => {
                 const status = (s.estado || s.status || "pendiente").toLowerCase();
                 return status === "provisional" || status === "pending" || status === "pendiente";
               }).length || 0,
-              approved: suppliers?.filter((s: any) => {
+              approved: suppliers?.filter((s: Supplier) => {
                 const status = (s.estado || s.status || "pendiente").toLowerCase();
                 return status === "approved" || status === "active";
               }).length || 0,
-              blocked: suppliers?.filter((s: any) => {
+              blocked: suppliers?.filter((s: Supplier) => {
                 const status = (s.estado || s.status || "pendiente").toLowerCase();
                 return status === "blocked" || status === "bloqueado";
               }).length || 0,
-              rejected: suppliers?.filter((s: any) => {
+              rejected: suppliers?.filter((s: Supplier) => {
                 const status = (s.estado || s.status || "pendiente").toLowerCase();
                 return status === "rejected" || status === "inactive";
               }).length || 0,

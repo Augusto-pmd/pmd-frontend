@@ -1,11 +1,7 @@
 "use client";
 
 import { SupplierCard } from "./SupplierCard";
-
-interface Supplier {
-  id: string;
-  [key: string]: any;
-}
+import { Supplier } from "@/lib/types/supplier";
 
 interface SuppliersListProps {
   suppliers: Supplier[];

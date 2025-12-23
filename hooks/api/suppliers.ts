@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
 
 export function useSuppliers() {
   const { token } = useAuthStore();
@@ -15,7 +16,7 @@ export function useSuppliers() {
   );
 
   return {
-    suppliers: data?.data || data || [],
+    suppliers: (data?.data || data || []) as Supplier[],
     error,
     isLoading,
     mutate,
@@ -38,7 +39,7 @@ export function useSupplier(id: string | null) {
   );
 
   return {
-    supplier: data?.data || data,
+    supplier: (data?.data || data) as Supplier | null,
     error,
     isLoading,
     mutate,
@@ -46,10 +47,10 @@ export function useSupplier(id: string | null) {
 }
 
 export const supplierApi = {
-  create: (data: any) => {
+  create: (data: CreateSupplierData) => {
     return apiClient.post("/suppliers", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: UpdateSupplierData) => {
     if (!id) {
       console.warn("❗ [supplierApi.update] id no está definido");
       throw new Error("ID de proveedor no está definido");

@@ -11,19 +11,7 @@ import { supplierApi } from "@/hooks/api/suppliers";
 import { useAuthStore } from "@/store/authStore";
 import { useToast } from "@/components/ui/Toast";
 import { Edit, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
-
-interface Supplier {
-  id: string;
-  name?: string;
-  nombre?: string;
-  email?: string;
-  contact?: string;
-  contacto?: string;
-  contactName?: string;
-  status?: string;
-  estado?: string;
-  [key: string]: any;
-}
+import { Supplier, UpdateSupplierData } from "@/lib/types/supplier";
 
 interface SupplierCardProps {
   supplier: Supplier;
@@ -89,16 +77,17 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
     return status;
   };
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: UpdateSupplierData) => {
     setIsSubmitting(true);
     try {
       await supplierApi.update(supplier.id, data);
       await onRefresh?.();
       toast.success("Proveedor actualizado correctamente");
       setIsEditModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al actualizar proveedor:", err);
-      toast.error(err.message || "Error al actualizar el proveedor");
+      const errorMessage = err instanceof Error ? err.message : "Error al actualizar el proveedor";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -111,9 +100,10 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       await onRefresh?.();
       toast.success("Proveedor eliminado correctamente");
       setIsDeleteModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al eliminar proveedor:", err);
-      toast.error(err.message || "Error al eliminar el proveedor");
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el proveedor";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -129,9 +119,10 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       await supplierApi.approve(supplier.id);
       await onRefresh?.();
       toast.success("Proveedor aprobado correctamente");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al aprobar proveedor:", err);
-      toast.error(err.message || "Error al aprobar el proveedor");
+      const errorMessage = err instanceof Error ? err.message : "Error al aprobar el proveedor";
+      toast.error(errorMessage);
     } finally {
       setIsApproving(false);
     }
@@ -147,9 +138,10 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       await supplierApi.reject(supplier.id);
       await onRefresh?.();
       toast.success("Proveedor rechazado correctamente. Se ha enviado una alerta al operador.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al rechazar proveedor:", err);
-      toast.error(err.message || "Error al rechazar el proveedor");
+      const errorMessage = err instanceof Error ? err.message : "Error al rechazar el proveedor";
+      toast.error(errorMessage);
     } finally {
       setIsRejecting(false);
     }

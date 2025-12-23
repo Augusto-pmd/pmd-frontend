@@ -7,10 +7,11 @@ import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { mapCreateSupplierPayload } from "@/lib/payload-mappers";
+import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
 
 interface SupplierFormProps {
-  initialData?: any;
-  onSubmit: (data: any) => Promise<void>;
+  initialData?: Supplier | null;
+  onSubmit: (data: CreateSupplierData | UpdateSupplierData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
