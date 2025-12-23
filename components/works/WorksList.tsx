@@ -8,8 +8,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { WorkForm } from "@/components/forms/WorkForm";
 import { workApi } from "@/hooks/api/works";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { useToast } from "@/components/ui/Toast";
-import { Edit, Trash2, Eye, Archive } from "lucide-react";
+import { Edit, Trash2, Eye, Archive, DollarSign, Lock } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { UserRole } from "@/lib/normalizeUser";
 import { cn } from "@/lib/utils";
 
 interface Work {
@@ -62,7 +65,10 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const toast = useToast();
+  const user = useAuthStore.getState().user;
+  const isDirection = user?.role?.name === UserRole.DIRECTION;
 
   const getWorkName = (work: Work) => {
     return work.nombre || work.name || work.title || "Sin nombre";
@@ -110,6 +116,41 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
     if (statusLower === "planned" || statusLower === "planificada") return "Planificada";
     if (statusLower === "pending") return "Pendiente";
     return status;
+  };
+
+  const isWorkClosed = (work: Work) => {
+    const status = getWorkStatus(work).toLowerCase();
+    return status === "finished" || status === "finalizada" || 
+           status === "administratively_closed" || status === "cerrada administrativamente" ||
+           status === "archived" || status === "archivada";
+  };
+
+  const handleClose = async () => {
+    if (!confirm(`¿Estás seguro de que quieres cerrar la obra "${getWorkName(work)}"? Una vez cerrada, no se podrán crear nuevos gastos (excepto para Dirección).`)) {
+      return;
+    }
+    setIsClosing(true);
+    try {
+      await workApi.close(work.id);
+      await onRefresh?.();
+      toast.success("Obra cerrada correctamente");
+    } catch (err: any) {
+      console.error("Error al cerrar obra:", err);
+      const errorMessage = parseBackendError(err);
+      toast.error(errorMessage);
+    } finally {
+      setIsClosing(false);
+    }
+  };
+
+  const formatCurrency = (amount: number | undefined, currency: string = "ARS") => {
+    if (amount === undefined || amount === null) return "$0.00";
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: currency === "USD" ? "USD" : "ARS",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
   };
 
   const handleUpdate = async (data: any) => {
@@ -181,9 +222,17 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Estado:</span>
-                <Badge variant={getStatusVariant(getWorkStatus(work))}>
-                  {getStatusLabel(getWorkStatus(work))}
-                </Badge>
+                <div className="flex gap-1">
+                  {isWorkClosed(work) && (
+                    <Badge variant="error" className="flex items-center gap-1">
+                      <Lock className="h-3 w-3" />
+                      Cerrada
+                    </Badge>
+                  )}
+                  <Badge variant={getStatusVariant(getWorkStatus(work))}>
+                    {getStatusLabel(getWorkStatus(work))}
+                  </Badge>
+                </div>
               </div>
 
               {getWorkClient(work) && (
@@ -203,22 +252,64 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
                   </span>
                 </div>
               )}
+
+              {/* Totales económicos */}
+              {(work.total_expenses !== undefined || work.total_incomes !== undefined) && (
+                <div className="pt-2 border-t border-gray-200 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Gastos:</span>
+                    <span className="text-xs font-semibold text-red-600">
+                      {formatCurrency(work.total_expenses || 0, work.currency)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Ingresos:</span>
+                    <span className="text-xs font-semibold text-green-600">
+                      {formatCurrency(work.total_incomes || 0, work.currency)}
+                    </span>
+                  </div>
+                  {((work.total_incomes || 0) - (work.total_expenses || 0)) !== 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Rentabilidad:</span>
+                      <span className={`text-xs font-bold ${
+                        ((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}>
+                        {formatCurrency((work.total_incomes || 0) - (work.total_expenses || 0), work.currency)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="pt-2 border-t border-gray-200 flex gap-2">
+            <div className="pt-2 border-t border-gray-200 flex gap-2 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 flex items-center justify-center gap-1"
+                className="flex-1 flex items-center justify-center gap-1 min-w-[80px]"
                 onClick={() => router.push(`/works/${work.id}`)}
               >
                 <Eye className="h-4 w-4" />
                 Ver
               </Button>
+              {isDirection && !isWorkClosed(work) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-1 min-w-[80px] text-orange-600 border-orange-300 hover:bg-orange-50"
+                  onClick={handleClose}
+                  disabled={isClosing}
+                >
+                  <Lock className="h-4 w-4" />
+                  {isClosing ? "Cerrando..." : "Cerrar"}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 flex items-center justify-center gap-1"
+                className="flex-1 flex items-center justify-center gap-1 min-w-[80px]"
                 onClick={() => setIsEditModalOpen(true)}
               >
                 <Edit className="h-4 w-4" />
@@ -227,7 +318,7 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
               <Button
                 variant="danger"
                 size="sm"
-                className="flex-1 flex items-center justify-center gap-1"
+                className="flex-1 flex items-center justify-center gap-1 min-w-[80px]"
                 onClick={() => setIsDeleteModalOpen(true)}
               >
                 <Archive className="h-4 w-4" />

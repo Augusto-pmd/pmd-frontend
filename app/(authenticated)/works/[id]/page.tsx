@@ -14,8 +14,10 @@ import { Modal } from "@/components/ui/Modal";
 import { WorkForm } from "@/components/forms/WorkForm";
 import { useToast } from "@/components/ui/Toast";
 import { BotonVolver } from "@/components/ui/BotonVolver";
-import { Edit, Archive, Trash2, UserPlus, Building2 } from "lucide-react";
+import { Edit, Archive, Trash2, UserPlus, Building2, DollarSign, TrendingUp, TrendingDown, Lock } from "lucide-react";
 import { parseBackendError } from "@/lib/parse-backend-error";
+import { useAuthStore } from "@/store/authStore";
+import { UserRole } from "@/lib/normalizeUser";
 
 function WorkDetailContent() {
   const params = useParams();
@@ -27,7 +29,10 @@ function WorkDetailContent() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const toast = useToast();
+  const user = useAuthStore.getState().user;
+  const isDirection = user?.role?.name === UserRole.DIRECTION;
 
   if (!id) return null;
 
@@ -75,6 +80,13 @@ function WorkDetailContent() {
     return work.estado || work.status || "pendiente";
   };
 
+  const isWorkClosed = () => {
+    const status = getWorkStatus().toLowerCase();
+    return status === "finished" || status === "finalizada" || 
+           status === "administratively_closed" || status === "cerrada administrativamente" ||
+           status === "archived" || status === "archivada";
+  };
+
   const getStatusVariant = (status: string) => {
     const statusLower = status.toLowerCase();
     if (statusLower === "completada" || statusLower === "completed") return "success";
@@ -104,11 +116,12 @@ function WorkDetailContent() {
     }
   };
 
-  const formatCurrency = (amount: number | undefined) => {
-    if (!amount) return "No especificado";
-    return new Intl.NumberFormat("es-ES", {
+  const formatCurrency = (amount: number | undefined, currency: string = work.currency || "ARS") => {
+    if (amount === undefined || amount === null) return "$0.00";
+    return new Intl.NumberFormat("es-AR", {
       style: "currency",
-      currency: "USD",
+      currency: currency === "USD" ? "USD" : "ARS",
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -167,6 +180,24 @@ function WorkDetailContent() {
     }
   };
 
+  const handleClose = async () => {
+    if (!confirm(`¿Estás seguro de que quieres cerrar la obra "${getWorkName()}"? Una vez cerrada, no se podrán crear nuevos gastos (excepto para Dirección).`)) {
+      return;
+    }
+    setIsClosing(true);
+    try {
+      await workApi.close(id);
+      await mutate();
+      toast.success("Obra cerrada correctamente");
+    } catch (err: any) {
+      console.error("Error al cerrar obra:", err);
+      const errorMessage = parseBackendError(err);
+      toast.error(errorMessage);
+    } finally {
+      setIsClosing(false);
+    }
+  };
+
   // Obtener personal asignado a esta obra
   const assignedEmployees = users?.filter((emp: any) => {
     const assignments = emp.assignments || [];
@@ -192,6 +223,17 @@ function WorkDetailContent() {
             <p className="text-gray-600">Información completa de la obra seleccionada</p>
           </div>
           <div className="flex gap-2">
+            {isDirection && !isWorkClosed() && (
+              <Button 
+                variant="outline" 
+                onClick={handleClose}
+                disabled={isClosing}
+                className="text-orange-600 border-orange-300 hover:bg-orange-50"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                {isClosing ? "Cerrando..." : "Cerrar Obra"}
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Editar
@@ -206,12 +248,41 @@ function WorkDetailContent() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">{getWorkName()}</CardTitle>
-              <Badge variant={getStatusVariant(getWorkStatus())}>
-                {getStatusLabel(getWorkStatus())}
-              </Badge>
+              <div className="flex gap-2">
+                {isWorkClosed() && (
+                  <Badge variant="error" className="flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Cerrada
+                  </Badge>
+                )}
+                <Badge variant={getStatusVariant(getWorkStatus())}>
+                  {getStatusLabel(getWorkStatus())}
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Banner para obras cerradas */}
+            {isWorkClosed() && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Lock className="h-5 w-5 text-orange-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-orange-900 mb-1">
+                      Obra Cerrada
+                    </p>
+                    <p className="text-sm text-orange-700 mb-2">
+                      Esta obra está cerrada. No se pueden crear nuevos gastos (excepto para Dirección).
+                    </p>
+                    {work.end_date && (
+                      <p className="text-xs text-orange-600">
+                        Fecha de cierre: {formatDate(work.end_date)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             {getWorkDescription() && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">Descripción</h3>
@@ -238,10 +309,12 @@ function WorkDetailContent() {
                 </div>
               ) : null}
 
-              {work.fechaFin || work.endDate ? (
+              {work.fechaFin || work.endDate || work.end_date ? (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Fecha de fin</h3>
-                  <p className="text-gray-900">{formatDate(work.fechaFin || work.endDate)}</p>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                    {isWorkClosed() ? "Fecha de cierre" : "Fecha de fin"}
+                  </h3>
+                  <p className="text-gray-900">{formatDate(work.fechaFin || work.endDate || work.end_date)}</p>
                 </div>
               ) : null}
 
@@ -468,7 +541,110 @@ function WorkDetailContent() {
           </CardContent>
         </Card>
 
-        {/* Dashboard por Obra (Placeholder) */}
+        {/* Resumen Económico */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Resumen Económico</CardTitle>
+            <p className="text-sm text-gray-500 mt-1">
+              Totales actualizados automáticamente al validar gastos e ingresos
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Presupuesto */}
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-5 w-5 text-blue-600" />
+                  <p className="text-sm font-medium text-gray-700">Presupuesto</p>
+                </div>
+                <p className="text-2xl font-bold text-blue-900">
+                  {formatCurrency(work.total_budget || work.presupuesto || work.budget, work.currency)}
+                </p>
+              </div>
+
+              {/* Total Gastos */}
+              <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingDown className="h-5 w-5 text-red-600" />
+                  <p className="text-sm font-medium text-gray-700">Total Gastos</p>
+                </div>
+                <p className="text-2xl font-bold text-red-900">
+                  {formatCurrency(work.total_expenses, work.currency)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Gastos validados</p>
+              </div>
+
+              {/* Total Ingresos */}
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <p className="text-sm font-medium text-gray-700">Total Ingresos</p>
+                </div>
+                <p className="text-2xl font-bold text-green-900">
+                  {formatCurrency(work.total_incomes, work.currency)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Ingresos validados</p>
+              </div>
+
+              {/* Rentabilidad */}
+              <div className={`p-4 rounded-lg border ${
+                ((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0
+                  ? "bg-green-50 border-green-200"
+                  : "bg-red-50 border-red-200"
+              }`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className={`h-5 w-5 ${
+                    ((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`} />
+                  <p className="text-sm font-medium text-gray-700">Rentabilidad</p>
+                </div>
+                <p className={`text-2xl font-bold ${
+                  ((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0
+                    ? "text-green-900"
+                    : "text-red-900"
+                }`}>
+                  {formatCurrency((work.total_incomes || 0) - (work.total_expenses || 0), work.currency)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0 ? "Ganancia" : "Pérdida"}
+                </p>
+              </div>
+            </div>
+
+            {/* Indicador de progreso económico */}
+            {work.total_budget && work.total_budget > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-700">Progreso Económico</p>
+                  <p className="text-sm text-gray-500">
+                    {((work.total_expenses || 0) / work.total_budget * 100).toFixed(1)}% del presupuesto utilizado
+                  </p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all ${
+                      ((work.total_expenses || 0) / work.total_budget) > 1
+                        ? "bg-red-600"
+                        : ((work.total_expenses || 0) / work.total_budget) > 0.8
+                        ? "bg-yellow-500"
+                        : "bg-green-500"
+                    }`}
+                    style={{
+                      width: `${Math.min(((work.total_expenses || 0) / work.total_budget) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Presupuesto restante: {formatCurrency(Math.max(0, work.total_budget - (work.total_expenses || 0)), work.currency)}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Dashboard por Obra */}
         <Card>
           <CardHeader>
             <CardTitle>Dashboard de la Obra</CardTitle>
@@ -476,18 +652,18 @@ function WorkDetailContent() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-gray-600">Presupuesto</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {formatCurrency(work.presupuesto || work.budget)}
-                </p>
-              </div>
-              <div className="p-4 bg-green-50 rounded-lg">
                 <p className="text-sm text-gray-600">Personal Asignado</p>
-                <p className="text-2xl font-bold text-green-700">{assignedEmployees.length}</p>
+                <p className="text-2xl font-bold text-blue-700">{assignedEmployees.length}</p>
               </div>
               <div className="p-4 bg-yellow-50 rounded-lg">
                 <p className="text-sm text-gray-600">Proveedores</p>
                 <p className="text-2xl font-bold text-yellow-700">{assignedSuppliers.length}</p>
+              </div>
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <p className="text-sm text-gray-600">Estado</p>
+                <Badge variant={getStatusVariant(getWorkStatus())} className="mt-2">
+                  {getStatusLabel(getWorkStatus())}
+                </Badge>
               </div>
             </div>
           </CardContent>
