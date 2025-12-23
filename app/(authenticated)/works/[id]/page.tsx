@@ -17,6 +17,9 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Edit, Archive, Trash2, UserPlus, Building2, DollarSign, TrendingUp, TrendingDown, Lock } from "lucide-react";
 import { parseBackendError } from "@/lib/parse-backend-error";
 import { useAuthStore } from "@/store/authStore";
+import { UpdateWorkData } from "@/lib/types/work";
+import { User } from "@/lib/types/user";
+import { Supplier } from "@/lib/types/supplier";
 
 function WorkDetailContent() {
   const params = useParams();
@@ -124,14 +127,14 @@ function WorkDetailContent() {
     }).format(amount);
   };
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: UpdateWorkData) => {
     setIsSubmitting(true);
     try {
       await workApi.update(id, data);
       await mutate();
       toast.success("Obra actualizada correctamente");
       setIsEditModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al actualizar obra:", err);
       const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
@@ -154,9 +157,10 @@ function WorkDetailContent() {
       setTimeout(() => {
         router.push("/works");
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al archivar obra:", err);
-      toast.error(err.message || "Error al archivar la obra");
+      const errorMessage = err instanceof Error ? err.message : "Error al archivar la obra";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -171,9 +175,10 @@ function WorkDetailContent() {
       setTimeout(() => {
         router.push("/works");
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al eliminar obra:", err);
-      toast.error(err.message || "Error al eliminar la obra");
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar la obra";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -188,7 +193,7 @@ function WorkDetailContent() {
       await workApi.close(id);
       await mutate();
       toast.success("Obra cerrada correctamente");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error al cerrar obra:", err);
       const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
@@ -198,15 +203,15 @@ function WorkDetailContent() {
   };
 
   // Obtener personal asignado a esta obra
-  const assignedEmployees = users?.filter((emp: any) => {
+  const assignedEmployees = (users as User[])?.filter((emp: User) => {
     const assignments = emp.assignments || [];
-    return assignments.some((assignment: any) => 
-      assignment.workId === id || assignment.obraId === id
+    return assignments.some((assignment) => 
+      assignment?.workId === id || assignment?.obraId === id
     );
   }) || [];
 
   // Obtener proveedores asignados (placeholder - ajustar según backend)
-  const assignedSuppliers = suppliers?.filter((sup: any) => {
+  const assignedSuppliers = (suppliers as Supplier[])?.filter((sup: Supplier) => {
     return sup.workId === id || sup.obraId === id;
   }) || [];
 
@@ -368,16 +373,15 @@ function WorkDetailContent() {
           <CardContent>
             {assignedEmployees.length > 0 ? (
               <div className="space-y-2">
-                {assignedEmployees.map((emp: any) => {
-                  const nombre = emp.nombre || emp.fullName || emp.name || "Sin nombre";
-                  const puesto = emp.puesto || emp.position || "";
+                {assignedEmployees.map((emp: User) => {
+                  const nombre = emp.fullName || emp.name || "Sin nombre";
                   return (
                     <div key={emp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">{nombre}</p>
-                        {puesto && <p className="text-sm text-gray-500">{puesto}</p>}
+                        {emp.email && <p className="text-sm text-gray-500">{emp.email}</p>}
                       </div>
-                      <Badge variant="info">{emp.area || emp.areaTrabajo || ""}</Badge>
+                      {emp.role && <Badge variant="info">{emp.role.name}</Badge>}
                     </div>
                   );
                 })}
@@ -406,16 +410,16 @@ function WorkDetailContent() {
           <CardContent>
             {assignedSuppliers.length > 0 ? (
               <div className="space-y-2">
-                {assignedSuppliers.map((sup: any) => {
-                  const nombre = sup.nombre || sup.name || "Sin nombre";
-                  const estado = sup.estado || sup.status || "";
+                {assignedSuppliers.map((sup: Supplier) => {
+                  const nombre = sup.name || sup.nombre || "Sin nombre";
+                  const estado = sup.status || sup.estado || "";
                   return (
                     <div key={sup.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">{nombre}</p>
                         {sup.email && <p className="text-sm text-gray-500">{sup.email}</p>}
                       </div>
-                      <Badge variant={estado === "aprobado" ? "success" : "warning"}>
+                      <Badge variant={estado === "approved" || estado === "aprobado" ? "success" : "warning"}>
                         {estado}
                       </Badge>
                     </div>
