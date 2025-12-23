@@ -83,6 +83,36 @@ function CashboxContent() {
     }
   };
 
+  // Obtener el rol del usuario para mostrar mensajes específicos
+  const getUserRole = (): string | null => {
+    if (!user) return null;
+    if (user.role?.name) return user.role.name.toUpperCase();
+    return null;
+  };
+
+  const isOperator = getUserRole() === "OPERATOR";
+  const isDirection = getUserRole() === "DIRECTION";
+  const isAdministration = getUserRole() === "ADMINISTRATION";
+  const isSupervisor = getUserRole() === "SUPERVISOR";
+
+  // Determinar el mensaje apropiado cuando no hay cajas
+  const getEmptyStateMessage = () => {
+    if (isOperator) {
+      return {
+        title: "No tienes cajas asignadas",
+        description: "Como operador, solo puedes ver las cajas que te han sido asignadas. Si necesitas una caja, contacta con un supervisor o administrador.",
+        showAction: false,
+      };
+    }
+    return {
+      title: "No hay cajas registradas",
+      description: "Crea tu primera caja para comenzar a gestionar el flujo de efectivo",
+      showAction: true,
+    };
+  };
+
+  const emptyStateMessage = getEmptyStateMessage();
+
   return (
     <div className="space-y-6">
         <div>
@@ -92,15 +122,18 @@ function CashboxContent() {
               <h1 className="text-2xl font-semibold text-gray-900 mb-2">Cajas</h1>
               <p className="text-gray-600">Gestión de flujo de efectivo y cajas del sistema PMD</p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => {
-                setEditingCashbox(null);
-                setShowForm(true);
-              }}
-            >
-              Abrir nueva caja
-            </Button>
+            {/* Solo mostrar botón de crear caja si el usuario tiene permisos (no Operator) */}
+            {!isOperator && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setEditingCashbox(null);
+                  setShowForm(true);
+                }}
+              >
+                Abrir nueva caja
+              </Button>
+            )}
           </div>
         </div>
 
@@ -130,12 +163,14 @@ function CashboxContent() {
               <Card>
                 <CardContent className="p-12">
                   <EmptyState
-                    title="No hay cajas registradas"
-                    description="Crea tu primera caja para comenzar a gestionar el flujo de efectivo"
+                    title={emptyStateMessage.title}
+                    description={emptyStateMessage.description}
                     action={
-                      <Button variant="primary" onClick={() => setShowForm(true)}>
-                        Crear primera caja
-                      </Button>
+                      emptyStateMessage.showAction ? (
+                        <Button variant="primary" onClick={() => setShowForm(true)}>
+                          Crear primera caja
+                        </Button>
+                      ) : undefined
                     }
                   />
                 </CardContent>

@@ -120,12 +120,20 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
       if (initialData?.id) {
         await updateMovement(cashboxId, initialData.id, payload);
         toast.success("Movimiento actualizado");
+        onSuccess();
       } else {
+        const isRefill = movementType === "ingreso";
         await createMovement(cashboxId, payload);
-        toast.success("Movimiento registrado");
+        
+        if (isRefill) {
+          toast.success("Refuerzo registrado. El saldo de la caja se ha actualizado automáticamente.");
+        } else {
+          toast.success("Movimiento registrado");
+        }
+        
+        // Pasar información sobre si fue un refuerzo al callback
+        onSuccess();
       }
-
-      onSuccess();
     } catch (error: any) {
       console.error("Error al guardar movimiento:", error);
       toast.error(error.message || "Error al guardar el movimiento");

@@ -9,7 +9,14 @@ export interface Cashbox {
   createdAt?: string;
   closedAt?: string;
   isClosed?: boolean;
-  balance?: number;
+  balance?: number; // Campo genérico para compatibilidad
+  opening_balance_ars?: number; // Saldo inicial en ARS (actualizado automáticamente al crear refuerzo)
+  opening_balance_usd?: number; // Saldo inicial en USD (actualizado automáticamente al crear refuerzo)
+  closing_balance_ars?: number;
+  closing_balance_usd?: number;
+  difference_ars?: number;
+  difference_usd?: number;
+  status?: string;
 }
 
 export interface CashMovement {
@@ -188,7 +195,15 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       // Note: Accounting entries should be created separately through the accounting module
       // El backend maneja la relación entre cash movements y accounting entries
       
+      // Refrescar movimientos
       await get().fetchMovements(cashboxId);
+      
+      // Si es un refuerzo (income), el backend actualiza automáticamente el saldo de apertura
+      // Refrescar los datos de la caja para obtener el saldo actualizado
+      const isRefill = movementPayload.type === "income";
+      if (isRefill) {
+        await get().fetchCashboxes();
+      }
     } catch (error: any) {
       console.error("🔴 [cashboxStore] Error al crear movimiento:", error);
       throw error;

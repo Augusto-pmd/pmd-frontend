@@ -16,6 +16,7 @@ import { Modal } from "@/components/ui/Modal";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { MovementForm } from "../components/MovementForm";
 import { useToast } from "@/components/ui/Toast";
+import { useAlertsStore } from "@/store/alertsStore";
 
 function CashboxDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -28,6 +29,7 @@ function CashboxDetailContent() {
   const { cashboxes, movements, isLoading, error, fetchCashboxes, fetchMovements, closeCashbox, deleteMovement } = useCashboxStore();
   const { suppliers } = useSuppliers();
   const { works } = useWorks();
+  const { alerts, fetchAlerts } = useAlertsStore();
   const user = useAuthStore.getState().user;
   const [showMovementForm, setShowMovementForm] = useState(false);
   const [editingMovement, setEditingMovement] = useState<CashMovement | null>(null);
@@ -44,8 +46,9 @@ function CashboxDetailContent() {
   useEffect(() => {
     if (cashboxId && organizationId) {
       fetchMovements(cashboxId);
+      fetchAlerts(); // Cargar alertas para mostrar las relacionadas con la caja
     }
-  }, [cashboxId, organizationId, fetchMovements]);
+  }, [cashboxId, organizationId, fetchMovements, fetchAlerts]);
 
   // Guard check after all hooks
   if (!cashboxId) {
@@ -109,7 +112,9 @@ function CashboxDetailContent() {
       }
     });
 
-    const saldoInicial = cashbox.balance || 0;
+    // Usar opening_balance_ars si está disponible, sino usar balance como fallback
+    // El backend actualiza opening_balance_ars automáticamente cuando se crea un refuerzo
+    const saldoInicial = cashbox.opening_balance_ars ?? cashbox.balance ?? 0;
     const saldoFinal = saldoInicial + totalIngresos - totalEgresos;
     const diferencia = saldoFinal;
 
@@ -129,6 +134,39 @@ function CashboxDetailContent() {
 
   const totals = calculateTotals();
   const balance = totals.saldoFinal;
+
+  // Obtener diferencias del backend (calculadas al cerrar la caja)
+  const differenceArs = cashbox.difference_ars ?? 0;
+  const differenceUsd = cashbox.difference_usd ?? 0;
+
+  // Función para determinar el color según la severidad de la diferencia
+  const getDifferenceColor = (difference: number): string => {
+    const absDifference = Math.abs(difference);
+    if (absDifference === 0) {
+      return "rgba(52, 199, 89, 1)"; // Verde si = 0
+    } else if (absDifference < 1000) {
+      return "rgba(255, 149, 0, 1)"; // Amarillo si < 1000
+    } else {
+      return "rgba(255, 59, 48, 1)"; // Rojo si >= 1000
+    }
+  };
+
+  // Función para determinar la variante del badge según la severidad
+  const getDifferenceBadgeVariant = (difference: number): "success" | "warning" | "error" => {
+    const absDifference = Math.abs(difference);
+    if (absDifference === 0) {
+      return "success";
+    } else if (absDifference < 1000) {
+      return "warning";
+    } else {
+      return "error";
+    }
+  };
+
+  // Filtrar alertas relacionadas con esta caja
+  const cashboxAlerts = alerts.filter(
+    (alert) => alert.cashbox_id === cashboxId && alert.type === "cashbox_difference"
+  );
 
   const handleCloseCashbox = async () => {
     setShowCloseModal(true);
@@ -344,9 +382,107 @@ function CashboxDetailContent() {
                   </div>
                 </CardContent>
               </Card>
+              {/* Diferencias calculadas por el backend */}
+              <Card>
+                <CardContent style={{ padding: "var(--space-lg)" }}>
+                  <div style={{ font: "var(--font-label)", color: "var(--apple-text-secondary)", marginBottom: "var(--space-xs)" }}>
+                    Diferencia ARS
+                  </div>
+                  <div style={{ font: "var(--font-section-title)", color: getDifferenceColor(differenceArs) }}>
+                    {formatCurrency(differenceArs)}
+                  </div>
+                  <Badge variant={getDifferenceBadgeVariant(differenceArs)} style={{ marginTop: "var(--space-xs)" }}>
+                    {differenceArs === 0 ? "Sin diferencia" : differenceArs > 0 ? "Sobrante" : "Faltante"}
+                  </Badge>
+                </CardContent>
+              </Card>
+              {differenceUsd !== 0 && (
+                <Card>
+                  <CardContent style={{ padding: "var(--space-lg)" }}>
+                    <div style={{ font: "var(--font-label)", color: "var(--apple-text-secondary)", marginBottom: "var(--space-xs)" }}>
+                      Diferencia USD
+                    </div>
+                    <div style={{ font: "var(--font-section-title)", color: getDifferenceColor(differenceUsd) }}>
+                      {formatCurrency(differenceUsd)}
+                    </div>
+                    <Badge variant={getDifferenceBadgeVariant(differenceUsd)} style={{ marginTop: "var(--space-xs)" }}>
+                      {differenceUsd === 0 ? "Sin diferencia" : differenceUsd > 0 ? "Sobrante" : "Faltante"}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
         </div>
+
+        {/* Mostrar alertas de diferencias si existen */}
+        {isClosed && cashboxAlerts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Alertas de Diferencias</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                {cashboxAlerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    style={{
+                      padding: "var(--space-md)",
+                      backgroundColor:
+                        alert.severity === "critical"
+                          ? "rgba(255, 59, 48, 0.1)"
+                          : alert.severity === "warning"
+                          ? "rgba(255, 149, 0, 0.1)"
+                          : "rgba(52, 199, 89, 0.1)",
+                      border: `1px solid ${
+                        alert.severity === "critical"
+                          ? "rgba(255, 59, 48, 0.3)"
+                          : alert.severity === "warning"
+                          ? "rgba(255, 149, 0, 0.3)"
+                          : "rgba(52, 199, 89, 0.3)"
+                      }`,
+                      borderRadius: "var(--radius-md)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
+                      <Badge
+                        variant={
+                          alert.severity === "critical"
+                            ? "error"
+                            : alert.severity === "warning"
+                            ? "warning"
+                            : "success"
+                        }
+                      >
+                        {alert.severity === "critical"
+                          ? "Crítico"
+                          : alert.severity === "warning"
+                          ? "Advertencia"
+                          : "Info"}
+                      </Badge>
+                      {!alert.read && (
+                        <Badge variant="info" style={{ fontSize: "10px" }}>
+                          Nuevo
+                        </Badge>
+                      )}
+                    </div>
+                    <div style={{ font: "var(--font-card-title)", color: "var(--apple-text-primary)", marginBottom: "var(--space-xs)" }}>
+                      {alert.title}
+                    </div>
+                    <div style={{ font: "var(--font-body)", color: "var(--apple-text-secondary)" }}>
+                      {alert.message}
+                    </div>
+                    {alert.createdAt && (
+                      <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)", marginTop: "var(--space-xs)" }}>
+                        {formatDate(alert.createdAt)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Modal de cierre de caja */}
         {showCloseModal && (
@@ -462,7 +598,9 @@ function CashboxDetailContent() {
             onSuccess={() => {
               setShowMovementForm(false);
               setEditingMovement(null);
+              // Refrescar movimientos y caja para mostrar saldo actualizado
               fetchMovements(cashboxId);
+              fetchCashboxes();
             }}
             onCancel={() => {
               setShowMovementForm(false);
