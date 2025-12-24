@@ -9,7 +9,7 @@ export interface StaffMember {
   salary?: number;
   department?: string;
   isActive?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

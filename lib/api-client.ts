@@ -16,13 +16,13 @@ export const apiClient = {
   },
 
   // POST - Create
-  create: async <T>(endpoint: string, data: any): Promise<T> => {
+  create: async <T>(endpoint: string, data: unknown): Promise<T> => {
     const response = await api.post<T>(endpoint, data);
     return response.data;
   },
 
   // PUT - Update
-  update: async <T>(endpoint: string, id: string | number, data: any): Promise<T> => {
+  update: async <T>(endpoint: string, id: string | number, data: unknown): Promise<T> => {
     const fullUrl = `${endpoint}/${id}`;
     const response = await api.put<T>(fullUrl, data);
     return response.data;
@@ -35,7 +35,7 @@ export const apiClient = {
   },
 
   // PATCH - Partial update
-  patch: async <T>(endpoint: string, id: string | number, data: any): Promise<T> => {
+  patch: async <T>(endpoint: string, id: string | number, data: unknown): Promise<T> => {
     const fullUrl = `${endpoint}/${id}`;
     const response = await api.patch<T>(fullUrl, data);
     return response.data;

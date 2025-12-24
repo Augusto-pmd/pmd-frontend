@@ -59,9 +59,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = useAuthStore.getState().token || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
     if (token && !user) {
       // Ejecutar loadMe para obtener user con permisos
-      loadMeStore().catch((error) => {
-        console.warn("⚠️ [AuthProvider] Error al cargar perfil:", error);
-      });
+      (async () => {
+        try {
+          await loadMeStore();
+        } catch (error) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn("⚠️ [AuthProvider] Error al cargar perfil:", error);
+          }
+        }
+      })();
     }
   }, [user, loading, loadMeStore]);
 
@@ -76,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       }
       return false;
-    } catch (e: any) {
+    } catch (e: unknown) {
       setLoading(false);
       // Re-throw error with code for explicit handling in LoginForm
       throw e;

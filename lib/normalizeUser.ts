@@ -19,36 +19,38 @@ export interface AuthUser {
   organization: {
     id: string;
     name: string;
-    [key: string]: any;
+    [key: string]: unknown;
   } | null;
   created_at?: string;
   updated_at?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
  * Normaliza un usuario del backend preservando explícitamente role.permissions
  * NO infiere permisos por role.name - solo preserva lo que viene del backend
  */
-export function normalizeUser(rawUser: any): AuthUser | null {
-  if (!rawUser) return null;
+export function normalizeUser(rawUser: unknown): AuthUser | null {
+  if (!rawUser || typeof rawUser !== "object") return null;
 
-  const id = normalizeId(rawUser.id);
-  const email = rawUser.email || "";
-  const fullName = rawUser.fullName || rawUser.name || "";
+  const user = rawUser as Record<string, unknown>;
+  const id = normalizeId(user.id);
+  const email = typeof user.email === "string" ? user.email : "";
+  const fullName = (typeof user.fullName === "string" ? user.fullName : typeof user.name === "string" ? user.name : "") || "";
 
   // Preservar permissions explícitas del backend
   let permissions: string[] = [];
-  if (rawUser.role?.permissions && Array.isArray(rawUser.role.permissions)) {
+  const role = user.role as Record<string, unknown> | undefined;
+  if (role?.permissions && Array.isArray(role.permissions)) {
     // Filtrar solo strings válidos
-    permissions = rawUser.role.permissions.filter((p: any) => typeof p === "string" && p.length > 0);
+    permissions = role.permissions.filter((p: unknown) => typeof p === "string" && p.length > 0);
   }
   // Si el backend no envía permissions, el array queda vacío (pero existe)
 
-  const role = rawUser.role
+  const normalizedRole = role
     ? {
-        id: normalizeId(rawUser.role.id),
-        name: rawUser.role.name || "ADMINISTRATION",
+        id: normalizeId(role.id),
+        name: (typeof role.name === "string" ? role.name : "ADMINISTRATION") || "ADMINISTRATION",
         permissions, // SIEMPRE presente como array (preservado del backend o vacío)
       }
     : {
@@ -57,30 +59,31 @@ export function normalizeUser(rawUser: any): AuthUser | null {
         permissions: [], // Array vacío si no hay role
       };
 
-  let organization: { id: string; name: string; [key: string]: any } | null = null;
+  let organization: { id: string; name: string; [key: string]: unknown } | null = null;
   let organizationId: string = "";
 
-  if (rawUser.organization) {
+  const org = user.organization as Record<string, unknown> | undefined;
+  if (org) {
     organization = {
-      id: normalizeId(rawUser.organization.id),
-      name: rawUser.organization.name || "",
+      id: normalizeId(org.id),
+      name: (typeof org.name === "string" ? org.name : "") || "",
     };
     organizationId = organization.id;
-  } else if (rawUser.organizationId) {
-    organizationId = normalizeId(rawUser.organizationId);
+  } else if (user.organizationId) {
+    organizationId = normalizeId(user.organizationId);
   }
 
   return {
     id,
     email,
     fullName,
-    role,
-    roleId: normalizeId(rawUser.roleId || role.id),
+    role: normalizedRole,
+    roleId: normalizeId(user.roleId || normalizedRole.id),
     organization,
     organizationId: organizationId || null,
-    isActive: rawUser.isActive ?? true,
-    created_at: rawUser.created_at ?? rawUser.createdAt ?? undefined,
-    updated_at: rawUser.updated_at ?? rawUser.updatedAt ?? undefined,
+    isActive: typeof user.isActive === "boolean" ? user.isActive : true,
+    created_at: (typeof user.created_at === "string" ? user.created_at : typeof user.createdAt === "string" ? user.createdAt : undefined),
+    updated_at: (typeof user.updated_at === "string" ? user.updated_at : typeof user.updatedAt === "string" ? user.updatedAt : undefined),
   };
 }
 

@@ -93,7 +93,7 @@ export function auditPermissions(): {
   let test6Pass = true;
 
   criticalPermissions.forEach(({ permission, expected }) => {
-    const result = can(permission as any);
+    const result = can(permission);
     const pass = result === expected;
     test6Results.push(`${permission}: ${result} (${pass ? "✅" : "❌"})`);
     if (!pass) test6Pass = false;
@@ -111,6 +111,6 @@ export function auditPermissions(): {
 
 // Exponer globalmente para ejecutar desde consola
 if (typeof window !== "undefined") {
-  (window as any).auditPermissions = auditPermissions;
+  (window as Window & { auditPermissions?: typeof auditPermissions }).auditPermissions = auditPermissions;
 }
 

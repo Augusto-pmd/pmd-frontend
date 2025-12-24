@@ -2,8 +2,9 @@ import { SWRConfiguration } from "swr";
 import api from "./api";
 
 export const swrConfig: SWRConfiguration = {
-  fetcher: (url: string) => {
-    return api.get(url).then((res) => res.data);
+  fetcher: async (url: string) => {
+    const res = await api.get(url);
+    return res.data;
   },
   revalidateOnFocus: false,
   revalidateOnReconnect: true,

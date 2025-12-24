@@ -14,8 +14,8 @@ export interface AuditEntryData {
   entity?: string; // Nombre de la entidad (ej: "Employee", "Work", "Supplier")
   entityId?: string; // ID del recurso modificado
   details?: string; // Descripción adicional
-  before?: any; // Estado anterior (para updates)
-  after?: any; // Estado posterior (para updates)
+  before?: unknown; // Estado anterior (para updates)
+  after?: unknown; // Estado posterior (para updates)
 }
 
 /**
@@ -49,10 +49,12 @@ export async function logAuditEvent(data: AuditEntryData): Promise<void> {
       userId: user.id,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // No lanzar error para no romper el flujo principal
     // Solo loguear el error
-    console.error("🔴 [auditHelper] Error al registrar evento de auditoría:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("🔴 [auditHelper] Error al registrar evento de auditoría:", error);
+    }
   }
 }
 
@@ -76,8 +78,8 @@ export async function logUpdate(
   module: string,
   entity: string,
   entityId: string,
-  before: any,
-  after: any,
+  before: unknown,
+  after: unknown,
   details?: string
 ): Promise<void> {
   await logAuditEvent({

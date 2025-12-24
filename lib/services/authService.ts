@@ -14,7 +14,7 @@ export interface LoginResponse {
     email: string;
     role: { id: number; name: string };
     organization: { id: number; name: string } | null;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -36,7 +36,7 @@ export interface UserMeResponse {
     email: string;
     role: { id: number; name: string };
     organization: { id: number; name: string } | null;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -78,12 +78,14 @@ export async function login(email: string, password: string): Promise<LoginRespo
     };
 
     return normalizedResponse;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Re-throw error with error code for explicit handling
-    if (error.code && error.message) {
+    if (error && typeof error === "object" && "code" in error && "message" in error) {
       throw error;
     }
-    const errorData = error?.response?.data || error;
+    const errorData = (error && typeof error === "object" && "response" in error && typeof error.response === "object" && error.response && "data" in error.response) 
+      ? error.response.data 
+      : error;
     if (errorData) {
       const errorCode = errorData.code || errorData.error || errorData.errorCode;
       const errorMessage = errorData.message || errorData.error || "Error de autenticación";

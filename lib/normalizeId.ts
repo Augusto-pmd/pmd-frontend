@@ -4,7 +4,7 @@
  * @param id - ID a normalizar (puede ser string, number, null, undefined)
  * @returns ID como string (cadena vacía si es null/undefined)
  */
-export const normalizeId = (id: any): string => {
+export const normalizeId = (id: unknown): string => {
   if (id === null || id === undefined) return "";
   return String(id);
 };

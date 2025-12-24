@@ -14,34 +14,39 @@ export interface BackendError {
  * @param error - Error de axios o cualquier error
  * @returns Mensaje de error parseado
  */
-export function parseBackendError(error: any): string {
+export function parseBackendError(error: unknown): string {
   // Si ya es un string, retornarlo directamente
   if (typeof error === "string") {
     return error;
   }
 
   // Si tiene message directo, usarlo
-  if (error?.message && typeof error.message === "string") {
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
     return error.message;
   }
 
   // Intentar extraer de response.data (axios error)
-  const responseData = error?.response?.data || error?.data;
+  const responseData = (error && typeof error === "object" && "response" in error && typeof error.response === "object" && error.response && "data" in error.response)
+    ? error.response.data
+    : (error && typeof error === "object" && "data" in error)
+      ? error.data
+      : undefined;
   
-  if (responseData) {
+  if (responseData && typeof responseData === "object") {
+    const data = responseData as Record<string, unknown>;
     // NestJS validation error: { statusCode: 400, message: string | string[] }
-    if (Array.isArray(responseData.message)) {
+    if (Array.isArray(data.message)) {
       // Si es array, unir los mensajes
-      return responseData.message.join(", ");
+      return data.message.join(", ");
     }
     
-    if (typeof responseData.message === "string") {
-      return responseData.message;
+    if (typeof data.message === "string") {
+      return data.message;
     }
 
     // Si tiene error field
-    if (typeof responseData.error === "string") {
-      return responseData.error;
+    if (typeof data.error === "string") {
+      return data.error;
     }
   }
 

@@ -13,28 +13,28 @@ import type { Alert } from "@/store/alertsStore";
 interface StaffMember {
   id: string;
   insuranceExpiry?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface Work {
   id: string;
   startDate?: string;
   status?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface Document {
   id: string;
   status?: string;
   workId?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface AccountingEntry {
   id: string;
   type: string;
   amount: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

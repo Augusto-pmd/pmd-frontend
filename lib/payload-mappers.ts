@@ -76,7 +76,7 @@ function toISODateTime(date: string | Date | undefined | null): string {
  * - status?: "provisional" | "approved" | "blocked" | "rejected"
  * - address?: string
  */
-export function mapCreateSupplierPayload(form: any): {
+export function mapCreateSupplierPayload(form: Record<string, unknown>): {
   name: string;
   cuit?: string;
   email?: string;
@@ -86,13 +86,13 @@ export function mapCreateSupplierPayload(form: any): {
   address?: string;
 } {
   return {
-    name: (form.nombre || form.name || "").trim(),
-    cuit: form.cuit?.trim() || undefined,
-    email: form.email?.trim() || undefined,
-    phone: (form.telefono || form.phone)?.trim() || undefined,
-    category: form.category?.trim() || undefined,
-    status: (form.existstatus || form.status) || undefined,
-    address: (form.direccion || form.address)?.trim() || undefined,
+    name: (typeof form.nombre === "string" ? form.nombre : typeof form.name === "string" ? form.name : "").trim(),
+    cuit: typeof form.cuit === "string" ? form.cuit.trim() : undefined,
+    email: typeof form.email === "string" ? form.email.trim() : undefined,
+    phone: (typeof form.telefono === "string" ? form.telefono : typeof form.phone === "string" ? form.phone : undefined)?.trim() || undefined,
+    category: typeof form.category === "string" ? form.category.trim() : undefined,
+    status: (form.existstatus || form.status) as "provisional" | "approved" | "blocked" | "rejected" | undefined,
+    address: (typeof form.direccion === "string" ? form.direccion : typeof form.address === "string" ? form.address : undefined)?.trim() || undefined,
   };
 }
 
@@ -112,7 +112,7 @@ export function mapCreateSupplierPayload(form: any): {
  * - supervisor_id?: string (opcional, UUID)
  * - total_budget?: number (opcional)
  */
-export function mapCreateWorkPayload(form: any): {
+export function mapCreateWorkPayload(form: Record<string, unknown>): {
   name: string;
   client: string;
   address: string;
@@ -129,12 +129,22 @@ export function mapCreateWorkPayload(form: any): {
     throw new Error("La fecha de inicio es requerida y debe ser válida");
   }
 
-  const payload: any = {
-    name: (form.name || "").trim(),
-    client: (form.client || "").trim(),
-    address: (form.address || "").trim(),
+  const payload: {
+    name: string;
+    client: string;
+    address: string;
+    start_date: string;
+    currency: string;
+    end_date?: string;
+    status?: string;
+    supervisor_id?: string;
+    total_budget?: number;
+  } = {
+    name: (typeof form.name === "string" ? form.name : "").trim(),
+    client: (typeof form.client === "string" ? form.client : "").trim(),
+    address: (typeof form.address === "string" ? form.address : "").trim(),
     start_date: startDate,
-    currency: form.currency || "USD",
+    currency: (typeof form.currency === "string" ? form.currency : "USD") || "USD",
   };
 
   // Campos opcionales - solo incluir si tienen valor
@@ -144,11 +154,11 @@ export function mapCreateWorkPayload(form: any): {
   }
 
   const status = form.status;
-  if (status && ["active", "paused", "finished", "administratively_closed", "archived"].includes(status)) {
+  if (typeof status === "string" && ["active", "paused", "finished", "administratively_closed", "archived"].includes(status)) {
     payload.status = status;
   }
 
-  const supervisorId = form.supervisor_id?.trim();
+  const supervisorId = typeof form.supervisor_id === "string" ? form.supervisor_id.trim() : undefined;
   if (supervisorId) {
     payload.supervisor_id = supervisorId;
   }
@@ -172,7 +182,7 @@ export function mapCreateWorkPayload(form: any): {
  * - opening_date: string (ISO8601 date string, requerido)
  * - user_id: string (UUID, requerido)
  */
-export function mapCreateCashboxPayload(form: any, userId: string): {
+export function mapCreateCashboxPayload(form: Record<string, unknown>, userId: string): {
   opening_date: string;
   user_id: string;
 } {
@@ -180,8 +190,12 @@ export function mapCreateCashboxPayload(form: any, userId: string): {
     throw new Error("El ID de usuario es requerido");
   }
   
+  const openingDate = form.opening_date;
+  if (!openingDate) {
+    throw new Error("La fecha de apertura es requerida");
+  }
   return {
-    opening_date: toISODateTime(form.opening_date),
+    opening_date: toISODateTime(openingDate as string | Date),
     user_id: userId,
   };
 }
