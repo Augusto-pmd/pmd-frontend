@@ -127,7 +127,7 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   };
 
   const formatCurrency = (amount: number | undefined, currency: string = "ARS") => {
-    if (amount === undefined || amount === null) return "$0.00";
+    if (amount == null) return "$0.00";
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: currency === "USD" ? "USD" : "ARS",
@@ -144,7 +144,9 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
       toast.success("Obra actualizada correctamente");
       setIsEditModalOpen(false);
     } catch (err: unknown) {
-      console.error("Error al actualizar obra:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al actualizar obra:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al actualizar la obra";
       toast.error(errorMessage);
     } finally {

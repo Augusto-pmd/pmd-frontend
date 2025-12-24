@@ -33,7 +33,7 @@ function ContractsContent() {
       await contractApi.delete(id);
       mutate();
       globalMutate("/contracts");
-    } catch (error: any) {
+    } catch (error: unknown) {
       alert(error.message || "Failed to delete contract");
     } finally {
       setDeleteLoading(null);

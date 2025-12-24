@@ -29,16 +29,17 @@ export function LoginForm() {
       }
 
       router.push("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsLoading(false);
       
       // Handle explicit backend error messages
-      if (error?.code === "USER_NOT_FOUND") {
+      const errorObj = error && typeof error === 'object' ? error as { code?: string; message?: string } : null;
+      if (errorObj?.code === "USER_NOT_FOUND") {
         setError("Usuario no encontrado");
-      } else if (error?.code === "INVALID_PASSWORD") {
+      } else if (errorObj?.code === "INVALID_PASSWORD") {
         setError("Contraseña incorrecta");
       } else {
-        setError(error?.message || "Credenciales incorrectas");
+        setError(errorObj?.message || "Credenciales incorrectas");
       }
     }
   };

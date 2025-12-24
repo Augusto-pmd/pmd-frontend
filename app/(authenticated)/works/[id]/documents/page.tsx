@@ -50,9 +50,12 @@ function WorkDocumentsContent() {
       await fetchDocuments(workId);
       toast.success("Documento subido correctamente");
       setIsCreateModalOpen(false);
-    } catch (err: any) {
-      console.error("Error al crear documento:", err);
-      toast.error(err.message || "Error al subir el documento");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al crear documento:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al subir el documento";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

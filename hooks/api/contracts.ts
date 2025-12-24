@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { Contract, CreateContractData, UpdateContractData } from "@/lib/types/contract";
 
 export function useContracts() {
   const { token } = useAuthStore();
@@ -15,7 +16,7 @@ export function useContracts() {
   );
 
   return {
-    contracts: data?.data || data || [],
+    contracts: (data?.data || data || []) as Contract[],
     error,
     isLoading,
     mutate,
@@ -26,7 +27,9 @@ export function useContract(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useContract] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useContract] id no está definido");
+    }
     return { contract: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -38,7 +41,7 @@ export function useContract(id: string | null) {
   );
 
   return {
-    contract: data?.data || data,
+    contract: (data?.data || data) as Contract | null,
     error,
     isLoading,
     mutate,
@@ -46,12 +49,14 @@ export function useContract(id: string | null) {
 }
 
 export const contractApi = {
-  create: (data: any) => {
+  create: (data: CreateContractData) => {
     return apiClient.post("/contracts", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: UpdateContractData) => {
     if (!id) {
-      console.warn("❗ [contractApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [contractApi.update] id no está definido");
+      }
       throw new Error("ID de contrato no está definido");
     }
     // Usar PATCH en lugar de PUT para actualizaciones parciales (el backend usa @Patch)
@@ -59,7 +64,9 @@ export const contractApi = {
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [contractApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [contractApi.delete] id no está definido");
+      }
       throw new Error("ID de contrato no está definido");
     }
     return apiClient.delete(`/contracts/${id}`);

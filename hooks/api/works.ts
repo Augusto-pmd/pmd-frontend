@@ -28,7 +28,9 @@ export function useWork(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useWork] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useWork] id no está definido");
+    }
     return { work: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -56,21 +58,27 @@ export const workApi = {
   },
   update: (id: string, data: UpdateWorkData) => {
     if (!id) {
-      console.warn("❗ [workApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workApi.update] id no está definido");
+      }
       throw new Error("ID de obra no está definido");
     }
     return apiClient.patch<Work>(`/works/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [workApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workApi.delete] id no está definido");
+      }
       throw new Error("ID de obra no está definido");
     }
     return apiClient.delete(`/works/${id}`);
   },
   close: (id: string) => {
     if (!id) {
-      console.warn("❗ [workApi.close] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workApi.close] id no está definido");
+      }
       throw new Error("ID de obra no está definido");
     }
     return apiClient.post<Work>(`/works/${id}/close`);

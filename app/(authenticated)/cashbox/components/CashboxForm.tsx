@@ -45,9 +45,12 @@ export function CashboxForm({ onSuccess, onCancel }: CashboxFormProps) {
       await createCashbox(payload);
       toast.success("Caja creada correctamente");
       onSuccess();
-    } catch (error: any) {
-      console.error("Error al guardar caja:", error);
-      toast.error(error.message || "Error al guardar la caja");
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al guardar caja:", error);
+      }
+      const errorMessage = error instanceof Error ? error.message : "Error al guardar la caja";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -134,9 +134,12 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
         // Pasar información sobre si fue un refuerzo al callback
         onSuccess();
       }
-    } catch (error: any) {
-      console.error("Error al guardar movimiento:", error);
-      toast.error(error.message || "Error al guardar el movimiento");
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al guardar movimiento:", error);
+      }
+      const errorMessage = error instanceof Error ? error.message : "Error al guardar el movimiento";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

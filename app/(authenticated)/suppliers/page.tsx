@@ -48,7 +48,9 @@ function SuppliersContent() {
       toast.success("Proveedor creado correctamente");
       setIsCreateModalOpen(false);
     } catch (err: unknown) {
-      console.error("Error al crear proveedor:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al crear proveedor:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al crear el proveedor";
       toast.error(errorMessage);
     } finally {

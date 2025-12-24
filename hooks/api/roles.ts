@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { Role, CreateRoleData, UpdateRoleData } from "@/lib/types/role";
 
 export function useRoles() {
   const { token } = useAuthStore();
@@ -13,7 +14,7 @@ export function useRoles() {
   );
 
   return {
-    roles: data?.data || data || [],
+    roles: (data?.data || data || []) as Role[],
     error,
     isLoading,
     mutate,
@@ -24,7 +25,9 @@ export function useRole(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useRole] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useRole] id no está definido");
+    }
     return { role: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -36,7 +39,7 @@ export function useRole(id: string | null) {
   );
 
   return {
-    role: data?.data || data,
+    role: (data?.data || data) as Role | null,
     error,
     isLoading,
     mutate,
@@ -47,7 +50,9 @@ export function useRolePermissions(roleId: string | null) {
   const { token } = useAuthStore();
   
   if (!roleId) {
-    console.warn("❗ [useRolePermissions] roleId no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useRolePermissions] roleId no está definido");
+    }
     return { permissions: [], error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -67,26 +72,32 @@ export function useRolePermissions(roleId: string | null) {
 }
 
 export const roleApi = {
-  create: (data: any) => {
+  create: (data: CreateRoleData) => {
     return apiClient.post("/roles", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: UpdateRoleData) => {
     if (!id) {
-      console.warn("❗ [roleApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [roleApi.update] id no está definido");
+      }
       throw new Error("ID de rol no está definido");
     }
     return apiClient.patch(`/roles/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [roleApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [roleApi.delete] id no está definido");
+      }
       throw new Error("ID de rol no está definido");
     }
     return apiClient.delete(`/roles/${id}`);
   },
   updatePermissions: (id: string, permissions: string[]) => {
     if (!id) {
-      console.warn("❗ [roleApi.updatePermissions] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [roleApi.updatePermissions] id no está definido");
+      }
       throw new Error("ID de rol no está definido");
     }
     return apiClient.patch(`/roles/${id}/permissions`, { permissions });

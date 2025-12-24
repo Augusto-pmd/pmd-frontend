@@ -27,7 +27,9 @@ export function useSupplier(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useSupplier] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useSupplier] id no está definido");
+    }
     return { supplier: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -52,28 +54,36 @@ export const supplierApi = {
   },
   update: (id: string, data: UpdateSupplierData) => {
     if (!id) {
-      console.warn("❗ [supplierApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [supplierApi.update] id no está definido");
+      }
       throw new Error("ID de proveedor no está definido");
     }
     return apiClient.put(`/suppliers/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [supplierApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [supplierApi.delete] id no está definido");
+      }
       throw new Error("ID de proveedor no está definido");
     }
     return apiClient.delete(`/suppliers/${id}`);
   },
   approve: (id: string) => {
     if (!id) {
-      console.warn("❗ [supplierApi.approve] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [supplierApi.approve] id no está definido");
+      }
       throw new Error("ID de proveedor no está definido");
     }
     return apiClient.patch(`/suppliers/${id}/approve`, {});
   },
   reject: (id: string) => {
     if (!id) {
-      console.warn("❗ [supplierApi.reject] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [supplierApi.reject] id no está definido");
+      }
       throw new Error("ID de proveedor no está definido");
     }
     return apiClient.patch(`/suppliers/${id}/reject`, {});

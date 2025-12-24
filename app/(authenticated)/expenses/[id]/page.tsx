@@ -119,7 +119,7 @@ function ExpenseDetailContent() {
 
   // Función para renderizar un campo si existe (patrón del sistema)
   const renderField = (label: string, value: any, formatter?: (val: any) => string, icon?: React.ReactNode) => {
-    if (value === null || value === undefined || value === "") return null;
+    if (!value) return null;
     return (
       <div className="flex items-start gap-3">
         {icon || <div className="h-5 w-5 mt-0.5" />}

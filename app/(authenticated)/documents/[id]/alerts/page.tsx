@@ -54,9 +54,12 @@ function DocumentAlertsContent() {
       await fetchAlerts();
       toast.success("Alerta creada correctamente");
       setIsCreateModalOpen(false);
-    } catch (err: any) {
-      console.error("Error al crear alerta:", err);
-      toast.error(err.message || "Error al crear la alerta");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al crear alerta:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al crear la alerta";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

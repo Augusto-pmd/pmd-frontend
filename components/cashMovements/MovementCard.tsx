@@ -4,26 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-
-interface CashMovement {
-  id: string;
-  type?: string;
-  tipo?: string;
-  amount?: number;
-  monto?: number;
-  date?: string;
-  fecha?: string;
-  description?: string;
-  descripcion?: string;
-  concepto?: string;
-  cashboxId?: string;
-  cashbox?: {
-    id: string;
-    name?: string;
-    nombre?: string;
-  };
-  [key: string]: any;
-}
+import { CashMovement } from "@/lib/types/cashbox";
 
 interface MovementCardProps {
   movement: CashMovement;
@@ -33,7 +14,10 @@ export function MovementCard({ movement }: MovementCardProps) {
   const router = useRouter();
 
   const getMovementType = () => {
-    return movement.tipo || movement.type || "egreso";
+    if (typeof movement.type === "string") {
+      return movement.type;
+    }
+    return "expense";
   };
 
   const getTypeVariant = (type: string) => {
@@ -51,7 +35,7 @@ export function MovementCard({ movement }: MovementCardProps) {
   };
 
   const formatCurrency = (amount: number | undefined) => {
-    if (amount === null || amount === undefined) return "$0.00";
+    if (amount == null) return "$0.00";
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
@@ -73,15 +57,12 @@ export function MovementCard({ movement }: MovementCardProps) {
   };
 
   const getCashboxName = () => {
-    if (movement.cashbox) {
-      return movement.cashbox.nombre || movement.cashbox.name || "Caja";
-    }
     return movement.cashboxId ? `Caja ${movement.cashboxId.slice(0, 8)}` : "Sin caja";
   };
 
   const type = getMovementType();
-  const isIncome = type.toLowerCase() === "ingreso" || type.toLowerCase() === "income";
-  const amount = movement.monto || movement.amount || 0;
+  const isIncome = type.toLowerCase() === "ingreso" || type.toLowerCase() === "income" || type.toLowerCase() === "refill";
+  const amount = movement.amount || 0;
 
   return (
     <Card
@@ -106,14 +87,14 @@ export function MovementCard({ movement }: MovementCardProps) {
             <div>
               <p className="text-sm text-gray-500">Concepto:</p>
               <p className="text-sm font-medium text-gray-900">
-                {movement.concepto || movement.descripcion || movement.description || "Sin concepto"}
+                {movement.description || "Sin concepto"}
               </p>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500">Fecha:</span>
               <span className="text-sm text-gray-900 font-medium">
-                {formatDate(movement.fecha || movement.date)}
+                {formatDate(movement.date)}
               </span>
             </div>
 

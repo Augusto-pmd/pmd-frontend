@@ -13,9 +13,9 @@ export function useDocuments(workId?: string) {
     try {
       const url = workId ? `/work-documents?workId=${workId}` : "/work-documents";
       return await apiClient.get(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Si el endpoint no existe, retornar array vacío
-      if (err.response?.status === 404) {
+      if (err && typeof err === "object" && "response" in err && err.response && typeof err.response === "object" && "status" in err.response && err.response.status === 404) {
         return [];
       }
       throw err;
@@ -39,7 +39,9 @@ export function useDocument(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useDocument] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useDocument] id no está definido");
+    }
     return { document: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -62,26 +64,32 @@ export function useDocument(id: string | null) {
  * @deprecated Use workDocumentApi from hooks/api/workDocuments.ts instead
  */
 export const documentApi = {
-  create: (data: any) => {
+  create: (data: unknown) => {
     return apiClient.post("/work-documents", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: unknown) => {
     if (!id) {
-      console.warn("❗ [documentApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [documentApi.update] id no está definido");
+      }
       throw new Error("ID de documento no está definido");
     }
     return apiClient.put(`/work-documents/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [documentApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [documentApi.delete] id no está definido");
+      }
       throw new Error("ID de documento no está definido");
     }
     return apiClient.delete(`/work-documents/${id}`);
   },
   download: (id: string) => {
     if (!id) {
-      console.warn("❗ [documentApi.download] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [documentApi.download] id no está definido");
+      }
       return null;
     }
     // Return relative path - apiClient will handle baseURL

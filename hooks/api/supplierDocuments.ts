@@ -26,7 +26,9 @@ export function useSupplierDocument(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useSupplierDocument] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useSupplierDocument] id no está definido");
+    }
     return { document: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -46,19 +48,23 @@ export function useSupplierDocument(id: string | null) {
 }
 
 export const supplierDocumentApi = {
-  create: (data: any) => {
+  create: (data: unknown) => {
     return apiClient.post("/supplier-documents", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: unknown) => {
     if (!id) {
-      console.warn("❗ [supplierDocumentApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [supplierDocumentApi.update] id no está definido");
+      }
       throw new Error("ID de documento no está definido");
     }
     return apiClient.put(`/supplier-documents/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [supplierDocumentApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [supplierDocumentApi.delete] id no está definido");
+      }
       throw new Error("ID de documento no está definido");
     }
     return apiClient.delete(`/supplier-documents/${id}`);

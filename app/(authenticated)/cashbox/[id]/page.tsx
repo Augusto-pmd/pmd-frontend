@@ -177,8 +177,9 @@ function CashboxDetailContent() {
       await closeCashbox(cashboxId);
       toast.success("Caja cerrada correctamente");
       setShowCloseModal(false);
-    } catch (error: any) {
-      toast.error(error.message || "Error al cerrar la caja");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al cerrar la caja";
+      toast.error(errorMessage);
     }
   };
 
@@ -190,8 +191,9 @@ function CashboxDetailContent() {
     try {
       await deleteMovement(cashboxId, movementId);
       toast.success("Movimiento eliminado");
-    } catch (error: any) {
-      toast.error(error.message || "Error al eliminar movimiento");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al eliminar movimiento";
+      toast.error(errorMessage);
     }
   };
 

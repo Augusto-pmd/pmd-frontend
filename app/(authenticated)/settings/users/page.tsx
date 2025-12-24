@@ -103,15 +103,18 @@ function UsersContent() {
       toast.success("Usuario eliminado correctamente");
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
-    } catch (err: any) {
-      console.error("Error al eliminar usuario:", err);
-      toast.error(err.message || "Error al eliminar el usuario");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar usuario:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el usuario";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleToggleStatus = async (user: any) => {
+  const handleToggleStatus = async (user: { id: string }) => {
     setIsSubmitting(true);
     try {
       // isActive no existe en el backend - todos los usuarios son activos
@@ -123,9 +126,12 @@ function UsersContent() {
       //   toast.success("Usuario activado correctamente");
       // }
       toast.info("El estado de usuario no está disponible en el backend");
-    } catch (err: any) {
-      console.error("Error al cambiar estado:", err);
-      toast.error(err.message || "Error al cambiar el estado del usuario");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al cambiar estado:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al cambiar el estado del usuario";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

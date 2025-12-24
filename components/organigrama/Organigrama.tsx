@@ -2,13 +2,7 @@
 
 import { AreaNode } from "./AreaNode";
 import { EmptyState } from "@/components/ui/EmptyState";
-
-interface Employee {
-  id: string;
-  area?: string;
-  areaTrabajo?: string;
-  [key: string]: any;
-}
+import { Employee } from "@/lib/types/employee";
 
 interface OrganigramaProps {
   employees: Employee[];

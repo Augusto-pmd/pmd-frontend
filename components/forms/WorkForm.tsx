@@ -163,7 +163,9 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
       await onSubmit(payload);
     } catch (error) {
       // El error ya se maneja en el componente padre
-      console.error("Error en WorkForm:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error en WorkForm:", error);
+      }
     }
   };
 

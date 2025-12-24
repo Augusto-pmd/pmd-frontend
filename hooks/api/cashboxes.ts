@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { Cashbox, CashMovement, CreateCashboxData, UpdateCashboxData, CreateCashMovementData, UpdateCashMovementData } from "@/lib/types/cashbox";
 
 export function useCashboxes() {
   const { token } = useAuthStore();
@@ -13,7 +14,7 @@ export function useCashboxes() {
   );
 
   return {
-    cashboxes: data?.data || data || [],
+    cashboxes: (data?.data || data || []) as Cashbox[],
     error,
     isLoading,
     mutate,
@@ -24,7 +25,9 @@ export function useCashbox(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useCashbox] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useCashbox] id no está definido");
+    }
     return { cashbox: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -36,7 +39,7 @@ export function useCashbox(id: string | null) {
   );
 
   return {
-    cashbox: data?.data || data,
+    cashbox: (data?.data || data) as Cashbox | null,
     error,
     isLoading,
     mutate,
@@ -44,19 +47,23 @@ export function useCashbox(id: string | null) {
 }
 
 export const cashboxApi = {
-  create: (data: any) => {
+  create: (data: CreateCashboxData) => {
     return apiClient.post("/cashboxes", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: UpdateCashboxData) => {
     if (!id) {
-      console.warn("❗ [cashboxApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.update] id no está definido");
+      }
       throw new Error("ID de caja no está definido");
     }
     return apiClient.patch(`/cashboxes/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [cashboxApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.delete] id no está definido");
+      }
       throw new Error("ID de caja no está definido");
     }
     return apiClient.delete(`/cashboxes/${id}`);
@@ -81,7 +88,7 @@ export function useCashMovements(cashboxId?: string) {
   );
 
   return {
-    movements: data?.data || data || [],
+    movements: (data?.data || data || []) as CashMovement[],
     error,
     isLoading,
     mutate,
@@ -92,7 +99,9 @@ export function useCashMovement(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useCashMovement] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useCashMovement] id no está definido");
+    }
     return { movement: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -104,7 +113,7 @@ export function useCashMovement(id: string | null) {
   );
 
   return {
-    movement: data?.data || data,
+    movement: (data?.data || data) as CashMovement | null,
     error,
     isLoading,
     mutate,
@@ -112,19 +121,23 @@ export function useCashMovement(id: string | null) {
 }
 
 export const cashMovementApi = {
-  create: (data: any) => {
+  create: (data: CreateCashMovementData) => {
     return apiClient.post("/cash-movements", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: UpdateCashMovementData) => {
     if (!id) {
-      console.warn("❗ [cashMovementApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashMovementApi.update] id no está definido");
+      }
       throw new Error("ID de movimiento no está definido");
     }
     return apiClient.patch(`/cash-movements/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [cashMovementApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashMovementApi.delete] id no está definido");
+      }
       throw new Error("ID de movimiento no está definido");
     }
     return apiClient.delete(`/cash-movements/${id}`);

@@ -24,7 +24,9 @@ export function useRubric(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useRubric] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useRubric] id no está definido");
+    }
     return { rubric: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -44,19 +46,23 @@ export function useRubric(id: string | null) {
 }
 
 export const rubricApi = {
-  create: (data: any) => {
+  create: (data: unknown) => {
     return apiClient.post("/rubrics", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: unknown) => {
     if (!id) {
-      console.warn("❗ [rubricApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [rubricApi.update] id no está definido");
+      }
       throw new Error("ID de rubro no está definido");
     }
     return apiClient.put(`/rubrics/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [rubricApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [rubricApi.delete] id no está definido");
+      }
       throw new Error("ID de rubro no está definido");
     }
     return apiClient.delete(`/rubrics/${id}`);

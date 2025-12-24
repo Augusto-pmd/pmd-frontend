@@ -2,11 +2,7 @@
 
 import { CashboxCard } from "./CashboxCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-
-interface Cashbox {
-  id: string;
-  [key: string]: any;
-}
+import { Cashbox } from "@/lib/types/cashbox";
 
 interface CashboxesListProps {
   cashboxes: Cashbox[];

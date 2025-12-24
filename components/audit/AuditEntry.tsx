@@ -4,30 +4,10 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-
-interface AuditEntry {
-  id: string;
-  userId?: string;
-  userName?: string;
-  usuario?: string;
-  action?: string;
-  accion?: string;
-  entity?: string;
-  entityType?: string;
-  modulo?: string;
-  entityId?: string;
-  timestamp?: string;
-  fecha?: string;
-  createdAt?: string;
-  details?: string;
-  descripcion?: string;
-  oldData?: any;
-  newData?: any;
-  [key: string]: any;
-}
+import { AuditLog } from "@/lib/types/audit";
 
 interface AuditEntryProps {
-  entry: AuditEntry;
+  entry: AuditLog;
 }
 
 export function AuditEntry({ entry }: AuditEntryProps) {

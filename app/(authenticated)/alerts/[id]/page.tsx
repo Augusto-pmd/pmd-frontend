@@ -95,9 +95,12 @@ function AlertDetailContent() {
       await markAsRead(alertId);
       await fetchAlerts();
       toast.success("Alerta marcada como leída");
-    } catch (err: any) {
-      console.error("Error al marcar alerta:", err);
-      toast.error(err.message || "Error al marcar la alerta");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al marcar alerta:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al marcar la alerta";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -109,9 +112,12 @@ function AlertDetailContent() {
       await deleteAlert(alertId);
       toast.success("Alerta eliminada correctamente");
       router.push("/alerts");
-    } catch (err: any) {
-      console.error("Error al eliminar alerta:", err);
-      toast.error(err.message || "Error al eliminar la alerta");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar alerta:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar la alerta";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

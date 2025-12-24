@@ -90,9 +90,12 @@ export function AuditList({
       toast.success("Log eliminado");
       setIsDeleteModalOpen(false);
       setSelectedLog(null);
-    } catch (err: any) {
-      console.error("Error al eliminar log:", err);
-      toast.error(err.message || "Error al eliminar el log");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar log:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el log";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,9 +108,12 @@ export function AuditList({
       await onRefresh?.();
       toast.success("Todos los registros limpiados");
       setIsClearAllModalOpen(false);
-    } catch (err: any) {
-      console.error("Error al limpiar todos los registros:", err);
-      toast.error(err.message || "Error al limpiar los registros");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al limpiar todos los registros:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al limpiar los registros";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

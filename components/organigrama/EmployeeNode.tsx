@@ -5,26 +5,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { UserAvatar } from "@/components/settings/UserAvatar";
 import { calcularEstadoSeguro, getBadgeColorSeguro } from "@/utils/seguro";
-
-interface Employee {
-  id: string;
-  fullName?: string;
-  nombre?: string;
-  name?: string;
-  puesto?: string;
-  position?: string;
-  area?: string;
-  areaTrabajo?: string;
-  seguro?: {
-    fechaVencimiento?: string;
-    expirationDate?: string;
-  };
-  insurance?: {
-    fechaVencimiento?: string;
-    expirationDate?: string;
-  };
-  [key: string]: any;
-}
+import { Employee } from "@/lib/types/employee";
 
 interface EmployeeNodeProps {
   employee: Employee;

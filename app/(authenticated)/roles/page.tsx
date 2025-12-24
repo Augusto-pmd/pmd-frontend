@@ -62,15 +62,18 @@ function RolesContent() {
       setIsFormModalOpen(false);
       setSelectedRole(null);
       await fetchRoles();
-    } catch (err: any) {
-      console.error("Error al crear rol:", err);
-      toast.error(err.message || "Error al crear el rol");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al crear rol:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al crear el rol";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: { name: string; description?: string; permissions?: string[] }) => {
     if (!selectedRole) return;
     setIsSubmitting(true);
     try {
@@ -79,9 +82,12 @@ function RolesContent() {
       setIsFormModalOpen(false);
       setSelectedRole(null);
       await fetchRoles();
-    } catch (err: any) {
-      console.error("Error al actualizar rol:", err);
-      toast.error(err.message || "Error al actualizar el rol");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al actualizar rol:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al actualizar el rol";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -96,9 +102,12 @@ function RolesContent() {
       setIsDeleteModalOpen(false);
       setSelectedRole(null);
       await fetchRoles();
-    } catch (err: any) {
-      console.error("Error al eliminar rol:", err);
-      toast.error(err.message || "Error al eliminar el rol");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar rol:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el rol";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

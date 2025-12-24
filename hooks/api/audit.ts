@@ -6,7 +6,7 @@ export function useAuditLogs(params?: { startDate?: string; endDate?: string }) 
   const { token } = useAuthStore();
   
   const queryString = params
-    ? `?${new URLSearchParams(params as any).toString()}`
+    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
     : "";
   
   const { data, error, isLoading, mutate } = useSWR(
@@ -28,7 +28,9 @@ export function useAuditLog(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useAuditLog] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useAuditLog] id no está definido");
+    }
     return { log: null, error: null, isLoading: false, mutate: async () => {} };
   }
   

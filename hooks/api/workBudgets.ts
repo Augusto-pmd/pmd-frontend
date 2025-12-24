@@ -26,7 +26,9 @@ export function useWorkBudget(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useWorkBudget] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useWorkBudget] id no está definido");
+    }
     return { budget: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -46,19 +48,23 @@ export function useWorkBudget(id: string | null) {
 }
 
 export const workBudgetApi = {
-  create: (data: any) => {
+  create: (data: unknown) => {
     return apiClient.post("/work-budgets", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: unknown) => {
     if (!id) {
-      console.warn("❗ [workBudgetApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workBudgetApi.update] id no está definido");
+      }
       throw new Error("ID de presupuesto no está definido");
     }
     return apiClient.put(`/work-budgets/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [workBudgetApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workBudgetApi.delete] id no está definido");
+      }
       throw new Error("ID de presupuesto no está definido");
     }
     return apiClient.delete(`/work-budgets/${id}`);

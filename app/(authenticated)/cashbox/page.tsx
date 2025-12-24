@@ -53,8 +53,9 @@ function CashboxContent() {
     try {
       await closeCashbox(id);
       toast.success("Caja cerrada correctamente");
-    } catch (error: any) {
-      toast.error(error.message || "Error al cerrar la caja");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al cerrar la caja";
+      toast.error(errorMessage);
     }
   };
 

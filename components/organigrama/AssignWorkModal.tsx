@@ -39,7 +39,9 @@ export function AssignWorkModal({
       toast.error("Esta funcionalidad no está disponible. El módulo de RRHH no existe en el backend.");
       onClose();
     } catch (err: unknown) {
-      console.error("Error al asignar obra:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al asignar obra:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al asignar la obra";
       toast.error(errorMessage);
     } finally {

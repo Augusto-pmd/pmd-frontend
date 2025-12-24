@@ -2,11 +2,7 @@
 
 import { UserCard } from "./UserCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-
-interface User {
-  id: string;
-  [key: string]: any;
-}
+import { User } from "@/lib/types/user";
 
 interface UsersListProps {
   users: User[];

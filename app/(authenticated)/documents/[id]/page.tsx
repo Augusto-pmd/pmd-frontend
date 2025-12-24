@@ -90,9 +90,12 @@ function DocumentDetailContent() {
       await fetchDocuments();
       toast.success("Documento actualizado correctamente");
       setIsEditModalOpen(false);
-    } catch (err: any) {
-      console.error("Error al actualizar documento:", err);
-      toast.error(err.message || "Error al actualizar el documento");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al actualizar documento:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al actualizar el documento";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -104,9 +107,12 @@ function DocumentDetailContent() {
       await deleteDocument(documentId);
       toast.success("Documento eliminado correctamente");
       router.push("/documents");
-    } catch (err: any) {
-      console.error("Error al eliminar documento:", err);
-      toast.error(err.message || "Error al eliminar el documento");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar documento:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el documento";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

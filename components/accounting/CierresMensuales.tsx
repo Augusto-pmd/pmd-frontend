@@ -11,7 +11,6 @@ interface CierreMensual {
   status?: string;
   estado?: string;
   total?: number;
-  [key: string]: any;
 }
 
 interface CierresMensualesProps {
@@ -109,8 +108,8 @@ export function CierresMensuales({ cierres = [] }: CierresMensualesProps) {
                   <h3 className="font-semibold text-pmd-darkBlue">
                     {getMonthName(cierre.month)} {cierre.year}
                   </h3>
-                  <Badge variant={getStatusVariant(cierre.status || (cierre as any).estado)}>
-                    {getStatusLabel(cierre.status || (cierre as any).estado)}
+                  <Badge variant={getStatusVariant(cierre.status || cierre.estado)}>
+                    {getStatusLabel(cierre.status || cierre.estado)}
                   </Badge>
                 </div>
                 {cierre.total !== undefined && (

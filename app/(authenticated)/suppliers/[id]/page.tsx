@@ -130,8 +130,9 @@ function SupplierDetailContent() {
       await supplierApi.update(id, { status: "APPROVED" });
       await mutate();
       toast.success("Proveedor desbloqueado correctamente");
-    } catch (error: any) {
-      toast.error(error.message || "Error al desbloquear el proveedor");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al desbloquear el proveedor";
+      toast.error(errorMessage);
     } finally {
       setIsUnblocking(false);
     }
@@ -150,8 +151,9 @@ function SupplierDetailContent() {
       await supplierApi.approve(id);
       await mutate();
       toast.success("Proveedor aprobado correctamente");
-    } catch (error: any) {
-      toast.error(error.message || "Error al aprobar el proveedor");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al aprobar el proveedor";
+      toast.error(errorMessage);
     } finally {
       setIsApproving(false);
     }
@@ -170,8 +172,9 @@ function SupplierDetailContent() {
       await supplierApi.reject(id);
       await mutate();
       toast.success("Proveedor rechazado correctamente. Se ha enviado una alerta al operador.");
-    } catch (error: any) {
-      toast.error(error.message || "Error al rechazar el proveedor");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al rechazar el proveedor";
+      toast.error(errorMessage);
     } finally {
       setIsRejecting(false);
     }
@@ -203,7 +206,7 @@ function SupplierDetailContent() {
 
   // Función para renderizar un campo si existe
   const renderField = (label: string, value: any, formatter?: (val: any) => string) => {
-    if (value === null || value === undefined || value === "") return null;
+    if (!value) return null;
     return (
       <div>
         <h3 className="text-sm font-semibold text-gray-700 mb-2">{label}</h3>

@@ -26,7 +26,9 @@ export function useWorkDocument(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useWorkDocument] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useWorkDocument] id no está definido");
+    }
     return { document: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -46,19 +48,23 @@ export function useWorkDocument(id: string | null) {
 }
 
 export const workDocumentApi = {
-  create: (data: any) => {
+  create: (data: unknown) => {
     return apiClient.post("/work-documents", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: unknown) => {
     if (!id) {
-      console.warn("❗ [workDocumentApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workDocumentApi.update] id no está definido");
+      }
       throw new Error("ID de documento no está definido");
     }
     return apiClient.put(`/work-documents/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [workDocumentApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workDocumentApi.delete] id no está definido");
+      }
       throw new Error("ID de documento no está definido");
     }
     return apiClient.delete(`/work-documents/${id}`);

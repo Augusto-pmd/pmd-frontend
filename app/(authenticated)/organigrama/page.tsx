@@ -19,20 +19,9 @@ import { useWorks } from "@/hooks/api/works";
 import { useRoles } from "@/hooks/api/roles";
 import { useAuthStore } from "@/store/authStore";
 import { can } from "@/lib/acl";
+import { Employee } from "@/lib/types/employee";
 
 type ViewMode = "grid" | "tree";
-
-interface Employee {
-  id: string;
-  fullName?: string;
-  name?: string;
-  nombre?: string;
-  role?: string;
-  subrole?: string;
-  workId?: string;
-  isActive?: boolean;
-  [key: string]: any;
-}
 
 function OrganigramaContent() {
   const router = useRouter();

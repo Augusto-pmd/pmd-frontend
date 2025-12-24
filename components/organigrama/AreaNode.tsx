@@ -2,14 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmployeeNode } from "./EmployeeNode";
-
-interface Employee {
-  id: string;
-  puesto?: string;
-  position?: string;
-  role?: string;
-  [key: string]: any;
-}
+import { Employee } from "@/lib/types/employee";
 
 interface AreaNodeProps {
   areaName: string;

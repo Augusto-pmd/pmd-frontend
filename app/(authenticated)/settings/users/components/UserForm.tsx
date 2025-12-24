@@ -130,9 +130,12 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       }
 
       onSuccess?.();
-    } catch (err: any) {
-      console.error("Error al guardar usuario:", err);
-      toast.error(err.message || "Error al guardar el usuario");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al guardar usuario:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al guardar el usuario";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

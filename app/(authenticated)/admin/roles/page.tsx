@@ -43,8 +43,9 @@ function AdminRolesContent() {
       await roleApi.delete(id);
       mutate();
       globalMutate("/roles");
-    } catch (error: any) {
-      alert(error.message || "Failed to delete role");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete role";
+      alert(errorMessage);
     } finally {
       setDeleteLoading(null);
     }
@@ -63,8 +64,9 @@ function AdminRolesContent() {
       globalMutate("/roles");
       setIsModalOpen(false);
       setEditingRole(null);
-    } catch (error: any) {
-      alert(error.message || "Failed to save role");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save role";
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

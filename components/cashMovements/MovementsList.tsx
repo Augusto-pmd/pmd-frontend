@@ -2,11 +2,7 @@
 
 import { MovementCard } from "./MovementCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-
-interface CashMovement {
-  id: string;
-  [key: string]: any;
-}
+import { CashMovement } from "@/lib/types/cashbox";
 
 interface MovementsListProps {
   movements: CashMovement[];

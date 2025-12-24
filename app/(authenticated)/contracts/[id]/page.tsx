@@ -107,7 +107,7 @@ function ContractDetailContent() {
 
   // Función para renderizar un campo si existe (patrón del sistema)
   const renderField = (label: string, value: any, formatter?: (val: any) => string, icon?: React.ReactNode) => {
-    if (value === null || value === undefined || value === "") return null;
+    if (!value) return null;
     return (
       <div className="flex items-start gap-3">
         {icon || <div className="h-5 w-5 mt-0.5" />}
@@ -136,8 +136,9 @@ function ContractDetailContent() {
       await contractApi.update(contractId, { is_blocked: false });
       await mutate();
       toast.success("Contrato desbloqueado correctamente");
-    } catch (error: any) {
-      toast.error(error.message || "Error al desbloquear el contrato");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al desbloquear el contrato";
+      toast.error(errorMessage);
     } finally {
       setIsUnblocking(false);
     }
@@ -153,8 +154,9 @@ function ContractDetailContent() {
       await mutate();
       toast.success("Contrato actualizado correctamente");
       setIsEditModalOpen(false);
-    } catch (error: any) {
-      toast.error(error.message || "Error al actualizar el contrato");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error al actualizar el contrato";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

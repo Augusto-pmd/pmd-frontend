@@ -9,21 +9,10 @@ import { useAlertsStore } from "@/store/alertsStore";
 import { useWorks } from "@/hooks/api/works";
 import { useRoles } from "@/hooks/api/roles";
 import Link from "next/link";
-
-interface Employee {
-  id: string;
-  fullName?: string;
-  name?: string;
-  nombre?: string;
-  role?: string;
-  subrole?: string;
-  workId?: string;
-  isActive?: boolean;
-  email?: string;
-  phone?: string;
-  hireDate?: string;
-  [key: string]: any;
-}
+import { Employee } from "@/lib/types/employee";
+import { Work } from "@/lib/types/work";
+import { Role } from "@/lib/types/role";
+import { Alert } from "@/store/alertsStore";
 
 interface EmployeeDetailModalProps {
   isOpen: boolean;
@@ -50,20 +39,23 @@ export function EmployeeDetailModal({
 
   const getWorkName = (workId?: string) => {
     if (!workId) return null;
-    const work = works.find((w: any) => w.id === workId);
+    const work = works.find((w: Work) => w.id === workId);
     if (!work) return null;
-    return work.name || work.title || work.nombre || workId;
+    return work.name || workId;
   };
 
   const name = employee.fullName || employee.name || employee.nombre || "Sin nombre";
   const roleId = employee.roleId || employee.role;
-  const role = roles.find((r: any) => r.id === roleId || r.name === roleId);
-  const roleName = role?.name || role?.nombre || roleId || "Sin rol";
+  const role = roles.find((r: Role) => r.id === roleId || r.name === roleId);
+  const roleName = role?.name || roleId || "Sin rol";
   const subrole = employee.subrole || "";
   const isActive = employee.isActive !== false;
   const workName = getWorkName(employee.workId);
   const workId = employee.workId;
-  const employeeAlerts = alerts.filter((alert) => (alert as any).personId === employee.id);
+  const employeeAlerts = alerts.filter((alert: Alert) => {
+    // Check if alert is related to this employee via user_id or metadata
+    return alert.user_id === employee.id || (alert.metadata && typeof alert.metadata === 'object' && 'personId' in alert.metadata && (alert.metadata as { personId?: string }).personId === employee.id);
+  });
   const unreadAlerts = employeeAlerts.filter((a) => !a.read).length;
   const criticalAlerts = employeeAlerts.filter((a) => a.severity === "critical").length;
   const warningAlerts = employeeAlerts.filter((a) => a.severity === "warning").length;

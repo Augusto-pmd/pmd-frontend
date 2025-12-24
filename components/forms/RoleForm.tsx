@@ -44,8 +44,9 @@ export function RoleForm({ role, onSubmit, onCancel }: RoleFormProps) {
     setLoading(true);
     try {
       await onSubmit(formData);
-    } catch (error: any) {
-      setErrors({ submit: error.message || "Failed to save role" });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save role";
+      setErrors({ submit: errorMessage });
     } finally {
       setLoading(false);
     }

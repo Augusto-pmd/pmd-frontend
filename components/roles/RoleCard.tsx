@@ -4,19 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-
-interface Role {
-  id: string;
-  name?: string;
-  nombre?: string;
-  description?: string;
-  descripcion?: string;
-  permissions?: string[];
-  permisos?: string[];
-  userCount?: number;
-  cantidadUsuarios?: number;
-  [key: string]: any;
-}
+import { Role } from "@/lib/types/role";
 
 interface RoleCardProps {
   role: Role;

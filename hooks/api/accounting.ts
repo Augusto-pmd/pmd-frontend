@@ -24,7 +24,9 @@ export function useAccountingReport(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useAccountingReport] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useAccountingReport] id no está definido");
+    }
     return { report: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -65,7 +67,7 @@ export function useAccountingTransactions(params?: { startDate?: string; endDate
   const { token } = useAuthStore();
   
   const queryString = params
-    ? `?${new URLSearchParams(params as any).toString()}`
+    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
     : "";
   
   const transactionsUrl = `/accounting/transactions${queryString}`;
@@ -89,7 +91,9 @@ export function useAccountingMonth(month: number | null, year: number | null) {
   const { token } = useAuthStore();
   
   if (!month || !year) {
-    console.warn("❗ [useAccountingMonth] month o year no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useAccountingMonth] month o year no está definido");
+    }
     return { monthData: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -114,7 +118,7 @@ export function useAccountingPurchasesBook(params?: { startDate?: string; endDat
   const { token } = useAuthStore();
   
   const queryString = params
-    ? `?${new URLSearchParams(params as any).toString()}`
+    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
     : "";
   
   const { data, error, isLoading, mutate } = useSWR(
@@ -136,7 +140,7 @@ export function useAccountingWithholdings(params?: { startDate?: string; endDate
   const { token } = useAuthStore();
   
   const queryString = params
-    ? `?${new URLSearchParams(params as any).toString()}`
+    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
     : "";
   
   const { data, error, isLoading, mutate } = useSWR(
@@ -158,7 +162,7 @@ export function useAccountingPerceptions(params?: { startDate?: string; endDate?
   const { token } = useAuthStore();
   
   const queryString = params
-    ? `?${new URLSearchParams(params as any).toString()}`
+    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
     : "";
   
   const { data, error, isLoading, mutate } = useSWR(

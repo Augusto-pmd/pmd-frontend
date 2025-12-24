@@ -28,7 +28,9 @@ export function useExpense(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useExpense] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useExpense] id no está definido");
+    }
     return { expense: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -56,21 +58,27 @@ export const expenseApi = {
   },
   update: (id: string, data: UpdateExpenseData) => {
     if (!id) {
-      console.warn("❗ [expenseApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [expenseApi.update] id no está definido");
+      }
       throw new Error("ID de gasto no está definido");
     }
     return apiClient.put<Expense>(`/expenses/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [expenseApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [expenseApi.delete] id no está definido");
+      }
       throw new Error("ID de gasto no está definido");
     }
     return apiClient.delete(`/expenses/${id}`);
   },
   validate: (id: string, state: "validated" | "observed" | "annulled", observations?: string) => {
     if (!id) {
-      console.warn("❗ [expenseApi.validate] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [expenseApi.validate] id no está definido");
+      }
       throw new Error("ID de gasto no está definido");
     }
     return apiClient.patch<Expense>(`/expenses/${id}/validate`, {

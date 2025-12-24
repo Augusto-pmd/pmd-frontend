@@ -26,8 +26,10 @@ function WorksContent() {
       await mutate();
       toast.success("Obra creada correctamente");
       setIsCreateModalOpen(false);
-    } catch (err: any) {
-      console.error("Error al crear obra:", err);
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al crear obra:", err);
+      }
       const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {

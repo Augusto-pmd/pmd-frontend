@@ -44,9 +44,12 @@ export function ChangeRoleModal({ isOpen, onClose, user, onSuccess }: ChangeRole
       toast.success("Rol actualizado correctamente");
       onSuccess?.();
       onClose();
-    } catch (err: any) {
-      console.error("Error al cambiar rol:", err);
-      toast.error(err.message || "Error al cambiar el rol");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al cambiar rol:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al cambiar el rol";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

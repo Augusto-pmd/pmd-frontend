@@ -2,11 +2,7 @@
 
 import { RoleCard } from "./RoleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-
-interface Role {
-  id: string;
-  [key: string]: any;
-}
+import { Role } from "@/lib/types/role";
 
 interface RolesListProps {
   roles: Role[];

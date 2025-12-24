@@ -4,23 +4,27 @@ import React from "react";
 
 export class DebugErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; error: any; info: any }
+  { hasError: boolean; error: Error | null; info: React.ErrorInfo | null }
 > {
-  constructor(props: any) {
+  constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null, info: null };
   }
 
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: unknown) {
+    return { hasError: true, error: error as Error };
   }
 
-  componentDidCatch(error: any, info: any) {
-    console.error("⛔ FULL ERROR CAUGHT BY BOUNDARY ⛔");
-    console.error("ERROR:", error);
-    console.error("STACK:", error?.stack);
-    console.error("INFO:", info);
-    this.setState({ error, info });
+  componentDidCatch(error: unknown, info: React.ErrorInfo) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("⛔ FULL ERROR CAUGHT BY BOUNDARY ⛔");
+      console.error("ERROR:", error);
+      if (error && typeof error === "object" && "stack" in error) {
+        console.error("STACK:", error.stack);
+      }
+      console.error("INFO:", info);
+    }
+    this.setState({ error: error as Error, info });
   }
 
   render() {

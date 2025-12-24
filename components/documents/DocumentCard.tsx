@@ -5,27 +5,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { getBackendUrl } from "@/lib/env";
-
-interface Document {
-  id: string;
-  name?: string;
-  nombre?: string;
-  fileName?: string;
-  type?: string;
-  tipo?: string;
-  mimeType?: string;
-  uploadDate?: string;
-  fecha?: string;
-  createdAt?: string;
-  uploadedBy?: string;
-  usuario?: string;
-  userId?: string;
-  description?: string;
-  descripcion?: string;
-  url?: string;
-  fileUrl?: string;
-  [key: string]: any;
-}
+import { Document } from "@/lib/types/document";
 
 interface DocumentCardProps {
   document: Document;
@@ -82,7 +62,9 @@ export function DocumentCard({ document }: DocumentCardProps) {
       // Si no hay URL, intentar descargar desde la API
       const envApiUrl = getBackendUrl();
       if (!envApiUrl || envApiUrl.includes("undefined") || envApiUrl.includes("null")) {
-        console.error("🔴 [DocumentCard] NEXT_PUBLIC_API_URL no está definida");
+        if (process.env.NODE_ENV === "development") {
+          console.error("🔴 [DocumentCard] NEXT_PUBLIC_API_URL no está definida");
+        }
         return;
       }
       // Construir API_URL EXACTAMENTE como se requiere: ${NEXT_PUBLIC_API_URL}/api

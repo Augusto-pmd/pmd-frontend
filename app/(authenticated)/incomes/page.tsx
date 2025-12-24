@@ -44,8 +44,9 @@ function IncomesContent() {
       await incomeApi.delete(id);
       mutate();
       globalMutate("/incomes");
-    } catch (error: any) {
-      alert(error.message || "Failed to delete income");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete income";
+      alert(errorMessage);
     } finally {
       setDeleteLoading(null);
     }
@@ -63,8 +64,9 @@ function IncomesContent() {
       globalMutate("/incomes");
       setIsModalOpen(false);
       setEditingIncome(null);
-    } catch (error: any) {
-      alert(error.message || "Failed to save income");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save income";
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

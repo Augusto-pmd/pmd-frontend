@@ -61,9 +61,12 @@ function AccountingContent() {
       await createEntry(data);
       toast.success("Movimiento creado correctamente");
       setIsCreateModalOpen(false);
-    } catch (err: any) {
-      console.error("Error al crear movimiento:", err);
-      toast.error(err.message || "Error al crear el movimiento");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al crear movimiento:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al crear el movimiento";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -2,11 +2,7 @@
 
 import { DocumentCard } from "./DocumentCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-
-interface Document {
-  id: string;
-  [key: string]: any;
-}
+import { Document } from "@/lib/types/document";
 
 interface DocumentListProps {
   documents: Document[];

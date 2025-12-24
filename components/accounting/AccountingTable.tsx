@@ -88,9 +88,12 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
       toast.success("Movimiento actualizado correctamente");
       setIsEditModalOpen(false);
       setSelectedEntry(null);
-    } catch (err: any) {
-      console.error("Error al actualizar movimiento:", err);
-      toast.error(err.message || "Error al actualizar el movimiento");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al actualizar movimiento:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al actualizar el movimiento";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,9 +108,12 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
       toast.success("Movimiento eliminado correctamente");
       setIsDeleteModalOpen(false);
       setSelectedEntry(null);
-    } catch (err: any) {
-      console.error("Error al eliminar movimiento:", err);
-      toast.error(err.message || "Error al eliminar el movimiento");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar movimiento:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el movimiento";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

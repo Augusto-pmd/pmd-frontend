@@ -96,7 +96,9 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
       await onSubmit(payload);
     } catch (error) {
       // El error ya se maneja en el componente padre
-      console.error("Error en SupplierForm:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error en SupplierForm:", error);
+      }
     }
   };
 

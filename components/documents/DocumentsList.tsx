@@ -11,19 +11,9 @@ import { useToast } from "@/components/ui/Toast";
 import { Edit, Trash2, Eye, Download, FileText } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
-
-interface Document {
-  id: string;
-  workId?: string;
-  type: string;
-  name: string;
-  version?: string;
-  uploadedAt: string;
-  uploadedBy?: string;
-  status?: "aprobado" | "en revisión" | "pendiente" | "rechazado";
-  url?: string;
-  [key: string]: any;
-}
+import { Document } from "@/lib/types/document";
+import { Work } from "@/lib/types/work";
+import { User } from "@/lib/types/user";
 
 interface DocumentsListProps {
   documents: Document[];
@@ -81,16 +71,16 @@ export function DocumentsList({
 
   const getWorkName = (workId?: string) => {
     if (!workId) return "-";
-    const work = works.find((w: any) => w.id === workId);
+    const work = works.find((w: Work) => w.id === workId);
     if (!work) return workId;
-    return work.name || work.title || work.nombre || workId;
+    return work.name || workId;
   };
 
   const getUserName = (userId?: string) => {
     if (!userId) return "-";
-    const user = users.find((u: any) => u.id === userId);
+    const user = users.find((u: User) => u.id === userId);
     if (!user) return userId;
-    return user.fullName || user.name || user.nombre || userId;
+    return user.fullName || user.name || userId;
   };
 
   const getStatusVariant = (status?: string) => {
@@ -122,9 +112,12 @@ export function DocumentsList({
       toast.success("Documento eliminado correctamente");
       setIsDeleteModalOpen(false);
       setSelectedDocument(null);
-    } catch (err: any) {
-      console.error("Error al eliminar documento:", err);
-      toast.error(err.message || "Error al eliminar el documento");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar documento:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el documento";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -282,9 +275,12 @@ export function DocumentsList({
                   toast.success("Documento actualizado correctamente");
                   setIsEditModalOpen(false);
                   setSelectedDocument(null);
-                } catch (err: any) {
-                  console.error("Error al actualizar documento:", err);
-                  toast.error(err.message || "Error al actualizar el documento");
+                } catch (err: unknown) {
+                  if (process.env.NODE_ENV === "development") {
+                    console.error("Error al actualizar documento:", err);
+                  }
+                  const errorMessage = err instanceof Error ? err.message : "Error al actualizar el documento";
+                  toast.error(errorMessage);
                 } finally {
                   setIsSubmitting(false);
                 }

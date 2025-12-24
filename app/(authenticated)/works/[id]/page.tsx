@@ -119,7 +119,7 @@ function WorkDetailContent() {
   };
 
   const formatCurrency = (amount: number | undefined, currency: string = work.currency || "ARS") => {
-    if (amount === undefined || amount === null) return "$0.00";
+    if (amount == null) return "$0.00";
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: currency === "USD" ? "USD" : "ARS",
@@ -135,7 +135,9 @@ function WorkDetailContent() {
       toast.success("Obra actualizada correctamente");
       setIsEditModalOpen(false);
     } catch (err: unknown) {
-      console.error("Error al actualizar obra:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al actualizar obra:", err);
+      }
       const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
@@ -158,7 +160,9 @@ function WorkDetailContent() {
         router.push("/works");
       }, 1500);
     } catch (err: unknown) {
-      console.error("Error al archivar obra:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al archivar obra:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al archivar la obra";
       toast.error(errorMessage);
     } finally {
@@ -176,7 +180,9 @@ function WorkDetailContent() {
         router.push("/works");
       }, 1500);
     } catch (err: unknown) {
-      console.error("Error al eliminar obra:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar obra:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al eliminar la obra";
       toast.error(errorMessage);
     } finally {
@@ -194,7 +200,9 @@ function WorkDetailContent() {
       await mutate();
       toast.success("Obra cerrada correctamente");
     } catch (err: unknown) {
-      console.error("Error al cerrar obra:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al cerrar obra:", err);
+      }
       const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {

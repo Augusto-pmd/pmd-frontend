@@ -4,19 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-
-interface User {
-  id: string;
-  name?: string;
-  nombre?: string;
-  fullName?: string;
-  email?: string;
-  role?: { id: string; name: string; permissions?: string[] };
-  rol?: string;
-  status?: string;
-  estado?: string;
-  [key: string]: any;
-}
+import { User } from "@/lib/types/user";
 
 interface UserCardProps {
   user: User;

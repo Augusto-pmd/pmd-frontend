@@ -4,24 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardTitle, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-
-interface Cashbox {
-  id: string;
-  name?: string;
-  nombre?: string;
-  status?: string;
-  estado?: string;
-  state?: string;
-  openDate?: string;
-  fechaApertura?: string;
-  openingDate?: string;
-  closeDate?: string;
-  fechaCierre?: string;
-  closingDate?: string;
-  balance?: number;
-  saldo?: number;
-  [key: string]: any;
-}
+import { Cashbox } from "@/lib/types/cashbox";
 
 interface CashboxCardProps {
   cashbox: Cashbox;
@@ -83,28 +66,28 @@ export function CashboxCard({ cashbox }: CashboxCardProps) {
                 Fecha de apertura:
               </span>
               <span style={{ fontSize: "13px", color: "var(--apple-text-primary)", fontWeight: 500 }}>
-                {formatDate(cashbox.fechaApertura || cashbox.openingDate || cashbox.openDate)}
+                {formatDate(cashbox.opening_date)}
               </span>
             </div>
 
-            {(cashbox.fechaCierre || cashbox.closingDate || cashbox.closeDate) && (
+            {(cashbox.closedAt || cashbox.closed_at) && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontSize: "13px", color: "var(--apple-text-secondary)" }}>
                   Fecha de cierre:
                 </span>
                 <span style={{ fontSize: "13px", color: "var(--apple-text-primary)", fontWeight: 500 }}>
-                  {formatDate(cashbox.fechaCierre || cashbox.closingDate || cashbox.closeDate)}
+                  {formatDate(cashbox.closedAt || cashbox.closed_at)}
                 </span>
               </div>
             )}
 
-            {(cashbox.balance !== undefined || cashbox.saldo !== undefined) && (
+            {cashbox.balance !== undefined && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontSize: "13px", color: "var(--apple-text-secondary)" }}>
                   Saldo:
                 </span>
                 <span style={{ fontSize: "13px", color: "var(--apple-text-primary)", fontWeight: 600 }}>
-                  ${((cashbox.balance || cashbox.saldo) || 0).toFixed(2)}
+                  ${(cashbox.balance || 0).toFixed(2)}
                 </span>
               </div>
             )}

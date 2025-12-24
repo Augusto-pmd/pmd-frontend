@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { User, CreateUserData, UpdateUserData } from "@/lib/types/user";
 
 export function useUsers() {
   const { token } = useAuthStore();
@@ -13,7 +14,7 @@ export function useUsers() {
   );
 
   return {
-    users: data?.data || data || [],
+    users: (data?.data || data || []) as User[],
     error,
     isLoading,
     mutate,
@@ -24,7 +25,9 @@ export function useUser(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useUser] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useUser] id no está definido");
+    }
     return { user: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -36,7 +39,7 @@ export function useUser(id: string | null) {
   );
 
   return {
-    user: data?.data || data,
+    user: (data?.data || data) as User | null,
     error,
     isLoading,
     mutate,
@@ -47,7 +50,9 @@ export function useUserRole(userId: string | null) {
   const { token } = useAuthStore();
   
   if (!userId) {
-    console.warn("❗ [useUserRole] userId no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useUserRole] userId no está definido");
+    }
     return { role: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -67,30 +72,38 @@ export function useUserRole(userId: string | null) {
 }
 
 export const userApi = {
-  create: (data: any) => {
+  create: (data: CreateUserData) => {
     return apiClient.post("/users", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: UpdateUserData) => {
     if (!id) {
-      console.warn("❗ [userApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [userApi.update] id no está definido");
+      }
       throw new Error("ID de usuario no está definido");
     }
     return apiClient.patch(`/users/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [userApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [userApi.delete] id no está definido");
+      }
       throw new Error("ID de usuario no está definido");
     }
     return apiClient.delete(`/users/${id}`);
   },
   updateRole: (id: string, roleId: string) => {
     if (!id) {
-      console.warn("❗ [userApi.updateRole] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [userApi.updateRole] id no está definido");
+      }
       throw new Error("ID de usuario no está definido");
     }
     if (!roleId) {
-      console.warn("❗ [userApi.updateRole] roleId no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [userApi.updateRole] roleId no está definido");
+      }
       throw new Error("ID de rol no está definido");
     }
     return apiClient.patch(`/users/${id}/role`, { roleId });

@@ -85,7 +85,9 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       toast.success("Proveedor actualizado correctamente");
       setIsEditModalOpen(false);
     } catch (err: unknown) {
-      console.error("Error al actualizar proveedor:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al actualizar proveedor:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al actualizar el proveedor";
       toast.error(errorMessage);
     } finally {
@@ -101,7 +103,9 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       toast.success("Proveedor eliminado correctamente");
       setIsDeleteModalOpen(false);
     } catch (err: unknown) {
-      console.error("Error al eliminar proveedor:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar proveedor:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al eliminar el proveedor";
       toast.error(errorMessage);
     } finally {
@@ -120,7 +124,9 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       await onRefresh?.();
       toast.success("Proveedor aprobado correctamente");
     } catch (err: unknown) {
-      console.error("Error al aprobar proveedor:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al aprobar proveedor:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al aprobar el proveedor";
       toast.error(errorMessage);
     } finally {
@@ -139,7 +145,9 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       await onRefresh?.();
       toast.success("Proveedor rechazado correctamente. Se ha enviado una alerta al operador.");
     } catch (err: unknown) {
-      console.error("Error al rechazar proveedor:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al rechazar proveedor:", err);
+      }
       const errorMessage = err instanceof Error ? err.message : "Error al rechazar el proveedor";
       toast.error(errorMessage);
     } finally {

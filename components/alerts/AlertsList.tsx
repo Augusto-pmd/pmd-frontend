@@ -132,9 +132,12 @@ export function AlertsList({
       await markAsRead(id);
       await onRefresh?.();
       toast.success("Alerta marcada como leída");
-    } catch (err: any) {
-      console.error("Error al marcar alerta:", err);
-      toast.error(err.message || "Error al marcar la alerta");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al marcar alerta:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al marcar la alerta";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -146,9 +149,12 @@ export function AlertsList({
       await markAllAsRead();
       await onRefresh?.();
       toast.success("Todas las alertas marcadas como leídas");
-    } catch (err: any) {
-      console.error("Error al marcar todas las alertas:", err);
-      toast.error(err.message || "Error al marcar las alertas");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al marcar todas las alertas:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al marcar las alertas";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -163,9 +169,12 @@ export function AlertsList({
       toast.success("Alerta eliminada correctamente");
       setIsDeleteModalOpen(false);
       setSelectedAlert(null);
-    } catch (err: any) {
-      console.error("Error al eliminar alerta:", err);
-      toast.error(err.message || "Error al eliminar la alerta");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al eliminar alerta:", err);
+      }
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar la alerta";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

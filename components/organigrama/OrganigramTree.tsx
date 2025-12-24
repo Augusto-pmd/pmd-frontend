@@ -8,18 +8,10 @@ import { useAlertsStore } from "@/store/alertsStore";
 import { useWorks } from "@/hooks/api/works";
 import { useRoles } from "@/hooks/api/roles";
 import Link from "next/link";
-
-interface Employee {
-  id: string;
-  fullName?: string;
-  name?: string;
-  nombre?: string;
-  role?: string;
-  subrole?: string;
-  workId?: string;
-  isActive?: boolean;
-  [key: string]: any;
-}
+import { Employee } from "@/lib/types/employee";
+import { Work } from "@/lib/types/work";
+import { Role } from "@/lib/types/role";
+import { Alert } from "@/store/alertsStore";
 
 interface TreeNode {
   id: string;
@@ -43,19 +35,22 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
 
   const getWorkName = (workId?: string) => {
     if (!workId) return null;
-    const work = works.find((w: any) => w.id === workId);
+    const work = works.find((w: Work) => w.id === workId);
     if (!work) return null;
-    return work.name || work.title || work.nombre || workId;
+    return work.name || workId;
   };
 
   const getRoleName = (roleId?: string) => {
     if (!roleId) return null;
-    const role = roles.find((r: any) => r.id === roleId || r.name === roleId);
-    return role?.name || role?.nombre || roleId;
+    const role = roles.find((r: Role) => r.id === roleId || r.name === roleId);
+    return role?.name || roleId;
   };
 
   const getEmployeeAlerts = (employeeId: string) => {
-    return alerts.filter((alert) => (alert as any).personId === employeeId);
+    return alerts.filter((alert: Alert) => {
+      // Check if alert is related to this employee via user_id or metadata
+      return alert.user_id === employeeId || (alert.metadata && typeof alert.metadata === 'object' && 'personId' in alert.metadata && (alert.metadata as { personId?: string }).personId === employeeId);
+    });
   };
 
   const toggleNode = (nodeId: string) => {
@@ -77,7 +72,7 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
     const roleHierarchy: Record<string, { parent?: string; label: string }> = {};
     
     // Agregar roles del backend a la jerarquía
-    roles.forEach((role: any) => {
+    roles.forEach((role: Role) => {
       const roleName = role.name || role.nombre || role.id;
       const roleKey = role.id || roleName;
       

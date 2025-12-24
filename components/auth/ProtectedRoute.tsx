@@ -46,10 +46,14 @@ export function ProtectedRoute({
           
           // Si loadMe falla, intentar refresh primero antes de redirigir
           if (!loadedUser) {
-            console.warn("⚠️ ProtectedRoute: loadMe() no devolvió usuario, intentando refresh...");
+            if (process.env.NODE_ENV === "development") {
+              console.warn("⚠️ ProtectedRoute: loadMe() no devolvió usuario, intentando refresh...");
+            }
             const refreshed = await storeState.refresh();
             if (!refreshed && isMounted && !storeState.user) {
-              console.warn("⚠️ ProtectedRoute: Refresh también falló, redirigiendo a login");
+              if (process.env.NODE_ENV === "development") {
+                console.warn("⚠️ ProtectedRoute: Refresh también falló, redirigiendo a login");
+              }
               setTimeout(() => {
                 if (isMounted && !storeState.user) {
                   router.replace(redirectTo);
@@ -58,17 +62,21 @@ export function ProtectedRoute({
             }
           }
         } catch (error) {
-          console.error("🔴 ProtectedRoute: Error en loadMe():", error);
+          if (process.env.NODE_ENV === "development") {
+            console.error("🔴 ProtectedRoute: Error en loadMe():", error);
+          }
           if (isMounted) {
             // Si hay error, intentar refresh antes de redirigir
-            storeState.refresh().catch(() => {
+            try {
+              await storeState.refresh();
+            } catch {
               // Si refresh también falla, redirigir después de un tiempo
               setTimeout(() => {
                 if (isMounted && !storeState.user) {
                   router.replace(redirectTo);
                 }
               }, 2000);
-            });
+            }
           }
         }
       };

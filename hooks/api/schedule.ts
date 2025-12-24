@@ -6,7 +6,7 @@ export function useSchedule(params?: { startDate?: string; endDate?: string; wor
   const { token } = useAuthStore();
   
   const queryString = params
-    ? `?${new URLSearchParams(params as any).toString()}`
+    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
     : "";
   
   const { data, error, isLoading, mutate } = useSWR(
@@ -28,7 +28,9 @@ export function useScheduleItem(id: string | null) {
   const { token } = useAuthStore();
   
   if (!id) {
-    console.warn("❗ [useScheduleItem] id no está definido");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❗ [useScheduleItem] id no está definido");
+    }
     return { item: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
@@ -48,19 +50,23 @@ export function useScheduleItem(id: string | null) {
 }
 
 export const scheduleApi = {
-  create: (data: any) => {
+  create: (data: unknown) => {
     return apiClient.post("/schedule", data);
   },
-  update: (id: string, data: any) => {
+  update: (id: string, data: unknown) => {
     if (!id) {
-      console.warn("❗ [scheduleApi.update] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [scheduleApi.update] id no está definido");
+      }
       throw new Error("ID de item de cronograma no está definido");
     }
     return apiClient.put(`/schedule/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
-      console.warn("❗ [scheduleApi.delete] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [scheduleApi.delete] id no está definido");
+      }
       throw new Error("ID de item de cronograma no está definido");
     }
     return apiClient.delete(`/schedule/${id}`);
