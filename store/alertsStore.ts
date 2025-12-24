@@ -48,30 +48,39 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/alerts");
       set({ alerts: data?.data || data || [], isLoading: false });
-    } catch (error: any) {
-      console.error("🔴 [alertsStore] Error al obtener alertas:", error);
-      set({ error: error.message || "Error al cargar alertas", isLoading: false });
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [alertsStore] Error al obtener alertas:", error);
+      }
+      const errorMessage = error instanceof Error ? error.message : "Error al cargar alertas";
+      set({ error: errorMessage, isLoading: false });
     }
   },
 
   async markAsRead(id) {
     if (!id) {
-      console.warn("❗ [alertsStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [alertsStore] id no está definido");
+      }
       throw new Error("ID de alerta no está definido");
     }
 
     try {
       await apiClient.patch(`/alerts/${id}/read`, {});
       await get().fetchAlerts();
-    } catch (error: any) {
-      console.error("🔴 [alertsStore] Error al marcar alerta como leída:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [alertsStore] Error al marcar alerta como leída:", error);
+      }
       throw error;
     }
   },
 
   async createAlert(payload) {
     if (!payload) {
-      console.warn("❗ [alertsStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [alertsStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -91,7 +100,20 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
 
     try {
       // Construir payload exacto según CreateAlertDto del backend
-      const alertPayload: any = {
+      const alertPayload: {
+        type: string;
+        title: string;
+        message: string;
+        severity?: "info" | "warning" | "critical";
+        user_id?: string;
+        work_id?: string;
+        supplier_id?: string;
+        expense_id?: string;
+        contract_id?: string;
+        cashbox_id?: string;
+        document_id?: string;
+        metadata?: object;
+      } = {
         type: payload.type, // AlertType enum - required
         title: payload.title.trim(), // required, max 255
         message: payload.message.trim(), // required, string
@@ -111,43 +133,55 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       const response = await apiClient.post("/alerts", alertPayload);
       await get().fetchAlerts();
       return response;
-    } catch (error: any) {
-      console.error("🔴 [alertsStore] Error al crear alerta:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [alertsStore] Error al crear alerta:", error);
+      }
       throw error;
     }
   },
 
   async updateAlert(id, payload) {
     if (!id) {
-      console.warn("❗ [alertsStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [alertsStore] id no está definido");
+      }
       throw new Error("ID de alerta no está definido");
     }
 
     if (!payload) {
-      console.warn("❗ [alertsStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [alertsStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
     try {
       await apiClient.put(`/alerts/${id}`, payload);
       await get().fetchAlerts();
-    } catch (error: any) {
-      console.error("🔴 [alertsStore] Error al actualizar alerta:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [alertsStore] Error al actualizar alerta:", error);
+      }
       throw error;
     }
   },
 
   async deleteAlert(id) {
     if (!id) {
-      console.warn("❗ [alertsStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [alertsStore] id no está definido");
+      }
       throw new Error("ID de alerta no está definido");
     }
 
     try {
       await apiClient.delete(`/alerts/${id}`);
       await get().fetchAlerts();
-    } catch (error: any) {
-      console.error("🔴 [alertsStore] Error al eliminar alerta:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [alertsStore] Error al eliminar alerta:", error);
+      }
       throw error;
     }
   },
@@ -158,8 +192,10 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       const unreadAlerts = get().alerts.filter(a => !a.read);
       await Promise.all(unreadAlerts.map(alert => apiClient.patch(`/alerts/${alert.id}/read`, {})));
       await get().fetchAlerts();
-    } catch (error: any) {
-      console.error("🔴 [alertsStore] Error al marcar todas las alertas como leídas:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [alertsStore] Error al marcar todas las alertas como leídas:", error);
+      }
       throw error;
     }
   },

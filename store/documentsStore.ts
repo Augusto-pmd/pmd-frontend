@@ -48,15 +48,20 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       set({ isLoading: true, error: null });
       const data = await apiClient.get(url);
       set({ documents: data?.data || data || [], isLoading: false });
-    } catch (error: any) {
-      console.error("🔴 [documentsStore] Error al obtener documentos:", error);
-      set({ error: error.message || "Error al cargar documentos", isLoading: false });
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [documentsStore] Error al obtener documentos:", error);
+      }
+      const errorMessage = error instanceof Error ? error.message : "Error al cargar documentos";
+      set({ error: errorMessage, isLoading: false });
     }
   },
 
   async createDocument(payload) {
     if (!payload) {
-      console.warn("❗ [documentsStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [documentsStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -94,20 +99,26 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
         await get().fetchDocuments(payload.workId);
         return response;
       }
-    } catch (error: any) {
-      console.error("🔴 [documentsStore] Error al crear documento:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [documentsStore] Error al crear documento:", error);
+      }
       throw error;
     }
   },
 
   async updateDocument(id, payload) {
     if (!id) {
-      console.warn("❗ [documentsStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [documentsStore] id no está definido");
+      }
       throw new Error("ID de documento no está definido");
     }
 
     if (!payload) {
-      console.warn("❗ [documentsStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [documentsStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -132,15 +143,19 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       
       // Refrescar lista (con workId si está disponible)
       await get().fetchDocuments(payload.workId);
-    } catch (error: any) {
-      console.error("🔴 [documentsStore] Error al actualizar documento:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [documentsStore] Error al actualizar documento:", error);
+      }
       throw error;
     }
   },
 
   async deleteDocument(id) {
     if (!id) {
-      console.warn("❗ [documentsStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [documentsStore] id no está definido");
+      }
       throw new Error("ID de documento no está definido");
     }
 
@@ -151,8 +166,10 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
 
       await apiClient.delete(`/work-documents/${id}`);
       await get().fetchDocuments(workId);
-    } catch (error: any) {
-      console.error("🔴 [documentsStore] Error al eliminar documento:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [documentsStore] Error al eliminar documento:", error);
+      }
       throw error;
     }
   },

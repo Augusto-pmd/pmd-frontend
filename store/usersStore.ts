@@ -50,7 +50,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       const rawUsers = data?.data || data || [];
       
       // Normalizar IDs de usuarios y roles
-      const normalizedUsers = rawUsers.map((user: any) => ({
+      const normalizedUsers = rawUsers.map((user: Record<string, unknown>) => ({
         ...user,
         id: normalizeId(user.id),
         roleId: user.roleId ? normalizeId(user.roleId) : undefined,
@@ -61,15 +61,20 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       }));
       
       set({ users: normalizedUsers, isLoading: false });
-    } catch (error: any) {
-      console.error("🔴 [usersStore] Error al obtener usuarios:", error);
-      set({ error: error.message || "Error al cargar usuarios", isLoading: false });
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [usersStore] Error al obtener usuarios:", error);
+      }
+      const errorMessage = error instanceof Error ? error.message : "Error al cargar usuarios";
+      set({ error: errorMessage, isLoading: false });
     }
   },
 
   async createUser(payload) {
     if (!payload) {
-      console.warn("❗ [usersStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [usersStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -97,7 +102,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO del backend
-      const userPayload: any = {
+      const userPayload: {
+        fullName: string;
+        email: string;
+        password: string;
+        roleId: string;
+      } = {
         fullName: payload.fullName.trim(),
         email: payload.email.trim().toLowerCase(),
         password: payload.password,
@@ -114,20 +124,26 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       
       await get().fetchUsers();
       return response;
-    } catch (error: any) {
-      console.error("🔴 [usersStore] Error al crear usuario:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [usersStore] Error al crear usuario:", error);
+      }
       throw error;
     }
   },
 
   async updateUser(id, payload) {
     if (!id) {
-      console.warn("❗ [usersStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [usersStore] id no está definido");
+      }
       throw new Error("ID de usuario no está definido");
     }
 
     if (!payload) {
-      console.warn("❗ [usersStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [usersStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -150,7 +166,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO del backend
-      const userPayload: any = {};
+      const userPayload: {
+        fullName?: string;
+        email?: string;
+        password?: string;
+        roleId?: string | null;
+      } = {};
 
       // Solo enviar campos que existen en UpdateUserDto del backend
       if (payload.fullName) userPayload.fullName = payload.fullName.trim();
@@ -167,15 +188,19 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       
       await get().fetchUsers();
       return response;
-    } catch (error: any) {
-      console.error("🔴 [usersStore] Error al actualizar usuario:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [usersStore] Error al actualizar usuario:", error);
+      }
       throw error;
     }
   },
 
   async deleteUser(id) {
     if (!id) {
-      console.warn("❗ [usersStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [usersStore] id no está definido");
+      }
       throw new Error("ID de usuario no está definido");
     }
 
@@ -190,15 +215,19 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       await logDelete("users", "User", id, `Se eliminó el usuario ${userName}`);
       
       await get().fetchUsers();
-    } catch (error: any) {
-      console.error("🔴 [usersStore] Error al eliminar usuario:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [usersStore] Error al eliminar usuario:", error);
+      }
       throw error;
     }
   },
 
   async changeUserRole(id, roleId) {
     if (!id) {
-      console.warn("❗ [usersStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [usersStore] id no está definido");
+      }
       throw new Error("ID de usuario no está definido");
     }
 
@@ -219,8 +248,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       await logUpdate("users", "User", id, { roleId: beforeRoleId || null }, { roleId }, roleChange);
       
       await get().fetchUsers();
-    } catch (error: any) {
-      console.error("🔴 [usersStore] Error al cambiar rol:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [usersStore] Error al cambiar rol:", error);
+      }
       throw error;
     }
   },

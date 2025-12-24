@@ -37,9 +37,12 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/roles");
       set({ roles: data?.data || data || [], isLoading: false });
-    } catch (error: any) {
-      console.error("🔴 [rolesStore] Error al obtener roles:", error);
-      set({ error: error.message || "Error al cargar roles", isLoading: false });
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [rolesStore] Error al obtener roles:", error);
+      }
+      const errorMessage = error instanceof Error ? error.message : "Error al cargar roles";
+      set({ error: errorMessage, isLoading: false });
     }
   },
 
@@ -53,8 +56,10 @@ export const useRolesStore = create<RolesState>((set, get) => ({
         set({ permissions });
         return;
       }
-    } catch (error: any) {
-      console.warn("⚠️ [rolesStore] No se pudo obtener permisos del backend, usando lista estándar");
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️ [rolesStore] No se pudo obtener permisos del backend, usando lista estándar");
+      }
     }
 
     // Lista estándar de permisos si el backend no los provee
@@ -75,7 +80,9 @@ export const useRolesStore = create<RolesState>((set, get) => ({
 
   async createRole(payload) {
     if (!payload) {
-      console.warn("❗ [rolesStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [rolesStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -86,16 +93,19 @@ export const useRolesStore = create<RolesState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO
-      const rolePayload: any = {
+      const rolePayload: {
+        name: string;
+        description?: string;
+        permissions: string[];
+      } = {
         name: payload.name.trim(),
+        permissions: [],
       };
 
       // Agregar campos opcionales
       if (payload.description) rolePayload.description = payload.description.trim();
       if (payload.permissions && Array.isArray(payload.permissions)) {
         rolePayload.permissions = payload.permissions;
-      } else {
-        rolePayload.permissions = [];
       }
 
       const response = await apiClient.post("/roles", rolePayload);
@@ -105,20 +115,26 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       
       await get().fetchRoles();
       return response;
-    } catch (error: any) {
-      console.error("🔴 [rolesStore] Error al crear rol:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [rolesStore] Error al crear rol:", error);
+      }
       throw error;
     }
   },
 
   async updateRole(id, payload) {
     if (!id) {
-      console.warn("❗ [rolesStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [rolesStore] id no está definido");
+      }
       throw new Error("ID de rol no está definido");
     }
 
     if (!payload) {
-      console.warn("❗ [rolesStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [rolesStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -128,7 +144,11 @@ export const useRolesStore = create<RolesState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO
-      const rolePayload: any = {};
+      const rolePayload: {
+        name?: string;
+        description?: string;
+        permissions?: string[];
+      } = {};
 
       if (payload.name) rolePayload.name = payload.name.trim();
       if (payload.description !== undefined) rolePayload.description = payload.description?.trim() || undefined;
@@ -144,15 +164,19 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       
       await get().fetchRoles();
       return response;
-    } catch (error: any) {
-      console.error("🔴 [rolesStore] Error al actualizar rol:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [rolesStore] Error al actualizar rol:", error);
+      }
       throw error;
     }
   },
 
   async deleteRole(id) {
     if (!id) {
-      console.warn("❗ [rolesStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [rolesStore] id no está definido");
+      }
       throw new Error("ID de rol no está definido");
     }
 
@@ -167,8 +191,10 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       await logDelete("roles", "Role", id, `Se eliminó el rol ${roleName}`);
       
       await get().fetchRoles();
-    } catch (error: any) {
-      console.error("🔴 [rolesStore] Error al eliminar rol:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [rolesStore] Error al eliminar rol:", error);
+      }
       throw error;
     }
   },

@@ -12,8 +12,8 @@ export interface AuditLog {
   entityId?: string;
   details?: string;
   timestamp: string;
-  before?: any;
-  after?: any;
+  before?: unknown;
+  after?: unknown;
 }
 
 interface AuditState {
@@ -46,15 +46,20 @@ export const useAuditStore = create<AuditState>((set, get) => ({
       set({ isLoading: true, error: null });
       const data = await apiClient.get(url);
       set({ logs: data?.data || data || [], isLoading: false });
-    } catch (error: any) {
-      console.error("🔴 [auditStore] Error al obtener logs de auditoría:", error);
-      set({ error: error.message || "Error al cargar logs de auditoría", isLoading: false });
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [auditStore] Error al obtener logs de auditoría:", error);
+      }
+      const errorMessage = error instanceof Error ? error.message : "Error al cargar logs de auditoría";
+      set({ error: errorMessage, isLoading: false });
     }
   },
 
   async createAuditEntry(payload) {
     if (!payload) {
-      console.warn("❗ [auditStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [auditStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -71,7 +76,19 @@ export const useAuditStore = create<AuditState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO
-      const auditPayload: any = {
+      const auditPayload: {
+        action: string;
+        module: string;
+        user: string;
+        timestamp: string;
+        userId?: string;
+        userName?: string;
+        entity?: string;
+        entityId?: string;
+        details?: string;
+        before?: unknown;
+        after?: unknown;
+      } = {
         action: payload.action.trim(),
         module: payload.module.trim(),
         user: payload.user.trim(),
@@ -90,23 +107,29 @@ export const useAuditStore = create<AuditState>((set, get) => ({
       const response = await apiClient.post("/audit", auditPayload);
       await get().fetchLogs();
       return response;
-    } catch (error: any) {
-      console.error("🔴 [auditStore] Error al crear entrada de auditoría:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [auditStore] Error al crear entrada de auditoría:", error);
+      }
       throw error;
     }
   },
 
   async clearAuditEntry(id) {
     if (!id) {
-      console.warn("❗ [auditStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [auditStore] id no está definido");
+      }
       throw new Error("ID de entrada no está definido");
     }
 
     try {
       await apiClient.delete(`/audit/${id}`);
       await get().fetchLogs();
-    } catch (error: any) {
-      console.error("🔴 [auditStore] Error al eliminar entrada de auditoría:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [auditStore] Error al eliminar entrada de auditoría:", error);
+      }
       throw error;
     }
   },
@@ -115,8 +138,10 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     try {
       await apiClient.delete("/audit");
       await get().fetchLogs();
-    } catch (error: any) {
-      console.error("🔴 [auditStore] Error al limpiar todos los registros:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [auditStore] Error al limpiar todos los registros:", error);
+      }
       throw error;
     }
   },

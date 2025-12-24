@@ -64,15 +64,20 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
 
       const data = await apiClient.get(url);
       set({ entries: data?.data || data || [], isLoading: false });
-    } catch (error: any) {
-      console.error("🔴 [accountingStore] Error al obtener movimientos:", error);
-      set({ error: error.message || "Error al cargar movimientos contables", isLoading: false });
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [accountingStore] Error al obtener movimientos:", error);
+      }
+      const errorMessage = error instanceof Error ? error.message : "Error al cargar movimientos contables";
+      set({ error: errorMessage, isLoading: false });
     }
   },
 
   async createEntry(payload) {
     if (!payload) {
-      console.warn("❗ [accountingStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [accountingStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -94,20 +99,26 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       const response = await apiClient.post("/accounting", payload);
       await get().fetchEntries();
       return response;
-    } catch (error: any) {
-      console.error("🔴 [accountingStore] Error al crear movimiento:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [accountingStore] Error al crear movimiento:", error);
+      }
       throw error;
     }
   },
 
   async updateEntry(id, payload) {
     if (!id) {
-      console.warn("❗ [accountingStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [accountingStore] id no está definido");
+      }
       throw new Error("ID de movimiento no está definido");
     }
 
     if (!payload) {
-      console.warn("❗ [accountingStore] payload no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [accountingStore] payload no está definido");
+      }
       throw new Error("Payload no está definido");
     }
 
@@ -119,23 +130,29 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
     try {
       await apiClient.put(`/accounting/${id}`, payload);
       await get().fetchEntries();
-    } catch (error: any) {
-      console.error("🔴 [accountingStore] Error al actualizar movimiento:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [accountingStore] Error al actualizar movimiento:", error);
+      }
       throw error;
     }
   },
 
   async deleteEntry(id) {
     if (!id) {
-      console.warn("❗ [accountingStore] id no está definido");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [accountingStore] id no está definido");
+      }
       throw new Error("ID de movimiento no está definido");
     }
 
     try {
       await apiClient.delete(`/accounting/${id}`);
       await get().fetchEntries();
-    } catch (error: any) {
-      console.error("🔴 [accountingStore] Error al eliminar movimiento:", error);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [accountingStore] Error al eliminar movimiento:", error);
+      }
       throw error;
     }
   },
