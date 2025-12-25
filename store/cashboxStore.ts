@@ -7,7 +7,8 @@ import {
   CreateCashboxData, 
   CreateCashMovementData, 
   UpdateCashMovementData, 
-  CashMovementType, 
+  CashMovementType,
+  CashboxStatus, 
   Currency 
 } from "@/lib/types/cashbox";
 
@@ -40,7 +41,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/cashboxes");
-      set({ cashboxes: data?.data || data || [], isLoading: false });
+      set({ cashboxes: (data as any)?.data || data || [], isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [cashboxStore] Error al obtener cajas:", error);
@@ -71,14 +72,13 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       const cashboxPayload: CreateCashboxData = {
         opening_date: payload.opening_date, // ISO8601 string
         user_id: payload.user_id, // UUID
-        ...(payload.status && { status: payload.status }),
+        ...(payload.status && { status: payload.status as CashboxStatus }),
         ...(payload.opening_balance_ars !== undefined && { opening_balance_ars: payload.opening_balance_ars }),
         ...(payload.opening_balance_usd !== undefined && { opening_balance_usd: payload.opening_balance_usd }),
       };
 
-      const response = await apiClient.post("/cashboxes", cashboxPayload);
+      await apiClient.post("/cashboxes", cashboxPayload);
       await get().fetchCashboxes();
-      return response;
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [cashboxStore] Error al crear caja:", error);
@@ -144,7 +144,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get(`/cash-movements?cashboxId=${cashboxId}`);
-      const movements = data?.data || data || [];
+      const movements = (data as any)?.data || data || [];
       
       set((state) => ({
         movements: { ...state.movements, [cashboxId]: movements },
@@ -174,6 +174,11 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
+    // Validar campos obligatorios
+    if (!payload.amount || payload.amount <= 0) {
+      throw new Error("El monto es obligatorio y debe ser mayor a 0");
+    }
+
     try {
       // Construir payload exacto según CreateCashMovementDto del backend
       const movementType: CashMovementType = payload.type === "ingreso" || payload.type === "income" 
@@ -189,7 +194,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       const movementPayload: CreateCashMovementData = {
         cashbox_id: cashboxId, // required, UUID
         type: movementType, // required, CashMovementType enum
-        amount: payload.amount, // required, number
+        amount: payload.amount as number, // required, number
         currency: movementCurrency, // required, Currency enum
         date: movementDate, // required, ISO8601
         ...(payload.description && { description: payload.description.trim() }),

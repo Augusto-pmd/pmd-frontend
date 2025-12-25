@@ -63,7 +63,7 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       const url = queryString ? `/accounting?${queryString}` : "/accounting";
 
       const data = await apiClient.get(url);
-      set({ entries: data?.data || data || [], isLoading: false });
+      set({ entries: (data as any)?.data || data || [], isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [accountingStore] Error al obtener movimientos:", error);
@@ -96,9 +96,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
     }
 
     try {
-      const response = await apiClient.post("/accounting", payload);
+      await apiClient.post("/accounting", payload);
       await get().fetchEntries();
-      return response;
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [accountingStore] Error al crear movimiento:", error);

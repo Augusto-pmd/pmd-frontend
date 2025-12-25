@@ -47,7 +47,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get(url);
-      set({ documents: data?.data || data || [], isLoading: false });
+      set({ documents: (data as any)?.data || data || [], isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [documentsStore] Error al obtener documentos:", error);
@@ -90,14 +90,12 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
         if (payload.notes) formData.append("notes", payload.notes);
 
         // Usar apiClient.post con FormData (axios maneja multipart automáticamente)
-        const response = await apiClient.post("/work-documents", formData);
+        await apiClient.post("/work-documents", formData);
         await get().fetchDocuments(payload.workId);
-        return response;
       } else {
         // Si no hay archivo, enviar JSON normal
-        const response = await apiClient.post("/work-documents", payload);
+        await apiClient.post("/work-documents", payload);
         await get().fetchDocuments(payload.workId);
-        return response;
       }
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {

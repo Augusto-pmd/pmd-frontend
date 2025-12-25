@@ -47,7 +47,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/users");
-      const rawUsers = data?.data || data || [];
+      const rawUsers = (data as any)?.data || data || [];
       
       // Normalizar IDs de usuarios y roles
       const normalizedUsers = rawUsers.map((user: Record<string, unknown>) => ({
@@ -55,8 +55,8 @@ export const useUsersStore = create<UsersState>((set, get) => ({
         id: normalizeId(user.id),
         roleId: user.roleId ? normalizeId(user.roleId) : undefined,
         role: user.role ? {
-          ...user.role,
-          id: normalizeId(user.role.id),
+          ...(user.role as any),
+          id: normalizeId((user.role as any).id),
         } : undefined,
       }));
       
@@ -120,10 +120,9 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       const response = await apiClient.post("/users", userPayload);
       
       // Registrar en auditoría
-      await logCreate("users", "User", response?.data?.id || "unknown", `Se creó el usuario ${userPayload.fullName}`);
+      await logCreate("users", "User", (response as any)?.data?.id || "unknown", `Se creó el usuario ${userPayload.fullName}`);
       
       await get().fetchUsers();
-      return response;
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [usersStore] Error al crear usuario:", error);
@@ -187,7 +186,6 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       await logUpdate("users", "User", id, beforeState, afterState, `Se actualizó el usuario ${userPayload.fullName || currentUser?.fullName || id}`);
       
       await get().fetchUsers();
-      return response;
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [usersStore] Error al actualizar usuario:", error);

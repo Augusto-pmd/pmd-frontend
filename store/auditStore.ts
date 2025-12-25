@@ -45,7 +45,7 @@ export const useAuditStore = create<AuditState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get(url);
-      set({ logs: data?.data || data || [], isLoading: false });
+      set({ logs: (data as any)?.data || data || [], isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [auditStore] Error al obtener logs de auditoría:", error);
@@ -104,9 +104,8 @@ export const useAuditStore = create<AuditState>((set, get) => ({
       if (payload.before) auditPayload.before = payload.before;
       if (payload.after) auditPayload.after = payload.after;
 
-      const response = await apiClient.post("/audit", auditPayload);
+      await apiClient.post("/audit", auditPayload);
       await get().fetchLogs();
-      return response;
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [auditStore] Error al crear entrada de auditoría:", error);

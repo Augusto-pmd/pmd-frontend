@@ -47,7 +47,7 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/alerts");
-      set({ alerts: data?.data || data || [], isLoading: false });
+      set({ alerts: (data as any)?.data || data || [], isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [alertsStore] Error al obtener alertas:", error);
@@ -130,9 +130,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       if (payload.document_id) alertPayload.document_id = payload.document_id;
       if (payload.metadata) alertPayload.metadata = payload.metadata;
 
-      const response = await apiClient.post("/alerts", alertPayload);
+      await apiClient.post("/alerts", alertPayload);
       await get().fetchAlerts();
-      return response;
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [alertsStore] Error al crear alerta:", error);

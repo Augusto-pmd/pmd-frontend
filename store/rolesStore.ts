@@ -36,7 +36,7 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/roles");
-      set({ roles: data?.data || data || [], isLoading: false });
+      set({ roles: (data as any)?.data || data || [], isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [rolesStore] Error al obtener roles:", error);
@@ -51,7 +51,7 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     // Si el backend no tiene endpoint de permisos, usar lista estándar
     try {
       const data = await apiClient.get("/permissions");
-      const permissions = data?.data || data || [];
+      const permissions = (data as any)?.data || data || [];
       if (Array.isArray(permissions) && permissions.length > 0) {
         set({ permissions });
         return;
@@ -111,10 +111,9 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       const response = await apiClient.post("/roles", rolePayload);
       
       // Registrar en auditoría
-      await logCreate("roles", "Role", response?.data?.id || "unknown", `Se creó el rol ${rolePayload.name}`);
+      await logCreate("roles", "Role", (response as any)?.data?.id || "unknown", `Se creó el rol ${rolePayload.name}`);
       
       await get().fetchRoles();
-      return response;
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [rolesStore] Error al crear rol:", error);
@@ -163,7 +162,6 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       await logUpdate("roles", "Role", id, beforeState, afterState, `Se actualizó el rol ${rolePayload.name || currentRole?.name || id}`);
       
       await get().fetchRoles();
-      return response;
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [rolesStore] Error al actualizar rol:", error);
