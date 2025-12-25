@@ -8,7 +8,7 @@ export function useExpenses() {
   
   const fetcher = async (): Promise<Expense[]> => {
     const response = await apiClient.get<Expense[]>("/expenses");
-    return response?.data || response || [];
+    return (response as any)?.data || response || [];
   };
   
   const { data, error, isLoading, mutate } = useSWR<Expense[]>(
@@ -36,7 +36,7 @@ export function useExpense(id: string | null) {
   
   const fetcher = async (): Promise<Expense> => {
     const response = await apiClient.get<Expense>(`/expenses/${id}`);
-    return response?.data || response;
+    return (response as any)?.data || response;
   };
   
   const { data, error, isLoading, mutate } = useSWR<Expense>(

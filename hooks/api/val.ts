@@ -13,7 +13,7 @@ export function useVals() {
   );
 
   return {
-    vals: data?.data || data || [],
+    vals: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -38,7 +38,7 @@ export function useVal(id: string | null) {
   );
 
   return {
-    val: data?.data || data,
+    val: (data as any)?.data || data,
     error,
     isLoading,
     mutate,

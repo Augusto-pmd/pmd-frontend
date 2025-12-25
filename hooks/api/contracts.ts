@@ -16,7 +16,7 @@ export function useContracts() {
   );
 
   return {
-    contracts: (data?.data || data || []) as Contract[],
+    contracts: ((data as any)?.data || data || []) as Contract[],
     error,
     isLoading,
     mutate,
@@ -41,7 +41,7 @@ export function useContract(id: string | null) {
   );
 
   return {
-    contract: (data?.data || data) as Contract | null,
+    contract: ((data as any)?.data || data) as Contract | null,
     error,
     isLoading,
     mutate,

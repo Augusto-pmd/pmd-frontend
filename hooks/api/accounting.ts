@@ -13,7 +13,7 @@ export function useAccounting() {
   );
 
   return {
-    accounting: data?.data || data || [],
+    accounting: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -38,7 +38,7 @@ export function useAccountingReport(id: string | null) {
   );
 
   return {
-    report: data?.data || data,
+    report: (data as any)?.data || data,
     error,
     isLoading,
     mutate,
@@ -56,7 +56,7 @@ export function useAccountingSummary() {
   );
 
   return {
-    summary: data?.data || data,
+    summary: (data as any)?.data || data,
     error,
     isLoading,
     mutate,
@@ -80,7 +80,7 @@ export function useAccountingTransactions(params?: { startDate?: string; endDate
   );
 
   return {
-    transactions: data?.data || data || [],
+    transactions: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -107,7 +107,7 @@ export function useAccountingMonth(month: number | null, year: number | null) {
   );
 
   return {
-    monthData: data?.data || data,
+    monthData: (data as any)?.data || data,
     error,
     isLoading,
     mutate,
@@ -129,7 +129,7 @@ export function useAccountingPurchasesBook(params?: { startDate?: string; endDat
   );
 
   return {
-    purchasesBook: data?.data || data || [],
+    purchasesBook: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -151,7 +151,7 @@ export function useAccountingWithholdings(params?: { startDate?: string; endDate
   );
 
   return {
-    withholdings: data?.data || data || [],
+    withholdings: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -173,7 +173,7 @@ export function useAccountingPerceptions(params?: { startDate?: string; endDate?
   );
 
   return {
-    perceptions: data?.data || data || [],
+    perceptions: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,

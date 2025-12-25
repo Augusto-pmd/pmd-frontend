@@ -15,7 +15,7 @@ export function useWorkBudgets(workId?: string) {
   );
 
   return {
-    budgets: data?.data || data || [],
+    budgets: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -40,7 +40,7 @@ export function useWorkBudget(id: string | null) {
   );
 
   return {
-    budget: data?.data || data,
+    budget: (data as any)?.data || data,
     error,
     isLoading,
     mutate,

@@ -8,7 +8,7 @@ export function useWorks() {
   
   const fetcher = async (): Promise<Work[]> => {
     const response = await apiClient.get<Work[]>("/works");
-    return response?.data || response || [];
+    return (response as any)?.data || response || [];
   };
   
   const { data, error, isLoading, mutate } = useSWR<Work[]>(
@@ -36,7 +36,7 @@ export function useWork(id: string | null) {
   
   const fetcher = async (): Promise<Work> => {
     const response = await apiClient.get<Work>(`/works/${id}`);
-    return response?.data || response;
+    return (response as any)?.data || response;
   };
   
   const { data, error, isLoading, mutate } = useSWR<Work>(

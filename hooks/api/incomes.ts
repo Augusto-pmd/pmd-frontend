@@ -16,7 +16,7 @@ export function useIncomes() {
   );
 
   return {
-    incomes: (data?.data || data || []) as Income[],
+    incomes: ((data as any)?.data || data || []) as Income[],
     error,
     isLoading,
     mutate,
@@ -41,7 +41,7 @@ export function useIncome(id: string | null) {
   );
 
   return {
-    income: (data?.data || data) as Income | null,
+    income: ((data as any)?.data || data) as Income | null,
     error,
     isLoading,
     mutate,

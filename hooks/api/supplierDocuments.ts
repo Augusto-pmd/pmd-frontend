@@ -15,7 +15,7 @@ export function useSupplierDocuments(supplierId?: string) {
   );
 
   return {
-    documents: data?.data || data || [],
+    documents: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -40,7 +40,7 @@ export function useSupplierDocument(id: string | null) {
   );
 
   return {
-    document: data?.data || data,
+    document: (data as any)?.data || data,
     error,
     isLoading,
     mutate,

@@ -13,7 +13,7 @@ export function useDashboardStats() {
   );
 
   return {
-    stats: data?.data || data,
+    stats: (data as any)?.data || data,
     error,
     isLoading,
     mutate,

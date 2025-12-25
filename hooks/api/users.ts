@@ -14,7 +14,7 @@ export function useUsers() {
   );
 
   return {
-    users: (data?.data || data || []) as User[],
+    users: ((data as any)?.data || data || []) as User[],
     error,
     isLoading,
     mutate,
@@ -39,7 +39,7 @@ export function useUser(id: string | null) {
   );
 
   return {
-    user: (data?.data || data) as User | null,
+    user: ((data as any)?.data || data) as User | null,
     error,
     isLoading,
     mutate,
@@ -64,7 +64,7 @@ export function useUserRole(userId: string | null) {
   );
 
   return {
-    role: data?.data || data,
+    role: (data as any)?.data || data,
     error,
     isLoading,
     mutate,

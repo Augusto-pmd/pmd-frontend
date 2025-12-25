@@ -15,7 +15,7 @@ export function useWorkDocuments(workId?: string) {
   );
 
   return {
-    documents: data?.data || data || [],
+    documents: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -40,7 +40,7 @@ export function useWorkDocument(id: string | null) {
   );
 
   return {
-    document: data?.data || data,
+    document: (data as any)?.data || data,
     error,
     isLoading,
     mutate,

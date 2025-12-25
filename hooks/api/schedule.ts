@@ -17,7 +17,7 @@ export function useSchedule(params?: { startDate?: string; endDate?: string; wor
   );
 
   return {
-    schedule: data?.data || data || [],
+    schedule: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -42,7 +42,7 @@ export function useScheduleItem(id: string | null) {
   );
 
   return {
-    item: data?.data || data,
+    item: (data as any)?.data || data,
     error,
     isLoading,
     mutate,

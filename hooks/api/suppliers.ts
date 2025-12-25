@@ -16,7 +16,7 @@ export function useSuppliers() {
   );
 
   return {
-    suppliers: (data?.data || data || []) as Supplier[],
+    suppliers: ((data as any)?.data || data || []) as Supplier[],
     error,
     isLoading,
     mutate,
@@ -41,7 +41,7 @@ export function useSupplier(id: string | null) {
   );
 
   return {
-    supplier: (data?.data || data) as Supplier | null,
+    supplier: ((data as any)?.data || data) as Supplier | null,
     error,
     isLoading,
     mutate,

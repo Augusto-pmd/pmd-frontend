@@ -14,7 +14,7 @@ export function useRoles() {
   );
 
   return {
-    roles: (data?.data || data || []) as Role[],
+    roles: ((data as any)?.data || data || []) as Role[],
     error,
     isLoading,
     mutate,
@@ -39,7 +39,7 @@ export function useRole(id: string | null) {
   );
 
   return {
-    role: (data?.data || data) as Role | null,
+    role: ((data as any)?.data || data) as Role | null,
     error,
     isLoading,
     mutate,
@@ -64,7 +64,7 @@ export function useRolePermissions(roleId: string | null) {
   );
 
   return {
-    permissions: data?.data || data || [],
+    permissions: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,

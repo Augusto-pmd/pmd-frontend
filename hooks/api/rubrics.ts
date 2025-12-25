@@ -13,7 +13,7 @@ export function useRubrics() {
   );
 
   return {
-    rubrics: data?.data || data || [],
+    rubrics: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -38,7 +38,7 @@ export function useRubric(id: string | null) {
   );
 
   return {
-    rubric: data?.data || data,
+    rubric: (data as any)?.data || data,
     error,
     isLoading,
     mutate,

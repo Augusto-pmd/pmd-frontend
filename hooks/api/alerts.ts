@@ -15,7 +15,7 @@ export function useAlerts() {
   );
 
   return {
-    alerts: data?.data || data || [],
+    alerts: (data as any)?.data || data || [],
     error,
     isLoading,
     mutate,
@@ -40,7 +40,7 @@ export function useAlert(id: string | null) {
   );
 
   return {
-    alert: data?.data || data,
+    alert: (data as any)?.data || data,
     error,
     isLoading,
     mutate,
@@ -58,8 +58,8 @@ export function useUnreadAlerts() {
   );
 
   return {
-    unreadAlerts: data?.data || data || [],
-    unreadCount: Array.isArray(data?.data || data) ? (data?.data || data).length : 0,
+    unreadAlerts: (data as any)?.data || data || [],
+    unreadCount: Array.isArray((data as any)?.data || data) ? ((data as any)?.data || data).length : 0,
     error,
     isLoading,
     mutate,

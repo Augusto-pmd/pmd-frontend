@@ -14,7 +14,7 @@ export function useCashboxes() {
   );
 
   return {
-    cashboxes: (data?.data || data || []) as Cashbox[],
+    cashboxes: ((data as any)?.data || data || []) as Cashbox[],
     error,
     isLoading,
     mutate,
@@ -39,7 +39,7 @@ export function useCashbox(id: string | null) {
   );
 
   return {
-    cashbox: (data?.data || data) as Cashbox | null,
+    cashbox: ((data as any)?.data || data) as Cashbox | null,
     error,
     isLoading,
     mutate,
@@ -88,7 +88,7 @@ export function useCashMovements(cashboxId?: string) {
   );
 
   return {
-    movements: (data?.data || data || []) as CashMovement[],
+    movements: ((data as any)?.data || data || []) as CashMovement[],
     error,
     isLoading,
     mutate,
@@ -113,7 +113,7 @@ export function useCashMovement(id: string | null) {
   );
 
   return {
-    movement: (data?.data || data) as CashMovement | null,
+    movement: ((data as any)?.data || data) as CashMovement | null,
     error,
     isLoading,
     mutate,
