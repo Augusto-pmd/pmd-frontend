@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { mapCreateSupplierPayload } from "@/lib/payload-mappers";
 import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
+import { validateCuit, formatCuit, validateEmail, validateRequired } from "@/lib/validations";
 
 interface SupplierFormProps {
   initialData?: Supplier | null;
@@ -34,6 +35,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (initialData) {
@@ -61,20 +63,24 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
     
     // Validación obligatoria: nombre
     const nombre = formData.nombre || formData.name;
-    if (!nombre?.trim()) {
-      newErrors.nombre = "El nombre o razón social es obligatorio";
+    const nombreValidation = validateRequired(nombre);
+    if (!nombreValidation.isValid) {
+      newErrors.nombre = nombreValidation.error || "El nombre o razón social es obligatorio";
     }
     
     // Validar email si está presente
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "El email no es válido";
+    if (formData.email) {
+      const emailValidation = validateEmail(formData.email);
+      if (!emailValidation.isValid) {
+        newErrors.email = emailValidation.error || "El email no es válido";
+      }
     }
     
-    // Validar CUIT si está presente (formato básico: XX-XXXXXXXX-X)
-    if (formData.cuit && !/^\d{2}-?\d{8}-?\d{1}$/.test(formData.cuit.replace(/\D/g, ""))) {
-      const cuitDigits = formData.cuit.replace(/\D/g, "");
-      if (cuitDigits.length !== 11) {
-        newErrors.cuit = "El CUIT debe tener 11 dígitos";
+    // Validar CUIT si está presente
+    if (formData.cuit) {
+      const cuitValidation = validateCuit(formData.cuit);
+      if (!cuitValidation.isValid) {
+        newErrors.cuit = cuitValidation.error || "El CUIT no es válido";
       }
     }
     
@@ -124,14 +130,23 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
             onChange={(e) => {
               // Permitir solo números y guiones, formatear automáticamente
               const value = e.target.value.replace(/\D/g, "");
-              let formatted = value;
-              if (value.length > 2) {
-                formatted = value.slice(0, 2) + "-" + value.slice(2);
-              }
-              if (value.length > 10) {
-                formatted = value.slice(0, 2) + "-" + value.slice(2, 10) + "-" + value.slice(10);
-              }
+              const formatted = formatCuit(value);
               setFormData({ ...formData, cuit: formatted });
+              // Limpiar error si el campo cambia
+              if (errors.cuit) {
+                setErrors({ ...errors, cuit: "" });
+              }
+            }}
+            onBlur={() => {
+              setTouched({ ...touched, cuit: true });
+              if (formData.cuit) {
+                const cuitValidation = validateCuit(formData.cuit);
+                if (!cuitValidation.isValid) {
+                  setErrors({ ...errors, cuit: cuitValidation.error });
+                } else {
+                  setErrors({ ...errors, cuit: "" });
+                }
+              }
             }}
             placeholder="20-12345678-9"
             maxLength={13}
@@ -141,7 +156,24 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
           <Input
             type="email"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, email: e.target.value });
+              // Limpiar error si el campo cambia
+              if (errors.email) {
+                setErrors({ ...errors, email: "" });
+              }
+            }}
+            onBlur={() => {
+              setTouched({ ...touched, email: true });
+              if (formData.email) {
+                const emailValidation = validateEmail(formData.email);
+                if (!emailValidation.isValid) {
+                  setErrors({ ...errors, email: emailValidation.error });
+                } else {
+                  setErrors({ ...errors, email: "" });
+                }
+              }
+            }}
             placeholder="proveedor@ejemplo.com"
           />
         </FormField>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuthStore } from "@/store/authStore";
+import { validateDateRange, validatePositiveNumber, validateNonNegativeNumber } from "@/lib/validations";
 
 interface ContractFormProps {
   initialData?: any;
@@ -30,6 +31,7 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
     ...initialData,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (initialData) {
@@ -50,11 +52,20 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
     
     // Validaciones para campos que solo Direction puede modificar
     if (isDirection) {
-      if (!formData.amount_total || formData.amount_total <= 0) {
-        newErrors.amount_total = "El monto total debe ser mayor a 0";
+      const amountValidation = validatePositiveNumber(formData.amount_total);
+      if (!amountValidation.isValid) {
+        newErrors.amount_total = amountValidation.error || "El monto total debe ser mayor a 0";
       }
       if (!formData.currency) {
         newErrors.currency = "La moneda es requerida";
+      }
+    }
+    
+    // Validar rango de fechas
+    if (formData.start_date && formData.end_date) {
+      const dateRangeValidation = validateDateRange(formData.start_date, formData.end_date);
+      if (!dateRangeValidation.isValid) {
+        newErrors.end_date = dateRangeValidation.error || "La fecha de fin debe ser posterior a la fecha de inicio";
       }
     }
     
@@ -97,7 +108,22 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
             type="number"
             step="0.01"
             value={formData.amount_total}
-            onChange={(e) => setFormData({ ...formData, amount_total: parseFloat(e.target.value) || 0 })}
+            onChange={(e) => {
+              setFormData({ ...formData, amount_total: parseFloat(e.target.value) || 0 });
+              // Limpiar error si el campo cambia
+              if (errors.amount_total) {
+                setErrors({ ...errors, amount_total: "" });
+              }
+            }}
+            onBlur={() => {
+              setTouched({ ...touched, amount_total: true });
+              const amountValidation = validatePositiveNumber(formData.amount_total);
+              if (!amountValidation.isValid) {
+                setErrors({ ...errors, amount_total: amountValidation.error });
+              } else {
+                setErrors({ ...errors, amount_total: "" });
+              }
+            }}
             error={errors.amount_total}
             required
             disabled={isLoading}
@@ -138,14 +164,41 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
             label="Fecha de Inicio"
             type="date"
             value={formData.start_date}
-            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, start_date: e.target.value });
+              // Limpiar error de end_date si cambia start_date
+              if (errors.end_date && formData.end_date) {
+                const dateRangeValidation = validateDateRange(e.target.value, formData.end_date);
+                if (dateRangeValidation.isValid) {
+                  setErrors({ ...errors, end_date: "" });
+                }
+              }
+            }}
             disabled={isLoading}
           />
           <Input
             label="Fecha de Fin"
             type="date"
             value={formData.end_date}
-            onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, end_date: e.target.value });
+              // Limpiar error si el campo cambia
+              if (errors.end_date) {
+                setErrors({ ...errors, end_date: "" });
+              }
+            }}
+            onBlur={() => {
+              setTouched({ ...touched, end_date: true });
+              if (formData.start_date && formData.end_date) {
+                const dateRangeValidation = validateDateRange(formData.start_date, formData.end_date);
+                if (!dateRangeValidation.isValid) {
+                  setErrors({ ...errors, end_date: dateRangeValidation.error });
+                } else {
+                  setErrors({ ...errors, end_date: "" });
+                }
+              }
+            }}
+            error={errors.end_date}
             disabled={isLoading}
           />
           <Textarea

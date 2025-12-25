@@ -83,31 +83,42 @@ function ExpensesContent() {
     setValidatingExpenseId(editingExpense.id);
     try {
       await expenseApi.validate(editingExpense.id, validateState, validateObservations || undefined);
-      mutate();
-      globalMutate("/expenses");
-      // Refrescar registros contables si se validó el gasto
-      if (validateState === "validated") {
-        globalMutate("/accounting");
-      }
       
-      // Mensaje informativo sobre reversión de saldo si se observa o anula un gasto con contrato
-      const hasContract = editingExpense.contract_id;
-      if (hasContract && (validateState === "observed" || validateState === "annulled")) {
+      // Refrescar datos relacionados automáticamente
+      mutate(); // Refrescar gastos
+      globalMutate("/expenses"); // Refrescar gastos globalmente
+      
+      // Si se validó el gasto, refrescar múltiples módulos relacionados
+      if (validateState === "validated") {
+        globalMutate("/accounting"); // Refrescar registros contables
+        globalMutate("/contracts"); // Refrescar contratos (puede haber actualizado amount_executed)
+        globalMutate("/works"); // Refrescar obras (puede haber actualizado total_expenses)
+        globalMutate("/alerts"); // Refrescar alertas (puede haber generado nuevas alertas)
+        
         toast.success(
-          `${validateState === "observed" ? "Gasto observado" : "Gasto anulado"}. El saldo del contrato se ha revertido automáticamente.`,
-          5000
+          "Gasto validado correctamente. Se han actualizado automáticamente: contrato, obra, contabilidad y alertas.",
+          6000
         );
-      } else if (validateState === "validated") {
-        toast.success(
-          "Gasto validado correctamente. Se ha creado automáticamente un registro contable.",
-          5000
-        );
-      } else {
-        toast.success(
-          validateState === "observed"
-            ? "Gasto observado correctamente"
-            : "Gasto anulado correctamente"
-        );
+      } else if (validateState === "observed" || validateState === "annulled") {
+        // Si se observa o anula, también refrescar contratos y obras (puede haber revertido saldo)
+        globalMutate("/contracts");
+        globalMutate("/works");
+        globalMutate("/alerts"); // Refrescar alertas (puede haber generado alertas de gasto observado/anulado)
+        
+        const hasContract = editingExpense.contract_id;
+        if (hasContract) {
+          toast.success(
+            `${validateState === "observed" ? "Gasto observado" : "Gasto anulado"}. Se ha revertido automáticamente el saldo del contrato y se han actualizado los totales de la obra.`,
+            6000
+          );
+        } else {
+          toast.success(
+            validateState === "observed"
+              ? "Gasto observado correctamente. Se han actualizado los totales de la obra."
+              : "Gasto anulado correctamente. Se han actualizado los totales de la obra.",
+            5000
+          );
+        }
       }
       
       setShowValidateModal(false);

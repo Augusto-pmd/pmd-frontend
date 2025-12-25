@@ -17,6 +17,7 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 import { MovementForm } from "../components/MovementForm";
 import { useToast } from "@/components/ui/Toast";
 import { useAlertsStore } from "@/store/alertsStore";
+import { useSWRConfig } from "swr";
 
 function CashboxDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -30,6 +31,7 @@ function CashboxDetailContent() {
   const { suppliers } = useSuppliers();
   const { works } = useWorks();
   const { alerts, fetchAlerts } = useAlertsStore();
+  const { mutate: globalMutate } = useSWRConfig();
   const user = useAuthStore.getState().user;
   const [showMovementForm, setShowMovementForm] = useState(false);
   const [editingMovement, setEditingMovement] = useState<CashMovement | null>(null);
@@ -175,7 +177,17 @@ function CashboxDetailContent() {
   const confirmCloseCashbox = async () => {
     try {
       await closeCashbox(cashboxId);
-      toast.success("Caja cerrada correctamente");
+      
+      // Refrescar datos relacionados automáticamente
+      await fetchCashboxes(); // Refrescar cajas
+      await fetchAlerts(); // Refrescar alertas (puede haber generado alerta de diferencia)
+      globalMutate("/cashboxes"); // Refrescar cajas globalmente
+      globalMutate("/alerts"); // Refrescar alertas globalmente
+      
+      toast.success(
+        "Caja cerrada correctamente. Si hay diferencias, se ha generado una alerta automáticamente.",
+        6000
+      );
       setShowCloseModal(false);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Error al cerrar la caja";
