@@ -92,7 +92,7 @@ function UsersContent() {
     if (!roleId) return "Sin rol";
     const role = roles.find((r: any) => r.id === roleId);
     if (!role) return roleId;
-    return role.name || role.nombre || roleId;
+    return role.name || (role as any).nombre || roleId;
   };
 
   const handleDelete = async () => {

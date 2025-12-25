@@ -2,7 +2,7 @@
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useUsers, userApi } from "@/hooks/api/users";
-import { User } from "@/hooks/useUsers";
+import { useRoles } from "@/hooks/api/roles";
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { UserForm } from "@/components/forms/UserForm";
@@ -12,12 +12,14 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useSWRConfig } from "swr";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { CreateUserData, UpdateUserData } from "@/lib/types/user";
 
 function AdminUsersContent() {
   const { users, isLoading, error, mutate } = useUsers();
+  const { roles } = useRoles();
   const { mutate: globalMutate } = useSWRConfig();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
@@ -26,7 +28,7 @@ function AdminUsersContent() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (user: User) => {
+  const handleEdit = (user: any) => {
     setEditingUser(user);
     setIsModalOpen(true);
   };
@@ -49,10 +51,40 @@ function AdminUsersContent() {
   const handleSubmit = async (data: { name: string; email: string; password?: string; role: string }) => {
     setIsSubmitting(true);
     try {
+      // Buscar el role_id del rol por su nombre
+      const roleObj = roles?.find((r: any) => r.name === data.role);
+      const roleId = roleObj?.id || editingUser?.role?.id;
+
       if (editingUser) {
-        await userApi.update(editingUser.id, data);
+        // Para actualizar
+        const updateData: UpdateUserData = {
+          name: data.name,
+          email: data.email,
+          role_id: roleId,
+        };
+        if (data.password) {
+          updateData.password = data.password;
+        }
+        await userApi.update(editingUser.id, updateData);
       } else {
-        await userApi.create(data);
+        // Para crear, role_id es requerido
+        if (!roleId) {
+          alert("Error: No se pudo encontrar el ID del rol seleccionado");
+          setIsSubmitting(false);
+          return;
+        }
+        if (!data.password) {
+          alert("Error: La contraseña es requerida para crear un usuario");
+          setIsSubmitting(false);
+          return;
+        }
+        const createData: CreateUserData = {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          role_id: roleId,
+        };
+        await userApi.create(createData);
       }
       mutate();
       globalMutate("/users");
@@ -104,13 +136,13 @@ function AdminUsersContent() {
               <div className="bg-gray-50 rounded-pmd p-4">
                 <p className="text-sm text-gray-600 mb-1">Active Users</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {users?.filter((u: User) => u.status !== "inactive").length || 0}
+                  {users?.filter((u) => (u as any).status !== "inactive").length || 0}
                 </p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
                 <p className="text-sm text-gray-600 mb-1">Inactive Users</p>
                 <p className="text-2xl font-bold text-gray-600">
-                  {users?.filter((u: User) => u.status === "inactive").length || 0}
+                  {users?.filter((u) => (u as any).status === "inactive").length || 0}
                 </p>
               </div>
             </div>
@@ -137,7 +169,7 @@ function AdminUsersContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {users?.map((user: User) => {
+                    {users?.map((user) => {
                       // role ahora es SIEMPRE un objeto { id, name }
                       const userRole = user?.role?.name || '';
                       return (
@@ -148,8 +180,8 @@ function AdminUsersContent() {
                           <Badge variant="info">{String(userRole)}</Badge>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">
-                          <Badge variant={user.status === "active" ? "success" : "default"}>
-                            {user.status || "active"}
+                          <Badge variant={(user as any).status === "active" ? "success" : "default"}>
+                            {(user as any).status || "active"}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-sm">

@@ -94,7 +94,7 @@ function OrganigramaContent() {
   const getRoleName = (roleId?: string) => {
     if (!roleId) return null;
     const role = roles.find((r: any) => r.id === roleId || r.name === roleId);
-    return role?.name || role?.nombre || roleId;
+    return role?.name || (role as any)?.nombre || roleId;
   };
 
   const handleViewDetail = (employee: Employee) => {

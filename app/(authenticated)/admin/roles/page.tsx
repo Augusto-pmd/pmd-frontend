@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useSWRConfig } from "swr";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { CreateRoleData, UpdateRoleData, UserRole } from "@/lib/types/role";
 
 function AdminRolesContent() {
   const { roles, isLoading, error, mutate } = useRoles();
@@ -56,9 +57,28 @@ function AdminRolesContent() {
     setIsSubmitting(true);
     try {
       if (editingRole) {
-        await roleApi.update(editingRole.id, formData);
+        // Para actualizar, solo enviamos los campos que tienen valores
+        const updateData: UpdateRoleData = {};
+        if (formData.name) {
+          updateData.name = formData.name as UserRole;
+        }
+        if (formData.description) {
+          updateData.description = formData.description;
+        }
+        if (formData.permissions && formData.permissions.length > 0) {
+          // Convertir array a Record si es necesario, o mantener como array
+          updateData.permissions = formData.permissions as string[];
+        }
+        await roleApi.update(editingRole.id, updateData);
       } else {
-        await roleApi.create(formData);
+        // Para crear, el name es requerido
+        const createData: CreateRoleData = {
+          name: formData.name as UserRole,
+          description: formData.description || undefined,
+          // Omitir permissions si está vacío, ya que CreateRoleData espera Record<string, unknown>
+          // y en este componente no se manejan permisos como objeto
+        };
+        await roleApi.create(createData);
       }
       mutate();
       globalMutate("/roles");
