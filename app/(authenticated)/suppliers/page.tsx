@@ -12,7 +12,7 @@ import { Modal } from "@/components/ui/Modal";
 import { SupplierForm } from "@/components/forms/SupplierForm";
 import { useToast } from "@/components/ui/Toast";
 import { Plus } from "lucide-react";
-import { Supplier, CreateSupplierData } from "@/lib/types/supplier";
+import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
 
 function SuppliersContent() {
   const { suppliers, isLoading, error, mutate } = useSuppliers();
@@ -40,10 +40,16 @@ function SuppliersContent() {
     return true;
   }) || [];
 
-  const handleCreate = async (data: CreateSupplierData) => {
+  const handleCreate = async (data: CreateSupplierData | UpdateSupplierData) => {
     setIsSubmitting(true);
     try {
-      await supplierApi.create(data);
+      // Asegurar que name esté presente para crear
+      if (!data.name) {
+        toast.error("El nombre es requerido");
+        setIsSubmitting(false);
+        return;
+      }
+      await supplierApi.create(data as CreateSupplierData);
       await mutate();
       toast.success("Proveedor creado correctamente");
       setIsCreateModalOpen(false);

@@ -216,7 +216,7 @@ function DocumentsContent() {
         </div>
 
         <DocumentsList
-          documents={documents || []}
+          documents={(documents || []) as any}
           onRefresh={fetchDocuments}
           searchQuery={searchQuery}
           typeFilter={typeFilter}

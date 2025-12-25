@@ -34,7 +34,8 @@ function ContractsContent() {
       mutate();
       globalMutate("/contracts");
     } catch (error: unknown) {
-      alert(error.message || "Failed to delete contract");
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete contract";
+      alert(errorMessage);
     } finally {
       setDeleteLoading(null);
     }

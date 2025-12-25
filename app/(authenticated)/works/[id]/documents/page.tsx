@@ -177,7 +177,7 @@ function WorkDocumentsContent() {
         </div>
 
         <DocumentsList
-          documents={workDocuments}
+          documents={workDocuments as any}
           onRefresh={() => fetchDocuments(workId)}
           typeFilter={typeFilter}
           statusFilter={statusFilter}

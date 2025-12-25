@@ -117,7 +117,7 @@ function ExpensesContent() {
   const getContractName = (contractId?: string) => {
     if (!contractId) return "-";
     const contract = contracts?.find((c) => c.id === contractId);
-    return contract?.contract_number || contract?.number || `Contrato ${contractId.slice(0, 8)}`;
+    return (contract as any)?.contract_number || (contract as any)?.number || `Contrato ${contractId.slice(0, 8)}`;
   };
 
   const getStateBadgeVariant = (state?: string) => {
