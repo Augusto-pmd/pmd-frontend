@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useExpense } from "@/hooks/api/expenses";
 import { useContract } from "@/hooks/api/contracts";
+import { useAccountingRecordByExpense } from "@/hooks/api/accounting";
 import { useAlertsStore } from "@/store/alertsStore";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { useToast } from "@/components/ui/Toast";
-import { Receipt, FileCheck, AlertCircle, FileText } from "lucide-react";
+import { Receipt, FileCheck, AlertCircle, FileText, Calculator } from "lucide-react";
 
 function ExpenseDetailContent() {
   const params = useParams();
@@ -25,6 +26,11 @@ function ExpenseDetailContent() {
   // Obtener contrato si existe
   const contractId = expense?.contract_id;
   const { contract, mutate: mutateContract } = useContract(contractId || null);
+  
+  // Obtener registro contable asociado si el gasto está validado
+  const { record: accountingRecord, isLoading: isLoadingAccounting } = useAccountingRecordByExpense(
+    expense?.state === "validated" ? expenseId : null
+  );
 
   useEffect(() => {
     if (expenseId) {
@@ -265,6 +271,65 @@ function ExpenseDetailContent() {
                 >
                   Ver contrato completo
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Registro contable asociado */}
+      {expense?.state === "validated" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Calculator className="h-5 w-5 text-gray-400" />
+                Registro Contable
+              </CardTitle>
+              <Badge variant="success">Creado automáticamente</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingAccounting ? (
+              <div className="text-gray-600">Cargando registro contable...</div>
+            ) : accountingRecord ? (
+              <div className="space-y-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <FileCheck className="h-5 w-5 text-green-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-green-900 mb-1">
+                        Registro contable creado automáticamente
+                      </p>
+                      <p className="text-sm text-green-700">
+                        Este registro contable fue generado automáticamente al validar el gasto.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {renderField("Tipo", accountingRecord.accounting_type === "fiscal" ? "Fiscal" : "Efectivo")}
+                  {renderField("Fecha", accountingRecord.date, formatDate)}
+                  {renderField("Mes/Año", `${accountingRecord.month}/${accountingRecord.year}`)}
+                  {renderField("Monto", accountingRecord.amount, formatCurrency)}
+                  {renderField("Moneda", accountingRecord.currency)}
+                  {renderField("IVA", accountingRecord.vat_amount, formatCurrency)}
+                  {renderField("Tasa IVA", accountingRecord.vat_rate ? `${accountingRecord.vat_rate}%` : null)}
+                  {renderField("Percepción IVA", accountingRecord.vat_perception, formatCurrency)}
+                  {renderField("Retención IVA", accountingRecord.vat_withholding, formatCurrency)}
+                  {renderField("Percepción IIBB", accountingRecord.iibb_perception, formatCurrency)}
+                  {renderField("Retención Ganancias", accountingRecord.income_tax_withholding, formatCurrency)}
+                </div>
+                {accountingRecord.description && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <p className="text-sm text-gray-500 mb-1">Descripción</p>
+                    <p className="text-sm text-gray-900">{accountingRecord.description}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-gray-600">
+                No se encontró registro contable asociado. El registro se creará automáticamente al validar el gasto.
               </div>
             )}
           </CardContent>

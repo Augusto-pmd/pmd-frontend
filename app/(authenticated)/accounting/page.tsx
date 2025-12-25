@@ -17,14 +17,16 @@ import { Modal } from "@/components/ui/Modal";
 import { EntryForm } from "@/app/(authenticated)/accounting/components/EntryForm";
 import { useToast } from "@/components/ui/Toast";
 import { BotonVolver } from "@/components/ui/BotonVolver";
-import { Plus } from "lucide-react";
+import { Plus, Info } from "lucide-react";
+import { useSWRConfig } from "swr";
 
 function AccountingContent() {
   const user = useAuthStore.getState().user;
-  const { accounting, isLoading: summaryLoading, error: summaryError } = useAccounting();
+  const { accounting, isLoading: summaryLoading, error: summaryError, mutate: mutateAccounting } = useAccounting();
   const { entries, isLoading, error, fetchEntries, createEntry } = useAccountingStore();
   const { works, isLoading: worksLoading } = useWorks();
   const { suppliers, isLoading: suppliersLoading } = useSuppliers();
+  const { mutate: globalMutate } = useSWRConfig();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filters, setFilters] = useState<{
@@ -36,6 +38,22 @@ function AccountingContent() {
     category?: string;
   }>({});
   const toast = useToast();
+  
+  // Escuchar cambios en gastos validados para refrescar registros contables
+  useEffect(() => {
+    const handleStorageChange = () => {
+      // Refrescar cuando se valida un gasto (se actualiza localStorage o SWR cache)
+      fetchEntries(filters);
+      mutateAccounting();
+    };
+    
+    // Escuchar eventos de validación de gastos
+    window.addEventListener('expense-validated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('expense-validated', handleStorageChange);
+    };
+  }, [filters, fetchEntries, mutateAccounting]);
 
   const organizationId = user?.organizationId;
 
@@ -139,7 +157,15 @@ function AccountingContent() {
         <CierresMensuales cierres={Array.isArray(cierres) ? cierres : []} />
 
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Movimientos Contables</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Movimientos Contables</h2>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center gap-2">
+              <Info className="h-4 w-4 text-blue-600" />
+              <p className="text-sm text-blue-700">
+                Los registros se crean automáticamente al validar gastos
+              </p>
+            </div>
+          </div>
           <AccountingFilters
             filters={filters}
             onFiltersChange={handleFiltersChange}

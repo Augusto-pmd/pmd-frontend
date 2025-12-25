@@ -85,6 +85,10 @@ function ExpensesContent() {
       await expenseApi.validate(editingExpense.id, validateState, validateObservations || undefined);
       mutate();
       globalMutate("/expenses");
+      // Refrescar registros contables si se validó el gasto
+      if (validateState === "validated") {
+        globalMutate("/accounting");
+      }
       
       // Mensaje informativo sobre reversión de saldo si se observa o anula un gasto con contrato
       const hasContract = editingExpense.contract_id;
@@ -93,13 +97,16 @@ function ExpensesContent() {
           `${validateState === "observed" ? "Gasto observado" : "Gasto anulado"}. El saldo del contrato se ha revertido automáticamente.`,
           5000
         );
+      } else if (validateState === "validated") {
+        toast.success(
+          "Gasto validado correctamente. Se ha creado automáticamente un registro contable.",
+          5000
+        );
       } else {
         toast.success(
-          validateState === "validated"
-            ? "Gasto validado correctamente"
-            : validateState === "observed"
-            ? "Gasto observado"
-            : "Gasto anulado"
+          validateState === "observed"
+            ? "Gasto observado correctamente"
+            : "Gasto anulado correctamente"
         );
       }
       

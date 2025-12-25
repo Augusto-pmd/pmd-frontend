@@ -180,6 +180,32 @@ export function useAccountingPerceptions(params?: { startDate?: string; endDate?
   };
 }
 
+export function useAccountingRecordByExpense(expenseId: string | null) {
+  const { token } = useAuthStore();
+  
+  if (!expenseId) {
+    return { record: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const { data, error, isLoading, mutate } = useSWR(
+    token && expenseId ? `accounting/expense/${expenseId}` : null,
+    () => {
+      return apiClient.get(`/accounting?expense_id=${expenseId}`);
+    }
+  );
+
+  // El backend devuelve una lista, tomamos el primer registro si existe
+  const records = (data as any)?.data || data || [];
+  const record = Array.isArray(records) && records.length > 0 ? records[0] : null;
+
+  return {
+    record,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
 export const accountingApi = {
   getMonth: (month: number, year: number) => {
     return apiClient.get(`/accounting/month/${month}/${year}`);
@@ -201,5 +227,15 @@ export const accountingApi = {
       ? `?${new URLSearchParams(params as any).toString()}`
       : "";
     return apiClient.get(`/accounting/perceptions${queryString}`);
+  },
+  closeMonth: (month: number, year: number) => {
+    return apiClient.post("/accounting/close-month", {
+      month,
+      year,
+      status: "closed",
+    });
+  },
+  reopenMonth: (month: number, year: number) => {
+    return apiClient.post(`/accounting/reopen-month/${month}/${year}`);
   },
 };
