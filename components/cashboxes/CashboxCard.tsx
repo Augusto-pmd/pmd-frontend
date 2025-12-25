@@ -14,11 +14,11 @@ export function CashboxCard({ cashbox }: CashboxCardProps) {
   const router = useRouter();
 
   const getCashboxName = () => {
-    return cashbox.nombre || cashbox.name || `Caja ${cashbox.id.slice(0, 8)}`;
+    return (cashbox as any).nombre || (cashbox as any).name || `Caja ${cashbox.id.slice(0, 8)}`;
   };
 
   const getCashboxStatus = () => {
-    return cashbox.estado || cashbox.status || cashbox.state || "abierta";
+    return (cashbox as any).estado || (cashbox as any).status || (cashbox as any).state || "abierta";
   };
 
   const getStatusVariant = (status: string) => {
@@ -87,7 +87,7 @@ export function CashboxCard({ cashbox }: CashboxCardProps) {
                   Saldo:
                 </span>
                 <span style={{ fontSize: "13px", color: "var(--apple-text-primary)", fontWeight: 600 }}>
-                  ${(cashbox.balance || 0).toFixed(2)}
+                  ${((cashbox as any).balance || 0).toFixed(2)}
                 </span>
               </div>
             )}

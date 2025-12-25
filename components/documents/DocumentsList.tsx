@@ -58,7 +58,7 @@ export function DocumentsList({
     if (typeFilter !== "all" && doc.type !== typeFilter) return false;
 
     // Filtro de obra
-    if (workFilter !== "all" && doc.workId !== workFilter) return false;
+    if (workFilter !== "all" && doc.work_id !== workFilter) return false;
 
     // Filtro de estado
     if (statusFilter !== "all" && doc.status !== statusFilter) return false;
@@ -184,14 +184,14 @@ export function DocumentsList({
                     <div className="text-sm font-medium text-gray-900">{doc.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{getWorkName(doc.workId)}</div>
+                    <div className="text-sm text-gray-600">{getWorkName(doc.work_id)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{doc.version || "-"}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">
-                      {new Date(doc.uploadedAt).toLocaleDateString("es-AR")}
+                      {new Date(doc.uploadDate || doc.createdAt || "").toLocaleDateString("es-AR")}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

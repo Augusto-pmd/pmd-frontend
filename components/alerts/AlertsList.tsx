@@ -82,7 +82,7 @@ export function AlertsList({
     if (!userId) return "-";
     const user = users.find((u: any) => u.id === userId);
     if (!user) return userId;
-    return user.fullName || user.name || user.nombre || userId;
+    return user.fullName || user.name || (user as any).nombre || userId;
   };
 
   const getDocumentName = (documentId?: string) => {

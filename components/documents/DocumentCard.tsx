@@ -55,7 +55,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
 
   const handleDownload = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const fileUrl = document.url || document.fileUrl;
+    const fileUrl = document.url || document.file_url;
     if (fileUrl) {
       window.open(fileUrl, "_blank");
     } else {
@@ -76,8 +76,8 @@ export function DocumentCard({ document }: DocumentCardProps) {
 
   const handleView = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const fileUrl = document.url || document.fileUrl;
-    const fileType = document.tipo || document.type || document.mimeType || "";
+    const fileUrl = document.url || document.file_url;
+    const fileType = (document as any).tipo || document.type || (document as any).mimeType || "";
     const isPdf = fileType.toLowerCase().includes("pdf");
     
     if (fileUrl) {
@@ -91,10 +91,10 @@ export function DocumentCard({ document }: DocumentCardProps) {
     }
   };
 
-  const fileName = document.nombre || document.name || document.fileName || "Sin nombre";
-  const fileType = document.tipo || document.type || document.mimeType || "";
-  const uploadDate = document.fecha || document.uploadDate || document.createdAt;
-  const uploadedBy = document.usuario || document.uploadedBy || document.userId || "Usuario desconocido";
+  const fileName = (document as any).nombre || document.name || (document as any).fileName || "Sin nombre";
+  const fileType = (document as any).tipo || document.type || (document as any).mimeType || "";
+  const uploadDate = (document as any).fecha || (document as any).uploadDate || document.createdAt;
+  const uploadedBy = (document as any).usuario || (document as any).uploadedBy || (document as any).userId || "Usuario desconocido";
 
   return (
     <Card className="hover:bg-white/15 transition-all">

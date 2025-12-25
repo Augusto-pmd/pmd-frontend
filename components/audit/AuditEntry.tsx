@@ -140,10 +140,10 @@ export function AuditEntry({ entry }: AuditEntryProps) {
   const action = entry.accion || entry.action || "";
   const actionType = getActionType(action);
   const actionIcon = getActionIcon(action);
-  const moduleName = entry.modulo || entry.entity || entry.entityType || "";
-  const userName = entry.usuario || entry.userName || entry.userId || "Usuario desconocido";
-  const date = entry.fecha || entry.timestamp || entry.createdAt;
-  const entityId = entry.entityId || entry.id;
+  const moduleName = (entry as any).modulo || (entry as any).entity || entry.entityType || "";
+  const userName = (entry as any).usuario || (entry as any).userName || (entry as any).userId || "Usuario desconocido";
+  const date = (entry as any).fecha || (entry as any).timestamp || entry.createdAt;
+  const entityId = entry.entity_id || entry.id;
 
   return (
     <div
