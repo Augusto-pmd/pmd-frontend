@@ -87,8 +87,8 @@ export async function login(email: string, password: string): Promise<LoginRespo
       ? error.response.data 
       : error;
     if (errorData) {
-      const errorCode = errorData.code || errorData.error || errorData.errorCode;
-      const errorMessage = errorData.message || errorData.error || "Error de autenticación";
+      const errorCode = (errorData as any).code || (errorData as any).error || (errorData as any).errorCode;
+      const errorMessage = (errorData as any).message || (errorData as any).error || "Error de autenticación";
       if (errorCode) {
         throw { code: errorCode, message: errorMessage };
       }

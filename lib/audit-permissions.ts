@@ -11,7 +11,7 @@
  */
 
 import { useAuthStore } from "@/store/authStore";
-import { can } from "@/lib/acl";
+import { can, Permission } from "@/lib/acl";
 
 export function auditPermissions(): {
   pass: boolean;
@@ -80,7 +80,7 @@ export function auditPermissions(): {
   if (!test5) allPass = false;
 
   // TEST 6: useCan() retorna true para módulos habilitados
-  const criticalPermissions: Array<{ permission: string; expected: boolean }> = [
+  const criticalPermissions: Array<{ permission: Permission; expected: boolean }> = [
     { permission: "works.read", expected: true },
     { permission: "suppliers.read", expected: true },
     { permission: "accounting.read", expected: true },

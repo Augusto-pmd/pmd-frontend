@@ -124,7 +124,7 @@ export function mapCreateWorkPayload(form: Record<string, unknown>): {
   total_budget?: number;
 } {
   // ✅ Formulario ahora usa modelo único alineado al backend (start_date directamente)
-  const startDate = formatDateYYYYMMDD(form.start_date);
+  const startDate = formatDateYYYYMMDD(form.start_date as string | Date | undefined | null);
   if (!startDate) {
     throw new Error("La fecha de inicio es requerida y debe ser válida");
   }
@@ -148,7 +148,7 @@ export function mapCreateWorkPayload(form: Record<string, unknown>): {
   };
 
   // Campos opcionales - solo incluir si tienen valor
-  const endDate = formatDateYYYYMMDD(form.end_date);
+  const endDate = formatDateYYYYMMDD(form.end_date as string | Date | undefined | null);
   if (endDate) {
     payload.end_date = endDate;
   }
