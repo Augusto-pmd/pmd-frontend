@@ -57,7 +57,7 @@ function CashMovementDetailContent() {
   }
 
   const getMovementType = () => {
-    return movement.tipo || movement.type || "egreso";
+    return (movement as any).tipo || movement.type || "egreso";
   };
 
   const getTypeVariant = (type: string) => {
@@ -99,22 +99,22 @@ function CashMovementDetailContent() {
   };
 
   const getCashboxName = () => {
-    if (movement.cashbox) {
-      return movement.cashbox.nombre || movement.cashbox.name || "Caja";
+    if ((movement as any).cashbox) {
+      return (movement as any).cashbox.nombre || (movement as any).cashbox.name || "Caja";
     }
     return movement.cashboxId ? `Caja ${movement.cashboxId.slice(0, 8)}` : "Sin caja";
   };
 
   const getUserName = () => {
-    if (movement.user) {
-      return movement.user.nombre || movement.user.fullName || movement.user.name || "Usuario";
+    if ((movement as any).user) {
+      return (movement as any).user.nombre || (movement as any).user.fullName || (movement as any).user.name || "Usuario";
     }
-    return movement.userId ? `Usuario ${movement.userId.slice(0, 8)}` : null;
+    return (movement as any).userId ? `Usuario ${(movement as any).userId.slice(0, 8)}` : null;
   };
 
   const type = getMovementType();
   const isIncome = type.toLowerCase() === "ingreso" || type.toLowerCase() === "income";
-  const amount = movement.monto || movement.amount || 0;
+  const amount = (movement as any).monto || movement.amount || 0;
 
   // Función para renderizar un campo si existe
   const renderField = (label: string, value: any, formatter?: (val: any) => string) => {
@@ -146,7 +146,7 @@ function CashMovementDetailContent() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">
-                {movement.concepto || movement.descripcion || movement.description || "Movimiento"}
+                {(movement as any).concepto || (movement as any).descripcion || movement.description || "Movimiento"}
               </CardTitle>
               <div className="flex items-center gap-3">
                 <Badge variant={getTypeVariant(type)}>{getTypeLabel(type)}</Badge>
@@ -164,8 +164,8 @@ function CashMovementDetailContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {renderField("Tipo", getTypeLabel(type))}
               {renderField("Monto", amount, formatCurrency)}
-              {renderField("Fecha", movement.fecha || movement.date, formatDate)}
-              {renderField("Concepto", movement.concepto || movement.descripcion || movement.description)}
+              {renderField("Fecha", (movement as any).fecha || movement.date, formatDate)}
+              {renderField("Concepto", (movement as any).concepto || (movement as any).descripcion || movement.description)}
               {renderField("Caja asociada", getCashboxName())}
               {getUserName() && renderField("Usuario que registró", getUserName())}
             </div>
@@ -191,9 +191,9 @@ function CashMovementDetailContent() {
                   "createdAt",
                   "updatedAt",
                 ].includes(key) &&
-                movement[key] !== null &&
-                movement[key] !== undefined &&
-                movement[key] !== ""
+                (movement as any)[key] !== null &&
+                (movement as any)[key] !== undefined &&
+                (movement as any)[key] !== ""
             ) && (
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Información adicional</h3>
@@ -219,9 +219,9 @@ function CashMovementDetailContent() {
                           "createdAt",
                           "updatedAt",
                         ].includes(key) &&
-                        movement[key] !== null &&
-                        movement[key] !== undefined &&
-                        movement[key] !== ""
+                        (movement as any)[key] !== null &&
+                        (movement as any)[key] !== undefined &&
+                        (movement as any)[key] !== ""
                     )
                     .map((key) => (
                       <div key={key}>
@@ -229,9 +229,9 @@ function CashMovementDetailContent() {
                           {key.charAt(0).toUpperCase() + key.slice(1)}
                         </h3>
                         <p className="text-gray-900">
-                          {typeof movement[key] === "object"
-                            ? JSON.stringify(movement[key])
-                            : String(movement[key])}
+                          {typeof (movement as any)[key] === "object"
+                            ? JSON.stringify((movement as any)[key])
+                            : String((movement as any)[key])}
                         </p>
                       </div>
                     ))}

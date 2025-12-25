@@ -57,11 +57,11 @@ function CashboxDetailContent() {
   }
 
   const getCashboxName = () => {
-    return cashbox.nombre || cashbox.name || `Caja ${cashbox.id.slice(0, 8)}`;
+    return (cashbox as any).nombre || (cashbox as any).name || `Caja ${cashbox.id.slice(0, 8)}`;
   };
 
   const getCashboxStatus = () => {
-    return cashbox.estado || cashbox.status || cashbox.state || "abierta";
+    return (cashbox as any).estado || (cashbox as any).status || (cashbox as any).state || "abierta";
   };
 
   const getStatusVariant = (status: string) => {
@@ -147,18 +147,18 @@ function CashboxDetailContent() {
               {renderField("Estado", getStatusLabel(status))}
               {renderField(
                 "Fecha de apertura",
-                cashbox.fechaApertura || cashbox.openingDate || cashbox.openDate,
+                (cashbox as any).fechaApertura || (cashbox as any).openingDate || (cashbox as any).openDate,
                 formatDate
               )}
               {renderField(
                 "Fecha de cierre",
-                cashbox.fechaCierre || cashbox.closingDate || cashbox.closeDate,
+                (cashbox as any).fechaCierre || (cashbox as any).closingDate || (cashbox as any).closeDate,
                 formatDate
               )}
-              {renderField("Saldo", cashbox.balance || cashbox.saldo, formatCurrency)}
-              {renderField("Monto inicial", cashbox.initialAmount || cashbox.montoInicial, formatCurrency)}
-              {renderField("Monto final", cashbox.finalAmount || cashbox.montoFinal, formatCurrency)}
-              {renderField("Diferencia", cashbox.difference || cashbox.diferencia, formatCurrency)}
+              {renderField("Saldo", cashbox.balance || (cashbox as any).saldo, formatCurrency)}
+              {renderField("Monto inicial", (cashbox as any).initialAmount || (cashbox as any).montoInicial, formatCurrency)}
+              {renderField("Monto final", (cashbox as any).finalAmount || (cashbox as any).montoFinal, formatCurrency)}
+              {renderField("Diferencia", (cashbox as any).difference || (cashbox as any).diferencia, formatCurrency)}
             </div>
 
             {/* Mostrar campos adicionales si existen */}
@@ -188,9 +188,9 @@ function CashboxDetailContent() {
                   "createdAt",
                   "updatedAt",
                 ].includes(key) &&
-                cashbox[key] !== null &&
-                cashbox[key] !== undefined &&
-                cashbox[key] !== ""
+                (cashbox as any)[key] !== null &&
+                (cashbox as any)[key] !== undefined &&
+                (cashbox as any)[key] !== ""
             ) && (
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Información adicional</h3>
@@ -222,9 +222,9 @@ function CashboxDetailContent() {
                           "createdAt",
                           "updatedAt",
                         ].includes(key) &&
-                        cashbox[key] !== null &&
-                        cashbox[key] !== undefined &&
-                        cashbox[key] !== ""
+                        (cashbox as any)[key] !== null &&
+                        (cashbox as any)[key] !== undefined &&
+                        (cashbox as any)[key] !== ""
                     )
                     .map((key) => (
                       <div key={key}>
@@ -232,9 +232,9 @@ function CashboxDetailContent() {
                           {key.charAt(0).toUpperCase() + key.slice(1)}
                         </h3>
                         <p className="text-gray-900">
-                          {typeof cashbox[key] === "object"
-                            ? JSON.stringify(cashbox[key])
-                            : String(cashbox[key])}
+                          {typeof (cashbox as any)[key] === "object"
+                            ? JSON.stringify((cashbox as any)[key])
+                            : String((cashbox as any)[key])}
                         </p>
                       </div>
                     ))}
@@ -249,10 +249,10 @@ function CashboxDetailContent() {
               </div>
             )}
 
-            {cashbox.updatedAt && (
+            {((cashbox as any).updatedAt || cashbox.updated_at) && (
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">Última actualización</h3>
-                <p className="text-gray-900">{formatDate(cashbox.updatedAt)}</p>
+                <p className="text-gray-900">{formatDate((cashbox as any).updatedAt || cashbox.updated_at)}</p>
               </div>
             )}
           </CardContent>

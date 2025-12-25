@@ -42,7 +42,7 @@ function StaffAlertsContent() {
   }
 
   const user = users?.find((u: any) => u.id === personId);
-  const userName = user ? (user.fullName || user.name || user.nombre || personId) : personId;
+  const userName = user ? (user.fullName || user.name || (user as any).nombre || personId) : personId;
 
   // Filtrar alertas de este empleado
   const staffAlerts = alerts.filter((alert) => (alert as any).personId === personId);
