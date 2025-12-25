@@ -2,9 +2,14 @@
 const path = require('path');
 const fs = require('fs');
 
+const isProduction = process.env.NODE_ENV === 'production';
+const isBuild = process.env.NODE_ENV === 'production' || process.argv.includes('build');
+
 // Intentar cargar .env.local manualmente
 const envLocalPath = path.join(__dirname, '.env.local');
-if (fs.existsSync(envLocalPath)) {
+const envFileExists = fs.existsSync(envLocalPath);
+
+if (envFileExists) {
   try {
     const envFile = fs.readFileSync(envLocalPath, 'utf8');
     let loadedVars = [];
@@ -31,18 +36,27 @@ if (fs.existsSync(envLocalPath)) {
     console.warn('⚠️ [CONFIG] Error al leer .env.local:', error.message);
   }
 } else {
-  console.warn('⚠️ [CONFIG] Archivo .env.local no encontrado en:', envLocalPath);
+  // Solo mostrar warning si:
+  // 1. Estamos en desarrollo (no en build/producción)
+  // 2. Y las variables críticas no están configuradas
+  const hasRequiredEnvVars = !!process.env.NEXT_PUBLIC_API_URL;
+  if (!isBuild && !hasRequiredEnvVars) {
+    console.warn('⚠️ [CONFIG] Archivo .env.local no encontrado en:', envLocalPath);
+    console.log('ℹ️  [CONFIG] En producción, las variables de entorno se configuran mediante Docker ENV o build args');
+  }
 }
 
-// También intentar con dotenv como respaldo
-try {
-  const dotenv = require('dotenv');
-  const result = dotenv.config({ path: envLocalPath });
-  if (result && !result.error) {
-    console.log('✅ [CONFIG] dotenv cargado correctamente');
+// También intentar con dotenv como respaldo (solo si el archivo existe o estamos en desarrollo)
+if (envFileExists || !isBuild) {
+  try {
+    const dotenv = require('dotenv');
+    const result = dotenv.config({ path: envLocalPath, silent: true });
+    if (result && !result.error && envFileExists) {
+      console.log('✅ [CONFIG] dotenv cargado correctamente');
+    }
+  } catch (error) {
+    // dotenv puede fallar, pero ya tenemos el método manual
   }
-} catch (error) {
-  // dotenv puede fallar, pero ya tenemos el método manual
 }
 
 /** @type {import('next').NextConfig} */
