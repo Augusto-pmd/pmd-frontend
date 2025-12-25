@@ -39,12 +39,12 @@ export function OrganigramGrid({
 
   const getRoleName = (roleId?: string) => {
     if (!roleId) return null;
-    const role = roles.find((r: Role) => r.id === roleId || r.name === roleId);
+    const role = roles.find((r: any) => r.id === roleId || r.name === roleId);
     return role?.name || roleId;
   };
 
   const getEmployeeAlerts = (employeeId: string) => {
-    return alerts.filter((alert: Alert) => {
+    return alerts.filter((alert: any) => {
       // Check if alert is related to this employee via user_id or metadata
       return alert.user_id === employeeId || (alert.metadata && typeof alert.metadata === 'object' && 'personId' in alert.metadata && (alert.metadata as { personId?: string }).personId === employeeId);
     });
@@ -69,10 +69,10 @@ export function OrganigramGrid({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {employees.map((employee) => {
-        const name = employee.fullName || employee.name || employee.nombre || "Sin nombre";
-        const roleId = employee.roleId || employee.role;
-        const role = getRoleName(roleId) || employee.role || "Sin rol";
-        const subrole = employee.subrole || "";
+        const name = employee.fullName || employee.name || (employee as any).nombre || "Sin nombre";
+        const roleId = (employee as any).roleId || (employee as any).role;
+        const role = getRoleName(roleId) || (employee as any).role || "Sin rol";
+        const subrole = (employee as any).subrole || "";
         const isActive = employee.isActive !== false;
         const workName = getWorkName(employee.workId);
         const workId = employee.workId;

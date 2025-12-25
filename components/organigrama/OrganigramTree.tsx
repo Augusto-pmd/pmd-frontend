@@ -73,7 +73,7 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
     
     // Agregar roles del backend a la jerarquía
     roles.forEach((role: Role) => {
-      const roleName = role.name || role.nombre || role.id;
+      const roleName = role.name || (role as any).nombre || role.id;
       const roleKey = role.id || roleName;
       
       // Determinar jerarquía basada en el nombre del rol
@@ -109,7 +109,7 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
       // Buscar empleados que tengan este rol (por roleId o role)
       const nodeEmployees: Employee[] = [];
       employees.forEach((emp) => {
-        const empRoleId = emp.roleId || emp.role;
+        const empRoleId = (emp as any).roleId || (emp as any).role;
         if (empRoleId === roleKey || empRoleId === config.label) {
           nodeEmployees.push(emp);
         }

@@ -44,11 +44,11 @@ export function EmployeeDetailModal({
     return work.name || workId;
   };
 
-  const name = employee.fullName || employee.name || employee.nombre || "Sin nombre";
-  const roleId = employee.roleId || employee.role;
+  const name = employee.fullName || employee.name || (employee as any).nombre || "Sin nombre";
+  const roleId = (employee as any).roleId || (employee as any).role;
   const role = roles.find((r: Role) => r.id === roleId || r.name === roleId);
   const roleName = role?.name || roleId || "Sin rol";
-  const subrole = employee.subrole || "";
+  const subrole = (employee as any).subrole || "";
   const isActive = employee.isActive !== false;
   const workName = getWorkName(employee.workId);
   const workId = employee.workId;
