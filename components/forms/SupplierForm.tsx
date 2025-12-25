@@ -39,19 +39,19 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
     if (initialData) {
       // Normalizar datos del backend (puede venir como name o nombre)
       setFormData({
-        nombre: initialData.nombre || initialData.name || "",
-        name: initialData.name || initialData.nombre || "",
-        cuit: initialData.cuit || initialData.CUIT || "",
+        nombre: (initialData as any).nombre || initialData.name || "",
+        name: initialData.name || (initialData as any).nombre || "",
+        cuit: initialData.cuit || (initialData as any).CUIT || "",
         email: initialData.email || "",
-        telefono: initialData.telefono || initialData.phone || "",
-        phone: initialData.phone || initialData.telefono || "",
-        direccion: initialData.direccion || initialData.address || "",
-        address: initialData.address || initialData.direccion || "",
-        contacto: initialData.contacto || initialData.contact || initialData.contactName || "",
-        contactName: initialData.contactName || initialData.contact || initialData.contacto || "",
-        existstatus: initialData.existstatus || initialData.status || initialData.estado || "provisional",
-        notes: initialData.notes || initialData.notas || "",
-        notas: initialData.notas || initialData.notes || "",
+        telefono: (initialData as any).telefono || initialData.phone || "",
+        phone: initialData.phone || (initialData as any).telefono || "",
+        direccion: (initialData as any).direccion || initialData.address || "",
+        address: initialData.address || (initialData as any).direccion || "",
+        contacto: (initialData as any).contacto || (initialData as any).contact || (initialData as any).contactName || "",
+        contactName: (initialData as any).contactName || (initialData as any).contact || (initialData as any).contacto || "",
+        existstatus: (initialData as any).existstatus || (initialData as any).status || (initialData as any).estado || "provisional",
+        notes: (initialData as any).notes || (initialData as any).notas || "",
+        notas: (initialData as any).notas || (initialData as any).notes || "",
       });
     }
   }, [initialData]);
@@ -93,7 +93,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
     const payload = mapCreateSupplierPayload(formData);
 
     try {
-      await onSubmit(payload);
+      await onSubmit(payload as any);
     } catch (error) {
       // El error ya se maneja en el componente padre
       if (process.env.NODE_ENV === "development") {

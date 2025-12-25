@@ -39,7 +39,7 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
     if (initialData) {
       // ✅ Normalizar datos del backend al modelo único interno
       // Mapear estado del backend a valores válidos del enum
-      const backendStatus = initialData.status || initialData.estado || "active";
+      const backendStatus = initialData.status || (initialData as any).estado || "active";
       const validStatus: "active" | "paused" | "finished" | "administratively_closed" | "archived" = 
         ["active", "paused", "finished", "administratively_closed", "archived"].includes(backendStatus)
           ? (backendStatus as any)
@@ -58,19 +58,19 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
       };
       
       setFormData({
-        name: initialData.name || initialData.nombre || "",
+        name: initialData.name || (initialData as any).nombre || "",
         client: initialData.client || "",
-        address: initialData.address || initialData.direccion || "",
+        address: initialData.address || (initialData as any).direccion || "",
         currency: (initialData.currency === "ARS" || initialData.currency === "USD") 
           ? initialData.currency 
           : "USD",
-        start_date: normalizeDate(initialData.start_date || initialData.startDate || initialData.fechaInicio || initialData.estimatedStartDate),
-        end_date: normalizeDate(initialData.end_date || initialData.endDate || initialData.fechaFin),
+        start_date: normalizeDate(initialData.start_date || initialData.startDate || (initialData as any).fechaInicio || (initialData as any).estimatedStartDate),
+        end_date: normalizeDate(initialData.end_date || initialData.endDate || (initialData as any).fechaFin),
         status: validStatus,
-        supervisor_id: initialData.supervisor_id || initialData.managerId || initialData.responsableId || "",
+        supervisor_id: initialData.supervisor_id || (initialData as any).managerId || (initialData as any).responsableId || "",
         total_budget: initialData.total_budget !== undefined && initialData.total_budget !== null
           ? String(initialData.total_budget)
-          : (initialData.budget !== undefined && initialData.budget !== null ? String(initialData.budget) : (initialData.presupuesto || "")),
+          : ((initialData as any).budget !== undefined && (initialData as any).budget !== null ? String((initialData as any).budget) : ((initialData as any).presupuesto || "")),
       });
     }
   }, [initialData]);
@@ -160,7 +160,7 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
     }
 
     try {
-      await onSubmit(payload);
+      await onSubmit(payload as any);
     } catch (error) {
       // El error ya se maneja en el componente padre
       if (process.env.NODE_ENV === "development") {

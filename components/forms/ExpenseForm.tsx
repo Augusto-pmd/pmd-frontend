@@ -27,8 +27,10 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
     if (initialData) {
       setFormData({
         ...initialData,
-        date: initialData.date?.split("T")[0] || new Date().toISOString().split("T")[0],
-      });
+        description: initialData.description || "",
+        category: initialData.category || "",
+        date: typeof initialData.date === 'string' ? initialData.date.split("T")[0] : initialData.date instanceof Date ? initialData.date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+      } as any);
     }
   }, [initialData]);
 
@@ -44,7 +46,7 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    await onSubmit(formData);
+    await onSubmit(formData as CreateExpenseData);
   };
 
   return (
@@ -75,7 +77,7 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
       <Input
         label="Date"
         type="date"
-        value={formData.date}
+        value={typeof formData.date === 'string' ? formData.date : formData.date instanceof Date ? formData.date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0]}
         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
         required
       />
