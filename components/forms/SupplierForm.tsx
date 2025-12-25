@@ -142,7 +142,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
               if (formData.cuit) {
                 const cuitValidation = validateCuit(formData.cuit);
                 if (!cuitValidation.isValid) {
-                  setErrors({ ...errors, cuit: cuitValidation.error });
+                  setErrors({ ...errors, cuit: cuitValidation.error || "El CUIT no es válido" });
                 } else {
                   setErrors({ ...errors, cuit: "" });
                 }
@@ -168,7 +168,7 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
               if (formData.email) {
                 const emailValidation = validateEmail(formData.email);
                 if (!emailValidation.isValid) {
-                  setErrors({ ...errors, email: emailValidation.error });
+                  setErrors({ ...errors, email: emailValidation.error || "El email no es válido" });
                 } else {
                   setErrors({ ...errors, email: "" });
                 }

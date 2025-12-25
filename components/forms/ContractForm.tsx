@@ -119,7 +119,7 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
               setTouched({ ...touched, amount_total: true });
               const amountValidation = validatePositiveNumber(formData.amount_total);
               if (!amountValidation.isValid) {
-                setErrors({ ...errors, amount_total: amountValidation.error });
+                setErrors({ ...errors, amount_total: amountValidation.error || "El monto total debe ser mayor a 0" });
               } else {
                 setErrors({ ...errors, amount_total: "" });
               }
@@ -192,7 +192,7 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
               if (formData.start_date && formData.end_date) {
                 const dateRangeValidation = validateDateRange(formData.start_date, formData.end_date);
                 if (!dateRangeValidation.isValid) {
-                  setErrors({ ...errors, end_date: dateRangeValidation.error });
+                  setErrors({ ...errors, end_date: dateRangeValidation.error || "La fecha de fin debe ser posterior a la fecha de inicio" });
                 } else {
                   setErrors({ ...errors, end_date: "" });
                 }

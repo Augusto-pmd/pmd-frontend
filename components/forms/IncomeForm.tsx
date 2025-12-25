@@ -76,7 +76,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
           setTouched({ ...touched, amount: true });
           const amountValidation = validatePositiveNumber(formData.amount);
           if (!amountValidation.isValid) {
-            setErrors({ ...errors, amount: amountValidation.error });
+            setErrors({ ...errors, amount: amountValidation.error || "El monto debe ser mayor que 0" });
           } else {
             setErrors({ ...errors, amount: "" });
           }
@@ -95,7 +95,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
           setTouched({ ...touched, description: true });
           const descriptionValidation = validateRequired(formData.description);
           if (!descriptionValidation.isValid) {
-            setErrors({ ...errors, description: descriptionValidation.error });
+            setErrors({ ...errors, description: descriptionValidation.error || "La descripción es obligatoria" });
           } else {
             setErrors({ ...errors, description: "" });
           }
@@ -114,7 +114,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
           setTouched({ ...touched, source: true });
           const sourceValidation = validateRequired(formData.source);
           if (!sourceValidation.isValid) {
-            setErrors({ ...errors, source: sourceValidation.error });
+            setErrors({ ...errors, source: sourceValidation.error || "La fuente es obligatoria" });
           } else {
             setErrors({ ...errors, source: "" });
           }
