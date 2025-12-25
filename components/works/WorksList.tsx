@@ -54,32 +54,39 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   const isDirection = user?.role?.name === "direction" || user?.role?.name === "administration";
 
   const getWorkName = (work: Work) => {
-    return work.nombre || work.name || work.title || "Sin nombre";
+    return (work as any).nombre || work.name || (work as any).title || "Sin nombre";
   };
 
   const getWorkDescription = (work: Work) => {
-    return work.descripcion || work.description || "";
+    return (work as any).descripcion || work.description || "";
   };
 
   const getWorkStatus = (work: Work) => {
-    return work.estado || work.status || "pendiente";
+    return (work as any).estado || work.status || "pendiente";
   };
 
   const getWorkClient = (work: Work) => {
-    return work.cliente || work.client || null;
+    return (work as any).cliente || work.client || null;
   };
 
-  const getStartDate = (work: Work) => {
-    const date = work.fechaInicio || work.startDate || work.estimatedStartDate;
+  const getStartDate = (work: Work): string | null => {
+    const date = (work as any).fechaInicio || work.startDate || (work as any).estimatedStartDate;
     if (!date) return null;
     try {
+      if (date instanceof Date) {
+        return date.toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
       return new Date(date).toLocaleDateString("es-ES", {
         year: "numeric",
         month: "long",
         day: "numeric",
       });
     } catch {
-      return date;
+      return typeof date === 'string' ? date : null;
     }
   };
 
@@ -158,10 +165,9 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
     setIsSubmitting(true);
     try {
       // Archivar cambiando el estado a "finalizada" o "completada"
-      await workApi.update(work.id, { 
-        estado: "finalizada", 
-        status: "completed",
-        isActive: false 
+      await workApi.update(work.id, {
+        status: "completed" as any,
+        isActive: false
       });
       await onRefresh?.();
       toast.success("Obra archivada correctamente");

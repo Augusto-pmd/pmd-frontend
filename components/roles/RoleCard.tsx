@@ -14,11 +14,11 @@ export function RoleCard({ role }: RoleCardProps) {
   const router = useRouter();
 
   const getRoleName = () => {
-    return role.nombre || role.name || "Sin nombre";
+    return (role as any).nombre || role.name || "Sin nombre";
   };
 
   const getRoleDescription = () => {
-    return role.descripcion || role.description || null;
+    return (role as any).descripcion || role.description || null;
   };
 
   const getRoleLabel = (name: string) => {
@@ -38,12 +38,12 @@ export function RoleCard({ role }: RoleCardProps) {
   };
 
   const getPermissionsCount = () => {
-    const permissions = role.permisos || role.permissions || [];
+    const permissions = (role as any).permisos || role.permissions || [];
     return Array.isArray(permissions) ? permissions.length : 0;
   };
 
   const getUserCount = () => {
-    return role.cantidadUsuarios || role.userCount || null;
+    return (role as any).cantidadUsuarios || (role as any).userCount || null;
   };
 
   return (

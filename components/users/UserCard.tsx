@@ -14,7 +14,7 @@ export function UserCard({ user }: UserCardProps) {
   const router = useRouter();
 
   const getUserName = () => {
-    return user.nombre || user.fullName || user.name || "Sin nombre";
+    return (user as any).nombre || user.fullName || user.name || "Sin nombre";
   };
 
   const getUserEmail = () => {
@@ -22,7 +22,7 @@ export function UserCard({ user }: UserCardProps) {
   };
 
   const getUserRole = (): string | null => {
-    if (user.rol) return user.rol;
+    if ((user as any).rol) return (user as any).rol;
     if (user.role && typeof user.role.name === "string") {
       return user.role.name;
     }
@@ -48,7 +48,7 @@ export function UserCard({ user }: UserCardProps) {
   };
 
   const getUserStatus = () => {
-    return user.estado || user.status || "activo";
+    return (user as any).estado || (user as any).status || "activo";
   };
 
   const getStatusVariant = (status: string) => {

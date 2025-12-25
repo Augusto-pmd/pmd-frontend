@@ -32,7 +32,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   const canApproveReject = user?.role?.name === "ADMINISTRATION" || user?.role?.name === "DIRECTION";
 
   const getSupplierName = () => {
-    return supplier.nombre || supplier.name || "Sin nombre";
+    return (supplier as any).nombre || supplier.name || "Sin nombre";
   };
 
   const getSupplierEmail = () => {
@@ -40,11 +40,11 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   };
 
   const getSupplierContact = () => {
-    return supplier.contacto || supplier.contact || supplier.contactName || null;
+    return (supplier as any).contacto || (supplier as any).contact || (supplier as any).contactName || null;
   };
 
   const getSupplierStatus = () => {
-    return supplier.estado || supplier.status || "pendiente";
+    return (supplier as any).estado || (supplier as any).status || "pendiente";
   };
 
   const isProvisional = getSupplierStatus().toLowerCase() === "provisional" || getSupplierStatus().toLowerCase() === "pending" || getSupplierStatus().toLowerCase() === "pendiente";
