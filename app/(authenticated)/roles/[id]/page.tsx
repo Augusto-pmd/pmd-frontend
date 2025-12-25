@@ -57,11 +57,11 @@ function RoleDetailContent() {
   }
 
   const getRoleName = () => {
-    return role.nombre || role.name || "Sin nombre";
+    return (role as any).nombre || role.name || "Sin nombre";
   };
 
   const getRoleDescription = () => {
-    return role.descripcion || role.description || null;
+    return (role as any).descripcion || role.description || null;
   };
 
   const getRoleLabel = (name: string) => {
@@ -81,7 +81,7 @@ function RoleDetailContent() {
   };
 
   const getPermissions = () => {
-    return role.permisos || role.permissions || [];
+    return (role as any).permisos || role.permissions || [];
   };
 
   const formatDate = (dateString: string | undefined) => {
@@ -133,11 +133,11 @@ function RoleDetailContent() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {role.cantidadUsuarios !== undefined || role.userCount !== undefined ? (
+              {(role as any).cantidadUsuarios !== undefined || (role as any).userCount !== undefined ? (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">Usuarios asociados</h3>
                   <p className="text-gray-900">
-                    {role.cantidadUsuarios || role.userCount || 0} usuario(s)
+                    {(role as any).cantidadUsuarios || (role as any).userCount || 0} usuario(s)
                   </p>
                 </div>
               ) : null}
@@ -178,11 +178,11 @@ function RoleDetailContent() {
             )}
 
             {/* Mostrar usuarios asociados si el backend los devuelve */}
-            {role.users && Array.isArray(role.users) && role.users.length > 0 && (
+            {(role as any).users && Array.isArray((role as any).users) && (role as any).users.length > 0 && (
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Usuarios con este rol</h3>
                 <div className="space-y-2">
-                  {role.users.map((user: any) => (
+                  {(role as any).users.map((user: any) => (
                     <div
                       key={user.id}
                       className="p-3 bg-gray-50 rounded-lg border border-gray-200"

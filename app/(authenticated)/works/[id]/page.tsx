@@ -75,11 +75,11 @@ function WorkDetailContent() {
   };
 
   const getWorkDescription = () => {
-    return work.descripcion || work.description || "";
+    return (work as any).descripcion || work.description || "";
   };
 
   const getWorkStatus = () => {
-    return work.estado || work.status || "pendiente";
+    return (work as any).estado || work.status || "pendiente";
   };
 
   const isWorkClosed = () => {
@@ -148,10 +148,9 @@ function WorkDetailContent() {
   const handleArchive = async () => {
     setIsSubmitting(true);
     try {
-      await workApi.update(id, { 
-        estado: "finalizada", 
-        status: "completed",
-        isActive: false 
+      await workApi.update(id, {
+        status: "completed" as any,
+        isActive: false
       });
       await mutate();
       toast.success("Obra archivada correctamente");
@@ -288,7 +287,7 @@ function WorkDetailContent() {
                     </p>
                     {work.end_date && (
                       <p className="text-xs text-orange-600">
-                        Fecha de cierre: {formatDate(work.end_date)}
+                        Fecha de cierre: {formatDate(typeof work.end_date === 'string' ? work.end_date : work.end_date instanceof Date ? work.end_date.toISOString() : undefined)}
                       </p>
                     )}
                   </div>
@@ -303,10 +302,10 @@ function WorkDetailContent() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {work.cliente || work.client ? (
+              {(work as any).cliente || work.client ? (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">Cliente</h3>
-                  <p className="text-gray-900">{work.cliente || work.client}</p>
+                  <p className="text-gray-900">{(work as any).cliente || work.client}</p>
                 </div>
               ) : null}
 
@@ -316,40 +315,40 @@ function WorkDetailContent() {
                     Fecha de inicio estimada
                   </h3>
                   <p className="text-gray-900">
-                    {formatDate(work.fechaInicio || work.startDate || work.estimatedStartDate)}
+                    {formatDate(typeof (work as any).fechaInicio === 'string' ? (work as any).fechaInicio : work.startDate || (work as any).estimatedStartDate)}
                   </p>
                 </div>
               ) : null}
 
-              {work.fechaFin || work.endDate || work.end_date ? (
+              {(work as any).fechaFin || work.endDate || work.end_date ? (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">
                     {isWorkClosed() ? "Fecha de cierre" : "Fecha de fin"}
                   </h3>
-                  <p className="text-gray-900">{formatDate(work.fechaFin || work.endDate || work.end_date)}</p>
+                  <p className="text-gray-900">{formatDate(typeof (work as any).fechaFin === 'string' ? (work as any).fechaFin : typeof work.endDate === 'string' ? work.endDate : typeof work.end_date === 'string' ? work.end_date : work.end_date instanceof Date ? work.end_date.toISOString() : undefined)}</p>
                 </div>
               ) : null}
 
-              {work.presupuesto || work.budget ? (
+              {(work as any).presupuesto || (work as any).budget ? (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">Presupuesto</h3>
                   <p className="text-gray-900">
-                    {formatCurrency(work.presupuesto || work.budget)}
+                    {formatCurrency((work as any).presupuesto || (work as any).budget)}
                   </p>
                 </div>
               ) : null}
 
-              {work.createdAt ? (
+              {(work as any).createdAt ? (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">Fecha de creación</h3>
-                  <p className="text-gray-900">{formatDate(work.createdAt)}</p>
+                  <p className="text-gray-900">{formatDate((work as any).createdAt)}</p>
                 </div>
               ) : null}
 
-              {work.updatedAt ? (
+              {(work as any).updatedAt ? (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">Última actualización</h3>
-                  <p className="text-gray-900">{formatDate(work.updatedAt)}</p>
+                  <p className="text-gray-900">{formatDate((work as any).updatedAt)}</p>
                 </div>
               ) : null}
             </div>
@@ -569,7 +568,7 @@ function WorkDetailContent() {
                   <p className="text-sm font-medium text-gray-700">Presupuesto</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-900">
-                  {formatCurrency(work.total_budget || work.presupuesto || work.budget, work.currency)}
+                  {formatCurrency((work as any).total_budget || (work as any).presupuesto || (work as any).budget, work.currency)}
                 </p>
               </div>
 
@@ -580,7 +579,7 @@ function WorkDetailContent() {
                   <p className="text-sm font-medium text-gray-700">Total Gastos</p>
                 </div>
                 <p className="text-2xl font-bold text-red-900">
-                  {formatCurrency(work.total_expenses, work.currency)}
+                  {formatCurrency((work as any).total_expenses, work.currency)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">Gastos validados</p>
               </div>
@@ -592,63 +591,63 @@ function WorkDetailContent() {
                   <p className="text-sm font-medium text-gray-700">Total Ingresos</p>
                 </div>
                 <p className="text-2xl font-bold text-green-900">
-                  {formatCurrency(work.total_incomes, work.currency)}
+                  {formatCurrency((work as any).total_incomes, work.currency)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">Ingresos validados</p>
               </div>
 
               {/* Rentabilidad */}
               <div className={`p-4 rounded-lg border ${
-                ((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0
+                (((work as any).total_incomes || 0) - ((work as any).total_expenses || 0)) >= 0
                   ? "bg-green-50 border-green-200"
                   : "bg-red-50 border-red-200"
               }`}>
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className={`h-5 w-5 ${
-                    ((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0
+                    (((work as any).total_incomes || 0) - ((work as any).total_expenses || 0)) >= 0
                       ? "text-green-600"
                       : "text-red-600"
                   }`} />
                   <p className="text-sm font-medium text-gray-700">Rentabilidad</p>
                 </div>
                 <p className={`text-2xl font-bold ${
-                  ((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0
+                  (((work as any).total_incomes || 0) - ((work as any).total_expenses || 0)) >= 0
                     ? "text-green-900"
                     : "text-red-900"
                 }`}>
-                  {formatCurrency((work.total_incomes || 0) - (work.total_expenses || 0), work.currency)}
+                  {formatCurrency(((work as any).total_incomes || 0) - ((work as any).total_expenses || 0), work.currency)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {((work.total_incomes || 0) - (work.total_expenses || 0)) >= 0 ? "Ganancia" : "Pérdida"}
+                  {(((work as any).total_incomes || 0) - ((work as any).total_expenses || 0)) >= 0 ? "Ganancia" : "Pérdida"}
                 </p>
               </div>
             </div>
 
             {/* Indicador de progreso económico */}
-            {work.total_budget && work.total_budget > 0 && (
+            {(work as any).total_budget && (work as any).total_budget > 0 && (
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium text-gray-700">Progreso Económico</p>
                   <p className="text-sm text-gray-500">
-                    {((work.total_expenses || 0) / work.total_budget * 100).toFixed(1)}% del presupuesto utilizado
+                    {(((work as any).total_expenses || 0) / (work as any).total_budget * 100).toFixed(1)}% del presupuesto utilizado
                   </p>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
                     className={`h-3 rounded-full transition-all ${
-                      ((work.total_expenses || 0) / work.total_budget) > 1
+                      (((work as any).total_expenses || 0) / (work as any).total_budget) > 1
                         ? "bg-red-600"
-                        : ((work.total_expenses || 0) / work.total_budget) > 0.8
+                        : (((work as any).total_expenses || 0) / (work as any).total_budget) > 0.8
                         ? "bg-yellow-500"
                         : "bg-green-500"
                     }`}
                     style={{
-                      width: `${Math.min(((work.total_expenses || 0) / work.total_budget) * 100, 100)}%`,
+                      width: `${Math.min((((work as any).total_expenses || 0) / (work as any).total_budget) * 100, 100)}%`,
                     }}
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Presupuesto restante: {formatCurrency(Math.max(0, work.total_budget - (work.total_expenses || 0)), work.currency)}
+                  Presupuesto restante: {formatCurrency(Math.max(0, (work as any).total_budget - ((work as any).total_expenses || 0)), work.currency)}
                 </p>
               </div>
             )}

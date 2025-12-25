@@ -164,8 +164,8 @@ function ExpenseDetailContent() {
             {renderField("Tipo de documento", expense.document_type)}
             {renderField("Número de documento", expense.document_number)}
             {renderField("Moneda", expense.currency)}
-            {renderField("Fecha de creación", expense.createdAt || expense.created_at, formatDate)}
-            {renderField("Última actualización", expense.updatedAt || expense.updated_at, formatDate)}
+            {renderField("Fecha de creación", expense.created_at, formatDate)}
+            {renderField("Última actualización", expense.updated_at, formatDate)}
           </div>
           
           {/* Sección especial para VAL generado automáticamente */}
@@ -224,13 +224,13 @@ function ExpenseDetailContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {renderField(
                   "Número de contrato",
-                  contract.contract_number || contract.number || `Contrato ${contractId.slice(0, 8)}`,
+                  (contract as any).contract_number || (contract as any).number || `Contrato ${contractId.slice(0, 8)}`,
                   undefined,
                   <FileCheck className="h-5 w-5 text-gray-400" />
                 )}
-                {renderField("Proveedor", contract.supplier?.name || contract.supplierName)}
-                {renderField("Monto total", contract.amount_total, formatCurrency)}
-                {renderField("Monto ejecutado", contract.amount_executed, formatCurrency)}
+                {renderField("Proveedor", (contract as any).supplier?.name || (contract as any).supplierName)}
+                {renderField("Monto total", (contract as any).amount_total, formatCurrency)}
+                {renderField("Monto ejecutado", (contract as any).amount_executed, formatCurrency)}
                 <div className="flex items-start gap-3">
                   <div className="h-5 w-5 mt-0.5" />
                   <div>

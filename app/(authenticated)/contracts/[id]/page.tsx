@@ -119,8 +119,8 @@ function ContractDetailContent() {
     );
   };
 
-  const amountTotal = contract.amount_total || 0;
-  const amountExecuted = contract.amount_executed || 0;
+  const amountTotal = (contract as any).amount_total || 0;
+  const amountExecuted = (contract as any).amount_executed || 0;
   const availableBalance = amountTotal - amountExecuted;
 
   // Función para desbloquear contrato (solo Direction)
@@ -193,27 +193,27 @@ function ContractDetailContent() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl">
-              {contract.contract_number || contract.number || `Contrato ${contractId.slice(0, 8)}`}
+              {(contract as any).contract_number || (contract as any).number || `Contrato ${contractId.slice(0, 8)}`}
             </CardTitle>
             <div className="flex gap-2">
-              {contract.is_blocked && (
+              {(contract as any).is_blocked && (
                 <Badge variant="error">Bloqueado</Badge>
               )}
-              {contract.status && (
+              {(contract as any).status && (
                 <Badge
                   variant={
-                    contract.status === "active"
+                    (contract as any).status === "active"
                       ? "success"
-                      : contract.status === "expired"
+                      : (contract as any).status === "expired"
                       ? "error"
                       : "warning"
                   }
                 >
-                  {contract.status === "active"
+                  {(contract as any).status === "active"
                     ? "Activo"
-                    : contract.status === "expired"
+                    : (contract as any).status === "expired"
                     ? "Expirado"
-                    : contract.status}
+                    : (contract as any).status}
                 </Badge>
               )}
             </div>
@@ -221,7 +221,7 @@ function ContractDetailContent() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Mensaje informativo cuando el contrato está bloqueado */}
-          {contract.is_blocked && (
+          {(contract as any).is_blocked && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
@@ -253,19 +253,19 @@ function ContractDetailContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {renderField(
               "Número de contrato",
-              contract.contract_number || contract.number || `Contrato ${contractId.slice(0, 8)}`,
+              (contract as any).contract_number || (contract as any).number || `Contrato ${contractId.slice(0, 8)}`,
               undefined,
               <FileCheck className="h-5 w-5 text-gray-400" />
             )}
             {renderField(
               "Proveedor",
-              contract.supplier?.name || contract.supplierName || contract.supplier_id,
+              (contract as any).supplier?.name || (contract as any).supplierName || (contract as any).supplier_id,
               undefined,
               <Truck className="h-5 w-5 text-gray-400" />
             )}
             {renderField(
               "Obra",
-              contract.work?.name || contract.workName || contract.work_id,
+              (contract as any).work?.name || (contract as any).workName || (contract as any).work_id,
               undefined,
               <Building2 className="h-5 w-5 text-gray-400" />
             )}
@@ -287,26 +287,26 @@ function ContractDetailContent() {
                 </p>
               </div>
             </div>
-            {renderField("Moneda", contract.currency)}
+            {renderField("Moneda", (contract as any).currency || contract.currency)}
             {renderField(
               "Fecha de inicio",
-              contract.start_date || contract.startDate,
+              (contract as any).start_date,
               formatDate,
               <Calendar className="h-5 w-5 text-gray-400" />
             )}
             {renderField(
               "Fecha de fin",
-              contract.end_date || contract.endDate,
+              (contract as any).end_date,
               formatDate,
               <Calendar className="h-5 w-5 text-gray-400" />
             )}
             {renderField(
               "Términos de pago",
-              contract.payment_terms,
+              (contract as any).payment_terms || (contract as any).paymentTerms,
               undefined,
               <FileText className="h-5 w-5 text-gray-400" />
             )}
-            {renderField("Observaciones", contract.observations)}
+            {renderField("Observaciones", (contract as any).observations)}
           </div>
 
           {/* Mostrar ID del contrato */}

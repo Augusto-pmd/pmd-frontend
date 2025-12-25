@@ -54,11 +54,11 @@ function UserDetailContent() {
   }
 
   const getUserName = () => {
-    return user.nombre || user.fullName || user.name || "Sin nombre";
+    return (user as any).nombre || user.fullName || user.name || "Sin nombre";
   };
 
   const getUserRole = () => {
-    if (user.rol) return user.rol;
+    if ((user as any).rol) return (user as any).rol;
     if (user.role) {
       return user.role.name || null;
     }
@@ -84,7 +84,7 @@ function UserDetailContent() {
   };
 
   const getUserStatus = () => {
-    return user.estado || user.status || "activo";
+    return (user as any).estado || (user as any).status || "activo";
   };
 
   const getStatusVariant = (status: string) => {
@@ -158,7 +158,7 @@ function UserDetailContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField("Nombre completo", user.nombre || user.fullName || user.name)}
+              {renderField("Nombre completo", (user as any).nombre || user.fullName || user.name)}
               {renderField("Email", user.email)}
               {renderField("Rol", getUserRole() ? getRoleLabel(getUserRole()) : null)}
               {renderField("Estado", getStatusLabel(getUserStatus()))}
@@ -182,9 +182,9 @@ function UserDetailContent() {
                   "createdAt",
                   "updatedAt",
                 ].includes(key) &&
-                user[key] !== null &&
-                user[key] !== undefined &&
-                user[key] !== ""
+                (user as any)[key] !== null &&
+                (user as any)[key] !== undefined &&
+                (user as any)[key] !== ""
             ) && (
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Información adicional</h3>
@@ -205,9 +205,9 @@ function UserDetailContent() {
                           "createdAt",
                           "updatedAt",
                         ].includes(key) &&
-                        user[key] !== null &&
-                        user[key] !== undefined &&
-                        user[key] !== ""
+                        (user as any)[key] !== null &&
+                        (user as any)[key] !== undefined &&
+                        (user as any)[key] !== ""
                     )
                     .map((key) => (
                       <div key={key}>
@@ -215,9 +215,9 @@ function UserDetailContent() {
                           {key.charAt(0).toUpperCase() + key.slice(1)}
                         </h3>
                         <p className="text-gray-900">
-                          {typeof user[key] === "object"
-                            ? JSON.stringify(user[key])
-                            : String(user[key])}
+                          {typeof (user as any)[key] === "object"
+                            ? JSON.stringify((user as any)[key])
+                            : String((user as any)[key])}
                         </p>
                       </div>
                     ))}

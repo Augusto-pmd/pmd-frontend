@@ -127,7 +127,7 @@ function SupplierDetailContent() {
 
     setIsUnblocking(true);
     try {
-      await supplierApi.update(id, { status: "APPROVED" });
+      await supplierApi.update(id, { status: "APPROVED" as any });
       await mutate();
       toast.success("Proveedor desbloqueado correctamente");
     } catch (error: unknown) {
@@ -181,7 +181,7 @@ function SupplierDetailContent() {
   };
 
   // Obtener información de ART del proveedor
-  const artDocument = supplier?.documents?.find(
+  const artDocument = (supplier as any)?.documents?.find(
     (doc: any) => doc.document_type === "ART" || doc.document_type === "art"
   );
   const isBlocked = getSupplierStatus().toLowerCase() === "blocked" || getSupplierStatus().toLowerCase() === "bloqueado";
@@ -298,12 +298,12 @@ function SupplierDetailContent() {
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField("Nombre", supplier.nombre || supplier.name)}
+              {renderField("Nombre", (supplier as any).nombre || supplier.name)}
               {renderField("Email", supplier.email)}
-              {renderField("Contacto", supplier.contacto || supplier.contact || supplier.contactName)}
-              {renderField("Teléfono", supplier.telefono || supplier.phone)}
-              {renderField("Dirección", supplier.direccion || supplier.address)}
-              {renderField("CUIT", supplier.cuit || supplier.CUIT)}
+              {renderField("Contacto", (supplier as any).contacto || (supplier as any).contact || (supplier as any).contactName)}
+              {renderField("Teléfono", (supplier as any).telefono || (supplier as any).phone)}
+              {renderField("Dirección", (supplier as any).direccion || (supplier as any).address)}
+              {renderField("CUIT", (supplier as any).cuit || (supplier as any).CUIT)}
               {renderField("Estado", getStatusLabel(getSupplierStatus()))}
               {renderField("Fecha de creación", supplier.createdAt, formatDate)}
               {renderField("Última actualización", supplier.updatedAt, formatDate)}
@@ -361,7 +361,7 @@ function SupplierDetailContent() {
               (key) =>
                 !["id", "nombre", "name", "email", "contacto", "contact", "contactName", "telefono", "phone", "direccion", "address", "cuit", "CUIT", "estado", "status", "createdAt", "updatedAt"].includes(
                   key
-                ) && supplier[key] !== null && supplier[key] !== undefined && supplier[key] !== ""
+                ) && (supplier as any)[key] !== null && (supplier as any)[key] !== undefined && (supplier as any)[key] !== ""
             ) && (
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Información adicional</h3>
@@ -371,7 +371,7 @@ function SupplierDetailContent() {
                       (key) =>
                         !["id", "nombre", "name", "email", "contacto", "contact", "contactName", "telefono", "phone", "direccion", "address", "cuit", "CUIT", "estado", "status", "createdAt", "updatedAt"].includes(
                           key
-                        ) && supplier[key] !== null && supplier[key] !== undefined && supplier[key] !== ""
+                        ) && (supplier as any)[key] !== null && (supplier as any)[key] !== undefined && (supplier as any)[key] !== ""
                     )
                     .map((key) => (
                       <div key={key}>
@@ -379,9 +379,9 @@ function SupplierDetailContent() {
                           {key.charAt(0).toUpperCase() + key.slice(1)}
                         </h3>
                         <p className="text-gray-900">
-                          {typeof supplier[key] === "object"
-                            ? JSON.stringify(supplier[key])
-                            : String(supplier[key])}
+                          {typeof (supplier as any)[key] === "object"
+                            ? JSON.stringify((supplier as any)[key])
+                            : String((supplier as any)[key])}
                         </p>
                       </div>
                     ))}
