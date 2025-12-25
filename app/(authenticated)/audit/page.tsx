@@ -19,6 +19,8 @@ function AuditContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
   const [userFilter, setUserFilter] = useState("all");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [entityFilter, setEntityFilter] = useState("all");
   const [startDateFilter, setStartDateFilter] = useState("");
   const [endDateFilter, setEndDateFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -56,14 +58,20 @@ function AuditContent() {
     );
   }
 
-  // Obtener módulos y usuarios únicos
+  // Obtener módulos, usuarios, acciones y entidades únicas
   const modules = Array.from(new Set(logs.map((log) => log.module).filter(Boolean))) as string[];
   const users = Array.from(
     new Set(
       logs
-        .map((log) => log.userName || log.user)
+        .map((log) => log.userName || log.user || log.user_id)
         .filter(Boolean)
     )
+  ) as string[];
+  const actions = Array.from(
+    new Set(logs.map((log) => log.action).filter(Boolean))
+  ) as string[];
+  const entities = Array.from(
+    new Set(logs.map((log) => log.entity_type || log.entity).filter(Boolean))
   ) as string[];
 
   return (
@@ -96,13 +104,15 @@ function AuditContent() {
               <Filter className="h-4 w-4" />
               Filtros
             </Button>
-            {(searchQuery || moduleFilter !== "all" || userFilter !== "all" || startDateFilter || endDateFilter) && (
+            {(searchQuery || moduleFilter !== "all" || userFilter !== "all" || actionFilter !== "all" || entityFilter !== "all" || startDateFilter || endDateFilter) && (
               <Button
                 variant="ghost"
                 onClick={() => {
                   setSearchQuery("");
                   setModuleFilter("all");
                   setUserFilter("all");
+                  setActionFilter("all");
+                  setEntityFilter("all");
                   setStartDateFilter("");
                   setEndDateFilter("");
                 }}
@@ -115,7 +125,7 @@ function AuditContent() {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Módulo</label>
                 <select
@@ -142,6 +152,36 @@ function AuditContent() {
                   {users.map((user) => (
                     <option key={user} value={user}>
                       {user}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Acción</label>
+                <select
+                  value={actionFilter}
+                  onChange={(e) => setActionFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+                >
+                  <option value="all">Todas</option>
+                  {actions.map((action) => (
+                    <option key={action} value={action}>
+                      {action}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Entidad</label>
+                <select
+                  value={entityFilter}
+                  onChange={(e) => setEntityFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+                >
+                  <option value="all">Todas</option>
+                  {entities.map((entity) => (
+                    <option key={entity} value={entity}>
+                      {entity}
                     </option>
                   ))}
                 </select>
@@ -174,6 +214,8 @@ function AuditContent() {
           searchQuery={searchQuery}
           moduleFilter={moduleFilter}
           userFilter={userFilter}
+          actionFilter={actionFilter}
+          entityFilter={entityFilter}
           startDateFilter={startDateFilter}
           endDateFilter={endDateFilter}
         />

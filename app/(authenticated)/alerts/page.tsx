@@ -62,12 +62,27 @@ function AlertsContent() {
     );
   }
 
-  // Obtener categorías únicas de alertas
-  const alertCategories = Array.from(
-    new Set(alerts.map((alert) => alert.category).filter(Boolean))
+  // Obtener tipos únicos de alertas del backend
+  const alertTypes = Array.from(
+    new Set(alerts.map((alert) => alert.type).filter(Boolean))
   ) as string[];
 
+  // Mapeo de tipos de alerta a etiquetas en español
+  const alertTypeLabels: Record<string, string> = {
+    expired_documentation: "Documentación Vencida",
+    cashbox_difference: "Diferencia de Caja",
+    contract_zero_balance: "Contrato Sin Saldo",
+    contract_insufficient_balance: "Contrato Saldo Insuficiente",
+    duplicate_invoice: "Factura Duplicada",
+    overdue_stage: "Etapa Vencida",
+    observed_expense: "Gasto Observado",
+    missing_validation: "Validación Pendiente",
+    pending_income_confirmation: "Confirmación de Ingreso Pendiente",
+    annulled_expense: "Gasto Anulado",
+  };
+
   const unreadCount = alerts.filter((a) => !a.read).length;
+  const criticalUnreadCount = alerts.filter((a) => !a.read && a.severity === "critical").length;
 
   return (
     <>
@@ -81,7 +96,13 @@ function AlertsContent() {
                 Sistema de alertas y notificaciones PMD
                 {unreadCount > 0 && (
                   <span className="ml-2 text-gray-900 font-semibold">
-                    ({unreadCount} no leída{unreadCount !== 1 ? "s" : ""})
+                    ({unreadCount} no leída{unreadCount !== 1 ? "s" : ""}
+                    {criticalUnreadCount > 0 && (
+                      <span className="ml-1 text-red-600">
+                        - {criticalUnreadCount} crítica{criticalUnreadCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    )
                   </span>
                 )}
               </p>
@@ -151,28 +172,18 @@ function AlertsContent() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Alerta</label>
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
                 >
-                  <option value="all">Todos</option>
-                  {alertCategories.map((category) => {
-                    const labels: Record<string, string> = {
-                      work: "Obra",
-                      supplier: "Proveedor",
-                      document: "Documento",
-                      accounting: "Contable",
-                      cashbox: "Caja",
-                      general: "General",
-                    };
-                    return (
-                      <option key={category} value={category}>
-                        {labels[category] || category}
-                      </option>
-                    );
-                  })}
+                  <option value="all">Todos los tipos</option>
+                  {alertTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {alertTypeLabels[type] || type}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

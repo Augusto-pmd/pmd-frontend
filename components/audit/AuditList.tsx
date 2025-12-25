@@ -17,6 +17,8 @@ interface AuditListProps {
   searchQuery?: string;
   moduleFilter?: string;
   userFilter?: string;
+  actionFilter?: string;
+  entityFilter?: string;
   startDateFilter?: string;
   endDateFilter?: string;
 }
@@ -27,6 +29,8 @@ export function AuditList({
   searchQuery = "",
   moduleFilter = "all",
   userFilter = "all",
+  actionFilter = "all",
+  entityFilter = "all",
   startDateFilter = "",
   endDateFilter = "",
 }: AuditListProps) {
@@ -56,21 +60,32 @@ export function AuditList({
 
     if (moduleFilter !== "all" && log.module !== moduleFilter) return false;
 
-    if (userFilter !== "all" && log.user !== userFilter && log.userId !== userFilter) return false;
+    if (userFilter !== "all" && log.user !== userFilter && log.userId !== userFilter && log.user_id !== userFilter) return false;
+
+    if (actionFilter !== "all" && log.action !== actionFilter) return false;
+
+    if (entityFilter !== "all" && log.entity_type !== entityFilter && log.entity !== entityFilter) return false;
 
     if (startDateFilter) {
-      const logDate = log.timestamp.split("T")[0];
-      if (logDate < startDateFilter) return false;
+      const logTimestamp = log.timestamp || log.created_at;
+      if (logTimestamp) {
+        const logDate = logTimestamp.split("T")[0];
+        if (logDate < startDateFilter) return false;
+      }
     }
     if (endDateFilter) {
-      const logDate = log.timestamp.split("T")[0];
-      if (logDate > endDateFilter) return false;
+      const logTimestamp = log.timestamp || log.created_at;
+      if (logTimestamp) {
+        const logDate = logTimestamp.split("T")[0];
+        if (logDate > endDateFilter) return false;
+      }
     }
 
     return true;
   });
 
-  const formatTimestamp = (timestamp: string) => {
+  const formatTimestamp = (timestamp?: string) => {
+    if (!timestamp) return "-";
     const date = new Date(timestamp);
     return date.toLocaleString("es-AR", {
       year: "numeric",
@@ -200,7 +215,7 @@ export function AuditList({
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <Calendar className="w-4 h-4" style={{ color: "var(--apple-text-secondary)", flexShrink: 0 }} />
                     <span style={{ fontSize: "14px", color: "var(--apple-text-secondary)" }}>
-                      {formatTimestamp(log.timestamp)}
+                      {formatTimestamp(log.timestamp || log.created_at)}
                     </span>
                   </div>
                 </TableCell>

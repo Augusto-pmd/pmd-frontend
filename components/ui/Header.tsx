@@ -2,9 +2,10 @@
 
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, Bell } from "lucide-react";
 import { Button } from "./Button";
 import { useEffect, useState } from "react";
+import { useAlertsStore } from "@/store/alertsStore";
 
 interface HeaderProps {
   title?: string;
@@ -14,11 +15,20 @@ export function Header({ title }: HeaderProps) {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+  const { alerts, fetchAlerts } = useAlertsStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Cargar alertas al montar el componente
+    if (user?.organizationId) {
+      fetchAlerts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.organizationId]);
+
+  const unreadCount = alerts.filter((a) => !a.read).length;
+  const criticalUnreadCount = alerts.filter((a) => !a.read && a.severity === "critical").length;
 
   const handleLogout = () => {
     logout();
@@ -116,6 +126,44 @@ export function Header({ title }: HeaderProps) {
 
       {/* Right Section */}
       <div style={rightSectionStyle}>
+        {/* Alerts Counter */}
+        {mounted && unreadCount > 0 && (
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => router.push("/alerts")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              position: "relative",
+            }}
+            className="relative"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="hidden sm:inline">Alertas</span>
+            <span
+              style={{
+                position: "absolute",
+                top: "-4px",
+                right: "-4px",
+                backgroundColor: criticalUnreadCount > 0 ? "#dc2626" : "#3b82f6",
+                color: "white",
+                borderRadius: "50%",
+                width: "20px",
+                height: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "11px",
+                fontWeight: 600,
+              }}
+            >
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          </Button>
+        )}
+
         {/* User Info */}
         {mounted && user && (
           <div style={userInfoStyle} className="hidden sm:flex">

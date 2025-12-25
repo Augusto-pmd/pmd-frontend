@@ -7,7 +7,23 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { useAlertsStore, Alert } from "@/store/alertsStore";
 import { useToast } from "@/components/ui/Toast";
-import { Eye, Trash2, Check, CheckCheck, Bell, AlertTriangle } from "lucide-react";
+import { 
+  Eye, 
+  Trash2, 
+  Check, 
+  CheckCheck, 
+  Bell, 
+  AlertTriangle, 
+  FileX, 
+  Wallet, 
+  FileText, 
+  Receipt, 
+  Calendar, 
+  AlertCircle,
+  XCircle,
+  Clock,
+  DollarSign
+} from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
 import { useWorkDocuments } from "@/hooks/api/workDocuments";
@@ -56,8 +72,11 @@ export function AlertsList({
     // Filtro de severidad
     if (severityFilter !== "all" && alert.severity !== severityFilter) return false;
 
-    // Filtro de categoría
-    if (typeFilter !== "all" && alert.category !== typeFilter) return false;
+    // Filtro de tipo (usar type del backend, con fallback a category para compatibilidad)
+    if (typeFilter !== "all") {
+      const alertType = alert.type || alert.category;
+      if (alertType !== typeFilter) return false;
+    }
 
     // Filtro de obra
     if (workFilter !== "all" && alert.workId !== workFilter) return false;
@@ -114,8 +133,38 @@ export function AlertsList({
     return labels[severity] || severity;
   };
 
-  const getCategoryLabel = (category: string) => {
+  const getAlertTypeIcon = (type?: string) => {
+    if (!type) return <Bell className="h-4 w-4" />;
+    const typeLower = type.toLowerCase();
+    if (typeLower.includes("expired") || typeLower.includes("vencida")) return <FileX className="h-4 w-4" />;
+    if (typeLower.includes("cashbox") || typeLower.includes("caja")) return <Wallet className="h-4 w-4" />;
+    if (typeLower.includes("contract") || typeLower.includes("contrato")) return <FileText className="h-4 w-4" />;
+    if (typeLower.includes("expense") || typeLower.includes("gasto")) return <Receipt className="h-4 w-4" />;
+    if (typeLower.includes("overdue") || typeLower.includes("vencida")) return <Calendar className="h-4 w-4" />;
+    if (typeLower.includes("duplicate") || typeLower.includes("duplicada")) return <AlertCircle className="h-4 w-4" />;
+    if (typeLower.includes("validation") || typeLower.includes("validación")) return <Clock className="h-4 w-4" />;
+    if (typeLower.includes("income") || typeLower.includes("ingreso")) return <DollarSign className="h-4 w-4" />;
+    return <Bell className="h-4 w-4" />;
+  };
+
+  const getAlertTypeLabel = (type?: string, category?: string) => {
+    // Priorizar type del backend sobre category legacy
+    const alertType = type || category;
+    if (!alertType) return "General";
+    
     const labels: Record<string, string> = {
+      // Tipos del backend
+      expired_documentation: "Documentación Vencida",
+      cashbox_difference: "Diferencia de Caja",
+      contract_zero_balance: "Contrato Sin Saldo",
+      contract_insufficient_balance: "Contrato Saldo Insuficiente",
+      duplicate_invoice: "Factura Duplicada",
+      overdue_stage: "Etapa Vencida",
+      observed_expense: "Gasto Observado",
+      missing_validation: "Validación Pendiente",
+      pending_income_confirmation: "Confirmación de Ingreso Pendiente",
+      annulled_expense: "Gasto Anulado",
+      // Categorías legacy
       work: "Obra",
       supplier: "Proveedor",
       document: "Documento",
@@ -123,7 +172,7 @@ export function AlertsList({
       cashbox: "Caja",
       general: "General",
     };
-    return labels[category] || category;
+    return labels[alertType] || alertType;
   };
 
   const handleMarkAsRead = async (id: string) => {
@@ -252,13 +301,55 @@ export function AlertsList({
                   className={`hover:bg-gray-50 transition-colors ${!alert.read ? "bg-blue-50/30" : ""}`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{getCategoryLabel(alert.category || "general")}</div>
+                    <div className="flex items-center gap-2">
+                      <div className={`${
+                        alert.severity === "critical" 
+                          ? "text-red-600" 
+                          : alert.severity === "warning" 
+                          ? "text-yellow-600" 
+                          : "text-blue-600"
+                      }`}>
+                        {getAlertTypeIcon(alert.type || alert.category)}
+                      </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {getAlertTypeLabel(alert.type, alert.category)}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{alert.title || "Sin título"}</div>
-                    {alert.description && (
-                      <div className="text-xs text-gray-500 mt-1">{alert.description}</div>
-                    )}
+                    <div className="flex items-start gap-2">
+                      <div className={`mt-0.5 ${
+                        alert.severity === "critical" 
+                          ? "text-red-600" 
+                          : alert.severity === "warning" 
+                          ? "text-yellow-600" 
+                          : "text-blue-600"
+                      }`}>
+                        {alert.severity === "critical" ? (
+                          <AlertTriangle className="h-4 w-4" />
+                        ) : alert.severity === "warning" ? (
+                          <AlertCircle className="h-4 w-4" />
+                        ) : (
+                          <Bell className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className={`text-sm font-medium ${
+                          alert.severity === "critical" 
+                            ? "text-red-900" 
+                            : alert.severity === "warning" 
+                            ? "text-yellow-900" 
+                            : "text-gray-900"
+                        }`}>
+                          {alert.title || alert.message || "Sin título"}
+                        </div>
+                        {(alert.description || alert.message) && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {alert.description || alert.message}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{getWorkName(alert.workId)}</div>
