@@ -68,6 +68,66 @@ export const cashboxApi = {
     }
     return apiClient.delete(`/cashboxes/${id}`);
   },
+  refill: (id: string, data: { amount: number; currency: string; delivered_by?: string; description?: string }) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.refill] id no está definido");
+      }
+      throw new Error("ID de caja no está definido");
+    }
+    return apiClient.post(`/cashboxes/${id}/refill`, data);
+  },
+  requestExplanation: (id: string, data: { message: string }) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.requestExplanation] id no está definido");
+      }
+      throw new Error("ID de caja no está definido");
+    }
+    return apiClient.post(`/cashboxes/${id}/request-explanation`, data);
+  },
+  rejectDifference: (id: string, data?: { reason?: string }) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.rejectDifference] id no está definido");
+      }
+      throw new Error("ID de caja no está definido");
+    }
+    return apiClient.post(`/cashboxes/${id}/reject-difference`, data || {});
+  },
+  manualAdjustment: (id: string, data: { amount: number; currency: string; reason?: string }) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.manualAdjustment] id no está definido");
+      }
+      throw new Error("ID de caja no está definido");
+    }
+    return apiClient.post(`/cashboxes/${id}/manual-adjustment`, data);
+  },
+  getHistory: (id: string, filters?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    currency?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.getHistory] id no está definido");
+      }
+      throw new Error("ID de caja no está definido");
+    }
+    const params = new URLSearchParams();
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.currency) params.append('currency', filters.currency);
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    const queryString = params.toString();
+    return apiClient.get(`/cashboxes/${id}/history${queryString ? `?${queryString}` : ''}`);
+  },
 };
 
 export function useCashMovements(cashboxId?: string) {
