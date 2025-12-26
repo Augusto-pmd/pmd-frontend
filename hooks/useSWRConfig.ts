@@ -1,25 +1,58 @@
 import { SWRConfiguration } from "swr";
-import api from "@/lib/api";
+import { apiClient } from "@/lib/api";
 
 // SWR fetcher function
 export const fetcher = async (url: string) => {
-  const response = await api.get(url);
-  return response.data;
+  const response = await apiClient.get(url);
+  return response;
 };
 
 // Global SWR configuration
 export const swrConfig: SWRConfiguration = {
-  fetcher,
+  fetcher: async (url: string) => {
+    try {
+      const response = await apiClient.get(url);
+      return response;
+    } catch (error: any) {
+      // Handle timeout errors
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error('La solicitud tardó demasiado. Por favor, intenta nuevamente.');
+      }
+      // Handle network errors
+      if (error.message === 'Network Error' || !error.response) {
+        throw new Error('Error de conexión. Verifica tu conexión a internet.');
+      }
+      throw error;
+    }
+  },
   revalidateOnFocus: false,
   revalidateOnReconnect: true,
   shouldRetryOnError: (error: any) => {
-    // Don't retry on 401 or 403
-    if (error?.status === 401 || error?.status === 403) {
+    // Don't retry on 401, 403, or 404
+    if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
       return false;
+    }
+    // Don't retry on timeout or network errors (they will be retried by SWR's default mechanism)
+    if (error?.code === 'ECONNABORTED' || error?.message === 'Network Error') {
+      return true;
     }
     return true;
   },
   errorRetryCount: 3,
-  errorRetryInterval: 1000,
+  errorRetryInterval: (attemptIndex) => {
+    // Exponential backoff: 1s, 2s, 4s
+    return Math.min(1000 * 2 ** attemptIndex, 10000);
+  },
+  dedupingInterval: 2000, // Deduplicate requests within 2 seconds
+  focusThrottleInterval: 5000, // Throttle revalidation on focus
+  revalidateIfStale: true, // Revalidate if data is stale
+  keepPreviousData: true, // Keep previous data while fetching new data
+  // Cache configuration for different data types
+  onSuccess: (data: any, key: string) => {
+    // Log cache hits in development
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(`[SWR] Cache hit for: ${key}`);
+    }
+  },
 };
 
