@@ -1,7 +1,6 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
-import { apiClient } from "@/lib/api-client";
-import { mutate } from "swr";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 export interface User {
   id: string;
@@ -16,27 +15,34 @@ export interface User {
 }
 
 export function useUsers() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<User[]>("/users", fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token ? "users" : null,
+    () => {
+      return apiClient.get("/users");
+    }
+  );
 
   const createUser = async (userData: Partial<User>) => {
-    const newUser = await apiClient.create<User>("/users", userData);
+    const newUser = await apiClient.post<User>("/users", userData);
     await revalidate();
     return newUser;
   };
 
   const updateUser = async (id: string, userData: Partial<User>) => {
-    const updatedUser = await apiClient.update<User>("/users", id, userData);
+    const updatedUser = await apiClient.patch<User>(`/users/${id}`, userData);
     await revalidate();
     return updatedUser;
   };
 
   const deleteUser = async (id: string) => {
-    await apiClient.delete("/users", id);
+    await apiClient.delete(`/users/${id}`);
     await revalidate();
   };
 
   return {
-    users: data || [],
+    users: ((data as any)?.data || data || []) as User[],
     isLoading,
     error,
     createUser,
@@ -47,13 +53,17 @@ export function useUsers() {
 }
 
 export function useUser(id: string | null) {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<User | null>(
-    id ? `/users/${id}` : null,
-    fetcher
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token && id ? `users/${id}` : null,
+    () => {
+      return apiClient.get(`/users/${id}`);
+    }
   );
 
   return {
-    user: data || null,
+    user: ((data as any)?.data || data || null) as User | null,
     isLoading,
     error,
     revalidate,

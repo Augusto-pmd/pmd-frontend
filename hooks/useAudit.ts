@@ -1,5 +1,6 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 export interface AuditLog {
   id: string;
@@ -13,10 +14,17 @@ export interface AuditLog {
 }
 
 export function useAuditLogs() {
-  const { data, error, isLoading } = useSWR<AuditLog[]>("/audit", fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading } = useSWR(
+    token ? "audit" : null,
+    () => {
+      return apiClient.get("/audit");
+    }
+  );
 
   return {
-    logs: data || [],
+    logs: ((data as any)?.data || data || []) as AuditLog[],
     isLoading,
     error,
   };

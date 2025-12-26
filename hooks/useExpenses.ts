@@ -1,6 +1,6 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 export interface Expense {
   id: string;
@@ -15,27 +15,34 @@ export interface Expense {
 }
 
 export function useExpenses() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<Expense[]>("/expenses", fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token ? "expenses" : null,
+    () => {
+      return apiClient.get("/expenses");
+    }
+  );
 
   const createExpense = async (expenseData: Partial<Expense>) => {
-    const newExpense = await apiClient.create<Expense>("/expenses", expenseData);
+    const newExpense = await apiClient.post<Expense>("/expenses", expenseData);
     await revalidate();
     return newExpense;
   };
 
   const updateExpense = async (id: string, expenseData: Partial<Expense>) => {
-    const updatedExpense = await apiClient.update<Expense>("/expenses", id, expenseData);
+    const updatedExpense = await apiClient.patch<Expense>(`/expenses/${id}`, expenseData);
     await revalidate();
     return updatedExpense;
   };
 
   const deleteExpense = async (id: string) => {
-    await apiClient.delete("/expenses", id);
+    await apiClient.delete(`/expenses/${id}`);
     await revalidate();
   };
 
   return {
-    expenses: data || [],
+    expenses: ((data as any)?.data || data || []) as Expense[],
     isLoading,
     error,
     createExpense,
@@ -46,13 +53,17 @@ export function useExpenses() {
 }
 
 export function useExpense(id: string | null) {
-  const { data, error, isLoading } = useSWR<Expense | null>(
-    id ? `/expenses/${id}` : null,
-    fetcher
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading } = useSWR(
+    token && id ? `expenses/${id}` : null,
+    () => {
+      return apiClient.get(`/expenses/${id}`);
+    }
   );
 
   return {
-    expense: data || null,
+    expense: ((data as any)?.data || data || null) as Expense | null,
     isLoading,
     error,
   };

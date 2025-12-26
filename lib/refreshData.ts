@@ -34,47 +34,47 @@ export async function refreshRelatedData(
 
   if (expenses) {
     refreshPromises.push(globalMutate("/expenses"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/expenses')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/expenses')));
   }
 
   if (contracts) {
     refreshPromises.push(globalMutate("/contracts"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/contracts')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/contracts')));
   }
 
   if (works) {
     refreshPromises.push(globalMutate("/works"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/works')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/works')));
   }
 
   if (accounting) {
     refreshPromises.push(globalMutate("/accounting"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/accounting')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/accounting')));
   }
 
   if (alerts) {
     refreshPromises.push(globalMutate("/alerts"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/alerts')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/alerts')));
   }
 
   if (dashboard) {
     refreshPromises.push(globalMutate("/dashboard"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/dashboard')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/dashboard')));
   }
 
   if (cashboxes) {
     refreshPromises.push(globalMutate("/cashboxes"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/cashbox')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/cashbox')));
   }
 
   if (incomes) {
     refreshPromises.push(globalMutate("/incomes"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/incomes')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/incomes')));
   }
 
   if (suppliers) {
     refreshPromises.push(globalMutate("/suppliers"));
-    refreshPromises.push(globalMutate((key) => typeof key === 'string' && key.startsWith('/suppliers')));
+    refreshPromises.push(globalMutate((key: any) => typeof key === 'string' && key.startsWith('/suppliers')));
   }
 
   // Execute all refreshes in parallel

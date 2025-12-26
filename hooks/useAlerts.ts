@@ -1,6 +1,6 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 export interface Alert {
   id: string;
@@ -13,20 +13,27 @@ export interface Alert {
 }
 
 export function useAlerts() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<Alert[]>("/alerts", fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token ? "alerts" : null,
+    () => {
+      return apiClient.get("/alerts");
+    }
+  );
 
   const markAsRead = async (id: string) => {
-    await apiClient.patch("/alerts", id, { status: "read" });
+    await apiClient.patch(`/alerts/${id}`, { status: "read" });
     await revalidate();
   };
 
   const deleteAlert = async (id: string) => {
-    await apiClient.delete("/alerts", id);
+    await apiClient.delete(`/alerts/${id}`);
     await revalidate();
   };
 
   return {
-    alerts: data || [],
+    alerts: ((data as any)?.data || data || []) as Alert[],
     isLoading,
     error,
     markAsRead,

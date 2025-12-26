@@ -1,6 +1,6 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 export interface Cashbox {
   id: string;
@@ -22,27 +22,34 @@ export interface CashMovement {
 }
 
 export function useCashboxes() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<Cashbox[]>("/cashboxes", fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token ? "cashboxes" : null,
+    () => {
+      return apiClient.get("/cashboxes");
+    }
+  );
 
   const createCashbox = async (cashboxData: Partial<Cashbox>) => {
-    const newCashbox = await apiClient.create<Cashbox>("/cashboxes", cashboxData);
+    const newCashbox = await apiClient.post<Cashbox>("/cashboxes", cashboxData);
     await revalidate();
     return newCashbox;
   };
 
   const updateCashbox = async (id: string, cashboxData: Partial<Cashbox>) => {
-    const updatedCashbox = await apiClient.update<Cashbox>("/cashboxes", id, cashboxData);
+    const updatedCashbox = await apiClient.patch<Cashbox>(`/cashboxes/${id}`, cashboxData);
     await revalidate();
     return updatedCashbox;
   };
 
   const deleteCashbox = async (id: string) => {
-    await apiClient.delete("/cashboxes", id);
+    await apiClient.delete(`/cashboxes/${id}`);
     await revalidate();
   };
 
   return {
-    cashboxes: data || [],
+    cashboxes: ((data as any)?.data || data || []) as Cashbox[],
     isLoading,
     error,
     createCashbox,
@@ -53,37 +60,45 @@ export function useCashboxes() {
 }
 
 export function useCashbox(id: string | null) {
-  const { data, error, isLoading } = useSWR<Cashbox | null>(
-    id ? `/cashboxes/${id}` : null,
-    fetcher
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading } = useSWR(
+    token && id ? `cashboxes/${id}` : null,
+    () => {
+      return apiClient.get(`/cashboxes/${id}`);
+    }
   );
 
   return {
-    cashbox: data || null,
+    cashbox: ((data as any)?.data || data || null) as Cashbox | null,
     isLoading,
     error,
   };
 }
 
 export function useCashMovements(cashboxId: string | null) {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<CashMovement[]>(
-    cashboxId ? `/cash-movements?cashboxId=${cashboxId}` : null,
-    fetcher
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token && cashboxId ? `cash-movements?cashboxId=${cashboxId}` : null,
+    () => {
+      return apiClient.get(`/cash-movements?cashboxId=${cashboxId}`);
+    }
   );
 
   const createMovement = async (movementData: Partial<CashMovement>) => {
-    const newMovement = await apiClient.create<CashMovement>("/cash-movements", movementData);
+    const newMovement = await apiClient.post<CashMovement>("/cash-movements", movementData);
     await revalidate();
     return newMovement;
   };
 
   const deleteMovement = async (id: string) => {
-    await apiClient.delete("/cash-movements", id);
+    await apiClient.delete(`/cash-movements/${id}`);
     await revalidate();
   };
 
   return {
-    movements: data || [],
+    movements: ((data as any)?.data || data || []) as CashMovement[],
     isLoading,
     error,
     createMovement,

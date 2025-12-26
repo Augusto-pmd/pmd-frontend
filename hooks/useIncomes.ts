@@ -1,6 +1,6 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 export interface Income {
   id: string;
@@ -14,27 +14,34 @@ export interface Income {
 }
 
 export function useIncomes() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<Income[]>("/incomes", fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token ? "incomes" : null,
+    () => {
+      return apiClient.get("/incomes");
+    }
+  );
 
   const createIncome = async (incomeData: Partial<Income>) => {
-    const newIncome = await apiClient.create<Income>("/incomes", incomeData);
+    const newIncome = await apiClient.post<Income>("/incomes", incomeData);
     await revalidate();
     return newIncome;
   };
 
   const updateIncome = async (id: string, incomeData: Partial<Income>) => {
-    const updatedIncome = await apiClient.update<Income>("/incomes", id, incomeData);
+    const updatedIncome = await apiClient.patch<Income>(`/incomes/${id}`, incomeData);
     await revalidate();
     return updatedIncome;
   };
 
   const deleteIncome = async (id: string) => {
-    await apiClient.delete("/incomes", id);
+    await apiClient.delete(`/incomes/${id}`);
     await revalidate();
   };
 
   return {
-    incomes: data || [],
+    incomes: ((data as any)?.data || data || []) as Income[],
     isLoading,
     error,
     createIncome,
@@ -45,10 +52,17 @@ export function useIncomes() {
 }
 
 export function useIncome(id: string | null) {
-  const { data, error, isLoading } = useSWR<Income | null>(id ? `/incomes/${id}` : null, fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading } = useSWR(
+    token && id ? `incomes/${id}` : null,
+    () => {
+      return apiClient.get(`/incomes/${id}`);
+    }
+  );
 
   return {
-    income: data || null,
+    income: ((data as any)?.data || data || null) as Income | null,
     isLoading,
     error,
   };

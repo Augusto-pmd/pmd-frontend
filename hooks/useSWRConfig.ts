@@ -39,10 +39,7 @@ export const swrConfig: SWRConfiguration = {
     return true;
   },
   errorRetryCount: 3,
-  errorRetryInterval: (attemptIndex) => {
-    // Exponential backoff: 1s, 2s, 4s
-    return Math.min(1000 * 2 ** attemptIndex, 10000);
-  },
+  errorRetryInterval: 5000, // Fixed interval of 5 seconds
   dedupingInterval: 2000, // Deduplicate requests within 2 seconds
   focusThrottleInterval: 5000, // Throttle revalidation on focus
   revalidateIfStale: true, // Revalidate if data is stale
@@ -54,5 +51,5 @@ export const swrConfig: SWRConfiguration = {
       console.debug(`[SWR] Cache hit for: ${key}`);
     }
   },
-};
+} as SWRConfiguration;
 

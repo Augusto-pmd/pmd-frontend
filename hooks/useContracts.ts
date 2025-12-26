@@ -1,6 +1,6 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 export interface Contract {
   id: string;
@@ -16,27 +16,34 @@ export interface Contract {
 }
 
 export function useContracts() {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<Contract[]>("/contracts", fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token ? "contracts" : null,
+    () => {
+      return apiClient.get("/contracts");
+    }
+  );
 
   const createContract = async (contractData: Partial<Contract>) => {
-    const newContract = await apiClient.create<Contract>("/contracts", contractData);
+    const newContract = await apiClient.post<Contract>("/contracts", contractData);
     await revalidate();
     return newContract;
   };
 
   const updateContract = async (id: string, contractData: Partial<Contract>) => {
-    const updatedContract = await apiClient.update<Contract>("/contracts", id, contractData);
+    const updatedContract = await apiClient.patch<Contract>(`/contracts/${id}`, contractData);
     await revalidate();
     return updatedContract;
   };
 
   const deleteContract = async (id: string) => {
-    await apiClient.delete("/contracts", id);
+    await apiClient.delete(`/contracts/${id}`);
     await revalidate();
   };
 
   return {
-    contracts: data || [],
+    contracts: ((data as any)?.data || data || []) as Contract[],
     isLoading,
     error,
     createContract,
@@ -47,13 +54,17 @@ export function useContracts() {
 }
 
 export function useContract(id: string | null) {
-  const { data, error, isLoading } = useSWR<Contract | null>(
-    id ? `/contracts/${id}` : null,
-    fetcher
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading } = useSWR(
+    token && id ? `contracts/${id}` : null,
+    () => {
+      return apiClient.get(`/contracts/${id}`);
+    }
   );
 
   return {
-    contract: data || null,
+    contract: ((data as any)?.data || data || null) as Contract | null,
     isLoading,
     error,
   };

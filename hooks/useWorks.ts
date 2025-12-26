@@ -1,6 +1,5 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 
 export interface Work {
@@ -25,37 +24,40 @@ export interface WorkBudget {
 }
 
 export function useWorks() {
+  const { token } = useAuthStore();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
-  const endpoint = organizationId ? `${organizationId}/works` : null;
+  const endpoint = organizationId ? `works` : null;
   
-  const { data, error, isLoading, mutate: revalidate } = useSWR<Work[]>(
-    endpoint, 
-    fetcher
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token && endpoint ? endpoint : null,
+    () => {
+      return apiClient.get("/works");
+    }
   );
 
   const createWork = async (workData: Partial<Work>) => {
     if (!organizationId) throw new Error("No hay organización seleccionada");
-    const newWork = await apiClient.create<Work>(`${organizationId}/works`, workData);
+    const newWork = await apiClient.post<Work>("/works", workData);
     await revalidate();
     return newWork;
   };
 
   const updateWork = async (id: string, workData: Partial<Work>) => {
     if (!organizationId) throw new Error("No hay organización seleccionada");
-    const updatedWork = await apiClient.update<Work>(`${organizationId}/works`, id, workData);
+    const updatedWork = await apiClient.patch<Work>(`/works/${id}`, workData);
     await revalidate();
     return updatedWork;
   };
 
   const deleteWork = async (id: string) => {
     if (!organizationId) throw new Error("No hay organización seleccionada");
-    await apiClient.delete(`${organizationId}/works`, id);
+    await apiClient.delete(`/works/${id}`);
     await revalidate();
   };
 
   return {
-    works: data || [],
+    works: ((data as any)?.data || data || []) as Work[],
     isLoading,
     error,
     createWork,
@@ -66,47 +68,51 @@ export function useWorks() {
 }
 
 export function useWork(id: string | null) {
-  const authState = useAuthStore.getState();
-  const organizationId = authState.user?.organizationId;
-  const endpoint = id && organizationId ? `${organizationId}/works/${id}` : null;
+  const { token } = useAuthStore();
   
-  const { data, error, isLoading } = useSWR<Work | null>(
-    endpoint, 
-    fetcher
+  const { data, error, isLoading } = useSWR(
+    token && id ? `works/${id}` : null,
+    () => {
+      return apiClient.get(`/works/${id}`);
+    }
   );
 
   return {
-    work: data || null,
+    work: ((data as any)?.data || data || null) as Work | null,
     isLoading,
     error,
   };
 }
 
 export function useWorkBudgets(workId: string | null) {
-  const { data, error, isLoading, mutate: revalidate } = useSWR<WorkBudget[]>(
-    workId ? `/work-budgets?workId=${workId}` : null,
-    fetcher
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading, mutate: revalidate } = useSWR(
+    token && workId ? `work-budgets?workId=${workId}` : null,
+    () => {
+      return apiClient.get(`/work-budgets?workId=${workId}`);
+    }
   );
 
   const createBudget = async (budgetData: Partial<WorkBudget>) => {
-    const newBudget = await apiClient.create<WorkBudget>("/work-budgets", budgetData);
+    const newBudget = await apiClient.post<WorkBudget>("/work-budgets", budgetData);
     await revalidate();
     return newBudget;
   };
 
   const updateBudget = async (id: string, budgetData: Partial<WorkBudget>) => {
-    const updatedBudget = await apiClient.update<WorkBudget>("/work-budgets", id, budgetData);
+    const updatedBudget = await apiClient.patch<WorkBudget>(`/work-budgets/${id}`, budgetData);
     await revalidate();
     return updatedBudget;
   };
 
   const deleteBudget = async (id: string) => {
-    await apiClient.delete("/work-budgets", id);
+    await apiClient.delete(`/work-budgets/${id}`);
     await revalidate();
   };
 
   return {
-    budgets: data || [],
+    budgets: ((data as any)?.data || data || []) as WorkBudget[],
     isLoading,
     error,
     createBudget,

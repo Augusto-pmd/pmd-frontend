@@ -1,5 +1,6 @@
 import useSWR from "swr";
-import { fetcher } from "./useSWRConfig";
+import { apiClient } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 export interface AccountingReport {
   id: string;
@@ -12,10 +13,17 @@ export interface AccountingReport {
 }
 
 export function useAccounting() {
-  const { data, error, isLoading } = useSWR<AccountingReport[]>("/accounting", fetcher);
+  const { token } = useAuthStore();
+  
+  const { data, error, isLoading } = useSWR(
+    token ? "accounting" : null,
+    () => {
+      return apiClient.get("/accounting");
+    }
+  );
 
   return {
-    reports: data || [],
+    reports: ((data as any)?.data || data || []) as AccountingReport[],
     isLoading,
     error,
   };
