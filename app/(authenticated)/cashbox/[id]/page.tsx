@@ -727,7 +727,7 @@ function CashboxDetailContent() {
                   fetchMovements(cashboxId);
                   fetchCashboxes();
                   mutateCashbox();
-                  refreshPatterns.afterCashboxClosure();
+                  await refreshPatterns.afterCashboxClosure(globalMutate);
                 } catch (error: any) {
                   const errorMessage = error?.response?.data?.message || error?.message || "Error al agregar refuerzo";
                   toast.error(errorMessage);
@@ -836,7 +836,7 @@ function CashboxDetailContent() {
                   setShowRequestExplanationModal(false);
                   setExplanationMessage("");
                   fetchAlerts();
-                  refreshPatterns.afterCashboxClosure();
+                  await refreshPatterns.afterCashboxClosure(globalMutate);
                 } catch (error: any) {
                   const errorMessage = error?.response?.data?.message || error?.message || "Error al solicitar explicación";
                   toast.error(errorMessage);
@@ -908,7 +908,7 @@ function CashboxDetailContent() {
                   fetchCashboxes();
                   fetchAlerts();
                   mutateCashbox();
-                  refreshPatterns.afterCashboxClosure();
+                  await refreshPatterns.afterCashboxClosure(globalMutate);
                 } catch (error: any) {
                   const errorMessage = error?.response?.data?.message || error?.message || "Error al rechazar diferencia";
                   toast.error(errorMessage);
@@ -942,7 +942,7 @@ function CashboxDetailContent() {
                   </Button>
                   <Button
                     type="submit"
-                    variant="error"
+                    variant="danger"
                     loading={isRejecting}
                   >
                     {isRejecting ? "Rechazando..." : "Rechazar Diferencia"}
@@ -989,7 +989,7 @@ function CashboxDetailContent() {
                   fetchMovements(cashboxId);
                   fetchAlerts();
                   mutateCashbox();
-                  refreshPatterns.afterCashboxClosure();
+                  await refreshPatterns.afterCashboxClosure(globalMutate);
                 } catch (error: any) {
                   const errorMessage = error?.response?.data?.message || error?.message || "Error al realizar ajuste manual";
                   toast.error(errorMessage);

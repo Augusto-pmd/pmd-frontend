@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { cashboxApi } from "@/hooks/api/cashboxes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -56,7 +56,8 @@ export function CashboxHistory({ cashboxId }: CashboxHistoryProps) {
   });
   const toast = useToast();
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
+    if (!cashboxId) return;
     setIsLoading(true);
     try {
       const response = await cashboxApi.getHistory(cashboxId, {
@@ -66,21 +67,19 @@ export function CashboxHistory({ cashboxId }: CashboxHistoryProps) {
         ...(filters.currency && { currency: filters.currency }),
         ...(filters.startDate && { startDate: filters.startDate }),
         ...(filters.endDate && { endDate: filters.endDate }),
-      });
-      setHistory(response.data || response);
+      }) as any;
+      setHistory((response?.data || response) as HistoryResponse);
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "Error al cargar historial";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cashboxId, page, limit, filters.type, filters.currency, filters.startDate, filters.endDate, toast]);
 
   useEffect(() => {
-    if (cashboxId) {
-      fetchHistory();
-    }
-  }, [cashboxId, page, limit, filters.type, filters.currency, filters.startDate, filters.endDate]);
+    fetchHistory();
+  }, [fetchHistory]);
 
   const formatDate = (dateString: string) => {
     try {
