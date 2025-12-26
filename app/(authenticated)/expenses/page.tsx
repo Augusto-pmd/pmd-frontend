@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/Badge";
 import { useSWRConfig } from "swr";
 import { useToast } from "@/components/ui/Toast";
 import { Expense, CreateExpenseData } from "@/lib/types/expense";
+import { refreshPatterns } from "@/lib/refreshData";
+import { getOperationErrorMessage } from "@/lib/errorMessages";
 
 function ExpensesContent() {
   const router = useRouter();
@@ -55,7 +57,13 @@ function ExpensesContent() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this expense?")) return;
+    const expense = expenses?.find((e) => e.id === id);
+    const hasAccountingRecord = expense?.state === "validated";
+    const confirmationMessage = hasAccountingRecord
+      ? "⚠️ Este gasto está validado y tiene un registro contable asociado. ¿Estás seguro de que deseas eliminarlo? Esta acción no se puede deshacer."
+      : "¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.";
+    
+    if (!confirm(confirmationMessage)) return;
     setDeleteLoading(id);
     try {
       await expenseApi.delete(id);
@@ -63,7 +71,7 @@ function ExpensesContent() {
       globalMutate("/expenses");
       toast.success("Gasto eliminado correctamente");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Error al eliminar el gasto";
+      const errorMessage = getOperationErrorMessage("delete", error);
       toast.error(errorMessage);
     } finally {
       setDeleteLoading(null);
@@ -90,13 +98,10 @@ function ExpensesContent() {
       
       // Si se validó el gasto, refrescar múltiples módulos relacionados
       if (validateState === "validated") {
-        globalMutate("/accounting"); // Refrescar registros contables
-        globalMutate("/contracts"); // Refrescar contratos (puede haber actualizado amount_executed)
-        globalMutate("/works"); // Refrescar obras (puede haber actualizado total_expenses)
-        globalMutate("/alerts"); // Refrescar alertas (puede haber generado nuevas alertas)
+        await refreshPatterns.afterExpenseValidation(globalMutate);
         
         toast.success(
-          "Gasto validado correctamente. Se han actualizado automáticamente: contrato, obra, contabilidad y alertas.",
+          "Gasto validado correctamente. Se han actualizado automáticamente: contrato, obra, contabilidad, alertas y dashboard.",
           6000
         );
       } else if (validateState === "observed" || validateState === "annulled") {
@@ -125,7 +130,7 @@ function ExpensesContent() {
       setEditingExpense(null);
       setValidateObservations("");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Error al validar el gasto";
+      const errorMessage = getOperationErrorMessage("validate", error);
       toast.error(errorMessage);
     } finally {
       setValidatingExpenseId(null);
@@ -171,7 +176,7 @@ function ExpensesContent() {
       toast.success(editingExpense ? "Gasto actualizado correctamente" : "Gasto creado correctamente");
     } catch (error: unknown) {
       // Manejar errores específicos del backend
-      const errorMessage = error instanceof Error ? error.message : "Error al guardar el gasto";
+      const errorMessage = getOperationErrorMessage(editingExpense ? "update" : "create", error);
       
       // Verificar si el error es por proveedor bloqueado
       if (errorMessage.toLowerCase().includes("blocked") || 
@@ -411,9 +416,29 @@ function ExpensesContent() {
                     Monto: ${editingExpense.amount?.toFixed(2) || "0.00"}
                   </p>
                   {editingExpense.contract_id && (
-                    <p className="text-sm text-blue-600">
-                      Contrato: {getContractName(editingExpense.contract_id)}
-                    </p>
+                    <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                      <p className="text-sm font-semibold text-yellow-800">
+                        ⚠️ Este gasto está asociado a un contrato
+                      </p>
+                      <p className="text-sm text-yellow-700">
+                        Contrato: {getContractName(editingExpense.contract_id)}
+                      </p>
+                      {validateState === "annulled" && (
+                        <p className="text-xs text-yellow-600 mt-1">
+                          Al anular este gasto, se revertirá automáticamente el saldo del contrato.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {editingExpense.state === "validated" && validateState === "annulled" && (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                      <p className="text-sm font-semibold text-red-800">
+                        ⚠️ Este gasto está validado y tiene un registro contable asociado
+                      </p>
+                      <p className="text-xs text-red-600 mt-1">
+                        Al anular este gasto, se eliminará el registro contable asociado.
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
@@ -445,18 +470,12 @@ function ExpensesContent() {
                 Cancelar
               </Button>
               <Button
-                variant={validateState === "annulled" ? "outline" : "primary"}
+                variant={validateState === "annulled" ? "danger" : "primary"}
                 onClick={handleValidate}
+                loading={validatingExpenseId === editingExpense?.id}
                 disabled={validatingExpenseId === editingExpense?.id}
-                style={
-                  validateState === "annulled"
-                    ? { color: "rgba(255, 59, 48, 1)", borderColor: "rgba(255, 59, 48, 1)" }
-                    : {}
-                }
               >
-                {validatingExpenseId === editingExpense?.id
-                  ? "Procesando..."
-                  : validateState === "validated"
+                {validateState === "validated"
                   ? "Validar"
                   : validateState === "observed"
                   ? "Observar"

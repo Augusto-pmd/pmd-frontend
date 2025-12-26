@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useSWRConfig } from "swr";
 import { useToast } from "@/components/ui/Toast";
+import { refreshPatterns } from "@/lib/refreshData";
 
 function ContractsContent() {
   const router = useRouter();
@@ -32,10 +33,11 @@ function ContractsContent() {
     try {
       await contractApi.delete(id);
       mutate();
-      globalMutate("/contracts");
+      await refreshPatterns.afterContractUpdate(globalMutate);
+      toast.success("Contrato eliminado correctamente. Dashboard actualizado.");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to delete contract";
-      alert(errorMessage);
+      const errorMessage = getOperationErrorMessage("delete", error);
+      toast.error(errorMessage);
     } finally {
       setDeleteLoading(null);
     }

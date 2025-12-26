@@ -9,10 +9,14 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { useSWRConfig } from "swr";
+import { refreshPatterns } from "@/lib/refreshData";
+import { useToast } from "@/components/ui/Toast";
+import { getOperationErrorMessage } from "@/lib/errorMessages";
 
 function IncomesContent() {
   const { incomes, isLoading, error, mutate } = useIncomes();
   const { mutate: globalMutate } = useSWRConfig();
+  const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,10 +47,11 @@ function IncomesContent() {
     try {
       await incomeApi.delete(id);
       mutate();
-      globalMutate("/incomes");
+      await refreshPatterns.afterIncomeUpdate(globalMutate);
+      toast.success("Ingreso eliminado correctamente. Dashboard actualizado.");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to delete income";
-      alert(errorMessage);
+      const errorMessage = getOperationErrorMessage("delete", error);
+      toast.error(errorMessage);
     } finally {
       setDeleteLoading(null);
     }
@@ -61,12 +66,13 @@ function IncomesContent() {
         await incomeApi.create(data);
       }
       mutate();
-      globalMutate("/incomes");
+      await refreshPatterns.afterIncomeUpdate(globalMutate);
+      toast.success("Ingreso guardado correctamente. Dashboard actualizado.");
       setIsModalOpen(false);
       setEditingIncome(null);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to save income";
-      alert(errorMessage);
+      const errorMessage = getOperationErrorMessage(editingIncome ? "update" : "create", error);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
