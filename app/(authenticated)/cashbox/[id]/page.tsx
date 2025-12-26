@@ -16,8 +16,16 @@ import { Modal } from "@/components/ui/Modal";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { MovementForm } from "../components/MovementForm";
 import { useToast } from "@/components/ui/Toast";
+import { FormField } from "@/components/ui/FormField";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { useAlertsStore } from "@/store/alertsStore";
 import { useSWRConfig } from "swr";
+import { refreshPatterns } from "@/lib/refreshData";
+import { cashboxApi } from "@/hooks/api/cashboxes";
+import { useCashbox } from "@/hooks/api/cashboxes";
+import { CashboxHistory } from "@/components/cashbox/CashboxHistory";
 
 function CashboxDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -36,7 +44,28 @@ function CashboxDetailContent() {
   const [showMovementForm, setShowMovementForm] = useState(false);
   const [editingMovement, setEditingMovement] = useState<CashMovement | null>(null);
   const [showCloseModal, setShowCloseModal] = useState(false);
+  const [showRefillModal, setShowRefillModal] = useState(false);
+  const [refillAmount, setRefillAmount] = useState("");
+  const [refillCurrency, setRefillCurrency] = useState("ARS");
+  const [refillDeliveredBy, setRefillDeliveredBy] = useState("");
+  const [refillDescription, setRefillDescription] = useState("");
+  const [isRefilling, setIsRefilling] = useState(false);
+  const [showRequestExplanationModal, setShowRequestExplanationModal] = useState(false);
+  const [explanationMessage, setExplanationMessage] = useState("");
+  const [isRequestingExplanation, setIsRequestingExplanation] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [showManualAdjustmentModal, setShowManualAdjustmentModal] = useState(false);
+  const [adjustmentAmount, setAdjustmentAmount] = useState("");
+  const [adjustmentCurrency, setAdjustmentCurrency] = useState("ARS");
+  const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [isAdjusting, setIsAdjusting] = useState(false);
   const toast = useToast();
+  const { mutate: mutateCashbox } = useCashbox(cashboxId);
+  
+  // Verificar si el usuario es Direction
+  const isDirection = user?.role?.name?.toLowerCase() === "direction";
   const organizationId = user?.organizationId;
 
   useEffect(() => {
@@ -181,11 +210,10 @@ function CashboxDetailContent() {
       // Refrescar datos relacionados automáticamente
       await fetchCashboxes(); // Refrescar cajas
       await fetchAlerts(); // Refrescar alertas (puede haber generado alerta de diferencia)
-      globalMutate("/cashboxes"); // Refrescar cajas globalmente
-      globalMutate("/alerts"); // Refrescar alertas globalmente
+      await refreshPatterns.afterCashboxClosure(globalMutate);
       
       toast.success(
-        "Caja cerrada correctamente. Si hay diferencias, se ha generado una alerta automáticamente.",
+        "Caja cerrada correctamente. Si hay diferencias, se ha generado una alerta automáticamente. Dashboard actualizado.",
         6000
       );
       setShowCloseModal(false);
@@ -431,6 +459,41 @@ function CashboxDetailContent() {
           )}
         </div>
 
+        {/* Botones de acción para diferencias */}
+        {isClosed && (differenceArs !== 0 || differenceUsd !== 0) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Acciones sobre Diferencias</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" }}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowRequestExplanationModal(true)}
+                >
+                  Solicitar Explicación
+                </Button>
+                {isDirection && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowRejectModal(true)}
+                    >
+                      Rechazar Diferencia
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowManualAdjustmentModal(true)}
+                    >
+                      Ajuste Manual
+                    </Button>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Mostrar alertas de diferencias si existen */}
         {isClosed && cashboxAlerts.length > 0 && (
           <Card>
@@ -625,6 +688,380 @@ function CashboxDetailContent() {
           />
         )}
 
+        {/* Modal de refuerzo */}
+        {showRefillModal && (
+          <Modal
+            isOpen={showRefillModal}
+            onClose={() => {
+              setShowRefillModal(false);
+              setRefillAmount("");
+              setRefillCurrency("ARS");
+              setRefillDeliveredBy("");
+              setRefillDescription("");
+            }}
+            title="Refuerzo de Caja"
+            subtitle="Agregar dinero a la caja"
+          >
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!refillAmount || parseFloat(refillAmount) <= 0) {
+                  toast.error("El monto debe ser mayor a 0");
+                  return;
+                }
+                setIsRefilling(true);
+                try {
+                  await cashboxApi.refill(cashboxId, {
+                    amount: parseFloat(refillAmount),
+                    currency: refillCurrency,
+                    delivered_by: refillDeliveredBy || undefined,
+                    description: refillDescription || undefined,
+                  });
+                  toast.success(`Refuerzo de ${formatCurrency(parseFloat(refillAmount))} agregado exitosamente`);
+                  setShowRefillModal(false);
+                  setRefillAmount("");
+                  setRefillCurrency("ARS");
+                  setRefillDeliveredBy("");
+                  setRefillDescription("");
+                  // Refrescar datos
+                  fetchMovements(cashboxId);
+                  fetchCashboxes();
+                  mutateCashbox();
+                  refreshPatterns.afterCashboxClosure();
+                } catch (error: any) {
+                  const errorMessage = error?.response?.data?.message || error?.message || "Error al agregar refuerzo";
+                  toast.error(errorMessage);
+                } finally {
+                  setIsRefilling(false);
+                }
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+                <FormField label="Monto" required error={!refillAmount || parseFloat(refillAmount) <= 0 ? "El monto debe ser mayor a 0" : undefined}>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={refillAmount}
+                    onChange={(e) => setRefillAmount(e.target.value)}
+                    placeholder="0.00"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Moneda" required>
+                  <Select
+                    value={refillCurrency}
+                    onChange={(e) => setRefillCurrency(e.target.value)}
+                    required
+                  >
+                    <option value="ARS">ARS (Pesos Argentinos)</option>
+                    <option value="USD">USD (Dólares)</option>
+                  </Select>
+                </FormField>
+
+                <FormField label="Entregado por (opcional)">
+                  <Input
+                    type="text"
+                    value={refillDeliveredBy}
+                    onChange={(e) => setRefillDeliveredBy(e.target.value)}
+                    placeholder="Nombre de quien entregó el dinero"
+                    maxLength={255}
+                  />
+                </FormField>
+
+                <FormField label="Descripción (opcional)">
+                  <Textarea
+                    value={refillDescription}
+                    onChange={(e) => setRefillDescription(e.target.value)}
+                    placeholder="Notas adicionales sobre el refuerzo"
+                    rows={3}
+                    maxLength={500}
+                  />
+                </FormField>
+
+                <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-md)" }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowRefillModal(false);
+                      setRefillAmount("");
+                      setRefillCurrency("ARS");
+                      setRefillDeliveredBy("");
+                      setRefillDescription("");
+                    }}
+                    disabled={isRefilling}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    loading={isRefilling}
+                    disabled={!refillAmount || parseFloat(refillAmount) <= 0}
+                  >
+                    {isRefilling ? "Agregando..." : "Agregar Refuerzo"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Modal>
+        )}
+
+        {/* Modal de solicitar explicación */}
+        {showRequestExplanationModal && (
+          <Modal
+            isOpen={showRequestExplanationModal}
+            onClose={() => {
+              setShowRequestExplanationModal(false);
+              setExplanationMessage("");
+            }}
+            title="Solicitar Explicación"
+            subtitle="Solicita una explicación sobre la diferencia de caja"
+          >
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!explanationMessage.trim()) {
+                  toast.error("El mensaje es obligatorio");
+                  return;
+                }
+                setIsRequestingExplanation(true);
+                try {
+                  await cashboxApi.requestExplanation(cashboxId, {
+                    message: explanationMessage,
+                  });
+                  toast.success("Explicación solicitada exitosamente. Se ha generado una alerta.");
+                  setShowRequestExplanationModal(false);
+                  setExplanationMessage("");
+                  fetchAlerts();
+                  refreshPatterns.afterCashboxClosure();
+                } catch (error: any) {
+                  const errorMessage = error?.response?.data?.message || error?.message || "Error al solicitar explicación";
+                  toast.error(errorMessage);
+                } finally {
+                  setIsRequestingExplanation(false);
+                }
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+                <FormField label="Mensaje" required error={!explanationMessage.trim() ? "El mensaje es obligatorio" : undefined}>
+                  <Textarea
+                    value={explanationMessage}
+                    onChange={(e) => setExplanationMessage(e.target.value)}
+                    placeholder="Por favor, explica la diferencia de caja..."
+                    rows={4}
+                    maxLength={1000}
+                    required
+                  />
+                </FormField>
+
+                <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-md)" }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowRequestExplanationModal(false);
+                      setExplanationMessage("");
+                    }}
+                    disabled={isRequestingExplanation}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    loading={isRequestingExplanation}
+                    disabled={!explanationMessage.trim()}
+                  >
+                    {isRequestingExplanation ? "Enviando..." : "Solicitar Explicación"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Modal>
+        )}
+
+        {/* Modal de rechazar diferencia */}
+        {showRejectModal && (
+          <Modal
+            isOpen={showRejectModal}
+            onClose={() => {
+              setShowRejectModal(false);
+              setRejectReason("");
+            }}
+            title="Rechazar Diferencia"
+            subtitle="Rechaza la diferencia de caja (solo Direction)"
+          >
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setIsRejecting(true);
+                try {
+                  await cashboxApi.rejectDifference(cashboxId, {
+                    reason: rejectReason || undefined,
+                  });
+                  toast.success("Diferencia rechazada exitosamente. Se ha generado una alerta.");
+                  setShowRejectModal(false);
+                  setRejectReason("");
+                  fetchCashboxes();
+                  fetchAlerts();
+                  mutateCashbox();
+                  refreshPatterns.afterCashboxClosure();
+                } catch (error: any) {
+                  const errorMessage = error?.response?.data?.message || error?.message || "Error al rechazar diferencia";
+                  toast.error(errorMessage);
+                } finally {
+                  setIsRejecting(false);
+                }
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+                <FormField label="Motivo (opcional)">
+                  <Textarea
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Motivo del rechazo..."
+                    rows={3}
+                    maxLength={500}
+                  />
+                </FormField>
+
+                <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-md)" }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowRejectModal(false);
+                      setRejectReason("");
+                    }}
+                    disabled={isRejecting}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="error"
+                    loading={isRejecting}
+                  >
+                    {isRejecting ? "Rechazando..." : "Rechazar Diferencia"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Modal>
+        )}
+
+        {/* Modal de ajuste manual */}
+        {showManualAdjustmentModal && (
+          <Modal
+            isOpen={showManualAdjustmentModal}
+            onClose={() => {
+              setShowManualAdjustmentModal(false);
+              setAdjustmentAmount("");
+              setAdjustmentCurrency("ARS");
+              setAdjustmentReason("");
+            }}
+            title="Ajuste Manual"
+            subtitle="Realiza un ajuste manual a la caja (solo Direction)"
+          >
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!adjustmentAmount || parseFloat(adjustmentAmount) === 0) {
+                  toast.error("El monto debe ser diferente de 0");
+                  return;
+                }
+                setIsAdjusting(true);
+                try {
+                  await cashboxApi.manualAdjustment(cashboxId, {
+                    amount: parseFloat(adjustmentAmount),
+                    currency: adjustmentCurrency,
+                    reason: adjustmentReason || undefined,
+                  });
+                  toast.success(`Ajuste manual de ${formatCurrency(parseFloat(adjustmentAmount))} realizado exitosamente.`);
+                  setShowManualAdjustmentModal(false);
+                  setAdjustmentAmount("");
+                  setAdjustmentCurrency("ARS");
+                  setAdjustmentReason("");
+                  fetchCashboxes();
+                  fetchMovements(cashboxId);
+                  fetchAlerts();
+                  mutateCashbox();
+                  refreshPatterns.afterCashboxClosure();
+                } catch (error: any) {
+                  const errorMessage = error?.response?.data?.message || error?.message || "Error al realizar ajuste manual";
+                  toast.error(errorMessage);
+                } finally {
+                  setIsAdjusting(false);
+                }
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+                <FormField label="Monto" required error={!adjustmentAmount || parseFloat(adjustmentAmount) === 0 ? "El monto debe ser diferente de 0" : undefined}>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={adjustmentAmount}
+                    onChange={(e) => setAdjustmentAmount(e.target.value)}
+                    placeholder="0.00 (puede ser positivo o negativo)"
+                    required
+                  />
+                  <p style={{ fontSize: "12px", color: "var(--apple-text-secondary)", marginTop: "4px" }}>
+                    Use valores positivos para agregar dinero, negativos para restar
+                  </p>
+                </FormField>
+
+                <FormField label="Moneda" required>
+                  <Select
+                    value={adjustmentCurrency}
+                    onChange={(e) => setAdjustmentCurrency(e.target.value)}
+                    required
+                  >
+                    <option value="ARS">ARS (Pesos Argentinos)</option>
+                    <option value="USD">USD (Dólares)</option>
+                  </Select>
+                </FormField>
+
+                <FormField label="Motivo (opcional)">
+                  <Textarea
+                    value={adjustmentReason}
+                    onChange={(e) => setAdjustmentReason(e.target.value)}
+                    placeholder="Motivo del ajuste manual..."
+                    rows={3}
+                    maxLength={500}
+                  />
+                </FormField>
+
+                <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "flex-end", paddingTop: "var(--space-md)" }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowManualAdjustmentModal(false);
+                      setAdjustmentAmount("");
+                      setAdjustmentCurrency("ARS");
+                      setAdjustmentReason("");
+                    }}
+                    disabled={isAdjusting}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    loading={isAdjusting}
+                    disabled={!adjustmentAmount || parseFloat(adjustmentAmount) === 0}
+                  >
+                    {isAdjusting ? "Ajustando..." : "Realizar Ajuste"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Modal>
+        )}
+
         {error && (
           <div style={{ backgroundColor: "rgba(255,59,48,0.1)", border: "1px solid rgba(255,59,48,0.3)", color: "rgba(255,59,48,1)", padding: "var(--space-md)", borderRadius: "var(--radius-md)" }}>
             {error}
@@ -750,6 +1187,9 @@ function CashboxDetailContent() {
             </CardContent>
           </Card>
         )}
+
+        {/* Historial detallado */}
+        <CashboxHistory cashboxId={cashboxId} />
       </div>
   );
 }
