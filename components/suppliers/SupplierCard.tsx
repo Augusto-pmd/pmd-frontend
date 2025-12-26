@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { SupplierForm } from "@/components/forms/SupplierForm";
 import { supplierApi } from "@/hooks/api/suppliers";
+import { useExpenses } from "@/hooks/api/expenses";
 import { useAuthStore } from "@/store/authStore";
 import { useToast } from "@/components/ui/Toast";
 import { Edit, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
@@ -21,6 +22,7 @@ interface SupplierCardProps {
 export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   const router = useRouter();
   const user = useAuthStore.getState().user;
+  const { expenses } = useExpenses();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +32,13 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   
   // Verificar permisos para aprobar/rechazar
   const canApproveReject = user?.role?.name === "ADMINISTRATION" || user?.role?.name === "DIRECTION";
+  
+  // Obtener gastos asociados al proveedor
+  const associatedExpenses = expenses?.filter(
+    (exp: any) => exp.supplier_id === supplier.id || exp.supplierId === supplier.id
+  ) || [];
+  const hasExpenses = associatedExpenses.length > 0;
+  const validatedExpenses = associatedExpenses.filter((exp: any) => exp.state === "validated").length;
 
   const getSupplierName = () => {
     return (supplier as any).nombre || supplier.name || "Sin nombre";
@@ -280,6 +289,25 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
           <p className="text-gray-700">
             ¿Estás seguro de que deseas eliminar el proveedor <strong>{getSupplierName()}</strong>?
           </p>
+          
+          {hasExpenses && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm font-semibold text-red-800 mb-2">
+                ⚠️ Este proveedor tiene gastos asociados
+              </p>
+              <ul className="text-sm text-red-700 space-y-1">
+                <li>• Total de gastos asociados: <strong>{associatedExpenses.length}</strong></li>
+                {validatedExpenses > 0 && (
+                  <li>• Gastos validados: <strong>{validatedExpenses}</strong> (tienen registros contables)</li>
+                )}
+              </ul>
+              <p className="text-xs text-red-600 mt-2">
+                Al eliminar este proveedor, los gastos asociados quedarán sin proveedor asignado.
+                {validatedExpenses > 0 && " Los registros contables de los gastos validados se mantendrán."}
+              </p>
+            </div>
+          )}
+          
           <p className="text-sm text-gray-500">
             Esta acción no se puede deshacer.
           </p>
@@ -292,12 +320,12 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
               Cancelar
             </Button>
             <Button
-              variant="primary"
+              variant="danger"
               onClick={handleDelete}
+              loading={isSubmitting}
               disabled={isSubmitting}
-              className="bg-red-600 hover:bg-red-700"
             >
-              {isSubmitting ? "Eliminando..." : "Eliminar"}
+              Eliminar
             </Button>
           </div>
         </div>

@@ -141,8 +141,8 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancelar
         </Button>
-        <Button type="submit" variant="primary" disabled={isLoading}>
-          {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
+        <Button type="submit" variant="primary" loading={isLoading} disabled={isLoading}>
+          {initialData ? "Actualizar" : "Crear"}
         </Button>
       </div>
     </form>
