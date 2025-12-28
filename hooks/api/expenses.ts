@@ -86,4 +86,15 @@ export const expenseApi = {
       observations,
     });
   },
+  reject: (id: string, reason: string) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [expenseApi.reject] id no está definido");
+      }
+      throw new Error("ID de gasto no está definido");
+    }
+    return apiClient.post<Expense>(`/expenses/${id}/reject`, {
+      reason,
+    });
+  },
 };

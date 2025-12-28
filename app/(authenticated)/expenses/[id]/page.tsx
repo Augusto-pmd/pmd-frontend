@@ -173,6 +173,49 @@ function ExpenseDetailContent() {
             {renderField("Fecha de creación", expense.created_at, formatDate)}
             {renderField("Última actualización", expense.updated_at, formatDate)}
           </div>
+
+          {/* Tax Information */}
+          {(expense.vat_perception || expense.vat_withholding || expense.iibb_perception || expense.income_tax_withholding) && (
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Calculator className="h-5 w-5 text-gray-400" />
+                Percepciones y Retenciones
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {expense.vat_perception && expense.vat_perception > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm text-gray-600">Percepción IVA</p>
+                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(expense.vat_perception)}</p>
+                  </div>
+                )}
+                {expense.vat_withholding && expense.vat_withholding > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm text-gray-600">Retención IVA</p>
+                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(expense.vat_withholding)}</p>
+                  </div>
+                )}
+                {expense.iibb_perception && expense.iibb_perception > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm text-gray-600">Percepción IIBB</p>
+                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(expense.iibb_perception)}</p>
+                  </div>
+                )}
+                {expense.income_tax_withholding && expense.income_tax_withholding > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm text-gray-600">Retención Ganancias</p>
+                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(expense.income_tax_withholding)}</p>
+                  </div>
+                )}
+              </div>
+              {expense.supplier && (expense.supplier as any).fiscal_condition && (
+                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    <strong>Condición fiscal del proveedor:</strong> {(expense.supplier as any).fiscal_condition}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
           
           {/* Sección especial para VAL generado automáticamente */}
           {expense.document_type === "VAL" && expense.document_number && (

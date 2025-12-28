@@ -33,9 +33,15 @@ function ExpensesContent() {
   const [showValidateModal, setShowValidateModal] = useState(false);
   const [validateState, setValidateState] = useState<"validated" | "observed" | "annulled">("validated");
   const [validateObservations, setValidateObservations] = useState("");
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectingExpenseId, setRejectingExpenseId] = useState<string | null>(null);
+  const [duplicateExpenseInfo, setDuplicateExpenseInfo] = useState<{ expenseId: string; message: string } | null>(null);
+  const [forceValidate, setForceValidate] = useState(false);
 
   // Verificar permisos para validar gastos
   const canValidate = user?.role?.name === "ADMINISTRATION" || user?.role?.name === "DIRECTION";
+  const isDirection = user?.role?.name === "DIRECTION";
 
   const totalExpenses = expenses?.reduce((sum: number, exp: Expense) => sum + (exp.amount || 0), 0) || 0;
   const thisMonth = new Date().getMonth();
@@ -82,6 +88,8 @@ function ExpensesContent() {
     setEditingExpense(expense);
     setValidateState(state);
     setValidateObservations("");
+    setDuplicateExpenseInfo(null);
+    setForceValidate(false);
     setShowValidateModal(true);
   };
 
@@ -129,8 +137,36 @@ function ExpensesContent() {
       setShowValidateModal(false);
       setEditingExpense(null);
       setValidateObservations("");
+      setDuplicateExpenseInfo(null);
+      setForceValidate(false);
     } catch (error: unknown) {
       const errorMessage = getOperationErrorMessage("validate", error);
+      
+      // Detectar error de factura duplicada
+      const isDuplicateError = errorMessage.toLowerCase().includes("duplicate invoice") || 
+                               errorMessage.toLowerCase().includes("factura duplicada") ||
+                               errorMessage.toLowerCase().includes("duplicate invoice detected");
+      
+      if (isDuplicateError && validateState === "validated") {
+        // Si es Direction, permitir validar de todas formas
+        if (isDirection && !forceValidate) {
+          setDuplicateExpenseInfo({
+            expenseId: editingExpense.id,
+            message: errorMessage,
+          });
+          toast.warning("Se detectó una factura duplicada. Como Dirección, puedes validar de todas formas si lo deseas.");
+          return; // No cerrar el modal, mostrar opción de forzar validación
+        } else if (!isDirection) {
+          // Para no-Direction, bloquear completamente
+          setDuplicateExpenseInfo({
+            expenseId: editingExpense.id,
+            message: errorMessage,
+          });
+          toast.error("No se puede validar: se detectó una factura duplicada. Solo Dirección puede validar gastos con facturas duplicadas.");
+          return;
+        }
+      }
+      
       toast.error(errorMessage);
     } finally {
       setValidatingExpenseId(null);
@@ -149,6 +185,7 @@ function ExpensesContent() {
     if (stateLower === "validated") return "success";
     if (stateLower === "observed") return "warning";
     if (stateLower === "annulled") return "error";
+    if (stateLower === "rejected") return "error";
     return "default";
   };
 
@@ -158,7 +195,38 @@ function ExpensesContent() {
     if (stateLower === "validated") return "Validado";
     if (stateLower === "observed") return "Observado";
     if (stateLower === "annulled") return "Anulado";
+    if (stateLower === "rejected") return "Rechazado";
     return state;
+  };
+
+  const handleRejectClick = (expense: Expense) => {
+    setEditingExpense(expense);
+    setRejectReason("");
+    setShowRejectModal(true);
+  };
+
+  const handleReject = async () => {
+    if (!editingExpense || !rejectReason.trim()) return;
+    
+    setRejectingExpenseId(editingExpense.id);
+    try {
+      await expenseApi.reject(editingExpense.id, rejectReason);
+      
+      mutate();
+      globalMutate("/expenses");
+      globalMutate("/alerts");
+      
+      toast.success("Gasto rechazado correctamente. Se ha generado una alerta.");
+      
+      setShowRejectModal(false);
+      setEditingExpense(null);
+      setRejectReason("");
+    } catch (error: unknown) {
+      const errorMessage = getOperationErrorMessage("reject", error);
+      toast.error(errorMessage);
+    } finally {
+      setRejectingExpenseId(null);
+    }
   };
 
   const handleSubmit = async (data: CreateExpenseData) => {
@@ -275,6 +343,8 @@ function ExpensesContent() {
                     {expenses?.map((expense: Expense) => {
                       const expenseState = expense.state || expense.estado || "pending";
                       const isPending = expenseState.toLowerCase() === "pending";
+                      const isRejected = expenseState.toLowerCase() === "rejected";
+                      const canReject = canValidate && (isPending || expenseState.toLowerCase() === "observed");
                       
                       return (
                         <tr key={expense.id} className="hover:bg-gray-50">
@@ -298,9 +368,16 @@ function ExpensesContent() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-sm">
-                            <Badge variant={getStateBadgeVariant(expenseState)}>
-                              {getStateLabel(expenseState)}
-                            </Badge>
+                            <div className="flex gap-2 items-center">
+                              <Badge variant={getStateBadgeVariant(expenseState)}>
+                                {getStateLabel(expenseState)}
+                              </Badge>
+                              {expense.is_post_closure && (
+                                <Badge variant="warning" className="text-xs">
+                                  Post-cierre
+                                </Badge>
+                              )}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">
                             {expense.contract_id ? (
@@ -345,6 +422,15 @@ function ExpensesContent() {
                                   <Button
                                     size="sm"
                                     variant="outline"
+                                    onClick={() => handleRejectClick(expense)}
+                                    disabled={rejectingExpenseId === expense.id}
+                                    style={{ color: "rgba(255, 59, 48, 1)" }}
+                                  >
+                                    Rechazar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
                                     onClick={() => handleValidateClick(expense, "annulled")}
                                     disabled={validatingExpenseId === expense.id}
                                     style={{ color: "rgba(255, 59, 48, 1)" }}
@@ -352,6 +438,17 @@ function ExpensesContent() {
                                     Anular
                                   </Button>
                                 </>
+                              )}
+                              {canReject && !isPending && !isRejected && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRejectClick(expense)}
+                                  disabled={rejectingExpenseId === expense.id}
+                                  style={{ color: "rgba(255, 59, 48, 1)" }}
+                                >
+                                  Rechazar
+                                </Button>
                               )}
                             </div>
                           </td>
@@ -391,6 +488,8 @@ function ExpensesContent() {
             setShowValidateModal(false);
             setEditingExpense(null);
             setValidateObservations("");
+            setDuplicateExpenseInfo(null);
+            setForceValidate(false);
           }}
           title={
             validateState === "validated"
@@ -415,6 +514,11 @@ function ExpensesContent() {
                   <p className="text-sm text-gray-600">
                     Monto: ${editingExpense.amount?.toFixed(2) || "0.00"}
                   </p>
+                  {editingExpense.document_number && (
+                    <p className="text-sm text-gray-600">
+                      Factura: {editingExpense.document_number}
+                    </p>
+                  )}
                   {editingExpense.contract_id && (
                     <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
                       <p className="text-sm font-semibold text-yellow-800">
@@ -442,6 +546,47 @@ function ExpensesContent() {
                   )}
                 </div>
               )}
+              
+              {/* Alerta de factura duplicada */}
+              {duplicateExpenseInfo && duplicateExpenseInfo.expenseId === editingExpense?.id && validateState === "validated" && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-red-900 mb-1">
+                        ⚠️ Factura Duplicada Detectada
+                      </p>
+                      <p className="text-sm text-red-700 mb-2">
+                        {duplicateExpenseInfo.message}
+                      </p>
+                      {isDirection && !forceValidate && (
+                        <div className="mt-3">
+                          <p className="text-xs text-red-600 mb-2">
+                            Como Dirección, puedes validar este gasto de todas formas si estás seguro de que no es un error.
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setForceValidate(true)}
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                          >
+                            Validar de todas formas
+                          </Button>
+                        </div>
+                      )}
+                      {!isDirection && (
+                        <p className="text-xs text-red-600">
+                          Solo Dirección puede validar gastos con facturas duplicadas. Contacta a Dirección para más información.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             {(validateState === "observed" || validateState === "annulled") && (
               <div>
@@ -464,6 +609,8 @@ function ExpensesContent() {
                   setShowValidateModal(false);
                   setEditingExpense(null);
                   setValidateObservations("");
+                  setDuplicateExpenseInfo(null);
+                  setForceValidate(false);
                 }}
                 disabled={validatingExpenseId === editingExpense?.id}
               >
@@ -473,13 +620,77 @@ function ExpensesContent() {
                 variant={validateState === "annulled" ? "danger" : "primary"}
                 onClick={handleValidate}
                 loading={validatingExpenseId === editingExpense?.id}
-                disabled={validatingExpenseId === editingExpense?.id}
+                disabled={
+                  validatingExpenseId === editingExpense?.id ||
+                  (duplicateExpenseInfo && duplicateExpenseInfo.expenseId === editingExpense?.id && validateState === "validated" && !isDirection && !forceValidate)
+                }
               >
                 {validateState === "validated"
-                  ? "Validar"
+                  ? forceValidate && duplicateExpenseInfo ? "Validar de todas formas" : "Validar"
                   : validateState === "observed"
                   ? "Observar"
                   : "Anular"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Modal de rechazo */}
+        <Modal
+          isOpen={showRejectModal}
+          onClose={() => {
+            setShowRejectModal(false);
+            setEditingExpense(null);
+            setRejectReason("");
+          }}
+          title="Rechazar Gasto"
+        >
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">
+                Ingresa el motivo del rechazo (obligatorio):
+              </p>
+              {editingExpense && (
+                <div className="bg-gray-50 p-3 rounded-md mb-4">
+                  <p className="text-sm font-medium">{editingExpense.description || "Sin descripción"}</p>
+                  <p className="text-sm text-gray-600">
+                    Monto: ${editingExpense.amount?.toFixed(2) || "0.00"}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Motivo del rechazo <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                rows={4}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Ingresa el motivo del rechazo..."
+                required
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setEditingExpense(null);
+                  setRejectReason("");
+                }}
+                disabled={rejectingExpenseId === editingExpense?.id}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleReject}
+                loading={rejectingExpenseId === editingExpense?.id}
+                disabled={rejectingExpenseId === editingExpense?.id || !rejectReason.trim()}
+              >
+                Rechazar
               </Button>
             </div>
           </div>

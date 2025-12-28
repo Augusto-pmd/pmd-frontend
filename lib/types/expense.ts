@@ -3,7 +3,7 @@
  * Based on pmd-backend/src/expenses/expenses.entity.ts
  */
 
-export type ExpenseState = "pending" | "validated" | "observed" | "annulled";
+export type ExpenseState = "pending" | "validated" | "observed" | "annulled" | "rejected";
 export type DocumentType = 
   | "INVOICE_A" 
   | "INVOICE_B" 
@@ -31,6 +31,7 @@ export interface Expense {
   estado?: ExpenseState; // Alias for state (used in frontend)
   file_url?: string | null;
   observations?: string | null;
+  is_post_closure?: boolean;
   created_by_id: string;
   validated_by_id?: string | null;
   validated_at?: string | Date | null;
