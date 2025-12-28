@@ -94,7 +94,16 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
         setFormData((prev) => ({ ...prev, income_tax_withholding: calculations.income_tax_withholding }));
       }
     }
-  }, [formData.amount, formData.supplier_id, formData.document_type, selectedSupplier?.fiscal_condition]);
+  }, [
+    formData.amount,
+    formData.supplier_id,
+    formData.document_type,
+    selectedSupplier?.fiscal_condition,
+    isAutoCalculated.vat_perception,
+    isAutoCalculated.vat_withholding,
+    isAutoCalculated.iibb_perception,
+    isAutoCalculated.income_tax_withholding,
+  ]);
 
   // Initialize auto-calculated flags
   useEffect(() => {
@@ -180,17 +189,17 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
       rubric_id: formData.rubric_id,
       amount: formData.amount,
       currency: formData.currency,
-      purchase_date: formData.purchase_date,
+      purchase_date: typeof formData.purchase_date === 'string' ? formData.purchase_date : formData.purchase_date instanceof Date ? formData.purchase_date.toISOString().split('T')[0] : formData.purchase_date,
       document_type: formData.document_type,
       document_number: formData.document_number || undefined,
       file_url: formData.file_url || undefined,
       observations: formData.observations || undefined,
-      vat_amount: formData.vat_amount > 0 ? formData.vat_amount : undefined,
-      vat_rate: formData.vat_rate > 0 ? formData.vat_rate : undefined,
-      vat_perception: formData.vat_perception > 0 ? formData.vat_perception : undefined,
-      vat_withholding: formData.vat_withholding > 0 ? formData.vat_withholding : undefined,
-      iibb_perception: formData.iibb_perception > 0 ? formData.iibb_perception : undefined,
-      income_tax_withholding: formData.income_tax_withholding > 0 ? formData.income_tax_withholding : undefined,
+      vat_amount: (formData.vat_amount ?? 0) > 0 ? formData.vat_amount ?? undefined : undefined,
+      vat_rate: (formData.vat_rate ?? 0) > 0 ? formData.vat_rate ?? undefined : undefined,
+      vat_perception: (formData.vat_perception ?? 0) > 0 ? formData.vat_perception ?? undefined : undefined,
+      vat_withholding: (formData.vat_withholding ?? 0) > 0 ? formData.vat_withholding ?? undefined : undefined,
+      iibb_perception: (formData.iibb_perception ?? 0) > 0 ? formData.iibb_perception ?? undefined : undefined,
+      income_tax_withholding: (formData.income_tax_withholding ?? 0) > 0 ? formData.income_tax_withholding ?? undefined : undefined,
     };
 
     await onSubmit(submitData);
@@ -248,7 +257,7 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
           label="Proveedor"
-          value={formData.supplier_id}
+          value={formData.supplier_id ?? undefined}
           onChange={(e) => {
             setFormData({ ...formData, supplier_id: e.target.value });
             if (errors.supplier_id) setErrors({ ...errors, supplier_id: "" });
@@ -344,14 +353,14 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
         <Input
           label="Fecha de Compra"
           type="date"
-          value={formData.purchase_date}
+          value={typeof formData.purchase_date === 'string' ? formData.purchase_date : formData.purchase_date instanceof Date ? formData.purchase_date.toISOString().split('T')[0] : ''}
           onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
           required
         />
 
         <Input
           label="Número de Documento"
-          value={formData.document_number}
+          value={formData.document_number ?? undefined}
           onChange={(e) => setFormData({ ...formData, document_number: e.target.value })}
           placeholder="Ej: 0001-00001234"
           disabled={formData.document_type === "VAL"}
@@ -366,14 +375,14 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
             label="Monto IVA"
             type="number"
             step="0.01"
-            value={formData.vat_amount}
+            value={formData.vat_amount ?? 0}
             onChange={(e) => setFormData({ ...formData, vat_amount: parseFloat(e.target.value) || 0 })}
           />
           <Input
             label="Tasa IVA (%)"
             type="number"
             step="0.01"
-            value={formData.vat_rate}
+            value={formData.vat_rate ?? 0}
             onChange={(e) => setFormData({ ...formData, vat_rate: parseFloat(e.target.value) || 0 })}
           />
         </div>
@@ -398,13 +407,13 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
               label="Percepción IVA"
               type="number"
               step="0.01"
-              value={formData.vat_perception}
+              value={formData.vat_perception ?? 0}
               onChange={(e) => {
                 setFormData({ ...formData, vat_perception: parseFloat(e.target.value) || 0 });
                 setIsAutoCalculated((prev) => ({ ...prev, vat_perception: false }));
               }}
             />
-            {isAutoCalculated.vat_perception && formData.vat_perception > 0 && (
+            {isAutoCalculated.vat_perception && (formData.vat_perception ?? 0) > 0 && (
               <p className="text-xs text-gray-500 mt-1">Calculado automáticamente</p>
             )}
           </div>
@@ -414,13 +423,13 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
               label="Retención IVA"
               type="number"
               step="0.01"
-              value={formData.vat_withholding}
+              value={formData.vat_withholding ?? 0}
               onChange={(e) => {
                 setFormData({ ...formData, vat_withholding: parseFloat(e.target.value) || 0 });
                 setIsAutoCalculated((prev) => ({ ...prev, vat_withholding: false }));
               }}
             />
-            {isAutoCalculated.vat_withholding && formData.vat_withholding > 0 && (
+            {isAutoCalculated.vat_withholding && (formData.vat_withholding ?? 0) > 0 && (
               <p className="text-xs text-gray-500 mt-1">Calculado automáticamente</p>
             )}
           </div>
@@ -430,13 +439,13 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
               label="Percepción IIBB"
               type="number"
               step="0.01"
-              value={formData.iibb_perception}
+              value={formData.iibb_perception ?? 0}
               onChange={(e) => {
                 setFormData({ ...formData, iibb_perception: parseFloat(e.target.value) || 0 });
                 setIsAutoCalculated((prev) => ({ ...prev, iibb_perception: false }));
               }}
             />
-            {isAutoCalculated.iibb_perception && formData.iibb_perception > 0 && (
+            {isAutoCalculated.iibb_perception && (formData.iibb_perception ?? 0) > 0 && (
               <p className="text-xs text-gray-500 mt-1">Calculado automáticamente</p>
             )}
           </div>
@@ -446,13 +455,13 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
               label="Retención Ganancias"
               type="number"
               step="0.01"
-              value={formData.income_tax_withholding}
+              value={formData.income_tax_withholding ?? 0}
               onChange={(e) => {
                 setFormData({ ...formData, income_tax_withholding: parseFloat(e.target.value) || 0 });
                 setIsAutoCalculated((prev) => ({ ...prev, income_tax_withholding: false }));
               }}
             />
-            {isAutoCalculated.income_tax_withholding && formData.income_tax_withholding > 0 && (
+            {isAutoCalculated.income_tax_withholding && (formData.income_tax_withholding ?? 0) > 0 && (
               <p className="text-xs text-gray-500 mt-1">Calculado automáticamente</p>
             )}
           </div>
@@ -464,13 +473,13 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
         <Input
           label="URL del Archivo"
           type="url"
-          value={formData.file_url}
+          value={formData.file_url ?? undefined}
           onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
           placeholder="https://..."
         />
         <Textarea
           label="Observaciones"
-          value={formData.observations}
+          value={formData.observations ?? undefined}
           onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
           rows={3}
         />

@@ -39,8 +39,13 @@ export interface CreateScheduleData {
   description?: string;
 }
 
-export interface UpdateScheduleData extends Partial<Omit<CreateScheduleData, 'work_id'>> {
-  state?: ScheduleState;
+export interface UpdateScheduleData {
+  stage_name?: string;
+  start_date?: string;
+  end_date?: string;
   actual_end_date?: string | null;
+  state?: ScheduleState;
+  order?: number;
+  description?: string;
 }
 

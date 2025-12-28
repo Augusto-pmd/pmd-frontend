@@ -622,7 +622,7 @@ function ExpensesContent() {
                 loading={validatingExpenseId === editingExpense?.id}
                 disabled={
                   validatingExpenseId === editingExpense?.id ||
-                  (duplicateExpenseInfo && duplicateExpenseInfo.expenseId === editingExpense?.id && validateState === "validated" && !isDirection && !forceValidate)
+                  !!(duplicateExpenseInfo && duplicateExpenseInfo.expenseId === editingExpense?.id && validateState === "validated" && !isDirection && !(forceValidate ?? false))
                 }
               >
                 {validateState === "validated"

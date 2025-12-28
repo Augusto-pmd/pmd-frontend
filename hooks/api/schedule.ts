@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { Schedule } from "@/lib/types/schedule";
+import { CreateScheduleData, UpdateScheduleData, Schedule } from "@/lib/types/schedule";
 
 export function useSchedule(params?: { startDate?: string; endDate?: string; workId?: string }) {
   const { token } = useAuthStore();
@@ -74,8 +74,6 @@ export function useScheduleItem(id: string | null) {
     mutate,
   };
 }
-
-import { CreateScheduleData, UpdateScheduleData, Schedule } from "@/lib/types/schedule";
 
 export const scheduleApi = {
   create: (data: CreateScheduleData) => {

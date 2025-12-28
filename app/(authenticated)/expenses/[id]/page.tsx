@@ -207,13 +207,6 @@ function ExpenseDetailContent() {
                   </div>
                 )}
               </div>
-              {expense.supplier && (expense.supplier as any).fiscal_condition && (
-                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-800">
-                    <strong>Condición fiscal del proveedor:</strong> {(expense.supplier as any).fiscal_condition}
-                  </p>
-                </div>
-              )}
             </div>
           )}
           

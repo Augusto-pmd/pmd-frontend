@@ -21,7 +21,6 @@ import { UpdateWorkData } from "@/lib/types/work";
 import { User } from "@/lib/types/user";
 import { Supplier } from "@/lib/types/supplier";
 import { ProgressIndicators } from "@/components/works/ProgressIndicators";
-import { workApi } from "@/hooks/api/works";
 
 function WorkDetailContent() {
   const params = useParams();
@@ -35,6 +34,7 @@ function WorkDetailContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isAllowingPostClosure, setIsAllowingPostClosure] = useState(false);
+  const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
   const toast = useToast();
   const user = useAuthStore.getState().user;
   const isDirection = user?.role?.name === "DIRECTION" || user?.role?.name === "direction" || user?.role?.name === "administration" || user?.role?.name === "ADMINISTRATION";

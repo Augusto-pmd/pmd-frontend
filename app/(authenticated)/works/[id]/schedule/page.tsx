@@ -96,7 +96,7 @@ function SchedulePageContent() {
   const handleTaskChange = async (task: Task) => {
     if (!isDirection) return;
 
-    const schedule = schedules.find(s => s.id === task.id);
+    const schedule = schedules.find((s: Schedule) => s.id === task.id);
     if (!schedule) return;
 
     setEditingSchedule(schedule);
