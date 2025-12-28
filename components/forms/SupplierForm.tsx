@@ -7,7 +7,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { mapCreateSupplierPayload } from "@/lib/payload-mappers";
-import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
+import { Supplier, CreateSupplierData, UpdateSupplierData, SupplierType, FiscalCondition } from "@/lib/types/supplier";
 import { validateCuit, formatCuit, validateEmail, validateRequired } from "@/lib/validations";
 
 interface SupplierFormProps {
@@ -30,6 +30,8 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
     contacto: "",
     contactName: "",
     existstatus: "provisional", // Backend enum: ["provisional", "approved", "blocked", "rejected"]
+    type: "",
+    fiscal_condition: "",
     notes: "",
     notas: "",
   });
@@ -52,6 +54,8 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
         contacto: (initialData as any).contacto || (initialData as any).contact || (initialData as any).contactName || "",
         contactName: (initialData as any).contactName || (initialData as any).contact || (initialData as any).contacto || "",
         existstatus: (initialData as any).existstatus || (initialData as any).status || (initialData as any).estado || "provisional",
+        type: initialData.type || "",
+        fiscal_condition: initialData.fiscal_condition || "",
         notes: (initialData as any).notes || (initialData as any).notas || "",
         notas: (initialData as any).notas || (initialData as any).notes || "",
       });
@@ -209,21 +213,61 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
         />
       </FormField>
 
-      {/* Estado - Backend enum: ["provisional", "approved", "blocked", "rejected"] */}
-      <FormField label="Estado" required>
+      {/* Estado y Tipo de Proveedor */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <FormField label="Estado" required>
+          <Select
+            value={formData.existstatus || "provisional"}
+            onChange={(e) => {
+              setFormData({ 
+                ...formData, 
+                existstatus: e.target.value
+              });
+            }}
+          >
+            <option value="provisional">Provisional</option>
+            <option value="approved">Aprobado</option>
+            <option value="blocked">Bloqueado</option>
+            <option value="rejected">Rechazado</option>
+          </Select>
+        </FormField>
+        <FormField label="Tipo de Proveedor">
+          <Select
+            value={formData.type || ""}
+            onChange={(e) => {
+              setFormData({ 
+                ...formData, 
+                type: e.target.value
+              });
+            }}
+          >
+            <option value="">Seleccionar tipo</option>
+            <option value={SupplierType.LABOR}>Mano de obra</option>
+            <option value={SupplierType.MATERIALS}>Materiales</option>
+            <option value={SupplierType.CONTRACTOR}>Contratista</option>
+            <option value={SupplierType.SERVICES}>Servicios</option>
+            <option value={SupplierType.LOGISTICS}>Logística</option>
+            <option value={SupplierType.OTHER}>Otro</option>
+          </Select>
+        </FormField>
+      </div>
+
+      {/* Condición Fiscal */}
+      <FormField label="Condición Fiscal">
         <Select
-          value={formData.existstatus || "provisional"}
+          value={formData.fiscal_condition || ""}
           onChange={(e) => {
             setFormData({ 
               ...formData, 
-              existstatus: e.target.value
+              fiscal_condition: e.target.value
             });
           }}
         >
-          <option value="provisional">Provisional</option>
-          <option value="approved">Aprobado</option>
-          <option value="blocked">Bloqueado</option>
-          <option value="rejected">Rechazado</option>
+          <option value="">Seleccionar condición</option>
+          <option value={FiscalCondition.RI}>Responsable Inscripto</option>
+          <option value={FiscalCondition.MONOTRIBUTISTA}>Monotributista</option>
+          <option value={FiscalCondition.EXEMPT}>Exento</option>
+          <option value={FiscalCondition.OTHER}>Otro</option>
         </Select>
       </FormField>
 

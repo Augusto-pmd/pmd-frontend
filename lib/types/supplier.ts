@@ -10,6 +10,22 @@ export enum SupplierStatus {
   BLOCKED = 'blocked',
 }
 
+export enum SupplierType {
+  LABOR = 'labor',
+  MATERIALS = 'materials',
+  CONTRACTOR = 'contractor',
+  SERVICES = 'services',
+  LOGISTICS = 'logistics',
+  OTHER = 'other',
+}
+
+export enum FiscalCondition {
+  RI = 'ri',
+  MONOTRIBUTISTA = 'monotributista',
+  EXEMPT = 'exempt',
+  OTHER = 'other',
+}
+
 export interface Supplier {
   id: string;
   name: string;
@@ -20,6 +36,8 @@ export interface Supplier {
   category?: string;
   status?: SupplierStatus | string;
   estado?: string; // Alias para status
+  type?: SupplierType | string;
+  fiscal_condition?: FiscalCondition | string;
   address?: string;
   created_by_id?: string;
   organization_id?: string | null;
@@ -42,6 +60,8 @@ export interface CreateSupplierData {
   phone?: string;
   category?: string;
   status?: SupplierStatus;
+  type?: SupplierType;
+  fiscal_condition?: FiscalCondition;
   address?: string;
   created_by_id?: string;
 }
@@ -53,6 +73,8 @@ export interface UpdateSupplierData {
   phone?: string;
   category?: string;
   status?: SupplierStatus;
+  type?: SupplierType;
+  fiscal_condition?: FiscalCondition;
   address?: string;
 }
 

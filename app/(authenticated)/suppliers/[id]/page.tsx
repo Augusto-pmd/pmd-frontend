@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { useToast } from "@/components/ui/Toast";
 import { AlertCircle, Unlock, FileText, CheckCircle, XCircle } from "lucide-react";
+import { SupplierType, FiscalCondition } from "@/lib/types/supplier";
 
 function SupplierDetailContent() {
   const params = useParams();
@@ -215,6 +216,30 @@ function SupplierDetailContent() {
     );
   };
 
+  const getTypeLabel = (type?: string) => {
+    if (!type) return null;
+    const typeMap: Record<string, string> = {
+      [SupplierType.LABOR]: "Mano de obra",
+      [SupplierType.MATERIALS]: "Materiales",
+      [SupplierType.CONTRACTOR]: "Contratista",
+      [SupplierType.SERVICES]: "Servicios",
+      [SupplierType.LOGISTICS]: "Logística",
+      [SupplierType.OTHER]: "Otro",
+    };
+    return typeMap[type] || type;
+  };
+
+  const getFiscalConditionLabel = (condition?: string) => {
+    if (!condition) return null;
+    const conditionMap: Record<string, string> = {
+      [FiscalCondition.RI]: "Responsable Inscripto",
+      [FiscalCondition.MONOTRIBUTISTA]: "Monotributista",
+      [FiscalCondition.EXEMPT]: "Exento",
+      [FiscalCondition.OTHER]: "Otro",
+    };
+    return conditionMap[condition] || condition;
+  };
+
   return (
     <div className="space-y-6">
         <div>
@@ -304,6 +329,8 @@ function SupplierDetailContent() {
               {renderField("Teléfono", (supplier as any).telefono || (supplier as any).phone)}
               {renderField("Dirección", (supplier as any).direccion || (supplier as any).address)}
               {renderField("CUIT", (supplier as any).cuit || (supplier as any).CUIT)}
+              {renderField("Tipo de Proveedor", getTypeLabel(supplier.type))}
+              {renderField("Condición Fiscal", getFiscalConditionLabel(supplier.fiscal_condition))}
               {renderField("Estado", getStatusLabel(getSupplierStatus()))}
               {renderField("Fecha de creación", supplier.createdAt, formatDate)}
               {renderField("Última actualización", supplier.updatedAt, formatDate)}
@@ -359,7 +386,7 @@ function SupplierDetailContent() {
             {/* Mostrar campos adicionales si existen */}
             {Object.keys(supplier).some(
               (key) =>
-                !["id", "nombre", "name", "email", "contacto", "contact", "contactName", "telefono", "phone", "direccion", "address", "cuit", "CUIT", "estado", "status", "createdAt", "updatedAt"].includes(
+                !["id", "nombre", "name", "email", "contacto", "contact", "contactName", "telefono", "phone", "direccion", "address", "cuit", "CUIT", "type", "fiscal_condition", "estado", "status", "createdAt", "updatedAt"].includes(
                   key
                 ) && (supplier as any)[key] !== null && (supplier as any)[key] !== undefined && (supplier as any)[key] !== ""
             ) && (
@@ -369,7 +396,7 @@ function SupplierDetailContent() {
                   {Object.keys(supplier)
                     .filter(
                       (key) =>
-                        !["id", "nombre", "name", "email", "contacto", "contact", "contactName", "telefono", "phone", "direccion", "address", "cuit", "CUIT", "estado", "status", "createdAt", "updatedAt"].includes(
+                        !["id", "nombre", "name", "email", "contacto", "contact", "contactName", "telefono", "phone", "direccion", "address", "cuit", "CUIT", "type", "fiscal_condition", "estado", "status", "createdAt", "updatedAt"].includes(
                           key
                         ) && (supplier as any)[key] !== null && (supplier as any)[key] !== undefined && (supplier as any)[key] !== ""
                     )

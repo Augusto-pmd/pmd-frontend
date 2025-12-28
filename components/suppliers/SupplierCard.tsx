@@ -12,7 +12,7 @@ import { useExpenses } from "@/hooks/api/expenses";
 import { useAuthStore } from "@/store/authStore";
 import { useToast } from "@/components/ui/Toast";
 import { Edit, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
-import { Supplier, UpdateSupplierData } from "@/lib/types/supplier";
+import { Supplier, UpdateSupplierData, SupplierType, FiscalCondition } from "@/lib/types/supplier";
 
 interface SupplierCardProps {
   supplier: Supplier;
@@ -84,6 +84,30 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
     if (statusLower === "inactive") return "Rechazado";
     if (statusLower === "blocked" || statusLower === "bloqueado") return "Bloqueado";
     return status;
+  };
+
+  const getTypeLabel = (type?: string) => {
+    if (!type) return null;
+    const typeMap: Record<string, string> = {
+      [SupplierType.LABOR]: "Mano de obra",
+      [SupplierType.MATERIALS]: "Materiales",
+      [SupplierType.CONTRACTOR]: "Contratista",
+      [SupplierType.SERVICES]: "Servicios",
+      [SupplierType.LOGISTICS]: "Logística",
+      [SupplierType.OTHER]: "Otro",
+    };
+    return typeMap[type] || type;
+  };
+
+  const getFiscalConditionLabel = (condition?: string) => {
+    if (!condition) return null;
+    const conditionMap: Record<string, string> = {
+      [FiscalCondition.RI]: "Responsable Inscripto",
+      [FiscalCondition.MONOTRIBUTISTA]: "Monotributista",
+      [FiscalCondition.EXEMPT]: "Exento",
+      [FiscalCondition.OTHER]: "Otro",
+    };
+    return conditionMap[condition] || condition;
   };
 
   const handleUpdate = async (data: UpdateSupplierData) => {
@@ -187,6 +211,20 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Contacto:</span>
                   <span className="text-sm text-gray-900">{getSupplierContact()}</span>
+                </div>
+              )}
+
+              {getTypeLabel(supplier.type) && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Tipo:</span>
+                  <span className="text-sm text-gray-900 font-medium">{getTypeLabel(supplier.type)}</span>
+                </div>
+              )}
+
+              {getFiscalConditionLabel(supplier.fiscal_condition) && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Condición Fiscal:</span>
+                  <span className="text-sm text-gray-900 font-medium">{getFiscalConditionLabel(supplier.fiscal_condition)}</span>
                 </div>
               )}
 
