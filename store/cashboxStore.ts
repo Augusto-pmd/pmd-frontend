@@ -24,7 +24,7 @@ interface CashboxState {
   fetchCashboxes: () => Promise<void>;
   createCashbox: (payload: Partial<Cashbox>) => Promise<void>;
   updateCashbox: (id: string, payload: Partial<Cashbox>) => Promise<void>;
-  closeCashbox: (id: string) => Promise<void>;
+  closeCashbox: (id: string, closingData?: { closing_balance_ars: number; closing_balance_usd?: number }) => Promise<void>;
   fetchMovements: (cashboxId: string) => Promise<void>;
   createMovement: (cashboxId: string, payload: Partial<CashMovement>) => Promise<void>;
   updateMovement: (cashboxId: string, id: string, payload: Partial<CashMovement>) => Promise<void>;
@@ -113,7 +113,7 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     }
   },
 
-  async closeCashbox(id) {
+  async closeCashbox(id, closingData?: { closing_balance_ars: number; closing_balance_usd?: number }) {
     if (!id) {
       if (process.env.NODE_ENV === "development") {
         console.warn("❗ [cashboxStore] id no está definido");
@@ -121,8 +121,17 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       throw new Error("ID de caja no está definido");
     }
 
+    if (!closingData || closingData.closing_balance_ars === undefined) {
+      throw new Error("El saldo de cierre ARS es obligatorio");
+    }
+
     try {
-      await apiClient.patch(`/cashboxes/${id}`, { isClosed: true, closedAt: new Date().toISOString() });
+      const { cashboxApi } = await import("@/hooks/api/cashboxes");
+      await cashboxApi.close(id, {
+        closing_balance_ars: closingData.closing_balance_ars,
+        closing_balance_usd: closingData.closing_balance_usd,
+        closing_date: new Date().toISOString().split('T')[0],
+      });
       await get().fetchCashboxes();
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {

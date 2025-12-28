@@ -124,7 +124,6 @@ export function GanttChart({ schedules, onTaskChange, onTaskDelete, readOnly = f
         rowHeight={50}
         ganttHeight={Math.max(300, tasks.length * 50 + 100)}
         preStepsCount={1}
-        postStepsCount={1}
       />
     </div>
   );

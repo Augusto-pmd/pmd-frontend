@@ -77,6 +77,18 @@ export const cashboxApi = {
     }
     return apiClient.post(`/cashboxes/${id}/refill`, data);
   },
+  close: (id: string, data: { closing_balance_ars: number; closing_balance_usd?: number; closing_date?: string }) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.close] id no está definido");
+      }
+      throw new Error("ID de caja no está definido");
+    }
+    if (!data.closing_balance_ars && data.closing_balance_ars !== 0) {
+      throw new Error("El saldo de cierre ARS es obligatorio");
+    }
+    return apiClient.post(`/cashboxes/${id}/close`, data);
+  },
   requestExplanation: (id: string, data: { message: string }) => {
     if (!id) {
       if (process.env.NODE_ENV === "development") {

@@ -44,6 +44,8 @@ function CashboxDetailContent() {
   const [showMovementForm, setShowMovementForm] = useState(false);
   const [editingMovement, setEditingMovement] = useState<CashMovement | null>(null);
   const [showCloseModal, setShowCloseModal] = useState(false);
+  const [closingBalanceArs, setClosingBalanceArs] = useState("");
+  const [closingBalanceUsd, setClosingBalanceUsd] = useState("");
   const [showRefillModal, setShowRefillModal] = useState(false);
   const [refillAmount, setRefillAmount] = useState("");
   const [refillCurrency, setRefillCurrency] = useState("ARS");
@@ -204,19 +206,32 @@ function CashboxDetailContent() {
   };
 
   const confirmCloseCashbox = async () => {
+    // Validar que se haya ingresado el saldo de cierre
+    if (!closingBalanceArs || parseFloat(closingBalanceArs) < 0) {
+      toast.error("Debe ingresar el saldo de cierre en ARS (debe ser mayor o igual a 0)");
+      return;
+    }
+
     try {
-      await closeCashbox(cashboxId);
+      await closeCashbox(cashboxId, {
+        closing_balance_ars: parseFloat(closingBalanceArs),
+        closing_balance_usd: closingBalanceUsd ? parseFloat(closingBalanceUsd) : undefined,
+      });
       
       // Refrescar datos relacionados automáticamente
       await fetchCashboxes(); // Refrescar cajas
       await fetchAlerts(); // Refrescar alertas (puede haber generado alerta de diferencia)
       await refreshPatterns.afterCashboxClosure(globalMutate);
+      mutateCashbox(); // Refrescar datos de la caja
       
       toast.success(
         "Caja cerrada correctamente. Si hay diferencias, se ha generado una alerta automáticamente. Dashboard actualizado.",
         6000
       );
       setShowCloseModal(false);
+      // Limpiar estados
+      setClosingBalanceArs("");
+      setClosingBalanceUsd("");
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Error al cerrar la caja";
       toast.error(errorMessage);
@@ -567,7 +582,11 @@ function CashboxDetailContent() {
         {showCloseModal && (
           <Modal
             isOpen={showCloseModal}
-            onClose={() => setShowCloseModal(false)}
+            onClose={() => {
+              setShowCloseModal(false);
+              setClosingBalanceArs("");
+              setClosingBalanceUsd("");
+            }}
             title="Cerrar Caja"
             subtitle="Resumen final de movimientos"
           >
@@ -628,11 +647,61 @@ function CashboxDetailContent() {
                 </div>
                 <div style={{ marginTop: "var(--space-md)", paddingTop: "var(--space-md)", borderTop: "1px solid var(--apple-border)" }}>
                   <div style={{ font: "var(--font-label)", color: "var(--apple-text-secondary)", marginBottom: "var(--space-xs)" }}>
-                    Diferencia (Saldo Inicial + Ingresos - Egresos)
+                    Saldo Final Calculado (Saldo Inicial + Ingresos - Egresos)
                   </div>
                   <div style={{ font: "var(--font-card-title)", color: totals.diferencia >= 0 ? "rgba(52, 199, 89, 1)" : "rgba(255, 59, 48, 1)" }}>
-                    {formatCurrency(totals.diferencia)}
+                    {formatCurrency(totals.saldoFinal)}
                   </div>
+                  <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)", marginTop: "var(--space-xs)" }}>
+                    Este es el saldo calculado según los movimientos registrados
+                  </div>
+                </div>
+              </div>
+
+              {/* Inputs para saldos de cierre real */}
+              <div style={{ marginTop: "var(--space-md)", paddingTop: "var(--space-md)", borderTop: "2px solid var(--apple-border)" }}>
+                <div style={{ font: "var(--font-section-title)", color: "var(--apple-text-primary)", marginBottom: "var(--space-sm)" }}>
+                  Saldo de Cierre Real
+                </div>
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)", marginBottom: "var(--space-md)" }}>
+                  Ingrese el saldo real contado físicamente en la caja. El sistema calculará la diferencia automáticamente.
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+                  <FormField 
+                    label="Saldo de Cierre Real (ARS) *" 
+                    required
+                    error={!closingBalanceArs || parseFloat(closingBalanceArs) < 0 ? "Debe ingresar el saldo real de cierre (mayor o igual a 0)" : undefined}
+                  >
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={closingBalanceArs}
+                      onChange={(e) => setClosingBalanceArs(e.target.value)}
+                      placeholder={totals.saldoFinal.toFixed(2)}
+                      required
+                    />
+                    <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)", marginTop: "var(--space-xs)" }}>
+                      Saldo calculado: {formatCurrency(totals.saldoFinal)}
+                    </div>
+                  </FormField>
+                  
+                  {(cashbox.opening_balance_usd && Number(cashbox.opening_balance_usd) > 0) && (
+                    <FormField 
+                      label="Saldo de Cierre Real (USD)" 
+                      required={false}
+                    >
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={closingBalanceUsd}
+                        onChange={(e) => setClosingBalanceUsd(e.target.value)}
+                        placeholder="0.00"
+                      />
+                    </FormField>
+                  )}
                 </div>
               </div>
 
@@ -661,7 +730,11 @@ function CashboxDetailContent() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setShowCloseModal(false)}
+                  onClick={() => {
+                    setShowCloseModal(false);
+                    setClosingBalanceArs("");
+                    setClosingBalanceUsd("");
+                  }}
                 >
                   Cancelar
                 </Button>
