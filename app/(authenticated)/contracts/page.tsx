@@ -9,10 +9,12 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { ContractStatusBadge } from "@/components/contracts/ContractStatusBadge";
 import { useSWRConfig } from "swr";
 import { useToast } from "@/components/ui/Toast";
 import { refreshPatterns } from "@/lib/refreshData";
 import { getOperationErrorMessage } from "@/lib/errorMessages";
+import { ContractStatus } from "@/lib/types/contract";
 
 function ContractsContent() {
   const router = useRouter();
@@ -20,12 +22,13 @@ function ContractsContent() {
   const { mutate: globalMutate } = useSWRConfig();
   const user = useAuthStore.getState().user;
   const toast = useToast();
-  const [filter, setFilter] = useState<"all" | "active" | "expired" | "pending">("all");
+  const [filter, setFilter] = useState<"all" | ContractStatus | string>("all");
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
   const filteredContracts = contracts?.filter((contract: any) => {
     if (filter === "all") return true;
-    return contract.status === filter;
+    const contractStatus = contract.status?.toLowerCase() || "";
+    return contractStatus === filter.toLowerCase();
   });
 
   const handleDelete = async (id: string) => {
@@ -67,20 +70,41 @@ function ContractsContent() {
         </div>
 
         <div className="bg-white rounded-lg shadow-pmd p-6">
-          <div className="mb-6 flex gap-2">
-            {(["all", "active", "expired", "pending"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-pmd font-medium transition-colors capitalize ${
-                  filter === f
-                    ? "bg-pmd-darkBlue text-pmd-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+          <div className="mb-6 flex gap-2 flex-wrap">
+            {([
+              { value: "all", label: "Todos" },
+              { value: ContractStatus.PENDING, label: "Pendiente" },
+              { value: ContractStatus.APPROVED, label: "Aprobado" },
+              { value: ContractStatus.ACTIVE, label: "Activo" },
+              { value: ContractStatus.LOW_BALANCE, label: "Saldo Bajo" },
+              { value: ContractStatus.NO_BALANCE, label: "Sin Saldo" },
+              { value: ContractStatus.PAUSED, label: "Pausado" },
+              { value: ContractStatus.FINISHED, label: "Finalizado" },
+              { value: ContractStatus.CANCELLED, label: "Cancelado" },
+            ]).map((f) => {
+              const count = f.value === "all" 
+                ? contracts?.length || 0
+                : contracts?.filter((c: any) => (c.status?.toLowerCase() || "") === f.value.toLowerCase()).length || 0;
+              
+              return (
+                <button
+                  key={f.value}
+                  onClick={() => setFilter(f.value)}
+                  className={`px-4 py-2 rounded-pmd font-medium transition-colors flex items-center gap-2 ${
+                    filter === f.value
+                      ? "bg-pmd-darkBlue text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {f.label}
+                  {count > 0 && (
+                    <Badge variant={filter === f.value ? "default" : "info"} className="text-[11px] px-[6px] py-[2px]">
+                      {count}
+                    </Badge>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           <div>
@@ -123,24 +147,10 @@ function ContractsContent() {
                           ${contract.value?.toFixed(2) || "0.00"}
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <div className="flex flex-wrap gap-2">
-                            {contract.is_blocked && (
-                              <Badge variant="error">Bloqueado</Badge>
-                            )}
-                            {contract.status && (
-                              <Badge
-                                variant={
-                                  contract.status === "active"
-                                    ? "success"
-                                    : contract.status === "expired"
-                                    ? "error"
-                                    : "warning"
-                                }
-                              >
-                                {contract.status}
-                              </Badge>
-                            )}
-                          </div>
+                          <ContractStatusBadge 
+                            status={contract.status} 
+                            isBlocked={contract.is_blocked}
+                          />
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <div className="flex gap-2">

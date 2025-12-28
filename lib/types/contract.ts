@@ -5,6 +5,17 @@
 
 import { Currency } from "./work";
 
+export enum ContractStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  ACTIVE = 'active',
+  LOW_BALANCE = 'low_balance',
+  NO_BALANCE = 'no_balance',
+  PAUSED = 'paused',
+  FINISHED = 'finished',
+  CANCELLED = 'cancelled',
+}
+
 export interface Contract {
   id: string;
   work_id: string;
@@ -16,6 +27,18 @@ export interface Contract {
   file_url?: string;
   payment_terms?: string;
   is_blocked: boolean;
+  status?: ContractStatus;
+  observations?: string;
+  validity_date?: string;
+  scope?: string;
+  specifications?: string;
+  closed_by_id?: string;
+  closed_at?: string;
+  closed_by?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   start_date?: string;
   end_date?: string;
   created_at?: string;
@@ -33,6 +56,11 @@ export interface CreateContractData {
   currency: Currency;
   file_url?: string;
   payment_terms?: string;
+  status?: ContractStatus;
+  observations?: string;
+  validity_date?: string;
+  scope?: string;
+  specifications?: string;
   start_date?: string;
   end_date?: string;
 }
@@ -45,6 +73,11 @@ export interface UpdateContractData {
   currency?: Currency;
   file_url?: string;
   payment_terms?: string;
+  status?: ContractStatus;
+  observations?: string;
+  validity_date?: string;
+  scope?: string;
+  specifications?: string;
   is_blocked?: boolean;
   start_date?: string;
   end_date?: string;

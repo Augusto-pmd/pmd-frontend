@@ -10,12 +10,14 @@ import { useAuthStore } from "@/store/authStore";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { ContractStatusBadge } from "@/components/contracts/ContractStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Modal } from "@/components/ui/Modal";
 import { ContractForm } from "@/components/forms/ContractForm";
 import { useToast } from "@/components/ui/Toast";
 import { FileCheck, DollarSign, AlertCircle, Building2, Truck, Calendar, FileText, Unlock, Edit } from "lucide-react";
+import { ContractStatus } from "@/lib/types/contract";
 
 function ContractDetailContent() {
   const params = useParams();
@@ -195,28 +197,10 @@ function ContractDetailContent() {
             <CardTitle className="text-2xl">
               {(contract as any).contract_number || (contract as any).number || `Contrato ${contractId.slice(0, 8)}`}
             </CardTitle>
-            <div className="flex gap-2">
-              {(contract as any).is_blocked && (
-                <Badge variant="error">Bloqueado</Badge>
-              )}
-              {(contract as any).status && (
-                <Badge
-                  variant={
-                    (contract as any).status === "active"
-                      ? "success"
-                      : (contract as any).status === "expired"
-                      ? "error"
-                      : "warning"
-                  }
-                >
-                  {(contract as any).status === "active"
-                    ? "Activo"
-                    : (contract as any).status === "expired"
-                    ? "Expirado"
-                    : (contract as any).status}
-                </Badge>
-              )}
-            </div>
+            <ContractStatusBadge 
+              status={contract.status} 
+              isBlocked={contract.is_blocked}
+            />
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -306,7 +290,29 @@ function ContractDetailContent() {
               undefined,
               <FileText className="h-5 w-5 text-gray-400" />
             )}
-            {renderField("Observaciones", (contract as any).observations)}
+            {renderField("Observaciones", contract.observations)}
+            {renderField(
+              "Fecha de Validez",
+              contract.validity_date,
+              formatDate,
+              <Calendar className="h-5 w-5 text-gray-400" />
+            )}
+            {renderField("Alcance", contract.scope)}
+            {renderField("Especificaciones", contract.specifications)}
+            {contract.closed_at && (
+              <div className="flex items-start gap-3">
+                <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500">Cerrado por</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {contract.closed_by?.name || contract.closed_by?.email || "Usuario desconocido"}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatDate(contract.closed_at)}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Mostrar ID del contrato */}

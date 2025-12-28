@@ -28,6 +28,9 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
     start_date: "",
     end_date: "",
     observations: "",
+    validity_date: "",
+    scope: "",
+    specifications: "",
     ...initialData,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,6 +46,9 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
         start_date: initialData.start_date?.split("T")[0] || initialData.startDate?.split("T")[0] || "",
         end_date: initialData.end_date?.split("T")[0] || initialData.endDate?.split("T")[0] || "",
         observations: initialData.observations || "",
+        validity_date: initialData.validity_date?.split("T")[0] || "",
+        scope: initialData.scope || "",
+        specifications: initialData.specifications || "",
       });
     }
   }, [initialData]);
@@ -93,6 +99,9 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
       if (formData.start_date) submitData.start_date = formData.start_date;
       if (formData.end_date) submitData.end_date = formData.end_date;
       if (formData.observations !== undefined) submitData.observations = formData.observations;
+      if (formData.validity_date) submitData.validity_date = formData.validity_date;
+      if (formData.scope !== undefined) submitData.scope = formData.scope;
+      if (formData.specifications !== undefined) submitData.specifications = formData.specifications;
     }
 
     await onSubmit(submitData);
@@ -207,6 +216,29 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
             onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
             rows={4}
             disabled={isLoading}
+          />
+          <Input
+            label="Fecha de Validez"
+            type="date"
+            value={formData.validity_date}
+            onChange={(e) => setFormData({ ...formData, validity_date: e.target.value })}
+            disabled={isLoading}
+          />
+          <Textarea
+            label="Alcance"
+            value={formData.scope}
+            onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
+            rows={3}
+            disabled={isLoading}
+            placeholder="Descripción del alcance del contrato"
+          />
+          <Textarea
+            label="Especificaciones"
+            value={formData.specifications}
+            onChange={(e) => setFormData({ ...formData, specifications: e.target.value })}
+            rows={4}
+            disabled={isLoading}
+            placeholder="Especificaciones técnicas o condiciones del contrato"
           />
         </>
       )}
