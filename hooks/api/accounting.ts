@@ -114,15 +114,25 @@ export function useAccountingMonth(month: number | null, year: number | null) {
   };
 }
 
-export function useAccountingPurchasesBook(params?: { startDate?: string; endDate?: string }) {
+export function useAccountingPurchasesBook(params?: { month?: number; year?: number; workId?: string; supplierId?: string }) {
   const { token } = useAuthStore();
   
-  const queryString = params
-    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
-    : "";
+  if (!params?.month || !params?.year) {
+    return { purchasesBook: [], error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const queryParams: Record<string, string> = {
+    month: params.month.toString(),
+    year: params.year.toString(),
+  };
+  if (params.workId) queryParams.workId = params.workId;
+  if (params.supplierId) queryParams.supplierId = params.supplierId;
+  
+  const queryString = `?${new URLSearchParams(queryParams).toString()}`;
+  const cacheKey = `accounting/purchases-book${queryString}`;
   
   const { data, error, isLoading, mutate } = useSWR(
-    token ? `accounting/purchases-book${queryString}` : null,
+    token ? cacheKey : null,
     () => {
       return apiClient.get(`/accounting/purchases-book${queryString}`);
     }
@@ -136,44 +146,64 @@ export function useAccountingPurchasesBook(params?: { startDate?: string; endDat
   };
 }
 
-export function useAccountingWithholdings(params?: { startDate?: string; endDate?: string }) {
+export function useAccountingWithholdings(params?: { month?: number; year?: number; workId?: string; supplierId?: string }) {
   const { token } = useAuthStore();
   
-  const queryString = params
-    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
-    : "";
+  if (!params?.month || !params?.year) {
+    return { withholdings: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const queryParams: Record<string, string> = {
+    month: params.month.toString(),
+    year: params.year.toString(),
+  };
+  if (params.workId) queryParams.workId = params.workId;
+  if (params.supplierId) queryParams.supplierId = params.supplierId;
+  
+  const queryString = `?${new URLSearchParams(queryParams).toString()}`;
+  const cacheKey = `accounting/withholdings${queryString}`;
   
   const { data, error, isLoading, mutate } = useSWR(
-    token ? `accounting/withholdings${queryString}` : null,
+    token ? cacheKey : null,
     () => {
       return apiClient.get(`/accounting/withholdings${queryString}`);
     }
   );
 
   return {
-    withholdings: (data as any)?.data || data || [],
+    withholdings: (data as any)?.data || data || null,
     error,
     isLoading,
     mutate,
   };
 }
 
-export function useAccountingPerceptions(params?: { startDate?: string; endDate?: string }) {
+export function useAccountingPerceptions(params?: { month?: number; year?: number; workId?: string; supplierId?: string }) {
   const { token } = useAuthStore();
   
-  const queryString = params
-    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
-    : "";
+  if (!params?.month || !params?.year) {
+    return { perceptions: null, error: null, isLoading: false, mutate: async () => {} };
+  }
+  
+  const queryParams: Record<string, string> = {
+    month: params.month.toString(),
+    year: params.year.toString(),
+  };
+  if (params.workId) queryParams.workId = params.workId;
+  if (params.supplierId) queryParams.supplierId = params.supplierId;
+  
+  const queryString = `?${new URLSearchParams(queryParams).toString()}`;
+  const cacheKey = `accounting/perceptions${queryString}`;
   
   const { data, error, isLoading, mutate } = useSWR(
-    token ? `accounting/perceptions${queryString}` : null,
+    token ? cacheKey : null,
     () => {
       return apiClient.get(`/accounting/perceptions${queryString}`);
     }
   );
 
   return {
-    perceptions: (data as any)?.data || data || [],
+    perceptions: (data as any)?.data || data || null,
     error,
     isLoading,
     mutate,
@@ -210,22 +240,34 @@ export const accountingApi = {
   getMonth: (month: number, year: number) => {
     return apiClient.get(`/accounting/month/${month}/${year}`);
   },
-  getPurchasesBook: (params?: { startDate?: string; endDate?: string }) => {
-    const queryString = params
-      ? `?${new URLSearchParams(params as any).toString()}`
-      : "";
+  getPurchasesBook: (params: { month: number; year: number; workId?: string; supplierId?: string }) => {
+    const queryParams: Record<string, string> = {
+      month: params.month.toString(),
+      year: params.year.toString(),
+    };
+    if (params.workId) queryParams.workId = params.workId;
+    if (params.supplierId) queryParams.supplierId = params.supplierId;
+    const queryString = `?${new URLSearchParams(queryParams).toString()}`;
     return apiClient.get(`/accounting/purchases-book${queryString}`);
   },
-  getWithholdings: (params?: { startDate?: string; endDate?: string }) => {
-    const queryString = params
-      ? `?${new URLSearchParams(params as any).toString()}`
-      : "";
+  getWithholdings: (params: { month: number; year: number; workId?: string; supplierId?: string }) => {
+    const queryParams: Record<string, string> = {
+      month: params.month.toString(),
+      year: params.year.toString(),
+    };
+    if (params.workId) queryParams.workId = params.workId;
+    if (params.supplierId) queryParams.supplierId = params.supplierId;
+    const queryString = `?${new URLSearchParams(queryParams).toString()}`;
     return apiClient.get(`/accounting/withholdings${queryString}`);
   },
-  getPerceptions: (params?: { startDate?: string; endDate?: string }) => {
-    const queryString = params
-      ? `?${new URLSearchParams(params as any).toString()}`
-      : "";
+  getPerceptions: (params: { month: number; year: number; workId?: string; supplierId?: string }) => {
+    const queryParams: Record<string, string> = {
+      month: params.month.toString(),
+      year: params.year.toString(),
+    };
+    if (params.workId) queryParams.workId = params.workId;
+    if (params.supplierId) queryParams.supplierId = params.supplierId;
+    const queryString = `?${new URLSearchParams(queryParams).toString()}`;
     return apiClient.get(`/accounting/perceptions${queryString}`);
   },
   closeMonth: (month: number, year: number) => {
