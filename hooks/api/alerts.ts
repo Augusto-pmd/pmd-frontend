@@ -66,9 +66,11 @@ export function useUnreadAlerts() {
   };
 }
 
+import { Alert, AssignAlertData, ResolveAlertData } from "@/lib/types/alert";
+
 export const alertApi = {
   create: (data: unknown) => {
-    return apiClient.post("/alerts", data);
+    return apiClient.post<Alert>("/alerts", data);
   },
   update: (id: string, data: unknown) => {
     if (!id) {
@@ -77,7 +79,7 @@ export const alertApi = {
       }
       throw new Error("ID de alerta no está definido");
     }
-    return apiClient.put(`/alerts/${id}`, data);
+    return apiClient.patch<Alert>(`/alerts/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
@@ -88,13 +90,31 @@ export const alertApi = {
     }
     return apiClient.delete(`/alerts/${id}`);
   },
-  markAsRead: (id: string) => {
+  markAsRead: (id: string, is_read: boolean = true) => {
     if (!id) {
       if (process.env.NODE_ENV === "development") {
         console.warn("❗ [alertApi.markAsRead] id no está definido");
       }
       throw new Error("ID de alerta no está definido");
     }
-    return apiClient.patch(`/alerts/${id}/read`, {});
+    return apiClient.patch<Alert>(`/alerts/${id}/mark-read`, { is_read });
+  },
+  assign: (id: string, data: AssignAlertData) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [alertApi.assign] id no está definido");
+      }
+      throw new Error("ID de alerta no está definido");
+    }
+    return apiClient.post<Alert>(`/alerts/${id}/assign`, data);
+  },
+  resolve: (id: string, data: ResolveAlertData) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [alertApi.resolve] id no está definido");
+      }
+      throw new Error("ID de alerta no está definido");
+    }
+    return apiClient.post<Alert>(`/alerts/${id}/resolve`, data);
   },
 };

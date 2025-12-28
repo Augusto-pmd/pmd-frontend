@@ -12,8 +12,10 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { Check, Trash2, Bell, Building2, User, Calendar, Tag, AlertTriangle } from "lucide-react";
+import { Check, Trash2, Bell, Building2, User, Calendar, Tag, AlertTriangle, UserPlus, CheckCircle, Clock } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { AlertActions } from "@/components/alerts/AlertActions";
+import { useAlert } from "@/hooks/api/alerts";
 
 function AlertDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -28,6 +30,7 @@ function AlertDetailContent() {
 
   // Safely extract alertId from params
   const alertId = typeof params?.id === "string" ? params.id : null;
+  const { alert: alertFromApi, isLoading, mutate } = useAlert(alertId);
 
   useEffect(() => {
     fetchAlerts();
@@ -39,7 +42,8 @@ function AlertDetailContent() {
     return null;
   }
 
-  const alert = alerts.find((a) => a.id === alertId);
+  // Use API alert if available, otherwise fallback to store
+  const alert = alertFromApi || alerts.find((a) => a.id === alertId);
 
   if (!alert) {
     return (
@@ -136,6 +140,7 @@ function AlertDetailContent() {
               <p className="text-gray-600">Información completa de la alerta</p>
             </div>
             <div className="flex gap-2">
+              <AlertActions alert={alert as any} onActionComplete={() => { mutate(); fetchAlerts(); }} />
               {!alert.read && (
                 <Button
                   variant="outline"
@@ -194,12 +199,31 @@ function AlertDetailContent() {
                 <div className="flex items-start gap-3">
                   <div className="h-5 w-5 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Estado</p>
+                    <p className="text-sm text-gray-500">Estado de Lectura</p>
                     <Badge variant={alert.read ? "default" : "info"}>
                       {alert.read ? "Leída" : "No leída"}
                     </Badge>
                   </div>
                 </div>
+
+                {(alert as any).status && (
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-gray-500">Estado de Alerta</p>
+                      <Badge variant={
+                        (alert as any).status === "resolved" ? "success" :
+                        (alert as any).status === "in_review" ? "info" :
+                        "warning"
+                      }>
+                        {(alert as any).status === "open" ? "Abierta" :
+                         (alert as any).status === "in_review" ? "En Revisión" :
+                         (alert as any).status === "resolved" ? "Resuelta" :
+                         (alert as any).status}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -232,7 +256,7 @@ function AlertDetailContent() {
                 <div className="flex items-start gap-3">
                   <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Fecha</p>
+                    <p className="text-sm text-gray-500">Fecha de Creación</p>
                     <p className="text-base font-medium text-gray-900">
                       {new Date((alert as any).date || alert.createdAt || new Date()).toLocaleDateString("es-AR", {
                         year: "numeric",
@@ -246,6 +270,60 @@ function AlertDetailContent() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Historial de Asignaciones y Resoluciones */}
+        {((alert as any).assigned_to || (alert as any).resolved_by) && (
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Historial</h2>
+              <div className="space-y-4">
+                {(alert as any).assigned_to && (
+                  <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <UserPlus className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900">Asignada a</p>
+                      <p className="text-base text-blue-700">
+                        {(alert as any).assigned_to.name || (alert as any).assigned_to.id}
+                      </p>
+                      {(alert as any).status === "in_review" && (
+                        <p className="text-xs text-blue-600 mt-1">Estado: En Revisión</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {(alert as any).resolved_by && (
+                  <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-green-900">Resuelta por</p>
+                      <p className="text-base text-green-700">
+                        {(alert as any).resolved_by.name || (alert as any).resolved_by.id}
+                      </p>
+                      {(alert as any).resolved_at && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Fecha: {new Date((alert as any).resolved_at).toLocaleDateString("es-AR", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      )}
+                      {(alert as any).metadata?.resolution_notes && (
+                        <div className="mt-2 p-2 bg-white rounded border border-green-200">
+                          <p className="text-xs text-gray-600 font-medium mb-1">Notas de Resolución:</p>
+                          <p className="text-sm text-gray-700">{(alert as any).metadata.resolution_notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Modal
           isOpen={isDeleteModalOpen}

@@ -28,6 +28,7 @@ import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
 import { useWorkDocuments } from "@/hooks/api/workDocuments";
 import { useSuppliers } from "@/hooks/api/suppliers";
+import { AlertActions } from "./AlertActions";
 
 interface AlertsListProps {
   alerts: Alert[];
@@ -36,6 +37,8 @@ interface AlertsListProps {
   severityFilter?: "all" | "info" | "warning" | "critical";
   typeFilter?: string;
   workFilter?: string;
+  statusFilter?: "all" | "open" | "in_review" | "resolved";
+  assignedToFilter?: string;
   dateFilter?: string;
 }
 
@@ -46,6 +49,8 @@ export function AlertsList({
   severityFilter = "all",
   typeFilter = "all",
   workFilter = "all",
+  statusFilter = "all",
+  assignedToFilter = "all",
   dateFilter = "",
 }: AlertsListProps) {
   const router = useRouter();
@@ -371,12 +376,44 @@ export function AlertsList({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant={alert.read ? "default" : "info"}>
-                      {alert.read ? "Leída" : "No leída"}
-                    </Badge>
+                    <div className="space-y-1">
+                      <Badge variant={alert.read ? "default" : "info"}>
+                        {alert.read ? "Leída" : "No leída"}
+                      </Badge>
+                      {(alert as any).status && (
+                        <div className="mt-1">
+                          <Badge variant={
+                            (alert as any).status === "resolved" ? "success" :
+                            (alert as any).status === "in_review" ? "info" :
+                            "warning"
+                          }>
+                            {(alert as any).status === "open" ? "Abierta" :
+                             (alert as any).status === "in_review" ? "En Revisión" :
+                             (alert as any).status === "resolved" ? "Resuelta" :
+                             (alert as any).status}
+                          </Badge>
+                        </div>
+                      )}
+                      {(alert as any).assigned_to && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Asignada a: {(alert as any).assigned_to.name || (alert as any).assigned_to.id}
+                        </div>
+                      )}
+                      {(alert as any).resolved_by && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Resuelta por: {(alert as any).resolved_by.name || (alert as any).resolved_by.id}
+                          {(alert as any).resolved_at && (
+                            <span className="ml-1">
+                              ({new Date((alert as any).resolved_at).toLocaleDateString("es-AR")})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
+                      <AlertActions alert={alert as any} onActionComplete={onRefresh || (() => {})} />
                       <Button
                         variant="ghost"
                         size="sm"

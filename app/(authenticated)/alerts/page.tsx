@@ -22,11 +22,14 @@ function AlertsContent() {
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
   const { works } = useWorks();
+  const { users } = useUsers();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [severityFilter, setSeverityFilter] = useState<"all" | "info" | "warning" | "critical">("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [workFilter, setWorkFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "in_review" | "resolved">("all");
+  const [assignedToFilter, setAssignedToFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -157,7 +160,7 @@ function AlertsContent() {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Severidad</label>
                 <select
@@ -169,6 +172,19 @@ function AlertsContent() {
                   <option value="critical">Crítico</option>
                   <option value="warning">Advertencia</option>
                   <option value="info">Info</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as "all" | "open" | "in_review" | "resolved")}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+                >
+                  <option value="all">Todos</option>
+                  <option value="open">Abierta</option>
+                  <option value="in_review">En Revisión</option>
+                  <option value="resolved">Resuelta</option>
                 </select>
               </div>
               <div>
@@ -205,6 +221,18 @@ function AlertsContent() {
                 </select>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Asignado a</label>
+                <select
+                  value={assignedToFilter}
+                  onChange={(e) => setAssignedToFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+                >
+                  <option value="all">Todos</option>
+                  <option value="unassigned">Sin asignar</option>
+                  {/* Users will be populated from useUsers hook */}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
                 <input
                   type="date"
@@ -224,6 +252,8 @@ function AlertsContent() {
           severityFilter={severityFilter}
           typeFilter={typeFilter}
           workFilter={workFilter}
+          statusFilter={statusFilter}
+          assignedToFilter={assignedToFilter}
           dateFilter={dateFilter}
         />
 
