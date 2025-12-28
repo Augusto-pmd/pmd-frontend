@@ -17,10 +17,12 @@ import { Modal } from "@/components/ui/Modal";
 import { EntryForm } from "@/app/(authenticated)/accounting/components/EntryForm";
 import { useToast } from "@/components/ui/Toast";
 import { BotonVolver } from "@/components/ui/BotonVolver";
-import { Plus, Info } from "lucide-react";
+import { Plus, Info, FileText } from "lucide-react";
 import { useSWRConfig } from "swr";
+import { useRouter } from "next/navigation";
 
 function AccountingContent() {
+  const router = useRouter();
   const user = useAuthStore.getState().user;
   const { accounting, isLoading: summaryLoading, error: summaryError, mutate: mutateAccounting } = useAccounting();
   const { entries, isLoading, error, fetchEntries, createEntry } = useAccountingStore();
@@ -134,14 +136,24 @@ function AccountingContent() {
               <h1 className="text-2xl font-semibold text-gray-900 mb-2">Contabilidad</h1>
               <p className="text-gray-600">Resumen financiero y movimientos contables del sistema PMD</p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Nuevo Movimiento
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/accounting/reports")}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Reportes
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Nuevo Movimiento
+              </Button>
+            </div>
           </div>
         </div>
 

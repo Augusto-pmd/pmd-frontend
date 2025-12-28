@@ -74,6 +74,8 @@ function toISODateTime(date: string | Date | undefined | null): string {
  * - phone?: string
  * - category?: string
  * - status?: "provisional" | "approved" | "blocked" | "rejected"
+ * - type?: "labor" | "materials" | "contractor" | "services" | "logistics" | "other"
+ * - fiscal_condition?: "ri" | "monotributista" | "exempt" | "other"
  * - address?: string
  */
 export function mapCreateSupplierPayload(form: Record<string, unknown>): {
@@ -83,9 +85,21 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
   phone?: string;
   category?: string;
   status?: "provisional" | "approved" | "blocked" | "rejected";
+  type?: "labor" | "materials" | "contractor" | "services" | "logistics" | "other";
+  fiscal_condition?: "ri" | "monotributista" | "exempt" | "other";
   address?: string;
 } {
-  return {
+  const payload: {
+    name: string;
+    cuit?: string;
+    email?: string;
+    phone?: string;
+    category?: string;
+    status?: "provisional" | "approved" | "blocked" | "rejected";
+    type?: "labor" | "materials" | "contractor" | "services" | "logistics" | "other";
+    fiscal_condition?: "ri" | "monotributista" | "exempt" | "other";
+    address?: string;
+  } = {
     name: (typeof form.nombre === "string" ? form.nombre : typeof form.name === "string" ? form.name : "").trim(),
     cuit: typeof form.cuit === "string" ? form.cuit.trim() : undefined,
     email: typeof form.email === "string" ? form.email.trim() : undefined,
@@ -94,6 +108,18 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
     status: (form.existstatus || form.status) as "provisional" | "approved" | "blocked" | "rejected" | undefined,
     address: (typeof form.direccion === "string" ? form.direccion : typeof form.address === "string" ? form.address : undefined)?.trim() || undefined,
   };
+
+  // Agregar type si está presente
+  if (form.type && typeof form.type === "string" && form.type.trim() !== "") {
+    payload.type = form.type.trim() as "labor" | "materials" | "contractor" | "services" | "logistics" | "other";
+  }
+
+  // Agregar fiscal_condition si está presente
+  if (form.fiscal_condition && typeof form.fiscal_condition === "string" && form.fiscal_condition.trim() !== "") {
+    payload.fiscal_condition = form.fiscal_condition.trim() as "ri" | "monotributista" | "exempt" | "other";
+  }
+
+  return payload;
 }
 
 /**
@@ -111,6 +137,7 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
  * - currency: Currency (requerido, enum: "ARS" | "USD")
  * - supervisor_id?: string (opcional, UUID)
  * - total_budget?: number (opcional)
+ * - work_type?: WorkType (opcional, enum: "house" | "local" | "expansion" | "renovation" | "other")
  */
 export function mapCreateWorkPayload(form: Record<string, unknown>): {
   name: string;
@@ -120,6 +147,7 @@ export function mapCreateWorkPayload(form: Record<string, unknown>): {
   end_date?: string;
   status?: string;
   currency: string;
+  work_type?: string;
   supervisor_id?: string;
   total_budget?: number;
 } {
@@ -137,6 +165,7 @@ export function mapCreateWorkPayload(form: Record<string, unknown>): {
     currency: string;
     end_date?: string;
     status?: string;
+    work_type?: string;
     supervisor_id?: string;
     total_budget?: number;
   } = {
@@ -156,6 +185,11 @@ export function mapCreateWorkPayload(form: Record<string, unknown>): {
   const status = form.status;
   if (typeof status === "string" && ["active", "paused", "finished", "administratively_closed", "archived"].includes(status)) {
     payload.status = status;
+  }
+
+  const workType = form.work_type;
+  if (typeof workType === "string" && ["house", "local", "expansion", "renovation", "other"].includes(workType)) {
+    payload.work_type = workType;
   }
 
   const supervisorId = typeof form.supervisor_id === "string" ? form.supervisor_id.trim() : undefined;
