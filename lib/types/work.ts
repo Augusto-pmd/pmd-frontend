@@ -14,6 +14,14 @@ export type WorkStatus =
   | "archived";
 export type Currency = "ARS" | "USD";
 
+export enum WorkType {
+  HOUSE = 'house',
+  LOCAL = 'local',
+  EXPANSION = 'expansion',
+  RENOVATION = 'renovation',
+  OTHER = 'other',
+}
+
 export interface Work {
   id: string;
   name: string;
@@ -37,6 +45,10 @@ export interface Work {
   organization_id?: string | null;
   organizationId?: string | null; // Alias for organization_id
   currency: Currency;
+  work_type?: WorkType;
+  allow_post_closure_expenses?: boolean;
+  post_closure_expenses_allowed_at?: string | Date | null;
+  post_closure_expenses_allowed_by_id?: string | null;
   total_budget?: number;
   total_expenses?: number;
   total_incomes?: number;
@@ -56,6 +68,7 @@ export interface CreateWorkData {
   end_date?: string;
   status?: WorkStatus;
   currency: Currency;
+  work_type?: WorkType;
   supervisor_id?: string;
   total_budget?: number;
 }

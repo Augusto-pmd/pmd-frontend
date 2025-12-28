@@ -14,12 +14,14 @@ import { Modal } from "@/components/ui/Modal";
 import { WorkForm } from "@/components/forms/WorkForm";
 import { useToast } from "@/components/ui/Toast";
 import { BotonVolver } from "@/components/ui/BotonVolver";
-import { Edit, Archive, Trash2, UserPlus, Building2, DollarSign, TrendingUp, TrendingDown, Lock } from "lucide-react";
+import { Edit, Archive, Trash2, UserPlus, Building2, DollarSign, TrendingUp, TrendingDown, Lock, Calendar } from "lucide-react";
 import { parseBackendError } from "@/lib/parse-backend-error";
 import { useAuthStore } from "@/store/authStore";
 import { UpdateWorkData } from "@/lib/types/work";
 import { User } from "@/lib/types/user";
 import { Supplier } from "@/lib/types/supplier";
+import { ProgressIndicators } from "@/components/works/ProgressIndicators";
+import { workApi } from "@/hooks/api/works";
 
 function WorkDetailContent() {
   const params = useParams();
@@ -32,9 +34,10 @@ function WorkDetailContent() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isAllowingPostClosure, setIsAllowingPostClosure] = useState(false);
   const toast = useToast();
   const user = useAuthStore.getState().user;
-  const isDirection = user?.role?.name === "direction" || user?.role?.name === "administration";
+  const isDirection = user?.role?.name === "DIRECTION" || user?.role?.name === "direction" || user?.role?.name === "administration" || user?.role?.name === "ADMINISTRATION";
 
   if (!id) return null;
 
@@ -209,6 +212,44 @@ function WorkDetailContent() {
     }
   };
 
+  const handleAllowPostClosure = async () => {
+    if (!confirm(`¿Estás seguro de que quieres permitir gastos post-cierre para la obra "${getWorkName()}"? Esta acción solo puede ser realizada por Dirección.`)) {
+      return;
+    }
+    setIsAllowingPostClosure(true);
+    try {
+      await workApi.allowPostClosure(id);
+      await mutate();
+      toast.success("Gastos post-cierre permitidos correctamente");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al permitir gastos post-cierre:", err);
+      }
+      const errorMessage = parseBackendError(err);
+      toast.error(errorMessage);
+    } finally {
+      setIsAllowingPostClosure(false);
+    }
+  };
+
+  const handleUpdateProgress = async () => {
+    if (!id) return;
+    setIsUpdatingProgress(true);
+    try {
+      await workApi.updateProgress(id);
+      await mutate();
+      toast.success("Avances actualizados correctamente");
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al actualizar avances:", err);
+      }
+      const errorMessage = parseBackendError(err);
+      toast.error(errorMessage);
+    } finally {
+      setIsUpdatingProgress(false);
+    }
+  };
+
   // Obtener personal asignado a esta obra
   const assignedEmployees = (users as User[])?.filter((emp: User) => {
     const assignments = emp.assignments || [];
@@ -283,10 +324,33 @@ function WorkDetailContent() {
                       Obra Cerrada
                     </p>
                     <p className="text-sm text-orange-700 mb-2">
-                      Esta obra está cerrada. No se pueden crear nuevos gastos (excepto para Dirección).
+                      Esta obra está cerrada. No se pueden crear nuevos gastos {work.allow_post_closure_expenses ? "(excepto gastos post-cierre permitidos)" : "(excepto para Dirección)"}.
                     </p>
+                    {work.allow_post_closure_expenses && (
+                      <p className="text-sm text-green-700 mb-2 font-semibold">
+                        ✓ Gastos post-cierre permitidos
+                        {work.post_closure_expenses_allowed_at && (
+                          <span className="text-xs text-green-600 ml-2">
+                            (desde {formatDate(typeof work.post_closure_expenses_allowed_at === 'string' ? work.post_closure_expenses_allowed_at : work.post_closure_expenses_allowed_at instanceof Date ? work.post_closure_expenses_allowed_at.toISOString() : undefined)})
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    {!work.allow_post_closure_expenses && isDirection && (
+                      <div className="mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleAllowPostClosure}
+                          disabled={isAllowingPostClosure}
+                          className="text-green-600 border-green-300 hover:bg-green-50"
+                        >
+                          {isAllowingPostClosure ? "Procesando..." : "Permitir gastos post-cierre"}
+                        </Button>
+                      </div>
+                    )}
                     {work.end_date && (
-                      <p className="text-xs text-orange-600">
+                      <p className="text-xs text-orange-600 mt-2">
                         Fecha de cierre: {formatDate(typeof work.end_date === 'string' ? work.end_date : work.end_date instanceof Date ? work.end_date.toISOString() : undefined)}
                       </p>
                     )}
@@ -651,6 +715,15 @@ function WorkDetailContent() {
                 </p>
               </div>
             )}
+
+            {/* Progress Indicators */}
+            <ProgressIndicators
+              physicalProgress={work.physical_progress || 0}
+              economicProgress={work.economic_progress || 0}
+              financialProgress={work.financial_progress || 0}
+              onUpdateProgress={handleUpdateProgress}
+              showUpdateButton={isDirection}
+            />
           </CardContent>
         </Card>
 

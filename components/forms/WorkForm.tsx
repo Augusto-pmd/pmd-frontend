@@ -8,7 +8,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Select } from "@/components/ui/Select";
 import { useUsers } from "@/hooks/api/users";
 import { mapCreateWorkPayload } from "@/lib/payload-mappers";
-import { Work, CreateWorkData, UpdateWorkData } from "@/lib/types/work";
+import { Work, CreateWorkData, UpdateWorkData, WorkType } from "@/lib/types/work";
 
 interface WorkFormProps {
   initialData?: Work | null;
@@ -29,6 +29,7 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
     start_date: "", // Fecha de inicio (requerido, formato YYYY-MM-DD)
     end_date: "", // Fecha de fin (opcional, formato YYYY-MM-DD)
     status: "active" as "active" | "paused" | "finished" | "administratively_closed" | "archived", // Estado
+    work_type: "" as WorkType | "", // Tipo de obra (opcional)
     supervisor_id: "", // Responsable (opcional, UUID)
     total_budget: "", // Presupuesto (opcional)
   });
@@ -67,6 +68,7 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
         start_date: normalizeDate(initialData.start_date || initialData.startDate || (initialData as any).fechaInicio || (initialData as any).estimatedStartDate),
         end_date: normalizeDate(initialData.end_date || initialData.endDate || (initialData as any).fechaFin),
         status: validStatus,
+        work_type: initialData.work_type || "",
         supervisor_id: initialData.supervisor_id || (initialData as any).managerId || (initialData as any).responsableId || "",
         total_budget: initialData.total_budget !== undefined && initialData.total_budget !== null
           ? String(initialData.total_budget)
@@ -219,6 +221,21 @@ export function WorkForm({ initialData, onSubmit, onCancel, isLoading }: WorkFor
           >
             <option value="USD">USD (Dólar Estadounidense)</option>
             <option value="ARS">ARS (Peso Argentino)</option>
+          </Select>
+        </FormField>
+
+        {/* Tipo de obra - OPCIONAL */}
+        <FormField label="Tipo de obra">
+          <Select
+            value={formData.work_type}
+            onChange={(e) => setFormData({ ...formData, work_type: e.target.value as WorkType | "" })}
+          >
+            <option value="">Seleccionar tipo</option>
+            <option value={WorkType.HOUSE}>Casa</option>
+            <option value={WorkType.LOCAL}>Local</option>
+            <option value={WorkType.EXPANSION}>Ampliación</option>
+            <option value={WorkType.RENOVATION}>Renovación</option>
+            <option value={WorkType.OTHER}>Otro</option>
           </Select>
         </FormField>
       </div>

@@ -83,5 +83,23 @@ export const workApi = {
     }
     return apiClient.post<Work>(`/works/${id}/close`);
   },
+  allowPostClosure: (id: string) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workApi.allowPostClosure] id no está definido");
+      }
+      throw new Error("ID de obra no está definido");
+    }
+    return apiClient.post<Work>(`/works/${id}/allow-post-closure`);
+  },
+  updateProgress: (id: string) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [workApi.updateProgress] id no está definido");
+      }
+      throw new Error("ID de obra no está definido");
+    }
+    return apiClient.post<Work>(`/works/${id}/update-progress`);
+  },
 };
 
