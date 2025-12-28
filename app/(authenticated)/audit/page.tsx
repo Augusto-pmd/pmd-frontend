@@ -21,6 +21,7 @@ function AuditContent() {
   const [userFilter, setUserFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [entityFilter, setEntityFilter] = useState("all");
+  const [ipFilter, setIpFilter] = useState("");
   const [startDateFilter, setStartDateFilter] = useState("");
   const [endDateFilter, setEndDateFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -104,7 +105,7 @@ function AuditContent() {
               <Filter className="h-4 w-4" />
               Filtros
             </Button>
-            {(searchQuery || moduleFilter !== "all" || userFilter !== "all" || actionFilter !== "all" || entityFilter !== "all" || startDateFilter || endDateFilter) && (
+            {(searchQuery || moduleFilter !== "all" || userFilter !== "all" || actionFilter !== "all" || entityFilter !== "all" || ipFilter || startDateFilter || endDateFilter) && (
               <Button
                 variant="ghost"
                 onClick={() => {
@@ -113,6 +114,7 @@ function AuditContent() {
                   setUserFilter("all");
                   setActionFilter("all");
                   setEntityFilter("all");
+                  setIpFilter("");
                   setStartDateFilter("");
                   setEndDateFilter("");
                 }}
@@ -164,7 +166,10 @@ function AuditContent() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
                 >
                   <option value="all">Todas</option>
-                  {actions.map((action) => (
+                  <option value="login">Login</option>
+                  <option value="logout">Logout</option>
+                  <option value="login_failed">Intento Fallido</option>
+                  {actions.filter(a => !['login', 'logout', 'login_failed'].includes(a)).map((action) => (
                     <option key={action} value={action}>
                       {action}
                     </option>
@@ -185,6 +190,16 @@ function AuditContent() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Dirección IP</label>
+                <Input
+                  type="text"
+                  placeholder="Ej: 192.168.1.1"
+                  value={ipFilter}
+                  onChange={(e) => setIpFilter(e.target.value)}
+                  className="text-sm"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Fecha desde</label>
@@ -216,6 +231,7 @@ function AuditContent() {
           userFilter={userFilter}
           actionFilter={actionFilter}
           entityFilter={entityFilter}
+          ipFilter={ipFilter}
           startDateFilter={startDateFilter}
           endDateFilter={endDateFilter}
         />

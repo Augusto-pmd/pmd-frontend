@@ -48,3 +48,12 @@ export function useAuditLog(id: string | null) {
     mutate,
   };
 }
+
+export const auditApi = {
+  findByAction: (action: string, page: number = 1, limit: number = 50) => {
+    return apiClient.get(`/audit/action/${action}?page=${page}&limit=${limit}`);
+  },
+  findByIp: (ipAddress: string, page: number = 1, limit: number = 50) => {
+    return apiClient.get(`/audit/ip/${ipAddress}?page=${page}&limit=${limit}`);
+  },
+};

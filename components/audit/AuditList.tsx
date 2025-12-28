@@ -19,6 +19,7 @@ interface AuditListProps {
   userFilter?: string;
   actionFilter?: string;
   entityFilter?: string;
+  ipFilter?: string;
   startDateFilter?: string;
   endDateFilter?: string;
 }
@@ -31,6 +32,7 @@ export function AuditList({
   userFilter = "all",
   actionFilter = "all",
   entityFilter = "all",
+  ipFilter = "",
   startDateFilter = "",
   endDateFilter = "",
 }: AuditListProps) {
@@ -177,6 +179,7 @@ export function AuditList({
               <TableHead>Usuario</TableHead>
               <TableHead>Módulo</TableHead>
               <TableHead>Acción</TableHead>
+              <TableHead>IP / Dispositivo</TableHead>
               <TableHead>Fecha & Hora</TableHead>
               <TableHead align="right">Acciones</TableHead>
             </TableRow>
@@ -208,6 +211,18 @@ export function AuditList({
                   {log.details && (
                     <div style={{ fontSize: "12px", color: "var(--apple-text-secondary)", marginTop: "4px" }}>
                       {log.details}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div style={{ fontSize: "14px", color: "var(--apple-text-primary)" }}>
+                    {(log as any).ip_address || log.ip_address || "-"}
+                  </div>
+                  {(log as any).device_info && (
+                    <div style={{ fontSize: "12px", color: "var(--apple-text-secondary)", marginTop: "4px" }}>
+                      {(log as any).device_info.browser && `${(log as any).device_info.browser}${(log as any).device_info.browser_version ? ` ${(log as any).device_info.browser_version}` : ""}`}
+                      {(log as any).device_info.os && ` • ${(log as any).device_info.os}`}
+                      {(log as any).device_info.device_type && ` • ${(log as any).device_info.device_type}`}
                     </div>
                   )}
                 </TableCell>

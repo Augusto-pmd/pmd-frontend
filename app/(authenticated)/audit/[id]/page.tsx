@@ -7,8 +7,9 @@ import { useAuditLog } from "@/hooks/api/audit";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Shield, User, Calendar, FileText, ArrowRight, Globe, Monitor } from "lucide-react";
+import { Shield, User, Calendar, FileText, ArrowRight, Globe, Monitor, Smartphone, Laptop, Tablet, Plus, Minus, Edit } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { compareObjects, formatValue } from "@/lib/utils/diff";
 
 function AuditDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -151,7 +152,41 @@ function AuditDetailContent() {
                     <Monitor className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
                       <p className="text-sm text-gray-500">User Agent</p>
-                      <p className="text-base font-medium text-gray-900 break-all">{log.user_agent}</p>
+                      <p className="text-base font-medium text-gray-900 break-all text-xs">{log.user_agent}</p>
+                    </div>
+                  </div>
+                )}
+
+                {(log as any).device_info && (
+                  <div className="flex items-start gap-3">
+                    {(log as any).device_info.device_type === 'Mobile' ? (
+                      <Smartphone className="h-5 w-5 text-gray-400 mt-0.5" />
+                    ) : (log as any).device_info.device_type === 'Tablet' ? (
+                      <Tablet className="h-5 w-5 text-gray-400 mt-0.5" />
+                    ) : (
+                      <Laptop className="h-5 w-5 text-gray-400 mt-0.5" />
+                    )}
+                    <div>
+                      <p className="text-sm text-gray-500">Dispositivo</p>
+                      <div className="text-base font-medium text-gray-900">
+                        {(log as any).device_info.browser && (
+                          <span>{(log as any).device_info.browser}</span>
+                        )}
+                        {(log as any).device_info.browser_version && (
+                          <span className="text-gray-600"> {(log as any).device_info.browser_version}</span>
+                        )}
+                        {(log as any).device_info.os && (
+                          <div className="text-sm text-gray-600 mt-1">
+                            {(log as any).device_info.os}
+                            {(log as any).device_info.os_version && ` ${(log as any).device_info.os_version}`}
+                          </div>
+                        )}
+                        {(log as any).device_info.device_type && (
+                          <div className="text-xs text-gray-500 mt-1 capitalize">
+                            {(log as any).device_info.device_type}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -174,35 +209,137 @@ function AuditDetailContent() {
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold text-pmd-darkBlue mb-4">Cambios Realizados</h2>
-                <div className="space-y-4">
-                  {previousValue && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Valor Anterior</p>
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
-                          {JSON.stringify(previousValue, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
+                {previousValue && newValue ? (
+                  // Show detailed diff
+                  <div className="space-y-4">
+                    {(() => {
+                      const diff = compareObjects(previousValue, newValue);
+                      const hasChanges = Object.keys(diff.added).length > 0 || 
+                                        Object.keys(diff.removed).length > 0 || 
+                                        Object.keys(diff.changed).length > 0;
+                      
+                      if (!hasChanges) {
+                        return (
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center text-gray-600">
+                            No hay cambios detectados
+                          </div>
+                        );
+                      }
 
-                  {newValue && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Valor Nuevo</p>
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                        <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
-                          {JSON.stringify(newValue, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
+                      return (
+                        <div className="space-y-3">
+                          {/* Campos agregados */}
+                          {Object.keys(diff.added).length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Plus className="h-4 w-4 text-green-600" />
+                                <p className="text-xs font-medium text-green-700 uppercase tracking-wide">
+                                  Campos Agregados ({Object.keys(diff.added).length})
+                                </p>
+                              </div>
+                              <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
+                                {Object.entries(diff.added).map(([key, value]) => (
+                                  <div key={key} className="border-b border-green-200 last:border-0 pb-2 last:pb-0">
+                                    <div className="font-semibold text-green-900 text-sm">{key}:</div>
+                                    <pre className="text-xs text-green-700 whitespace-pre-wrap font-mono mt-1">
+                                      {formatValue(value)}
+                                    </pre>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
-                  {previousValue && newValue && (
-                    <div className="flex items-center justify-center pt-2">
-                      <ArrowRight className="h-5 w-5 text-gray-400" />
-                    </div>
-                  )}
-                </div>
+                          {/* Campos eliminados */}
+                          {Object.keys(diff.removed).length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Minus className="h-4 w-4 text-red-600" />
+                                <p className="text-xs font-medium text-red-700 uppercase tracking-wide">
+                                  Campos Eliminados ({Object.keys(diff.removed).length})
+                                </p>
+                              </div>
+                              <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-2">
+                                {Object.entries(diff.removed).map(([key, value]) => (
+                                  <div key={key} className="border-b border-red-200 last:border-0 pb-2 last:pb-0">
+                                    <div className="font-semibold text-red-900 text-sm">{key}:</div>
+                                    <pre className="text-xs text-red-700 whitespace-pre-wrap font-mono mt-1">
+                                      {formatValue(value)}
+                                    </pre>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Campos modificados */}
+                          {Object.keys(diff.changed).length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Edit className="h-4 w-4 text-yellow-600" />
+                                <p className="text-xs font-medium text-yellow-700 uppercase tracking-wide">
+                                  Campos Modificados ({Object.keys(diff.changed).length})
+                                </p>
+                              </div>
+                              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-3">
+                                {Object.entries(diff.changed).map(([key, { old, new: newVal }]) => (
+                                  <div key={key} className="border-b border-yellow-200 last:border-0 pb-3 last:pb-0">
+                                    <div className="font-semibold text-yellow-900 text-sm mb-2">{key}:</div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div className="bg-red-50 border border-red-200 rounded p-2">
+                                        <div className="text-xs font-medium text-red-700 mb-1">Anterior:</div>
+                                        <pre className="text-xs text-red-600 whitespace-pre-wrap font-mono">
+                                          {formatValue(old)}
+                                        </pre>
+                                      </div>
+                                      <div className="bg-green-50 border border-green-200 rounded p-2">
+                                        <div className="text-xs font-medium text-green-700 mb-1">Nuevo:</div>
+                                        <pre className="text-xs text-green-600 whitespace-pre-wrap font-mono">
+                                          {formatValue(newVal)}
+                                        </pre>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  // Fallback to simple view if diff not available
+                  <div className="space-y-4">
+                    {previousValue && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Valor Anterior</p>
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                            {JSON.stringify(previousValue, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+
+                    {newValue && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Valor Nuevo</p>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                          <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                            {JSON.stringify(newValue, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+
+                    {previousValue && newValue && (
+                      <div className="flex items-center justify-center pt-2">
+                        <ArrowRight className="h-5 w-5 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
