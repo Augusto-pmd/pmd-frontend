@@ -108,10 +108,29 @@ function ExpensesContent() {
       if (validateState === "validated") {
         await refreshPatterns.afterExpenseValidation(globalMutate);
         
-        toast.success(
-          "Gasto validado correctamente. Se han actualizado automáticamente: contrato, obra, contabilidad, alertas y dashboard.",
-          6000
-        );
+        // Verificar si se asignó un contrato automáticamente
+        try {
+          const updatedExpense = await expenseApi.getOne(editingExpense.id);
+          const hasAutoAssignedContract = updatedExpense?.contract_id && !editingExpense.contract_id;
+          
+          if (hasAutoAssignedContract) {
+            toast.success(
+              "Gasto validado correctamente. Se asignó automáticamente un contrato al gasto. Se han actualizado: contrato, obra, contabilidad, alertas y dashboard.",
+              7000
+            );
+          } else {
+            toast.success(
+              "Gasto validado correctamente. Se han actualizado automáticamente: contrato, obra, contabilidad, alertas y dashboard.",
+              6000
+            );
+          }
+        } catch {
+          // Si falla obtener el gasto actualizado, mostrar mensaje genérico
+          toast.success(
+            "Gasto validado correctamente. Se han actualizado automáticamente: contrato, obra, contabilidad, alertas y dashboard.",
+            6000
+          );
+        }
       } else if (validateState === "observed" || validateState === "annulled") {
         // Si se observa o anula, también refrescar contratos y obras (puede haber revertido saldo)
         globalMutate("/contracts");
@@ -147,6 +166,11 @@ function ExpensesContent() {
                                errorMessage.toLowerCase().includes("factura duplicada") ||
                                errorMessage.toLowerCase().includes("duplicate invoice detected");
       
+      // Detectar error de saldo insuficiente del contrato
+      const isInsufficientBalanceError = errorMessage.toLowerCase().includes("insufficient balance") ||
+                                        errorMessage.toLowerCase().includes("saldo insuficiente") ||
+                                        errorMessage.toLowerCase().includes("contract has insufficient balance");
+      
       if (isDuplicateError && validateState === "validated") {
         // Si es Direction, permitir validar de todas formas
         if (isDirection && !forceValidate) {
@@ -165,6 +189,17 @@ function ExpensesContent() {
           toast.error("No se puede validar: se detectó una factura duplicada. Solo Dirección puede validar gastos con facturas duplicadas.");
           return;
         }
+      }
+      
+      if (isInsufficientBalanceError && validateState === "validated") {
+        // Mostrar mensaje específico para error de saldo insuficiente
+        toast.error(
+          "No se puede validar: el contrato asignado automáticamente no tiene saldo suficiente. Se ha generado una alerta crítica. Por favor, revisa el contrato o ajusta el monto del gasto.",
+          8000
+        );
+        // Refrescar alertas para mostrar la nueva alerta generada
+        globalMutate("/alerts");
+        return;
       }
       
       toast.error(errorMessage);

@@ -97,4 +97,14 @@ export const expenseApi = {
       reason,
     });
   },
+  getOne: async (id: string): Promise<Expense> => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [expenseApi.getOne] id no está definido");
+      }
+      throw new Error("ID de gasto no está definido");
+    }
+    const response = await apiClient.get<Expense>(`/expenses/${id}`);
+    return (response as any)?.data || response;
+  },
 };

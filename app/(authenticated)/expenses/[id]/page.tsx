@@ -237,7 +237,14 @@ function ExpenseDetailContent() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">Contrato Asignado</CardTitle>
+              <div>
+                <CardTitle className="text-xl">Contrato Asignado</CardTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  {expense.state === "validated" || expense.estado === "validated"
+                    ? "Asignado automáticamente durante la validación"
+                    : "Contrato asociado al gasto"}
+                </p>
+              </div>
               {contract?.is_blocked && (
                 <Badge variant="error">Bloqueado</Badge>
               )}
