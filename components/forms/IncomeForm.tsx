@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { validatePositiveNumber, validateRequired } from "@/lib/validations";
+import { IncomeType, PaymentMethod } from "@/lib/types/income";
 
 interface IncomeFormProps {
   initialData?: any;
@@ -17,6 +19,8 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
     amount: 0,
     description: "",
     source: "",
+    type: IncomeType.ADVANCE,
+    payment_method: "",
     date: new Date().toISOString().split("T")[0],
     workId: "",
     ...initialData,
@@ -122,6 +126,30 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
         error={errors.source}
         required
       />
+      <Select
+        label="Tipo de ingreso"
+        value={formData.type}
+        onChange={(e) => setFormData({ ...formData, type: e.target.value as IncomeType })}
+        required
+      >
+        <option value={IncomeType.ADVANCE}>Anticipo</option>
+        <option value={IncomeType.CERTIFICATION}>Certificación</option>
+        <option value={IncomeType.FINAL_PAYMENT}>Pago Final</option>
+        <option value={IncomeType.ADJUSTMENT}>Ajuste</option>
+        <option value={IncomeType.REIMBURSEMENT}>Reembolso</option>
+        <option value={IncomeType.OTHER}>Otro</option>
+      </Select>
+      <Select
+        label="Método de pago"
+        value={formData.payment_method || ""}
+        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value || undefined })}
+      >
+        <option value="">Seleccionar método</option>
+        <option value={PaymentMethod.TRANSFER}>Transferencia</option>
+        <option value={PaymentMethod.CHECK}>Cheque</option>
+        <option value={PaymentMethod.CASH}>Efectivo</option>
+        <option value={PaymentMethod.PAYMENT_LINK}>Link de pago</option>
+      </Select>
       <Input
         label="Fecha"
         type="date"

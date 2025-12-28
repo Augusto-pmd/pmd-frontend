@@ -136,22 +136,49 @@ function IncomesContent() {
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Description</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Source</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Payment Method</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Amount</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {incomes?.map((income: any) => (
-                      <tr key={income.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {income.date ? new Date(income.date).toLocaleDateString() : "-"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{income.description}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{income.source}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900 font-semibold text-green-600">
-                          ${income.amount?.toFixed(2) || "0.00"}
-                        </td>
+                    {incomes?.map((income: any) => {
+                      const getTypeLabel = (type: string) => {
+                        const typeMap: Record<string, string> = {
+                          advance: "Anticipo",
+                          certification: "Certificación",
+                          final_payment: "Pago Final",
+                          adjustment: "Ajuste",
+                          reimbursement: "Reembolso",
+                          other: "Otro",
+                        };
+                        return typeMap[type] || type;
+                      };
+                      
+                      const getPaymentMethodLabel = (method: string) => {
+                        const methodMap: Record<string, string> = {
+                          transfer: "Transferencia",
+                          check: "Cheque",
+                          cash: "Efectivo",
+                          payment_link: "Link de pago",
+                        };
+                        return methodMap[method] || "-";
+                      };
+                      
+                      return (
+                        <tr key={income.id}>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {income.date ? new Date(income.date).toLocaleDateString() : "-"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{income.description}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{getTypeLabel(income.type || "")}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{income.source}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{getPaymentMethodLabel(income.payment_method || "")}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 font-semibold text-green-600">
+                            ${income.amount?.toFixed(2) || "0.00"}
+                          </td>
                         <td className="px-4 py-3 text-sm">
                           <div className="flex gap-2">
                             <Button
@@ -172,7 +199,8 @@ function IncomesContent() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>

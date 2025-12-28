@@ -9,6 +9,16 @@ export enum IncomeType {
   ADVANCE = 'advance',
   CERTIFICATION = 'certification',
   FINAL_PAYMENT = 'final_payment',
+  ADJUSTMENT = 'adjustment',
+  REIMBURSEMENT = 'reimbursement',
+  OTHER = 'other',
+}
+
+export enum PaymentMethod {
+  TRANSFER = 'transfer',
+  CHECK = 'check',
+  CASH = 'cash',
+  PAYMENT_LINK = 'payment_link',
 }
 
 export interface Income {
@@ -20,6 +30,7 @@ export interface Income {
   date: string;
   file_url?: string;
   document_number?: string;
+  payment_method?: PaymentMethod;
   is_validated: boolean;
   validated_by_id?: string;
   validated_at?: string;
@@ -38,6 +49,7 @@ export interface CreateIncomeData {
   date: string;
   file_url?: string;
   document_number?: string;
+  payment_method?: PaymentMethod;
   is_validated?: boolean;
   observations?: string;
 }
@@ -49,6 +61,7 @@ export interface UpdateIncomeData {
   date?: string;
   file_url?: string;
   document_number?: string;
+  payment_method?: PaymentMethod;
   is_validated?: boolean;
   observations?: string;
 }
