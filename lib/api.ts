@@ -3,6 +3,8 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { useOfflineStore } from "@/store/offlineStore";
+import { sanitizeInput } from "@/lib/sanitize";
 
 // Helper para obtener header de Authorization
 export function getAuthHeader(): Record<string, string> {
@@ -23,7 +25,7 @@ const api: AxiosInstance = axios.create({
   withCredentials: false,
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token, CSRF token and handle offline mode
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Obtener token de Zustand o localStorage
@@ -33,10 +35,82 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add CSRF token for state-changing methods
+    if (config.headers) {
+      const method = config.method?.toUpperCase();
+      const isStateChanging = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
+      
+      // Skip CSRF for auth endpoints (login, register, csrf-token)
+      const skipCsrf = config.url?.includes("/auth/login") || 
+                       config.url?.includes("/auth/register") ||
+                       config.url?.includes("/auth/csrf-token");
+      
+      if (isStateChanging && !skipCsrf && typeof window !== "undefined") {
+        const csrfToken = localStorage.getItem("csrf_token");
+        if (csrfToken) {
+          config.headers["X-CSRF-Token"] = csrfToken;
+        }
+      }
+    }
+
+    // Sanitize request data for state-changing methods
+    if (config.data && typeof config.data === 'object') {
+      const method = config.method?.toUpperCase();
+      const isStateChanging = method === "POST" || method === "PUT" || method === "PATCH";
+      
+      if (isStateChanging) {
+        // Skip sanitization for FormData (file uploads)
+        if (!(config.data instanceof FormData)) {
+          config.data = sanitizeInput(config.data);
+        }
+      }
+    }
     
     // Si es FormData, dejar que axios maneje el Content-Type automáticamente
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
+    }
+
+    // Check if offline and intercept POST/PATCH/PUT requests
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      const method = config.method?.toUpperCase();
+      const isMutation = method === "POST" || method === "PATCH" || method === "PUT";
+      
+      if (isMutation && config.url) {
+        const user = useAuthStore.getState().user;
+        if (user) {
+          // Determine item type from URL
+          const url = config.url;
+          let itemType = "unknown";
+          
+          if (url.includes("/expenses")) itemType = "expense";
+          else if (url.includes("/incomes")) itemType = "income";
+          else if (url.includes("/works")) itemType = "work";
+          else if (url.includes("/contracts")) itemType = "contract";
+          else if (url.includes("/suppliers")) itemType = "supplier";
+          else if (url.includes("/cash-movements")) itemType = "cash_movement";
+          
+          // Save to offline store
+          useOfflineStore.getState().addItem({
+            item_type: itemType,
+            data: {
+              action: method?.toLowerCase() || "create",
+              entity: itemType,
+              payload: config.data,
+              url: config.url,
+            },
+            user_id: user.id,
+          });
+
+          // Return a rejected promise to prevent the actual API call
+          return Promise.reject({
+            isOffline: true,
+            message: "Request saved offline. Will sync when connection is restored.",
+            config,
+          } as any);
+        }
+      }
     }
     
     return config;
@@ -50,14 +124,49 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
+    // Handle offline errors
+    if (error.isOffline) {
+      return Promise.reject({
+        ...error,
+        response: {
+          status: 0,
+          data: {
+            message: error.message || "Request saved offline. Will sync when connection is restored.",
+          },
+        },
+      });
+    }
+
     const original = error.config;
 
     // Skip interceptor for login/auth endpoints to prevent refresh loops
-    if (original.url?.includes("/auth/login") || original.url?.includes("/auth/refresh")) {
+    if (original?.url?.includes("/auth/login") || original?.url?.includes("/auth/refresh")) {
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401 && !original._retry) {
+    // Handle CSRF token errors (403 Forbidden)
+    if (error.response?.status === 403 && error.response?.data?.message?.includes("CSRF")) {
+      // Try to refresh CSRF token and retry
+      if (!original?._csrfRetry) {
+        original._csrfRetry = true;
+        
+        try {
+          // Fetch new CSRF token
+          const csrfResponse = await api.get("/auth/csrf-token");
+          const newCsrfToken = (csrfResponse as any)?.data?.csrfToken || (csrfResponse as any)?.csrfToken;
+          
+          if (newCsrfToken && typeof window !== "undefined") {
+            localStorage.setItem("csrf_token", newCsrfToken);
+            original.headers["X-CSRF-Token"] = newCsrfToken;
+            return api(original);
+          }
+        } catch (csrfError) {
+          console.error("Failed to refresh CSRF token:", csrfError);
+        }
+      }
+    }
+
+    if (error.response?.status === 401 && !original?._retry) {
       original._retry = true;
 
       const refreshed = await useAuthStore.getState().refresh();
