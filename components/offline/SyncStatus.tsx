@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { offlineApi } from "@/hooks/api/offline";
 import { usePendingOfflineItems } from "@/hooks/api/offline";
-import { Sync, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { RefreshCw, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 
 export function SyncStatus() {
   const { items, mutate } = usePendingOfflineItems();
@@ -22,8 +22,7 @@ export function SyncStatus() {
     setSyncResult(null);
 
     try {
-      const response = await offlineApi.sync();
-      const result = response.data as any;
+      const result = await offlineApi.sync();
 
       setSyncResult({
         synced: result.synced || 0,
@@ -65,7 +64,7 @@ export function SyncStatus() {
             loading={isSyncing}
             variant="primary"
           >
-            <Sync className="w-4 h-4 mr-2" />
+            <RefreshCw className="w-4 h-4 mr-2" />
             Sincronizar
           </Button>
         </div>
