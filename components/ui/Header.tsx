@@ -6,6 +6,7 @@ import { LogOut, Bell } from "lucide-react";
 import { Button } from "./Button";
 import { useEffect, useState } from "react";
 import { useAlertsStore } from "@/store/alertsStore";
+import { OfflineIndicator } from "./OfflineIndicator";
 
 interface HeaderProps {
   title?: string;
@@ -126,6 +127,9 @@ export function Header({ title }: HeaderProps) {
 
       {/* Right Section */}
       <div style={rightSectionStyle}>
+        {/* Offline Indicator */}
+        {mounted && <OfflineIndicator />}
+
         {/* Alerts Counter */}
         {mounted && unreadCount > 0 && (
           <Button
