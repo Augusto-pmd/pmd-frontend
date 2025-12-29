@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext";
+import { BruteForceAlert } from "./BruteForceAlert";
+import { useBruteForce } from "@/hooks/useBruteForce";
 import LogoPMD from "@/components/LogoPMD";
 
 export function LoginForm() {
@@ -12,6 +14,14 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuthContext();
+  const { status, refresh } = useBruteForce();
+  
+  // Refresh brute force status after failed login
+  useEffect(() => {
+    if (error) {
+      refresh();
+    }
+  }, [error, refresh]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +42,24 @@ export function LoginForm() {
     } catch (error: unknown) {
       setIsLoading(false);
       
+      // Handle brute force blocking (429)
+      const errorObj = error && typeof error === 'object' ? error as { 
+        code?: string; 
+        message?: string;
+        response?: { status?: number; data?: any };
+      } : null;
+      
+      if (errorObj?.response?.status === 429 || errorObj?.code === "BRUTE_FORCE_BLOCKED") {
+        const bruteForceData = errorObj?.response?.data || errorObj;
+        setError(
+          bruteForceData?.message || 
+          `Demasiados intentos fallidos. Intenta nuevamente en ${bruteForceData?.remainingMinutes || 15} minutos.`
+        );
+        refresh(); // Refresh status to show block
+        return;
+      }
+      
       // Handle explicit backend error messages
-      const errorObj = error && typeof error === 'object' ? error as { code?: string; message?: string } : null;
       if (errorObj?.code === "USER_NOT_FOUND") {
         setError("Usuario no encontrado");
       } else if (errorObj?.code === "INVALID_PASSWORD") {
@@ -41,11 +67,20 @@ export function LoginForm() {
       } else {
         setError(errorObj?.message || "Credenciales incorrectas");
       }
+      
+      // Refresh brute force status after error
+      refresh();
     }
   };
 
+  const isBlocked = status?.isBlocked || false;
+  const isSubmitDisabled = isLoading || isBlocked;
+
   return (
-    <div className="w-full max-w-[420px]">
+    <div className="w-full max-w-[420px] space-y-4">
+      {/* Brute Force Alert */}
+      <BruteForceAlert />
+      
       {/* Main Card Container */}
       <div
         style={{
@@ -181,10 +216,32 @@ export function LoginForm() {
             />
           </div>
 
+          {/* Attempt Counter */}
+          {status && !status.isBlocked && status.remainingAttempts < status.maxAttempts && (
+            <div
+              style={{
+                fontSize: "12px",
+                color: "var(--apple-text-secondary)",
+                textAlign: "center",
+                padding: "var(--space-xs)",
+              }}
+            >
+              {status.remainingAttempts > 0 ? (
+                <span>
+                  {status.remainingAttempts} intento{status.remainingAttempts > 1 ? "s" : ""} restante{status.remainingAttempts > 1 ? "s" : ""} antes del bloqueo
+                </span>
+              ) : (
+                <span style={{ color: "rgba(255,59,48,1)" }}>
+                  Sin intentos restantes. IP será bloqueada.
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Login Button */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isSubmitDisabled}
             style={{
               width: "100%",
               height: "44px",
@@ -196,8 +253,8 @@ export function LoginForm() {
               fontSize: "14px",
               fontWeight: 500,
               transition: "all 200ms ease",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              opacity: isLoading ? 0.5 : 1,
+              cursor: isSubmitDisabled ? "not-allowed" : "pointer",
+              opacity: isSubmitDisabled ? 0.5 : 1,
             }}
             onMouseEnter={(e) => {
               if (!isLoading) {
