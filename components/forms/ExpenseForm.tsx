@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
-import { Expense, CreateExpenseData, DocumentType, Currency } from "@/lib/types/expense";
+import { Expense, CreateExpenseData, DocumentType } from "@/lib/types/expense";
+import { Currency } from "@/lib/types/work";
 import { validatePositiveNumber, validateRequired } from "@/lib/validations";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
@@ -13,6 +14,7 @@ import { useRubrics } from "@/hooks/api/rubrics";
 import { calculateTaxes, getCalculationRulesExplanation } from "@/lib/calculations";
 import { FiscalCondition } from "@/lib/types/supplier";
 import { Info } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 
 interface ExpenseFormProps {
   initialData?: Expense | null;
@@ -25,6 +27,8 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
   const { works } = useWorks();
   const { suppliers } = useSuppliers();
   const { rubrics } = useRubrics();
+  const user = useAuthStore.getState().user;
+  const isDirection = user?.role?.name === "DIRECTION" || user?.role?.name === "direction";
 
   const [formData, setFormData] = useState({
     work_id: "",
@@ -61,6 +65,54 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
     if (!formData.supplier_id) return null;
     return suppliers?.find((s) => s.id === formData.supplier_id) || null;
   }, [formData.supplier_id, suppliers]);
+
+  // Filter out blocked suppliers from the selector
+  const availableSuppliers = useMemo(() => {
+    if (!suppliers) return [];
+    return suppliers.filter((supplier) => {
+      const status = (supplier.status || supplier.estado || "").toLowerCase();
+      return status !== "blocked" && status !== "bloqueado";
+    });
+  }, [suppliers]);
+
+  // Check if selected supplier is blocked (for validation)
+  const isSelectedSupplierBlocked = useMemo(() => {
+    if (!selectedSupplier) return false;
+    const status = (selectedSupplier.status || selectedSupplier.estado || "").toLowerCase();
+    return status === "blocked" || status === "bloqueado";
+  }, [selectedSupplier]);
+
+  // Get selected work to check if it's closed
+  const selectedWork = useMemo(() => {
+    if (!formData.work_id) return null;
+    return works?.find((w) => w.id === formData.work_id) || null;
+  }, [formData.work_id, works]);
+
+  // Check if selected work is closed
+  const isSelectedWorkClosed = useMemo(() => {
+    if (!selectedWork) return false;
+    const status = (selectedWork.status || selectedWork.estado || "").toLowerCase();
+    return status === "finished" || status === "finalizada" || 
+           status === "administratively_closed" || status === "cerrada administrativamente" ||
+           status === "archived" || status === "archivada";
+  }, [selectedWork]);
+
+  // Filter out closed works from selector (unless Direction or post-closure is allowed)
+  const availableWorks = useMemo(() => {
+    if (!works) return [];
+    return works.filter((work) => {
+      const status = (work.status || work.estado || "").toLowerCase();
+      const isClosed = status === "finished" || status === "finalizada" || 
+                      status === "administratively_closed" || status === "cerrada administrativamente" ||
+                      status === "archived" || status === "archivada";
+      
+      // Show closed works only if Direction or if post-closure is allowed
+      if (isClosed) {
+        return isDirection || (work as any).allow_post_closure_expenses;
+      }
+      return true;
+    });
+  }, [works, isDirection]);
 
   // Calculate taxes automatically when amount, supplier, or document_type changes
   useEffect(() => {
@@ -169,6 +221,20 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
     if (formData.document_type !== "VAL" && !formData.supplier_id) {
       newErrors.supplier_id = "El proveedor es requerido (excepto para VAL)";
     }
+    
+    // Validate that selected supplier is not blocked
+    if (formData.document_type !== "VAL" && formData.supplier_id && isSelectedSupplierBlocked) {
+      newErrors.supplier_id = "No se puede crear un gasto con un proveedor bloqueado. Por favor, seleccione otro proveedor o contacte a Dirección para desbloquearlo.";
+    }
+    
+    // Validate that selected work is not closed (unless Direction or post-closure allowed)
+    if (formData.work_id && isSelectedWorkClosed) {
+      const work = selectedWork as any;
+      if (!isDirection && !work?.allow_post_closure_expenses) {
+        newErrors.work_id = "No se puede crear un gasto en una obra cerrada. Solo Dirección puede crear gastos en obras cerradas o si los gastos post-cierre están permitidos.";
+      }
+    }
+    
     const amountValidation = validatePositiveNumber(formData.amount);
     if (!amountValidation.isValid) {
       newErrors.amount = amountValidation.error || "El monto debe ser mayor que 0";
@@ -228,12 +294,36 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
           required
         >
           <option value="">Seleccionar obra</option>
-          {works?.map((work) => (
-            <option key={work.id} value={work.id}>
-              {work.name}
-            </option>
-          ))}
+          {availableWorks.map((work) => {
+            const status = (work.status || work.estado || "").toLowerCase();
+            const isClosed = status === "finished" || status === "finalizada" || 
+                            status === "administratively_closed" || status === "cerrada administrativamente" ||
+                            status === "archived" || status === "archivada";
+            const hasPostClosure = (work as any).allow_post_closure_expenses;
+            return (
+              <option key={work.id} value={work.id}>
+                {work.name}{isClosed ? (hasPostClosure ? " (Cerrada - Post-cierre permitido)" : " (Cerrada)") : ""}
+              </option>
+            );
+          })}
         </Select>
+        
+        {/* Mensaje de advertencia si la obra seleccionada está cerrada */}
+        {isSelectedWorkClosed && formData.work_id && !isDirection && !(selectedWork as any)?.allow_post_closure_expenses && (
+          <div className="col-span-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <Info className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-orange-900 mb-1">
+                  Obra Cerrada
+                </p>
+                <p className="text-sm text-orange-700">
+                  La obra seleccionada está cerrada. No se pueden crear gastos en obras cerradas. Solo Dirección puede crear gastos en obras cerradas o si los gastos post-cierre están permitidos.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Select
           label="Rubro"
@@ -274,12 +364,29 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
           disabled={formData.document_type === "VAL"}
         >
           <option value="">Seleccionar proveedor</option>
-          {suppliers?.map((supplier) => (
+          {availableSuppliers.map((supplier) => (
             <option key={supplier.id} value={supplier.id}>
               {supplier.name || supplier.nombre}
             </option>
           ))}
         </Select>
+        
+        {/* Mensaje de advertencia si el proveedor seleccionado está bloqueado (caso edge: si se carga desde initialData) */}
+        {isSelectedSupplierBlocked && formData.document_type !== "VAL" && (
+          <div className="col-span-2 bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <Info className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-red-900 mb-1">
+                  Proveedor Bloqueado
+                </p>
+                <p className="text-sm text-red-700">
+                  El proveedor seleccionado está bloqueado (probablemente por ART vencida). No se puede crear un gasto con este proveedor. Por favor, seleccione otro proveedor o contacte a Dirección para desbloquearlo.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Select
           label="Tipo de Documento"

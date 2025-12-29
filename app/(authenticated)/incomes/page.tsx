@@ -3,6 +3,7 @@
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useIncomes, incomeApi } from "@/hooks/api/incomes";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { IncomeForm } from "@/components/forms/IncomeForm";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -14,6 +15,7 @@ import { useToast } from "@/components/ui/Toast";
 import { getOperationErrorMessage } from "@/lib/errorMessages";
 
 function IncomesContent() {
+  const router = useRouter();
   const { incomes, isLoading, error, mutate } = useIncomes();
   const { mutate: globalMutate } = useSWRConfig();
   const toast = useToast();
@@ -134,13 +136,14 @@ function IncomesContent() {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Description</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Source</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Payment Method</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Amount</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fecha</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Monto</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Moneda</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Método de Pago</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Observaciones</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -172,15 +175,41 @@ function IncomesContent() {
                           <td className="px-4 py-3 text-sm text-gray-900">
                             {income.date ? new Date(income.date).toLocaleDateString() : "-"}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{income.description}</td>
                           <td className="px-4 py-3 text-sm text-gray-900">{getTypeLabel(income.type || "")}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{income.source}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{getPaymentMethodLabel(income.payment_method || "")}</td>
                           <td className="px-4 py-3 text-sm text-gray-900 font-semibold text-green-600">
                             ${income.amount?.toFixed(2) || "0.00"}
                           </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{income.currency || "ARS"}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{getPaymentMethodLabel(income.payment_method || "")}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {income.observations ? (
+                              <span className="truncate block max-w-xs" title={income.observations}>
+                                {income.observations}
+                              </span>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {income.is_validated ? (
+                              <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                Validado
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Pendiente
+                              </span>
+                            )}
+                          </td>
                         <td className="px-4 py-3 text-sm">
                           <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/incomes/${income.id}`)}
+                            >
+                              Ver
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"

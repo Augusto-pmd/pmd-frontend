@@ -230,7 +230,11 @@ function AlertsContent() {
                 >
                   <option value="all">Todos</option>
                   <option value="unassigned">Sin asignar</option>
-                  {/* Users will be populated from useUsers hook */}
+                  {users?.map((u: any) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name || u.nombre || u.email || u.id}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

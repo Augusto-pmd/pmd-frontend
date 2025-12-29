@@ -39,6 +39,7 @@ export function Input({ label, error, className, ...props }: InputProps) {
       {label && (
         <label style={labelStyle}>
           {label}
+          {props.required && <span style={{ color: "#FF3B30", marginLeft: "4px" }}>*</span>}
         </label>
       )}
       <input

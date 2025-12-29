@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { validatePositiveNumber, validateRequired } from "@/lib/validations";
 import { IncomeType, PaymentMethod } from "@/lib/types/income";
+import { Currency } from "@/lib/types/work";
+import { useWorks } from "@/hooks/api/works";
 
 interface IncomeFormProps {
   initialData?: any;
@@ -15,14 +18,17 @@ interface IncomeFormProps {
 }
 
 export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: IncomeFormProps) {
+  const { works } = useWorks();
   const [formData, setFormData] = useState({
+    work_id: "",
     amount: 0,
-    description: "",
-    source: "",
+    currency: Currency.ARS,
     type: IncomeType.ADVANCE,
-    payment_method: "",
     date: new Date().toISOString().split("T")[0],
-    workId: "",
+    payment_method: "",
+    document_number: "",
+    file_url: "",
+    observations: "",
     ...initialData,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -31,8 +37,15 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
   useEffect(() => {
     if (initialData) {
       setFormData({
-        ...initialData,
+        work_id: initialData.work_id || initialData.workId || "",
+        amount: initialData.amount || 0,
+        currency: initialData.currency || Currency.ARS,
+        type: initialData.type || IncomeType.ADVANCE,
         date: initialData.date?.split("T")[0] || new Date().toISOString().split("T")[0],
+        payment_method: initialData.payment_method || "",
+        document_number: initialData.document_number || "",
+        file_url: initialData.file_url || "",
+        observations: initialData.observations || "",
       });
     }
   }, [initialData]);
@@ -40,19 +53,17 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
+    if (!formData.work_id) {
+      newErrors.work_id = "La obra es obligatoria";
+    }
+    
     const amountValidation = validatePositiveNumber(formData.amount);
     if (!amountValidation.isValid) {
       newErrors.amount = amountValidation.error || "El monto debe ser mayor que 0";
     }
     
-    const descriptionValidation = validateRequired(formData.description);
-    if (!descriptionValidation.isValid) {
-      newErrors.description = descriptionValidation.error || "La descripción es obligatoria";
-    }
-    
-    const sourceValidation = validateRequired(formData.source);
-    if (!sourceValidation.isValid) {
-      newErrors.source = sourceValidation.error || "La fuente es obligatoria";
+    if (!formData.currency) {
+      newErrors.currency = "La moneda es obligatoria";
     }
     
     setErrors(newErrors);
@@ -62,70 +73,60 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    await onSubmit(formData);
+    
+    // Mapear datos al formato del backend
+    const submitData: any = {
+      work_id: formData.work_id,
+      amount: formData.amount,
+      currency: formData.currency,
+      type: formData.type,
+      date: formData.date,
+    };
+    
+    // Campos opcionales
+    if (formData.payment_method) {
+      submitData.payment_method = formData.payment_method;
+    }
+    if (formData.document_number) {
+      submitData.document_number = formData.document_number;
+    }
+    if (formData.file_url) {
+      submitData.file_url = formData.file_url;
+    }
+    if (formData.observations) {
+      submitData.observations = formData.observations;
+    }
+    
+    await onSubmit(submitData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Monto"
-        type="number"
-        step="0.01"
-        value={formData.amount}
+      <Select
+        label="Obra"
+        value={formData.work_id}
         onChange={(e) => {
-          setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 });
-          if (errors.amount) setErrors({ ...errors, amount: "" });
+          setFormData({ ...formData, work_id: e.target.value });
+          if (errors.work_id) setErrors({ ...errors, work_id: "" });
         }}
         onBlur={() => {
-          setTouched({ ...touched, amount: true });
-          const amountValidation = validatePositiveNumber(formData.amount);
-          if (!amountValidation.isValid) {
-            setErrors({ ...errors, amount: amountValidation.error || "El monto debe ser mayor que 0" });
+          setTouched({ ...touched, work_id: true });
+          if (!formData.work_id) {
+            setErrors({ ...errors, work_id: "La obra es obligatoria" });
           } else {
-            setErrors({ ...errors, amount: "" });
+            setErrors({ ...errors, work_id: "" });
           }
         }}
-        error={errors.amount}
+        error={errors.work_id}
         required
-      />
-      <Input
-        label="Descripción"
-        value={formData.description}
-        onChange={(e) => {
-          setFormData({ ...formData, description: e.target.value });
-          if (errors.description) setErrors({ ...errors, description: "" });
-        }}
-        onBlur={() => {
-          setTouched({ ...touched, description: true });
-          const descriptionValidation = validateRequired(formData.description);
-          if (!descriptionValidation.isValid) {
-            setErrors({ ...errors, description: descriptionValidation.error || "La descripción es obligatoria" });
-          } else {
-            setErrors({ ...errors, description: "" });
-          }
-        }}
-        error={errors.description}
-        required
-      />
-      <Input
-        label="Fuente"
-        value={formData.source}
-        onChange={(e) => {
-          setFormData({ ...formData, source: e.target.value });
-          if (errors.source) setErrors({ ...errors, source: "" });
-        }}
-        onBlur={() => {
-          setTouched({ ...touched, source: true });
-          const sourceValidation = validateRequired(formData.source);
-          if (!sourceValidation.isValid) {
-            setErrors({ ...errors, source: sourceValidation.error || "La fuente es obligatoria" });
-          } else {
-            setErrors({ ...errors, source: "" });
-          }
-        }}
-        error={errors.source}
-        required
-      />
+      >
+        <option value="">Seleccionar obra</option>
+        {works?.map((work: any) => (
+          <option key={work.id} value={work.id}>
+            {work.name || work.nombre || `Obra ${work.id.slice(0, 8)}`}
+          </option>
+        ))}
+      </Select>
       <Select
         label="Tipo de ingreso"
         value={formData.type}
@@ -139,17 +140,51 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
         <option value={IncomeType.REIMBURSEMENT}>Reembolso</option>
         <option value={IncomeType.OTHER}>Otro</option>
       </Select>
-      <Select
-        label="Método de pago"
-        value={formData.payment_method || ""}
-        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value || undefined })}
-      >
-        <option value="">Seleccionar método</option>
-        <option value={PaymentMethod.TRANSFER}>Transferencia</option>
-        <option value={PaymentMethod.CHECK}>Cheque</option>
-        <option value={PaymentMethod.CASH}>Efectivo</option>
-        <option value={PaymentMethod.PAYMENT_LINK}>Link de pago</option>
-      </Select>
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Monto"
+          type="number"
+          step="0.01"
+          min="0"
+          value={formData.amount}
+          onChange={(e) => {
+            setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 });
+            if (errors.amount) setErrors({ ...errors, amount: "" });
+          }}
+          onBlur={() => {
+            setTouched({ ...touched, amount: true });
+            const amountValidation = validatePositiveNumber(formData.amount);
+            if (!amountValidation.isValid) {
+              setErrors({ ...errors, amount: amountValidation.error || "El monto debe ser mayor que 0" });
+            } else {
+              setErrors({ ...errors, amount: "" });
+            }
+          }}
+          error={errors.amount}
+          required
+        />
+        <Select
+          label="Moneda"
+          value={formData.currency}
+          onChange={(e) => {
+            setFormData({ ...formData, currency: e.target.value as Currency });
+            if (errors.currency) setErrors({ ...errors, currency: "" });
+          }}
+          onBlur={() => {
+            setTouched({ ...touched, currency: true });
+            if (!formData.currency) {
+              setErrors({ ...errors, currency: "La moneda es obligatoria" });
+            } else {
+              setErrors({ ...errors, currency: "" });
+            }
+          }}
+          error={errors.currency}
+          required
+        >
+          <option value={Currency.ARS}>ARS (Pesos Argentinos)</option>
+          <option value={Currency.USD}>USD (Dólares)</option>
+        </Select>
+      </div>
       <Input
         label="Fecha"
         type="date"
@@ -157,10 +192,33 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
         required
       />
+      <Select
+        label="Método de pago"
+        value={formData.payment_method || ""}
+        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value || undefined })}
+      >
+        <option value="">Seleccionar método (opcional)</option>
+        <option value={PaymentMethod.TRANSFER}>Transferencia</option>
+        <option value={PaymentMethod.CHECK}>Cheque</option>
+        <option value={PaymentMethod.CASH}>Efectivo</option>
+        <option value={PaymentMethod.PAYMENT_LINK}>Link de pago</option>
+      </Select>
       <Input
-        label="ID de Obra (opcional)"
-        value={formData.workId}
-        onChange={(e) => setFormData({ ...formData, workId: e.target.value })}
+        label="Número de documento"
+        value={formData.document_number}
+        onChange={(e) => setFormData({ ...formData, document_number: e.target.value })}
+      />
+      <Input
+        label="URL del archivo"
+        type="url"
+        value={formData.file_url}
+        onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
+      />
+      <Textarea
+        label="Observaciones"
+        value={formData.observations}
+        onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
+        rows={4}
       />
       <div className="flex gap-3 justify-end">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>

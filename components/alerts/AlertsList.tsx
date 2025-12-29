@@ -86,6 +86,24 @@ export function AlertsList({
     // Filtro de obra
     if (workFilter !== "all" && alert.workId !== workFilter) return false;
 
+    // Filtro de estado
+    if (statusFilter !== "all") {
+      const alertStatus = (alert as any).status;
+      if (alertStatus !== statusFilter) return false;
+    }
+
+    // Filtro de usuario asignado
+    if (assignedToFilter !== "all") {
+      if (assignedToFilter === "unassigned") {
+        // Mostrar solo alertas sin asignar
+        if ((alert as any).assigned_to_id || (alert as any).assigned_to) return false;
+      } else {
+        // Mostrar solo alertas asignadas a un usuario específico
+        const assignedToId = (alert as any).assigned_to_id || (alert as any).assigned_to?.id;
+        if (assignedToId !== assignedToFilter) return false;
+      }
+    }
+
     // Filtro de fecha (usar createdAt si date no existe)
     if (dateFilter) {
       const alertDate = (alert as any).date || alert.createdAt;

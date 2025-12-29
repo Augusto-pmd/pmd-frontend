@@ -329,9 +329,9 @@ function WorkDetailContent() {
                     {work.allow_post_closure_expenses && (
                       <p className="text-sm text-green-700 mb-2 font-semibold">
                         ✓ Gastos post-cierre permitidos
-                        {work.post_closure_expenses_allowed_at && (
+                        {work.post_closure_enabled_at && (
                           <span className="text-xs text-green-600 ml-2">
-                            (desde {formatDate(typeof work.post_closure_expenses_allowed_at === 'string' ? work.post_closure_expenses_allowed_at : work.post_closure_expenses_allowed_at instanceof Date ? work.post_closure_expenses_allowed_at.toISOString() : undefined)})
+                            (desde {formatDate(typeof work.post_closure_enabled_at === 'string' ? work.post_closure_enabled_at : work.post_closure_enabled_at instanceof Date ? work.post_closure_enabled_at.toISOString() : undefined)})
                           </span>
                         )}
                       </p>
@@ -370,6 +370,20 @@ function WorkDetailContent() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">Cliente</h3>
                   <p className="text-gray-900">{(work as any).cliente || work.client}</p>
+                </div>
+              ) : null}
+
+              {work.work_type ? (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Tipo de obra</h3>
+                  <p className="text-gray-900">
+                    {work.work_type === 'house' ? 'Casa' :
+                     work.work_type === 'local' ? 'Local' :
+                     work.work_type === 'expansion' ? 'Ampliación' :
+                     work.work_type === 'renovation' ? 'Renovación' :
+                     work.work_type === 'other' ? 'Otro' :
+                     work.work_type}
+                  </p>
                 </div>
               ) : null}
 

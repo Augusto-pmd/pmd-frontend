@@ -10,9 +10,10 @@ import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell, TableEmp
 import { EntryForm } from "@/app/(authenticated)/accounting/components/EntryForm";
 import { useAccountingStore, AccountingEntry } from "@/store/accountingStore";
 import { useToast } from "@/components/ui/Toast";
-import { Edit, Trash2, Eye } from "lucide-react";
+import { Edit, Trash2, Eye, Lock } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
+import { useAuthStore } from "@/store/authStore";
 
 interface AccountingTableProps {
   entries: AccountingEntry[];
@@ -29,6 +30,8 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
   const [selectedEntry, setSelectedEntry] = useState<AccountingEntry | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  const user = useAuthStore.getState().user;
+  const isDirection = user?.role?.name === "DIRECTION" || user?.role?.name === "direction";
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-AR", {
@@ -77,6 +80,18 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
     if (typeLower === "ingreso" || typeLower === "income") return "success";
     if (typeLower === "egreso" || typeLower === "expense") return "error";
     return "default";
+  };
+
+  const isMonthClosed = (entry: AccountingEntry): boolean => {
+    const status = entry.month_status?.toLowerCase();
+    return status === "closed" || status === "cerrado";
+  };
+
+  const canEditEntry = (entry: AccountingEntry): boolean => {
+    // Direction can always edit, even closed months
+    if (isDirection) return true;
+    // Other users cannot edit entries from closed months
+    return !isMonthClosed(entry);
   };
 
   const handleUpdate = async (data: any) => {
@@ -172,11 +187,22 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
                         variant="icon"
                         size="sm"
                         onClick={() => {
-                          setSelectedEntry(entry);
-                          setIsEditModalOpen(true);
+                          if (canEditEntry(entry)) {
+                            setSelectedEntry(entry);
+                            setIsEditModalOpen(true);
+                          } else {
+                            toast.error("No se puede editar un registro de un mes cerrado. Solo Dirección puede editar meses cerrados.");
+                          }
                         }}
+                        disabled={!canEditEntry(entry)}
+                        title={!canEditEntry(entry) ? "No se puede editar un registro de un mes cerrado" : "Editar movimiento"}
+                        style={!canEditEntry(entry) ? { opacity: 0.5, cursor: "not-allowed" } : {}}
                       >
-                        <Edit className="w-4 h-4" />
+                        {!canEditEntry(entry) ? (
+                          <Lock className="w-4 h-4" />
+                        ) : (
+                          <Edit className="w-4 h-4" />
+                        )}
                       </Button>
                       <Button
                         variant="icon"

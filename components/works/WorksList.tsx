@@ -69,6 +69,19 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
     return (work as any).cliente || work.client || null;
   };
 
+  const getWorkTypeLabel = (work: Work) => {
+    const workType = work.work_type;
+    if (!workType) return null;
+    const typeMap: Record<string, string> = {
+      house: "Casa",
+      local: "Local",
+      expansion: "Ampliación",
+      renovation: "Renovación",
+      other: "Otro",
+    };
+    return typeMap[workType] || workType;
+  };
+
   const getStartDate = (work: Work): string | null => {
     const date = (work as any).fechaInicio || work.startDate || (work as any).estimatedStartDate;
     if (!date) return null;
@@ -234,6 +247,15 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
                   <span className="text-sm text-gray-500">Cliente:</span>
                   <span className="text-sm text-gray-900 font-medium">
                     {getWorkClient(work)}
+                  </span>
+                </div>
+              )}
+
+              {getWorkTypeLabel(work) && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Tipo:</span>
+                  <span className="text-sm text-gray-900 font-medium">
+                    {getWorkTypeLabel(work)}
                   </span>
                 </div>
               )}

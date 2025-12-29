@@ -186,6 +186,22 @@ function AuditDetailContent() {
                             {(log as any).device_info.device_type}
                           </div>
                         )}
+                        {/* Mostrar alerta si se detectó cambio de dispositivo */}
+                        {((log as any).device_info.device_change_detected || (log as any).new_value?.device_change_detected) && (
+                          <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                            ⚠️ Cambio de dispositivo detectado
+                            {(log as any).device_info.previous_device && (
+                              <div className="mt-1 text-yellow-700">
+                                Anterior: {(log as any).device_info.previous_device.browser || 'N/A'} / {(log as any).device_info.previous_device.os || 'N/A'}
+                              </div>
+                            )}
+                            {(log as any).device_info.previous_ip && log.ip_address !== (log as any).device_info.previous_ip && (
+                              <div className="mt-1 text-yellow-700">
+                                IP anterior: {(log as any).device_info.previous_ip}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

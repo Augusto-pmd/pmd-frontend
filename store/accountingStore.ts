@@ -19,6 +19,9 @@ export interface AccountingEntry {
   notas?: string;
   description?: string;
   descripcion?: string;
+  month?: number;
+  year?: number;
+  month_status?: "OPEN" | "CLOSED" | "open" | "closed";
   createdAt?: string;
   updatedAt?: string;
 }

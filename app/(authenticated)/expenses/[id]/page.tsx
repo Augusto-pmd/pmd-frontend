@@ -111,6 +111,7 @@ function ExpenseDetailContent() {
     if (stateLower === "validated") return "success";
     if (stateLower === "observed") return "warning";
     if (stateLower === "annulled") return "error";
+    if (stateLower === "rejected") return "error";
     return "default";
   };
 
@@ -120,6 +121,7 @@ function ExpenseDetailContent() {
     if (stateLower === "validated") return "Validado";
     if (stateLower === "observed") return "Observado";
     if (stateLower === "annulled") return "Anulado";
+    if (stateLower === "rejected") return "Rechazado";
     return state;
   };
 
@@ -156,12 +158,55 @@ function ExpenseDetailContent() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl">{expense.description || "Gasto sin descripción"}</CardTitle>
-            <Badge variant={getStateBadgeVariant(expense.state || expense.estado)}>
-              {getStateLabel(expense.state || expense.estado)}
-            </Badge>
+            <div className="flex gap-2">
+              <Badge variant={getStateBadgeVariant(expense.state || expense.estado)}>
+                {getStateLabel(expense.state || expense.estado)}
+              </Badge>
+              {expense.is_post_closure && (
+                <Badge variant="warning">
+                  Post-cierre
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Alerta de gasto post-cierre */}
+          {expense.is_post_closure && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-yellow-900 mb-1">
+                    Gasto Post-Cierre
+                  </p>
+                  <p className="text-sm text-yellow-700">
+                    Este gasto fue creado después del cierre de la obra. Se ha generado una alerta para notificar a los responsables.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Mostrar alerta si el gasto está rechazado */}
+          {(expense.state === "rejected" || expense.estado === "rejected") && expense.observations && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-900 mb-1">
+                    Gasto Rechazado
+                  </p>
+                  <p className="text-sm text-red-700 mb-2">
+                    Motivo del rechazo:
+                  </p>
+                  <p className="text-sm text-red-800 bg-white rounded-md p-3 border border-red-300">
+                    {expense.observations}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {renderField("Descripción", expense.description, undefined, <Receipt className="h-5 w-5 text-gray-400" />)}
             {renderField("Monto", expense.amount, formatCurrency)}
@@ -170,6 +215,7 @@ function ExpenseDetailContent() {
             {renderField("Tipo de documento", expense.document_type)}
             {renderField("Número de documento", expense.document_number)}
             {renderField("Moneda", expense.currency)}
+            {renderField("Observaciones", expense.observations)}
             {renderField("Fecha de creación", expense.created_at, formatDate)}
             {renderField("Última actualización", expense.updated_at, formatDate)}
           </div>

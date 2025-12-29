@@ -13,7 +13,7 @@ export type DocumentType =
   | "VAL"
   | "RECEIPT"
   | "OTHER";
-export type Currency = "ARS" | "USD";
+import { Currency } from "./work";
 
 export interface Expense {
   id: string;

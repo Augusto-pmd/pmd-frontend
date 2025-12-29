@@ -12,7 +12,10 @@ export type WorkStatus =
   | "finished"
   | "administratively_closed"
   | "archived";
-export type Currency = "ARS" | "USD";
+export enum Currency {
+  ARS = 'ARS',
+  USD = 'USD',
+}
 
 export enum WorkType {
   HOUSE = 'house',
@@ -47,8 +50,8 @@ export interface Work {
   currency: Currency;
   work_type?: WorkType;
   allow_post_closure_expenses?: boolean;
-  post_closure_expenses_allowed_at?: string | Date | null;
-  post_closure_expenses_allowed_by_id?: string | null;
+  post_closure_enabled_at?: string | Date | null;
+  post_closure_enabled_by_id?: string | null;
   total_budget?: number;
   total_expenses?: number;
   total_incomes?: number;

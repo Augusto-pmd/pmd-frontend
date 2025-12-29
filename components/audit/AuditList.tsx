@@ -68,6 +68,11 @@ export function AuditList({
 
     if (entityFilter !== "all" && log.entity_type !== entityFilter && log.entity !== entityFilter) return false;
 
+    if (ipFilter) {
+      const logIp = (log as any).ip_address || log.ip_address;
+      if (!logIp || !logIp.toLowerCase().includes(ipFilter.toLowerCase())) return false;
+    }
+
     if (startDateFilter) {
       const logTimestamp = log.timestamp || log.created_at;
       if (logTimestamp) {

@@ -86,7 +86,7 @@ export const expenseApi = {
       observations,
     });
   },
-  reject: (id: string, reason: string) => {
+  reject: (id: string, observations: string) => {
     if (!id) {
       if (process.env.NODE_ENV === "development") {
         console.warn("❗ [expenseApi.reject] id no está definido");
@@ -94,7 +94,7 @@ export const expenseApi = {
       throw new Error("ID de gasto no está definido");
     }
     return apiClient.post<Expense>(`/expenses/${id}/reject`, {
-      reason,
+      observations,
     });
   },
   getOne: async (id: string): Promise<Expense> => {
