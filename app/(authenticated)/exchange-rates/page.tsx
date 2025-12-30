@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
 import { ExchangeRateForm } from "@/components/exchange-rates/ExchangeRateForm";
+import { ExchangeRateChart } from "@/components/exchange-rates/ExchangeRateChart";
 import { exchangeRatesApi } from "@/hooks/api/exchange-rates";
 import { useAuthStore } from "@/store/authStore";
 import { Plus, Edit, Trash2, Eye, DollarSign } from "lucide-react";
@@ -113,6 +114,11 @@ function ExchangeRatesContent() {
             )}
           </div>
         </div>
+
+        {/* Gráfico de evolución */}
+        {exchangeRates && exchangeRates.length >= 2 && (
+          <ExchangeRateChart height={350} />
+        )}
 
         {exchangeRates && exchangeRates.length > 0 ? (
           <Card>

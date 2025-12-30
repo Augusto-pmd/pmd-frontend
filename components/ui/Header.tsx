@@ -2,11 +2,12 @@
 
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
-import { LogOut, Bell } from "lucide-react";
+import { LogOut, Bell, DollarSign } from "lucide-react";
 import { Button } from "./Button";
 import { useEffect, useState } from "react";
 import { useAlertsStore } from "@/store/alertsStore";
 import { OfflineIndicator } from "./OfflineIndicator";
+import { useCurrentExchangeRate } from "@/hooks/api/exchange-rates";
 
 interface HeaderProps {
   title?: string;
@@ -18,6 +19,7 @@ export function Header({ title }: HeaderProps) {
   const router = useRouter();
   const { alerts, fetchAlerts } = useAlertsStore();
   const [mounted, setMounted] = useState(false);
+  const { currentRate } = useCurrentExchangeRate();
 
   useEffect(() => {
     setMounted(true);
@@ -127,6 +129,35 @@ export function Header({ title }: HeaderProps) {
 
       {/* Right Section */}
       <div style={rightSectionStyle}>
+        {/* Current Exchange Rate */}
+        {mounted && currentRate && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              backgroundColor: "var(--apple-surface-elevated)",
+              borderRadius: "8px",
+              border: "1px solid var(--apple-border)",
+              fontSize: "13px",
+            }}
+            className="hidden md:flex"
+          >
+            <DollarSign className="w-4 h-4 text-gray-500" />
+            <span style={{ color: "var(--apple-text-secondary)", fontSize: "12px" }}>
+              1 USD =
+            </span>
+            <span style={{ color: "var(--apple-text-primary)", fontWeight: 500 }}>
+              {new Intl.NumberFormat("es-AR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(currentRate.rate_usd_to_ars)}{" "}
+              ARS
+            </span>
+          </div>
+        )}
+
         {/* Offline Indicator */}
         {mounted && <OfflineIndicator />}
 

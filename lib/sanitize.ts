@@ -3,7 +3,20 @@
  * Uses DOMPurify for HTML sanitization
  */
 
-import DOMPurify from 'dompurify';
+/**
+ * Get DOMPurify instance (only available in browser)
+ */
+function getDOMPurify() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  try {
+    // Dynamic import to avoid SSR issues
+    return require('dompurify');
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Sanitize HTML string
@@ -11,6 +24,11 @@ import DOMPurify from 'dompurify';
 export function sanitizeHtml(html: string): string {
   if (typeof html !== 'string') {
     return '';
+  }
+  const DOMPurify = getDOMPurify();
+  if (!DOMPurify) {
+    // Fallback: remove all HTML tags
+    return html.replace(/<[^>]*>/g, '');
   }
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [], // No HTML tags allowed by default
@@ -24,6 +42,12 @@ export function sanitizeHtml(html: string): string {
 export function sanitizeHtmlWithTags(html: string, allowedTags: string[] = ['p', 'br', 'strong', 'em', 'u']): string {
   if (typeof html !== 'string') {
     return '';
+  }
+  const DOMPurify = getDOMPurify();
+  if (!DOMPurify) {
+    // Fallback: remove all HTML tags except allowed ones
+    const allowedTagsRegex = new RegExp(`</?(?!${allowedTags.join('|')})[^>]+>`, 'gi');
+    return html.replace(allowedTagsRegex, '');
   }
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: allowedTags,

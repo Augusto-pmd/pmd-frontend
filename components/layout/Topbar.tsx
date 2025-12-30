@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Header } from "@/components/ui/Header";
+import { CurrentRate } from "@/components/exchange-rates/CurrentRate";
 
 // Mapeo de rutas a títulos
 const routeTitles: Record<string, string> = {

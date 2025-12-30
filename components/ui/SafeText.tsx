@@ -42,8 +42,12 @@ export function SafeText({
       setSanitizedContent(sanitizeHtml(children));
     } else if (allowHtml) {
       // Use DOMPurify with default settings if allowHtml is true but no tags specified
-      const DOMPurifyLib = require('dompurify');
-      setSanitizedContent(DOMPurifyLib.sanitize(children));
+      const DOMPurifyLib = typeof window !== 'undefined' ? require('dompurify') : null;
+      if (DOMPurifyLib) {
+        setSanitizedContent(DOMPurifyLib.sanitize(children));
+      } else {
+        setSanitizedContent(sanitizeText(children));
+      }
     } else {
       setSanitizedContent(sanitizeText(children));
     }
