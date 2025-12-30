@@ -10,14 +10,16 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 function BackupsContent() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Backups</h1>
-          <p className="text-gray-600 mt-1">
-            Crea, descarga y gestiona los backups de la base de datos
-          </p>
-        </div>
+      <div>
         <BotonVolver />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Gestión de Backups</h1>
+            <p className="text-gray-600">
+              Crea, descarga y gestiona los backups de la base de datos
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Estado y Configuración */}
@@ -42,9 +44,7 @@ function BackupsContent() {
 export default function BackupsPage() {
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-6">
-        <BackupsContent />
-      </div>
+      <BackupsContent />
     </ProtectedRoute>
   );
 }

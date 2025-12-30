@@ -31,14 +31,16 @@ function OfflineContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Items Offline</h1>
-          <p className="text-gray-600 mt-1">
-            Gestiona los items creados mientras estabas sin conexión
-          </p>
-        </div>
+      <div>
         <BotonVolver />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Items Offline</h1>
+            <p className="text-gray-600">
+              Gestiona los items creados mientras estabas sin conexión
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -150,9 +152,7 @@ function OfflineContent() {
 export default function OfflinePage() {
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-6">
-        <OfflineContent />
-      </div>
+      <OfflineContent />
     </ProtectedRoute>
   );
 }
