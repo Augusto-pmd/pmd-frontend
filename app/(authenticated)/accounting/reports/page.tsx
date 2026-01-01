@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { useToast } from "@/components/ui/Toast";
 import { FileDown, Download, FileText, Calculator } from "lucide-react";
 import { exportToExcel, exportToPDF, preparePurchasesBookData, preparePerceptionsData, prepareWithholdingsData } from "@/lib/export-utils";
+import { BotonVolver } from "@/components/ui/BotonVolver";
 
 type ReportType = "purchases" | "perceptions" | "withholdings";
 
@@ -206,8 +207,13 @@ function ReportsContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Reportes Contables</h1>
-        <p className="text-gray-600">Genera y exporta reportes contables detallados</p>
+        <BotonVolver />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Reportes Contables</h1>
+            <p className="text-gray-600">Genera y exporta reportes contables detallados</p>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
