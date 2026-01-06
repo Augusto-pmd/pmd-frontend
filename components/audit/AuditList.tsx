@@ -8,6 +8,7 @@ import { TableContainer } from "@/components/ui/TableContainer";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/Table";
 import { useAuditStore, AuditLog } from "@/store/auditStore";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Eye, Trash2, Shield, User, Calendar, FileText } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -116,7 +117,7 @@ export function AuditList({
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar log:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el log";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -134,7 +135,7 @@ export function AuditList({
       if (process.env.NODE_ENV === "development") {
         console.error("Error al limpiar todos los registros:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al limpiar los registros";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

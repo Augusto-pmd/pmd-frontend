@@ -53,7 +53,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Gastos", href: "/expenses", icon: Receipt, permission: "expenses.read", section: "Operaciones" },
   { label: "Contratos", href: "/contracts", icon: FileCheck, permission: "contracts.read", section: "Operaciones" },
   { label: "Ingresos", href: "/incomes", icon: TrendingUp, permission: "incomes.read", section: "Operaciones" },
-  { label: "Cajas", href: "/cashbox", icon: Wallet, permission: "cashbox.read", section: "Operaciones" },
+  { label: "Cajas", href: "/cashbox", icon: Wallet, permission: "cashboxes.read", section: "Operaciones" },
   { label: "Documentación", href: "/documents", icon: FileText, permission: "documents.read", section: "Operaciones" },
   
   // Administración
@@ -134,13 +134,29 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const canContracts = useCan("contracts.read");
   const canIncomes = useCan("incomes.read");
   const canAccounting = useCan("accounting.read");
-  const canCashbox = useCan("cashbox.read");
+  const canCashbox = useCan("cashboxes.read");
   const canDocuments = useCan("documents.read");
   const canAlerts = useCan("alerts.read");
   const canAudit = useCan("audit.read");
   const canUsers = useCan("users.read");
   const canRoles = useCan("roles.read");
   const canSettings = useCan("settings.read");
+  
+  // 🔍 LOGGING: Verificar permisos críticos en desarrollo
+  if (process.env.NODE_ENV === "development" && user) {
+    const roleName = user.role?.name?.toLowerCase() || 'unknown';
+    if (roleName === 'administration' || roleName === 'admin') {
+      console.log(`[SIDEBAR] 🔍 Administration user permissions check:`, {
+        canUsers,
+        canRoles,
+        canAudit,
+        permissions: user.role?.permissions?.length || 0,
+        hasUsersRead: user.role?.permissions?.includes('users.read'),
+        hasRolesRead: user.role?.permissions?.includes('roles.read'),
+        hasAuditRead: user.role?.permissions?.includes('audit.read'),
+      });
+    }
+  }
 
   // Hook reactivo para organizationId
   const organizationId = useAuthStore((state) => state.user?.organizationId);
@@ -165,7 +181,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     const filtered = ALL_NAV_ITEMS.filter((item) => {
       // Dashboard siempre visible si hay usuario
       if (item.permission === "always" || item.href === "/dashboard") {
-        return { ...item, hasPermission: true };
+        return true;
       }
       
       // Verificar permiso específico
@@ -189,7 +205,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
         case "accounting.read":
           hasPermission = canAccounting;
           break;
-        case "cashbox.read":
+        case "cashboxes.read":
           hasPermission = canCashbox;
           break;
         case "documents.read":
@@ -214,7 +230,12 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           hasPermission = true;
       }
       
-      return { ...item, hasPermission };
+      // 🔍 LOGGING: Verificar permisos en desarrollo
+      if (process.env.NODE_ENV === "development" && !hasPermission) {
+        console.log(`[SIDEBAR] ❌ Item "${item.label}" oculto - permiso "${item.permission}" denegado`);
+      }
+      
+      return hasPermission; // ✅ Retornar boolean, no objeto
     });
     
     // Logging solo en desarrollo
