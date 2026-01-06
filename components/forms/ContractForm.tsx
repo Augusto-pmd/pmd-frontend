@@ -7,6 +7,9 @@ import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuthStore } from "@/store/authStore";
 import { validateDateRange, validatePositiveNumber, validateNonNegativeNumber } from "@/lib/validations";
+import { useWorks } from "@/hooks/api/works";
+import { useSuppliers } from "@/hooks/api/suppliers";
+import { useRubrics } from "@/hooks/api/rubrics";
 
 interface ContractFormProps {
   initialData?: any;
@@ -19,8 +22,17 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
   const user = useAuthStore.getState().user;
   const isDirection = user?.role?.name === "DIRECTION";
   const isAdministration = user?.role?.name === "ADMINISTRATION" || isDirection;
+  const isCreating = !initialData;
+
+  // Solo cargar datos cuando se está creando
+  const { works } = useWorks();
+  const { suppliers } = useSuppliers();
+  const { rubrics } = useRubrics();
 
   const [formData, setFormData] = useState({
+    work_id: "",
+    supplier_id: "",
+    rubric_id: "",
     amount_total: 0,
     currency: "ARS",
     payment_terms: "",
@@ -56,6 +68,19 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
+    // Validaciones para creación (campos obligatorios)
+    if (isCreating) {
+      if (!formData.work_id) {
+        newErrors.work_id = "La obra es requerida";
+      }
+      if (!formData.supplier_id) {
+        newErrors.supplier_id = "El proveedor es requerido";
+      }
+      if (!formData.rubric_id) {
+        newErrors.rubric_id = "La rubrica es requerida";
+      }
+    }
+    
     // Validaciones para campos que solo Direction puede modificar
     if (isDirection) {
       const amountValidation = validatePositiveNumber(formData.amount_total);
@@ -86,22 +111,42 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
     // Preparar datos según permisos
     const submitData: any = {};
 
-    // Solo Direction puede modificar amount_total y currency
-    if (isDirection) {
+    // Cuando se está creando, incluir campos obligatorios
+    if (isCreating) {
+      submitData.work_id = formData.work_id;
+      submitData.supplier_id = formData.supplier_id;
+      submitData.rubric_id = formData.rubric_id;
       submitData.amount_total = formData.amount_total;
       submitData.currency = formData.currency;
-    }
-
-    // Administration y Direction pueden modificar otros campos
-    if (isAdministration) {
-      if (formData.payment_terms !== undefined) submitData.payment_terms = formData.payment_terms;
-      if (formData.file_url !== undefined) submitData.file_url = formData.file_url;
+      
+      // Campos opcionales
+      if (formData.payment_terms) submitData.payment_terms = formData.payment_terms;
+      if (formData.file_url) submitData.file_url = formData.file_url;
       if (formData.start_date) submitData.start_date = formData.start_date;
       if (formData.end_date) submitData.end_date = formData.end_date;
-      if (formData.observations !== undefined) submitData.observations = formData.observations;
+      if (formData.observations) submitData.observations = formData.observations;
       if (formData.validity_date) submitData.validity_date = formData.validity_date;
-      if (formData.scope !== undefined) submitData.scope = formData.scope;
-      if (formData.specifications !== undefined) submitData.specifications = formData.specifications;
+      if (formData.scope) submitData.scope = formData.scope;
+      if (formData.specifications) submitData.specifications = formData.specifications;
+    } else {
+      // Para edición, solo incluir campos modificables según permisos
+      // Solo Direction puede modificar amount_total y currency
+      if (isDirection) {
+        submitData.amount_total = formData.amount_total;
+        submitData.currency = formData.currency;
+      }
+
+      // Administration y Direction pueden modificar otros campos
+      if (isAdministration) {
+        if (formData.payment_terms !== undefined) submitData.payment_terms = formData.payment_terms;
+        if (formData.file_url !== undefined) submitData.file_url = formData.file_url;
+        if (formData.start_date) submitData.start_date = formData.start_date;
+        if (formData.end_date) submitData.end_date = formData.end_date;
+        if (formData.observations !== undefined) submitData.observations = formData.observations;
+        if (formData.validity_date) submitData.validity_date = formData.validity_date;
+        if (formData.scope !== undefined) submitData.scope = formData.scope;
+        if (formData.specifications !== undefined) submitData.specifications = formData.specifications;
+      }
     }
 
     await onSubmit(submitData);
@@ -109,6 +154,68 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Campos para crear nuevo contrato */}
+      {isCreating && (
+        <>
+          <Select
+            label="Obra"
+            value={formData.work_id}
+            onChange={(e) => {
+              setFormData({ ...formData, work_id: e.target.value });
+              if (errors.work_id) setErrors({ ...errors, work_id: "" });
+            }}
+            error={errors.work_id}
+            required
+            disabled={isLoading}
+          >
+            <option value="">Seleccionar obra</option>
+            {works?.map((work) => (
+              <option key={work.id} value={work.id}>
+                {work.name}
+              </option>
+            ))}
+          </Select>
+          
+          <Select
+            label="Proveedor"
+            value={formData.supplier_id}
+            onChange={(e) => {
+              setFormData({ ...formData, supplier_id: e.target.value });
+              if (errors.supplier_id) setErrors({ ...errors, supplier_id: "" });
+            }}
+            error={errors.supplier_id}
+            required
+            disabled={isLoading}
+          >
+            <option value="">Seleccionar proveedor</option>
+            {suppliers?.map((supplier) => (
+              <option key={supplier.id} value={supplier.id}>
+                {supplier.nombre || supplier.name}
+              </option>
+            ))}
+          </Select>
+          
+          <Select
+            label="Rubrica"
+            value={formData.rubric_id}
+            onChange={(e) => {
+              setFormData({ ...formData, rubric_id: e.target.value });
+              if (errors.rubric_id) setErrors({ ...errors, rubric_id: "" });
+            }}
+            error={errors.rubric_id}
+            required
+            disabled={isLoading}
+          >
+            <option value="">Seleccionar rubrica</option>
+            {rubrics?.map((rubric: any) => (
+              <option key={rubric.id} value={rubric.id}>
+                {rubric.name || rubric.nombre}
+              </option>
+            ))}
+          </Select>
+        </>
+      )}
+
       {/* Campos solo para Direction */}
       {isDirection && (
         <>

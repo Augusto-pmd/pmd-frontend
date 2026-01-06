@@ -1,6 +1,7 @@
 "use client";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PermissionRoute } from "@/components/auth/PermissionRoute";
 import { useIncomes, incomeApi } from "@/hooks/api/incomes";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ import { useSWRConfig } from "swr";
 import { refreshPatterns } from "@/lib/refreshData";
 import { useToast } from "@/components/ui/Toast";
 import { getOperationErrorMessage } from "@/lib/errorMessages";
+import { useCan } from "@/lib/acl";
 
 function IncomesContent() {
   const router = useRouter();
@@ -23,6 +25,11 @@ function IncomesContent() {
   const [editingIncome, setEditingIncome] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  
+  // Verificar permisos para crear/editar/eliminar ingresos
+  const canCreateIncome = useCan("incomes.create");
+  const canUpdateIncome = useCan("incomes.update");
+  const canDeleteIncome = useCan("incomes.delete");
 
   const totalIncome = incomes?.reduce((sum: number, inc: any) => sum + (inc.amount || 0), 0) || 0;
   const thisMonth = new Date().getMonth();
@@ -100,7 +107,9 @@ function IncomesContent() {
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Incomes – PMD Backend Integration</h1>
             <p className="text-gray-600">Track and manage all income sources</p>
           </div>
-          <Button onClick={handleCreate}>+ Add Income</Button>
+          {canCreateIncome && (
+            <Button onClick={handleCreate}>+ Add Income</Button>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow-pmd p-6">
@@ -129,7 +138,7 @@ function IncomesContent() {
               <EmptyState
                 title="No income records found"
                 description="Create your first income record to get started"
-                action={<Button onClick={handleCreate}>Create Income</Button>}
+                action={canCreateIncome ? <Button onClick={handleCreate}>Create Income</Button> : undefined}
               />
             ) : (
               <div className="overflow-x-auto">
@@ -210,21 +219,25 @@ function IncomesContent() {
                             >
                               Ver
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(income)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDelete(income.id)}
-                              disabled={deleteLoading === income.id}
-                            >
-                              {deleteLoading === income.id ? "Deleting..." : "Delete"}
-                            </Button>
+                            {canUpdateIncome && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEdit(income)}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                            {canDeleteIncome && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(income.id)}
+                                disabled={deleteLoading === income.id}
+                              >
+                                {deleteLoading === income.id ? "Deleting..." : "Delete"}
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -263,7 +276,9 @@ function IncomesContent() {
 export default function IncomesPage() {
   return (
     <ProtectedRoute>
-      <IncomesContent />
+      <PermissionRoute permission="incomes.read">
+        <IncomesContent />
+      </PermissionRoute>
     </ProtectedRoute>
   );
 }

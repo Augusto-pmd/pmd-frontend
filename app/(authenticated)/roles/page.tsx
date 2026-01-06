@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PermissionRoute } from "@/components/auth/PermissionRoute";
 import { useRolesStore } from "@/store/rolesStore";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { BotonVolver } from "@/components/ui/BotonVolver";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { RoleForm } from "../settings/roles/components/RoleForm";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { TableContainer } from "@/components/ui/TableContainer";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/Table";
@@ -66,7 +68,7 @@ function RolesContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al crear rol:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al crear el rol";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -86,7 +88,7 @@ function RolesContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al actualizar rol:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al actualizar el rol";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -106,7 +108,7 @@ function RolesContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar rol:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el rol";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -290,7 +292,9 @@ function RolesContent() {
 export default function RolesPage() {
   return (
     <ProtectedRoute>
-      <RolesContent />
+      <PermissionRoute permission="roles.read">
+        <RolesContent />
+      </PermissionRoute>
     </ProtectedRoute>
   );
 }

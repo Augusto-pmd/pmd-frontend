@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import { mapCreateCashboxPayload } from "@/lib/payload-mappers";
+import { parseBackendError } from "@/lib/parse-backend-error";
 
 interface CashboxFormProps {
   onSuccess: () => void;
@@ -49,7 +50,7 @@ export function CashboxForm({ onSuccess, onCancel }: CashboxFormProps) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al guardar caja:", error);
       }
-      const errorMessage = error instanceof Error ? error.message : "Error al guardar la caja";
+      const errorMessage = parseBackendError(error) || "Error al guardar la caja";
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

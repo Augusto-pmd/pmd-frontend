@@ -4,6 +4,7 @@ import { normalizeId } from "@/lib/normalizeId";
 
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PermissionRoute } from "@/components/auth/PermissionRoute";
 import { useUsersStore } from "@/store/usersStore";
 import { useRoles } from "@/hooks/api/roles";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -14,6 +15,7 @@ import { Modal } from "@/components/ui/Modal";
 import { UserForm } from "./components/UserForm";
 import { ChangeRoleModal } from "./components/ChangeRoleModal";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Search, Filter, X, Plus, Edit, Trash2, UserCog, UserX } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { Badge } from "@/components/ui/Badge";
@@ -107,7 +109,7 @@ function UsersContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar usuario:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el usuario";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -130,7 +132,7 @@ function UsersContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al cambiar estado:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al cambiar el estado del usuario";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -432,7 +434,9 @@ function UsersContent() {
 export default function UsersPage() {
   return (
     <ProtectedRoute>
-      <UsersContent />
+      <PermissionRoute permission="users.read">
+        <UsersContent />
+      </PermissionRoute>
     </ProtectedRoute>
   );
 }

@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { CashboxForm } from "./components/CashboxForm";
 import { useToast } from "@/components/ui/Toast";
+import { useCan } from "@/lib/acl";
 
 function CashboxContent() {
   const router = useRouter();
@@ -24,6 +25,10 @@ function CashboxContent() {
   const [editingCashbox, setEditingCashbox] = useState<any>(null);
   const toast = useToast();
   const organizationId = (user as any)?.organizationId || (user as any)?.organization?.id;
+  
+  // ✅ CRÍTICO: Todos los hooks deben llamarse ANTES de cualquier return condicional
+  // Mover useCan antes de los early returns para cumplir con las reglas de hooks de React
+  const canCreateCashbox = useCan("cashboxes.create");
 
   useEffect(() => {
     if (organizationId) {
@@ -98,7 +103,7 @@ function CashboxContent() {
 
   // Determinar el mensaje apropiado cuando no hay cajas
   const getEmptyStateMessage = () => {
-    if (isOperator) {
+    if (isOperator && !canCreateCashbox) {
       return {
         title: "No tienes cajas asignadas",
         description: "Como operador, solo puedes ver las cajas que te han sido asignadas. Si necesitas una caja, contacta con un supervisor o administrador.",
@@ -123,8 +128,8 @@ function CashboxContent() {
               <h1 className="text-2xl font-semibold text-gray-900 mb-2">Cajas</h1>
               <p className="text-gray-600">Gestión de flujo de efectivo y cajas del sistema PMD</p>
             </div>
-            {/* Solo mostrar botón de crear caja si el usuario tiene permisos (no Operator) */}
-            {!isOperator && (
+            {/* Mostrar botón de crear caja si el usuario tiene el permiso cashboxes.create */}
+            {canCreateCashbox && (
               <Button
                 variant="primary"
                 onClick={() => {
@@ -167,7 +172,7 @@ function CashboxContent() {
                     title={emptyStateMessage.title}
                     description={emptyStateMessage.description}
                     action={
-                      emptyStateMessage.showAction ? (
+                      canCreateCashbox ? (
                         <Button variant="primary" onClick={() => setShowForm(true)}>
                           Crear primera caja
                         </Button>

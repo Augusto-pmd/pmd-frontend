@@ -1,6 +1,7 @@
 "use client";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PermissionRoute } from "@/components/auth/PermissionRoute";
 import { useContracts, contractApi } from "@/hooks/api/contracts";
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
@@ -15,6 +16,8 @@ import { useToast } from "@/components/ui/Toast";
 import { refreshPatterns } from "@/lib/refreshData";
 import { getOperationErrorMessage } from "@/lib/errorMessages";
 import { ContractStatus } from "@/lib/types/contract";
+import { Modal } from "@/components/ui/Modal";
+import { ContractForm } from "@/components/forms/ContractForm";
 
 function ContractsContent() {
   const router = useRouter();
@@ -24,6 +27,8 @@ function ContractsContent() {
   const toast = useToast();
   const [filter, setFilter] = useState<"all" | ContractStatus | string>("all");
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredContracts = contracts?.filter((contract: any) => {
     if (filter === "all") return true;
@@ -47,6 +52,22 @@ function ContractsContent() {
     }
   };
 
+  const handleCreate = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await contractApi.create(data);
+      await mutate();
+      await refreshPatterns.afterContractUpdate(globalMutate);
+      toast.success("Contrato creado correctamente");
+      setIsCreateModalOpen(false);
+    } catch (error: unknown) {
+      const errorMessage = getOperationErrorMessage("create", error);
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) {
     return <LoadingState message="Loading contracts..." />;
   }
@@ -66,7 +87,7 @@ function ContractsContent() {
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Contracts – PMD Backend Integration</h1>
             <p className="text-gray-600">Manage contracts and agreements</p>
           </div>
-          <Button>+ New Contract</Button>
+          <Button onClick={() => setIsCreateModalOpen(true)}>+ New Contract</Button>
         </div>
 
         <div className="bg-white rounded-lg shadow-pmd p-6">
@@ -179,6 +200,20 @@ function ContractsContent() {
             )}
           </div>
         </div>
+
+        {/* Modal para crear nuevo contrato */}
+        <Modal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          title="Nuevo Contrato"
+          size="lg"
+        >
+          <ContractForm
+            onSubmit={handleCreate}
+            onCancel={() => setIsCreateModalOpen(false)}
+            isLoading={isSubmitting}
+          />
+        </Modal>
       </div>
   );
 }
@@ -186,7 +221,9 @@ function ContractsContent() {
 export default function ContractsPage() {
   return (
     <ProtectedRoute>
-      <ContractsContent />
+      <PermissionRoute permission="contracts.read">
+        <ContractsContent />
+      </PermissionRoute>
     </ProtectedRoute>
   );
 }
