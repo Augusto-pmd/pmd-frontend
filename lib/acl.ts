@@ -10,7 +10,7 @@
  * - incomes.read, incomes.create, incomes.update, incomes.delete, incomes.manage
  * - documents.read, documents.create, documents.update, documents.delete, documents.manage
  * - accounting.read, accounting.create, accounting.update, accounting.delete, accounting.manage
- * - cashbox.read, cashbox.create, cashbox.update, cashbox.delete, cashbox.manage
+ * - cashboxes.read, cashboxes.create, cashboxes.update, cashboxes.delete, cashboxes.manage, cashboxes.close, cashboxes.approve
  * - clients.read, clients.create, clients.update, clients.delete, clients.manage
  * - alerts.read, alerts.create, alerts.update, alerts.delete, alerts.manage
  * - audit.read, audit.delete, audit.manage
@@ -31,7 +31,7 @@ export type Permission =
   | "incomes.read" | "incomes.create" | "incomes.update" | "incomes.delete" | "incomes.manage"
   | "documents.read" | "documents.create" | "documents.update" | "documents.delete" | "documents.manage"
   | "accounting.read" | "accounting.create" | "accounting.update" | "accounting.delete" | "accounting.manage"
-  | "cashbox.read" | "cashbox.create" | "cashbox.update" | "cashbox.delete" | "cashbox.manage"
+  | "cashboxes.read" | "cashboxes.create" | "cashboxes.update" | "cashboxes.delete" | "cashboxes.manage" | "cashboxes.close" | "cashboxes.approve"
   | "clients.read" | "clients.create" | "clients.update" | "clients.delete" | "clients.manage"
   | "alerts.read" | "alerts.create" | "alerts.update" | "alerts.delete" | "alerts.manage"
   | "audit.read" | "audit.delete" | "audit.manage"
@@ -64,30 +64,9 @@ function getUserPermissions(): Permission[] {
     return [];
   }
 
-  // Si el usuario es admin/administration/administrator, tiene acceso total
-  const roleName = user.role.name?.toLowerCase();
-  const isAdmin = roleName === "admin" || roleName === "administration" || roleName === "administrator";
-  
-  if (isAdmin) {
-    // Retornar todos los permisos posibles
-    return [
-      "works.read", "works.create", "works.update", "works.delete", "works.manage",
-      "staff.read", "staff.create", "staff.update", "staff.delete", "staff.manage",
-      "suppliers.read", "suppliers.create", "suppliers.update", "suppliers.delete", "suppliers.manage",
-      "expenses.read", "expenses.create", "expenses.update", "expenses.delete", "expenses.manage",
-      "contracts.read", "contracts.create", "contracts.update", "contracts.delete", "contracts.manage",
-      "incomes.read", "incomes.create", "incomes.update", "incomes.delete", "incomes.manage",
-      "documents.read", "documents.create", "documents.update", "documents.delete", "documents.manage",
-      "accounting.read", "accounting.create", "accounting.update", "accounting.delete", "accounting.manage",
-      "cashbox.read", "cashbox.create", "cashbox.update", "cashbox.delete", "cashbox.manage",
-      "clients.read", "clients.create", "clients.update", "clients.delete", "clients.manage",
-      "alerts.read", "alerts.create", "alerts.update", "alerts.delete", "alerts.manage",
-      "audit.read", "audit.delete", "audit.manage",
-      "settings.read", "settings.update", "settings.manage",
-      "users.read", "users.create", "users.update", "users.delete", "users.manage",
-      "roles.read", "roles.create", "roles.update", "roles.delete", "roles.manage",
-    ] as Permission[];
-  }
+  // NOTA: Ya no otorgamos permisos automáticos basados en el nombre del rol
+  // Todos los permisos deben venir explícitamente del backend en user.role.permissions
+  // Esto asegura que los permisos sean consistentes con la base de datos
 
   // VALIDACIÓN 2: user.role.permissions existe
   if (!user.role.permissions) {
@@ -139,44 +118,44 @@ export function useCan(permission: Permission): boolean {
   
   // Obtener permisos de forma reactiva
   const permissions: Permission[] = useMemo(() => {
-    // Si el usuario es admin/administration/administrator, tiene acceso total
+    // NOTA: Ya no otorgamos permisos automáticos basados en el nombre del rol
+    // Todos los permisos deben venir explícitamente del backend en user.role.permissions
+    // Esto asegura que los permisos sean consistentes con la base de datos
+    
     const roleName = user?.role?.name?.toLowerCase();
-    const isAdmin = roleName === "admin" || roleName === "administration" || roleName === "administrator";
     
-    if (isAdmin) {
-      // Retornar todos los permisos posibles para admin
-      return [
-        "works.read", "works.create", "works.update", "works.delete", "works.manage",
-        "staff.read", "staff.create", "staff.update", "staff.delete", "staff.manage",
-        "suppliers.read", "suppliers.create", "suppliers.update", "suppliers.delete", "suppliers.manage",
-      "expenses.read", "expenses.create", "expenses.update", "expenses.delete", "expenses.manage",
-      "contracts.read", "contracts.create", "contracts.update", "contracts.delete", "contracts.manage",
-      "incomes.read", "incomes.create", "incomes.update", "incomes.delete", "incomes.manage",
-      "documents.read", "documents.create", "documents.update", "documents.delete", "documents.manage",
-        "accounting.read", "accounting.create", "accounting.update", "accounting.delete", "accounting.manage",
-        "cashbox.read", "cashbox.create", "cashbox.update", "cashbox.delete", "cashbox.manage",
-        "clients.read", "clients.create", "clients.update", "clients.delete", "clients.manage",
-        "alerts.read", "alerts.create", "alerts.update", "alerts.delete", "alerts.manage",
-        "audit.read", "audit.delete", "audit.manage",
-        "settings.read", "settings.update", "settings.manage",
-        "users.read", "users.create", "users.update", "users.delete", "users.manage",
-        "roles.read", "roles.create", "roles.update", "roles.delete", "roles.manage",
-      ] as Permission[];
-    }
-    
+    // Verificar si hay permisos en el usuario
     if (!user?.role?.permissions) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn(`[ACL] ⚠️ No permissions found for user ${user?.email} (role: ${roleName})`);
+        console.warn(`[ACL] ⚠️ user.role.permissions is:`, user?.role?.permissions);
+      }
       return [];
     }
     
     if (!Array.isArray(user.role.permissions)) {
+      if (process.env.NODE_ENV === "development") {
+        console.error(`[ACL] ❌ user.role.permissions is not an array. Type: ${typeof user.role.permissions}, Value:`, user.role.permissions);
+      }
       return [];
     }
     
     // Filtrar solo strings válidos
-    return user.role.permissions.filter((p: string): p is Permission => 
+    const validPermissions = user.role.permissions.filter((p: string): p is Permission => 
       typeof p === "string" && p.length > 0
     );
-  }, [user?.role?.name, user?.role?.permissions]);
+    
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[ACL] 📋 Permissions for ${user.email} (${roleName}):`, {
+        total: user.role.permissions.length,
+        valid: validPermissions.length,
+        sample: validPermissions.slice(0, 5),
+        hasUsersRead: validPermissions.includes("users.read"),
+      });
+    }
+    
+    return validPermissions;
+  }, [user?.role?.name, user?.role?.permissions, user?.email]);
   
   // Normalizar a lowercase para comparación case-insensitive
   const lowerPermission = permission.toLowerCase();
@@ -185,21 +164,27 @@ export function useCan(permission: Permission): boolean {
   
   // Logging para debugging (solo en desarrollo)
   if (process.env.NODE_ENV === "development") {
-    if (!hasPermission && permissions.length > 0) {
-      console.log("[ACL] ❌ No match found for:", permission);
-      console.log("[ACL] Normalized permission:", lowerPermission);
-      console.log("[ACL] Available normalized permissions:", lowerPermissions.slice(0, 10));
-      
-      // Verificar si hay permisos similares
-      const similarPermissions = permissions.filter(p => 
-        String(p).toLowerCase().includes(permission.split('.')[0].toLowerCase())
-      );
-      if (similarPermissions.length > 0) {
-        console.log("[ACL] Similar permissions found:", similarPermissions);
+    if (!hasPermission) {
+      if (permissions.length > 0) {
+        console.log(`[ACL] ❌ Permission denied: "${permission}"`);
+        console.log(`[ACL]   User: ${user?.email} (${user?.role?.name})`);
+        console.log(`[ACL]   Normalized permission: "${lowerPermission}"`);
+        console.log(`[ACL]   Available permissions (${permissions.length}):`, lowerPermissions.slice(0, 10));
+        
+        // Verificar si hay permisos similares
+        const similarPermissions = permissions.filter(p => 
+          String(p).toLowerCase().includes(permission.split('.')[0].toLowerCase())
+        );
+        if (similarPermissions.length > 0) {
+          console.log(`[ACL]   Similar permissions found:`, similarPermissions);
+        }
+      } else {
+        console.warn(`[ACL] ⚠️ Permission denied: "${permission}" - No permissions available for user ${user?.email}`);
+        console.warn(`[ACL]   This may indicate that permissions were not loaded from backend correctly`);
       }
+    } else {
+      console.log(`[ACL] ✅ Permission granted: "${permission}" for ${user?.email} (${user?.role?.name})`);
     }
-    
-    console.log(`[ACL] useCan("${permission}"): ${hasPermission ? "✅ TRUE" : "❌ FALSE"}`);
   }
   
   return hasPermission;

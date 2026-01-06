@@ -12,7 +12,7 @@ export interface LoginResponse {
   user: {
     id: number;
     email: string;
-    role: { id: number; name: string };
+    role: { id: number; name: string; permissions?: string[] };
     organization: { id: number; name: string } | null;
     [key: string]: unknown;
   };
@@ -24,7 +24,7 @@ export interface RefreshResponse {
   user?: {
     id: number;
     email: string;
-    role: { id: number; name: string };
+    role: { id: number; name: string; permissions?: string[] };
     organization: { id: number; name: string } | null;
     [key: string]: any;
   };
@@ -34,7 +34,7 @@ export interface UserMeResponse {
   user: {
     id: number;
     email: string;
-    role: { id: number; name: string };
+    role: { id: number; name: string; permissions?: string[] };
     organization: { id: number; name: string } | null;
     [key: string]: unknown;
   };

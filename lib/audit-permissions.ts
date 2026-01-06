@@ -84,7 +84,7 @@ export function auditPermissions(): {
     { permission: "works.read", expected: true },
     { permission: "suppliers.read", expected: true },
     { permission: "accounting.read", expected: true },
-    { permission: "cashbox.read", expected: true },
+    { permission: "cashboxes.read", expected: true },
     { permission: "documents.read", expected: true },
     { permission: "alerts.read", expected: true },
   ];
