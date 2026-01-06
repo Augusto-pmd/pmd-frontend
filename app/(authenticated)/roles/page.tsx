@@ -16,6 +16,7 @@ import { TableContainer } from "@/components/ui/TableContainer";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { useAuthStore } from "@/store/authStore";
+import { useCan } from "@/lib/acl";
 
 function RolesContent() {
   const { roles, isLoading, error, fetchRoles, createRole, updateRole, deleteRole } = useRolesStore();
