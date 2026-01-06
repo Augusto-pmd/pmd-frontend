@@ -242,16 +242,9 @@ function translatePermissionMessage(message: string): string {
     "Only Administration can delete exchange rates": "Solo Administración puede eliminar tasas de cambio",
     "Only Direction can update users": "Solo Dirección puede actualizar usuarios",
     "Only Direction can update roles": "Solo Dirección puede actualizar roles",
-    "Only Direction can create users": "Solo Dirección puede crear usuarios",
-    "Only Direction can create roles": "Solo Dirección puede crear roles",
-    "Only Direction can close works": "Solo Dirección puede cerrar obras",
-    "Only Direction can reopen closed months": "Solo Dirección puede reabrir meses cerrados",
     "Only Direction can override blocked contracts": "Solo Dirección puede sobrescribir contratos bloqueados",
-    "Only Administration and Direction can validate expenses": "Solo Administración y Dirección pueden validar gastos",
-    "Only Administration and Direction can approve suppliers": "Solo Administración y Dirección pueden aprobar proveedores",
     "Only Administration and Direction can approve cashbox differences": "Solo Administración y Dirección pueden aprobar diferencias de caja",
     "Only Administration and Direction can close accounting months": "Solo Administración y Dirección pueden cerrar meses contables",
-    "Insufficient permissions": "Permisos insuficientes",
     "Forbidden": "Acceso prohibido",
   };
 
