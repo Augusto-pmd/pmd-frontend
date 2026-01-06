@@ -25,8 +25,8 @@ export const swrConfig: SWRConfiguration = {
       throw error;
     }
   },
-  revalidateOnFocus: false,
-  revalidateOnReconnect: true,
+  revalidateOnFocus: false, // No revalidar cuando la ventana recupera el foco
+  revalidateOnReconnect: true, // Revalidar cuando se reconecta a internet
   shouldRetryOnError: (error: any) => {
     // Don't retry on 401, 403, or 404
     if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
@@ -40,10 +40,11 @@ export const swrConfig: SWRConfiguration = {
   },
   errorRetryCount: 3,
   errorRetryInterval: 5000, // Fixed interval of 5 seconds
-  dedupingInterval: 2000, // Deduplicate requests within 2 seconds
-  focusThrottleInterval: 5000, // Throttle revalidation on focus
-  revalidateIfStale: true, // Revalidate if data is stale
+  dedupingInterval: 5000, // Deduplicate requests within 5 seconds (aumentado de 2s)
+  focusThrottleInterval: 10000, // Throttle revalidation on focus (aumentado de 5s)
+  revalidateIfStale: false, // NO revalidar automáticamente datos obsoletos (cambiado de true)
   keepPreviousData: true, // Keep previous data while fetching new data
+  // No configurar refreshInterval para evitar polling automático
   // Cache configuration for different data types
   onSuccess: (data: any, key: string) => {
     // Log cache hits in development

@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/authStore";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { useOfflineStore } from "@/store/offlineStore";
 import { sanitizeInput } from "@/lib/sanitize";
+import { getBackendUrl } from "@/lib/env";
 
 // Helper para obtener header de Authorization
 export function getAuthHeader(): Record<string, string> {
@@ -13,8 +14,28 @@ export function getAuthHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// Base URL para todas las llamadas API (same-origin)
-const baseURL = "/api";
+// Base URL para todas las llamadas API
+// Usar getBackendUrl() que tiene fallback a localhost:3001
+const getBaseURL = (): string => {
+  try {
+    const backendUrl = getBackendUrl();
+    // Asegurarse de que termine con /api
+    if (backendUrl) {
+      return backendUrl.endsWith('/api') ? backendUrl : `${backendUrl}/api`;
+    }
+  } catch (error) {
+    console.warn('Error al obtener backend URL:', error);
+  }
+  // Fallback a localhost:3001/api si getBackendUrl() falla
+  return "http://localhost:3001/api";
+};
+
+const baseURL = getBaseURL();
+
+// Log para debugging (solo en desarrollo)
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  console.log("🔗 [API] Base URL configurada:", baseURL);
+}
 
 const api: AxiosInstance = axios.create({
   baseURL: baseURL,
@@ -145,7 +166,8 @@ api.interceptors.response.use(
     }
 
     // Handle CSRF token errors (403 Forbidden)
-    if (error.response?.status === 403 && error.response?.data?.message?.includes("CSRF")) {
+    const errorMessage = error.response?.data?.message;
+    if (error.response?.status === 403 && typeof errorMessage === 'string' && errorMessage.includes("CSRF")) {
       // Try to refresh CSRF token and retry
       if (!original?._csrfRetry) {
         original._csrfRetry = true;
