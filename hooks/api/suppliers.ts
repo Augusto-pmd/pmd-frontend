@@ -59,7 +59,7 @@ export const supplierApi = {
       }
       throw new Error("ID de proveedor no está definido");
     }
-    return apiClient.put(`/suppliers/${id}`, data);
+    return apiClient.patch(`/suppliers/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {

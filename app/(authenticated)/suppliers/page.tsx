@@ -13,6 +13,7 @@ import { SupplierForm } from "@/components/forms/SupplierForm";
 import { useToast } from "@/components/ui/Toast";
 import { Plus } from "lucide-react";
 import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
+import { parseBackendError } from "@/lib/parse-backend-error";
 
 function SuppliersContent() {
   const { suppliers, isLoading, error, mutate } = useSuppliers();
@@ -57,7 +58,7 @@ function SuppliersContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al crear proveedor:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al crear el proveedor";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

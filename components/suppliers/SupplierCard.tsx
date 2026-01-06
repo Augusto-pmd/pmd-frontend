@@ -11,6 +11,7 @@ import { supplierApi } from "@/hooks/api/suppliers";
 import { useExpenses } from "@/hooks/api/expenses";
 import { useAuthStore } from "@/store/authStore";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Edit, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
 import { Supplier, UpdateSupplierData, SupplierType, FiscalCondition } from "@/lib/types/supplier";
 
@@ -121,7 +122,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al actualizar proveedor:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al actualizar el proveedor";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -139,7 +140,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar proveedor:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el proveedor";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -160,7 +161,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al aprobar proveedor:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al aprobar el proveedor";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsApproving(false);
@@ -181,7 +182,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al rechazar proveedor:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al rechazar el proveedor";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsRejecting(false);
