@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PermissionRoute } from "@/components/auth/PermissionRoute";
 import { useAccounting } from "@/hooks/api/accounting";
 import { useAccountingStore } from "@/store/accountingStore";
 import { useWorks } from "@/hooks/api/works";
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { EntryForm } from "@/app/(authenticated)/accounting/components/EntryForm";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Plus, Info, FileText } from "lucide-react";
 import { useSWRConfig } from "swr";
@@ -85,7 +87,7 @@ function AccountingContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al crear movimiento:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al crear el movimiento";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -206,7 +208,9 @@ function AccountingContent() {
 export default function AccountingPage() {
   return (
     <ProtectedRoute>
-      <AccountingContent />
+      <PermissionRoute permission="accounting.read">
+        <AccountingContent />
+      </PermissionRoute>
     </ProtectedRoute>
   );
 }

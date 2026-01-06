@@ -108,7 +108,7 @@ function ReportsContent() {
         }
       }
 
-      exportToExcel(exportData, filename);
+      await exportToExcel(exportData, filename);
       toast.success("Archivo Excel exportado correctamente");
     } catch (error) {
       console.error("Error al exportar a Excel:", error);

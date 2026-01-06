@@ -10,6 +10,7 @@ import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell, TableEmp
 import { EntryForm } from "@/app/(authenticated)/accounting/components/EntryForm";
 import { useAccountingStore, AccountingEntry } from "@/store/accountingStore";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Edit, Trash2, Eye, Lock } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
@@ -107,7 +108,7 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al actualizar movimiento:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al actualizar el movimiento";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -127,7 +128,7 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar movimiento:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el movimiento";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
