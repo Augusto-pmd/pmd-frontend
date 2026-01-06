@@ -147,15 +147,6 @@ export function useCan(permission: Permission): boolean {
       typeof p === "string" && p.length > 0
     );
     
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[ACL] 📋 Permissions for ${user.email} (${roleName}):`, {
-        total: user.role.permissions.length,
-        valid: validPermissions.length,
-        sample: validPermissions.slice(0, 5),
-        hasUsersRead: validPermissions.includes("users.read"),
-      });
-    }
-    
     return validPermissions;
   }, [user?.role?.name, user?.role?.permissions, user?.email]);
   
@@ -164,28 +155,11 @@ export function useCan(permission: Permission): boolean {
   const lowerPermissions = permissions.map(p => String(p).toLowerCase());
   const hasPermission = lowerPermissions.includes(lowerPermission);
   
-  // Logging para debugging (solo en desarrollo)
+  // Logging para debugging (solo en desarrollo) - solo warnings y errores críticos
   if (process.env.NODE_ENV === "development") {
-    if (!hasPermission) {
-      if (permissions.length > 0) {
-        console.log(`[ACL] ❌ Permission denied: "${permission}"`);
-        console.log(`[ACL]   User: ${user?.email} (${user?.role?.name})`);
-        console.log(`[ACL]   Normalized permission: "${lowerPermission}"`);
-        console.log(`[ACL]   Available permissions (${permissions.length}):`, lowerPermissions.slice(0, 10));
-        
-        // Verificar si hay permisos similares
-        const similarPermissions = permissions.filter(p => 
-          String(p).toLowerCase().includes(permission.split('.')[0].toLowerCase())
-        );
-        if (similarPermissions.length > 0) {
-          console.log(`[ACL]   Similar permissions found:`, similarPermissions);
-        }
-      } else {
-        console.warn(`[ACL] ⚠️ Permission denied: "${permission}" - No permissions available for user ${user?.email}`);
-        console.warn(`[ACL]   This may indicate that permissions were not loaded from backend correctly`);
-      }
-    } else {
-      console.log(`[ACL] ✅ Permission granted: "${permission}" for ${user?.email} (${user?.role?.name})`);
+    if (!hasPermission && permissions.length === 0) {
+      console.warn(`[ACL] ⚠️ Permission denied: "${permission}" - No permissions available for user ${user?.email}`);
+      console.warn(`[ACL]   This may indicate that permissions were not loaded from backend correctly`);
     }
   }
   
