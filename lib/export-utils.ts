@@ -2,7 +2,7 @@
  * Utilities for exporting data to Excel and PDF
  */
 
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 // @ts-ignore - jspdf-autotable doesn't have proper TypeScript types
 import autoTable from 'jspdf-autotable';
@@ -17,86 +17,112 @@ export interface ExportData {
 /**
  * Export data to Excel file
  */
-export function exportToExcel(data: ExportData, filename: string = 'reporte'): void {
-  // Create a new workbook
-  const workbook = XLSX.utils.book_new();
+export async function exportToExcel(data: ExportData, filename: string = 'reporte'): Promise<void> {
+  // Create a new workbook and worksheet
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Reporte');
 
-  // Prepare data for Excel
-  const excelData: (string | number)[][] = [];
+  let currentRow = 1;
 
   // Add title if provided
   if (data.title) {
-    excelData.push([data.title]);
-    excelData.push([]); // Empty row
+    const titleRow = worksheet.getRow(currentRow);
+    titleRow.getCell(1).value = data.title;
+    titleRow.getCell(1).font = { size: 14, bold: true };
+    titleRow.height = 20;
+    worksheet.mergeCells(currentRow, 1, currentRow, data.headers.length);
+    currentRow++;
+    currentRow++; // Empty row
   }
 
   // Add headers
-  excelData.push(data.headers);
+  const headerRow = worksheet.getRow(currentRow);
+  data.headers.forEach((header, index) => {
+    const cell = headerRow.getCell(index + 1);
+    cell.value = header;
+    cell.font = { bold: true };
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF428BCA' }, // Blue background
+    };
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }; // White text
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+  });
+  headerRow.height = 20;
+  currentRow++;
 
   // Add rows
   data.rows.forEach((row) => {
-    excelData.push(row);
+    const rowObj = worksheet.getRow(currentRow);
+    row.forEach((cellValue, colIndex) => {
+      rowObj.getCell(colIndex + 1).value = cellValue;
+    });
+    // Alternate row colors for better readability
+    if (currentRow % 2 === 0) {
+      rowObj.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF5F5F5' },
+      };
+    }
+    currentRow++;
   });
 
   // Add totals if provided
   if (data.totals && data.totals.length > 0) {
-    excelData.push([]); // Empty row
-    // Find the last numeric column index
-    const lastNumericColIndex = data.headers.length - 1;
+    currentRow++; // Empty row
+    const lastNumericColIndex = data.headers.length;
     data.totals.forEach((total) => {
-      const totalRow: (string | number)[] = new Array(data.headers.length).fill('');
-      totalRow[0] = total.label;
-      totalRow[lastNumericColIndex] = total.value;
-      excelData.push(totalRow);
+      const totalRow = worksheet.getRow(currentRow);
+      totalRow.getCell(1).value = total.label;
+      totalRow.getCell(1).font = { bold: true };
+      totalRow.getCell(lastNumericColIndex).value = total.value;
+      totalRow.getCell(lastNumericColIndex).numFmt = '#,##0.00';
+      totalRow.getCell(lastNumericColIndex).font = { bold: true };
+      currentRow++;
     });
   }
 
-  // Create worksheet
-  const worksheet = XLSX.utils.aoa_to_sheet(excelData);
-
   // Set column widths
-  const maxWidths = data.headers.map((_, colIndex) => {
-    let maxWidth = data.headers[colIndex].length;
+  data.headers.forEach((header, index) => {
+    let maxWidth = header.length;
     data.rows.forEach((row) => {
-      const cellValue = String(row[colIndex] || '');
+      const cellValue = String(row[index] || '');
       if (cellValue.length > maxWidth) {
         maxWidth = cellValue.length;
       }
     });
-    return { wch: Math.min(maxWidth + 2, 50) }; // Max width 50
+    worksheet.getColumn(index + 1).width = Math.min(maxWidth + 2, 50); // Max width 50
   });
-  worksheet['!cols'] = maxWidths;
 
   // Format currency columns (detect numeric columns from headers)
-  const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-  const headerRow = range.s.r;
   const currencyKeywords = ['monto', 'iva', 'percepción', 'retención', 'ganancias', 'iibb'];
-  
-  // Find columns that contain currency-related headers
-  const currencyColumns: number[] = [];
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    const cellAddress = XLSX.utils.encode_cell({ r: headerRow, c: C });
-    const headerValue = String(worksheet[cellAddress]?.v || '').toLowerCase();
+  data.headers.forEach((header, colIndex) => {
+    const headerValue = String(header).toLowerCase();
     if (currencyKeywords.some(keyword => headerValue.includes(keyword))) {
-      currencyColumns.push(C);
-    }
-  }
-  
-  // Apply number format to currency columns
-  for (let R = range.s.r + 1; R <= range.e.r; R++) {
-    currencyColumns.forEach((colIndex) => {
-      const cellAddress = XLSX.utils.encode_cell({ r: R, c: colIndex });
-      if (worksheet[cellAddress] && typeof worksheet[cellAddress].v === 'number') {
-        worksheet[cellAddress].z = '#,##0.00'; // Number format with thousands separator and 2 decimals
+      const column = worksheet.getColumn(colIndex + 1);
+      // Apply number format to all numeric cells in this column
+      for (let rowIndex = (data.title ? 3 : 2); rowIndex <= currentRow; rowIndex++) {
+        const cell = worksheet.getRow(rowIndex).getCell(colIndex + 1);
+        if (cell.value !== null && typeof cell.value === 'number') {
+          cell.numFmt = '#,##0.00'; // Number format with thousands separator and 2 decimals
+        }
       }
-    });
-  }
-
-  // Add worksheet to workbook
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
+    }
+  });
 
   // Generate Excel file and download
-  XLSX.writeFile(workbook, `${filename}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 }
 
 /**
