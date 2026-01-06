@@ -66,7 +66,7 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     }
 
     try {
-      await apiClient.patch(`/alerts/${id}/read`, {});
+      await apiClient.patch(`/alerts/${id}/mark-read`, { is_read: true });
       await get().fetchAlerts();
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
@@ -189,7 +189,7 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     try {
       // Marcar todas como leídas individualmente o usar endpoint si existe
       const unreadAlerts = get().alerts.filter(a => !a.read);
-      await Promise.all(unreadAlerts.map(alert => apiClient.patch(`/alerts/${alert.id}/read`, {})));
+      await Promise.all(unreadAlerts.map(alert => apiClient.patch(`/alerts/${alert.id}/mark-read`, { is_read: true })));
       await get().fetchAlerts();
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {

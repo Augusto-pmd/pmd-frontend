@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { AlertForm } from "@/app/(authenticated)/alerts/components/AlertForm";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Plus } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -58,7 +59,7 @@ function StaffAlertsContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al crear alerta:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al crear la alerta";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

@@ -17,6 +17,7 @@ import { useUsers } from "@/hooks/api/users";
 import { Modal } from "@/components/ui/Modal";
 import { AlertForm } from "./components/AlertForm";
 import { Plus } from "lucide-react";
+import { parseBackendError } from "@/lib/parse-backend-error";
 
 function AlertsContent() {
   const { alerts, isLoading, error, fetchAlerts, createAlert } = useAlertsStore();
@@ -280,7 +281,7 @@ function AlertsContent() {
                 if (process.env.NODE_ENV === "development") {
                   console.error("Error al crear alerta:", err);
                 }
-                const errorMessage = err instanceof Error ? err.message : "Error al crear la alerta";
+                const errorMessage = parseBackendError(err) || "Error al crear la alerta";
                 toast.error(errorMessage);
               } finally {
                 setIsSubmitting(false);

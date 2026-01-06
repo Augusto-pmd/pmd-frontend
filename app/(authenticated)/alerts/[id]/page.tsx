@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Check, Trash2, Bell, Building2, User, Calendar, Tag, AlertTriangle, UserPlus, CheckCircle, Clock } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { AlertActions } from "@/components/alerts/AlertActions";
@@ -103,7 +104,7 @@ function AlertDetailContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al marcar alerta:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al marcar la alerta";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -120,7 +121,7 @@ function AlertDetailContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar alerta:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar la alerta";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

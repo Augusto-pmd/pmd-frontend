@@ -23,7 +23,7 @@ export function useAlerts() {
   );
 
   const markAsRead = async (id: string) => {
-    await apiClient.patch(`/alerts/${id}`, { status: "read" });
+    await apiClient.patch(`/alerts/${id}/mark-read`, { is_read: true });
     await revalidate();
   };
 

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { useAlertsStore, Alert } from "@/store/alertsStore";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { 
   Eye, 
   Trash2, 
@@ -208,7 +209,7 @@ export function AlertsList({
       if (process.env.NODE_ENV === "development") {
         console.error("Error al marcar alerta:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al marcar la alerta";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -225,7 +226,7 @@ export function AlertsList({
       if (process.env.NODE_ENV === "development") {
         console.error("Error al marcar todas las alertas:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al marcar las alertas";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -245,7 +246,7 @@ export function AlertsList({
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar alerta:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar la alerta";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
