@@ -5,12 +5,13 @@
  * - works.read, works.create, works.update, works.delete, works.manage
  * - staff.read, staff.create, staff.update, staff.delete, staff.manage
  * - suppliers.read, suppliers.create, suppliers.update, suppliers.delete, suppliers.manage
- * - expenses.read, expenses.create, expenses.update, expenses.delete, expenses.manage
+ * - expenses.read, expenses.create, expenses.update, expenses.delete, expenses.manage, expenses.validate
  * - contracts.read, contracts.create, contracts.update, contracts.delete, contracts.manage
  * - incomes.read, incomes.create, incomes.update, incomes.delete, incomes.manage
  * - documents.read, documents.create, documents.update, documents.delete, documents.manage
- * - accounting.read, accounting.create, accounting.update, accounting.delete, accounting.manage
+ * - accounting.read, accounting.create, accounting.update, accounting.delete, accounting.manage, accounting.close, accounting.reopen
  * - cashboxes.read, cashboxes.create, cashboxes.update, cashboxes.delete, cashboxes.manage, cashboxes.close, cashboxes.approve
+ * - suppliers.read, suppliers.create, suppliers.update, suppliers.delete, suppliers.manage, suppliers.approve, suppliers.reject
  * - clients.read, clients.create, clients.update, clients.delete, clients.manage
  * - alerts.read, alerts.create, alerts.update, alerts.delete, alerts.manage
  * - audit.read, audit.delete, audit.manage
@@ -25,19 +26,20 @@ import { useAuthStore } from "@/store/authStore";
 export type Permission = 
   | "works.read" | "works.create" | "works.update" | "works.delete" | "works.manage"
   | "staff.read" | "staff.create" | "staff.update" | "staff.delete" | "staff.manage"
-  | "suppliers.read" | "suppliers.create" | "suppliers.update" | "suppliers.delete" | "suppliers.manage"
-  | "expenses.read" | "expenses.create" | "expenses.update" | "expenses.delete" | "expenses.manage"
+  | "suppliers.read" | "suppliers.create" | "suppliers.update" | "suppliers.delete" | "suppliers.manage" | "suppliers.approve" | "suppliers.reject"
+  | "expenses.read" | "expenses.create" | "expenses.update" | "expenses.delete" | "expenses.manage" | "expenses.validate"
   | "contracts.read" | "contracts.create" | "contracts.update" | "contracts.delete" | "contracts.manage"
   | "incomes.read" | "incomes.create" | "incomes.update" | "incomes.delete" | "incomes.manage"
   | "documents.read" | "documents.create" | "documents.update" | "documents.delete" | "documents.manage"
-  | "accounting.read" | "accounting.create" | "accounting.update" | "accounting.delete" | "accounting.manage"
+  | "accounting.read" | "accounting.create" | "accounting.update" | "accounting.delete" | "accounting.manage" | "accounting.close" | "accounting.reopen"
   | "cashboxes.read" | "cashboxes.create" | "cashboxes.update" | "cashboxes.delete" | "cashboxes.manage" | "cashboxes.close" | "cashboxes.approve"
   | "clients.read" | "clients.create" | "clients.update" | "clients.delete" | "clients.manage"
   | "alerts.read" | "alerts.create" | "alerts.update" | "alerts.delete" | "alerts.manage"
   | "audit.read" | "audit.delete" | "audit.manage"
   | "settings.read" | "settings.update" | "settings.manage"
   | "users.read" | "users.create" | "users.update" | "users.delete" | "users.manage"
-  | "roles.read" | "roles.create" | "roles.update" | "roles.delete" | "roles.manage";
+  | "roles.read" | "roles.create" | "roles.update" | "roles.delete" | "roles.manage"
+  | "schedule.read" | "schedule.create" | "schedule.update" | "schedule.delete" | "schedule.manage";
 
 /**
  * Obtiene los permisos del usuario desde su rol
