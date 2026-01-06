@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { WorkForm } from "@/components/forms/WorkForm";
 import { workApi } from "@/hooks/api/works";
 import { parseBackendError } from "@/lib/parse-backend-error";
@@ -47,6 +48,7 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   const router = useRouter();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const toast = useToast();
@@ -129,16 +131,20 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   };
 
   const handleClose = async () => {
-    if (!confirm(`¿Estás seguro de que quieres cerrar la obra "${getWorkName(work)}"? Una vez cerrada, no se podrán crear nuevos gastos (excepto para Dirección).`)) {
-      return;
-    }
+    setIsCloseModalOpen(true);
+  };
+
+  const confirmClose = async () => {
+    setIsCloseModalOpen(false);
     setIsClosing(true);
     try {
       await workApi.close(work.id);
       await onRefresh?.();
       toast.success("Obra cerrada correctamente");
     } catch (err: unknown) {
-      console.error("Error al cerrar obra:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al cerrar obra:", err);
+      }
       const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
@@ -167,7 +173,7 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al actualizar obra:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al actualizar la obra";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -177,17 +183,18 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   const handleArchive = async () => {
     setIsSubmitting(true);
     try {
-      // Archivar cambiando el estado a "finalizada" o "completada"
+      // Archivar cambiando el estado a "archived"
       await workApi.update(work.id, {
-        status: "completed" as any,
-        isActive: false
+        status: "archived"
       });
       await onRefresh?.();
       toast.success("Obra archivada correctamente");
       setIsDeleteModalOpen(false);
     } catch (err: unknown) {
-      console.error("Error al archivar obra:", err);
-      const errorMessage = err instanceof Error ? err.message : "Error al archivar la obra";
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error al archivar obra:", err);
+      }
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -203,7 +210,7 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
       setIsDeleteModalOpen(false);
     } catch (err: unknown) {
       console.error("Error al eliminar obra:", err);
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar la obra";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -404,6 +411,18 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
           </div>
         </div>
       </Modal>
+
+      <ConfirmationModal
+        isOpen={isCloseModalOpen}
+        onClose={() => setIsCloseModalOpen(false)}
+        onConfirm={confirmClose}
+        title="Confirmar Cierre de Obra"
+        description={`¿Estás seguro de que quieres cerrar la obra "${getWorkName(work)}"? Una vez cerrada, no se podrán crear nuevos gastos (excepto para Dirección).`}
+        confirmText="Cerrar Obra"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={isClosing}
+      />
     </>
   );
 }

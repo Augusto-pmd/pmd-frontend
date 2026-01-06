@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { WorkForm } from "@/components/forms/WorkForm";
 import { useToast } from "@/components/ui/Toast";
 import { BotonVolver } from "@/components/ui/BotonVolver";
@@ -31,6 +32,8 @@ function WorkDetailContent() {
   const { suppliers } = useSuppliers();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+  const [isPostClosureModalOpen, setIsPostClosureModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isAllowingPostClosure, setIsAllowingPostClosure] = useState(false);
@@ -152,8 +155,7 @@ function WorkDetailContent() {
     setIsSubmitting(true);
     try {
       await workApi.update(id, {
-        status: "completed" as any,
-        isActive: false
+        status: "archived"
       });
       await mutate();
       toast.success("Obra archivada correctamente");
@@ -165,7 +167,7 @@ function WorkDetailContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al archivar obra:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al archivar la obra";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -185,7 +187,7 @@ function WorkDetailContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar obra:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar la obra";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -193,9 +195,11 @@ function WorkDetailContent() {
   };
 
   const handleClose = async () => {
-    if (!confirm(`¿Estás seguro de que quieres cerrar la obra "${getWorkName()}"? Una vez cerrada, no se podrán crear nuevos gastos (excepto para Dirección).`)) {
-      return;
-    }
+    setIsCloseModalOpen(true);
+  };
+
+  const confirmClose = async () => {
+    setIsCloseModalOpen(false);
     setIsClosing(true);
     try {
       await workApi.close(id);
@@ -213,9 +217,11 @@ function WorkDetailContent() {
   };
 
   const handleAllowPostClosure = async () => {
-    if (!confirm(`¿Estás seguro de que quieres permitir gastos post-cierre para la obra "${getWorkName()}"? Esta acción solo puede ser realizada por Dirección.`)) {
-      return;
-    }
+    setIsPostClosureModalOpen(true);
+  };
+
+  const confirmAllowPostClosure = async () => {
+    setIsPostClosureModalOpen(false);
     setIsAllowingPostClosure(true);
     try {
       await workApi.allowPostClosure(id);
@@ -838,6 +844,30 @@ function WorkDetailContent() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmationModal
+        isOpen={isCloseModalOpen}
+        onClose={() => setIsCloseModalOpen(false)}
+        onConfirm={confirmClose}
+        title="Confirmar Cierre de Obra"
+        description={`¿Estás seguro de que quieres cerrar la obra "${getWorkName()}"? Una vez cerrada, no se podrán crear nuevos gastos (excepto para Dirección).`}
+        confirmText="Cerrar Obra"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={isClosing}
+      />
+
+      <ConfirmationModal
+        isOpen={isPostClosureModalOpen}
+        onClose={() => setIsPostClosureModalOpen(false)}
+        onConfirm={confirmAllowPostClosure}
+        title="Permitir Gastos Post-Cierre"
+        description={`¿Estás seguro de que quieres permitir gastos post-cierre para la obra "${getWorkName()}"? Esta acción solo puede ser realizada por Dirección.`}
+        confirmText="Permitir"
+        cancelText="Cancelar"
+        variant="default"
+        isLoading={isAllowingPostClosure}
+      />
     </>
   );
 }
