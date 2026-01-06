@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { DocumentForm } from "./components/DocumentForm";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Input } from "@/components/ui/Input";
 import { Plus, Search, Filter, X, FileText } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -52,7 +53,7 @@ function DocumentsContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al crear documento:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al subir el documento";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

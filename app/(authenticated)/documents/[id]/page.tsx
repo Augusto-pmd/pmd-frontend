@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Edit, Trash2, Download, FileText, Building2, User, Calendar, Tag } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { DocumentForm } from "../components/DocumentForm";
@@ -94,7 +95,7 @@ function DocumentDetailContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al actualizar documento:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al actualizar el documento";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -111,7 +112,7 @@ function DocumentDetailContent() {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar documento:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el documento";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

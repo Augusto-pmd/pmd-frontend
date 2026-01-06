@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { DocumentForm } from "@/app/(authenticated)/documents/components/DocumentForm";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { useToast } from "@/components/ui/Toast";
+import { parseBackendError } from "@/lib/parse-backend-error";
 import { Edit, Trash2, Eye, Download, FileText } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
@@ -116,7 +117,7 @@ export function DocumentsList({
       if (process.env.NODE_ENV === "development") {
         console.error("Error al eliminar documento:", err);
       }
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar el documento";
+      const errorMessage = parseBackendError(err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -279,7 +280,7 @@ export function DocumentsList({
                   if (process.env.NODE_ENV === "development") {
                     console.error("Error al actualizar documento:", err);
                   }
-                  const errorMessage = err instanceof Error ? err.message : "Error al actualizar el documento";
+                  const errorMessage = parseBackendError(err);
                   toast.error(errorMessage);
                 } finally {
                   setIsSubmitting(false);
