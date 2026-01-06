@@ -43,6 +43,7 @@ function AccountingContent() {
     category?: string;
   }>({});
   const toast = useToast();
+  const canCreate = useCan("accounting.create");
   
   // Escuchar cambios en gastos validados para refrescar registros contables
   useEffect(() => {
