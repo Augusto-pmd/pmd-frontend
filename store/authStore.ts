@@ -103,16 +103,6 @@ export const useAuthStore = create<AuthState>()(
             return null;
           }
 
-          // 🔍 VERIFICACIÓN: Log permisos RAW del backend ANTES de normalizar
-          if (process.env.NODE_ENV === "development") {
-            console.log(`[AUTH_STORE] 📥 RAW user from backend:`, {
-              email: user?.email,
-              role: user?.role?.name,
-              permissionsType: typeof user?.role?.permissions,
-              permissionsValue: user?.role?.permissions,
-              isArray: Array.isArray(user?.role?.permissions),
-            });
-          }
 
           // Normalize user
           const normalizedUser = normalizeUserWithDefaults(user);
@@ -128,24 +118,19 @@ export const useAuthStore = create<AuthState>()(
             return null;
           }
 
-          // 🔍 VERIFICACIÓN: Validar permisos en respuesta de login DESPUÉS de normalizar
-          if (process.env.NODE_ENV === "development") {
-            console.log(`[AUTH_STORE] 🔐 Login successful for ${normalizedUser.email}`);
-            console.log(`[AUTH_STORE] 📋 Role: ${normalizedUser.role?.name}`);
-            console.log(`[AUTH_STORE] 📋 Permissions count: ${normalizedUser.role?.permissions?.length || 0}`);
-            if (normalizedUser.role?.permissions && normalizedUser.role.permissions.length > 0) {
-              console.log(`[AUTH_STORE] 📋 All permissions:`, normalizedUser.role.permissions);
-              const hasUsersRead = normalizedUser.role.permissions.includes("users.read");
-              const hasAccountingRead = normalizedUser.role.permissions.includes("accounting.read");
-              console.log(`[AUTH_STORE] ${hasUsersRead ? "⚠️" : "✅"} Has 'users.read': ${hasUsersRead}`);
-              console.log(`[AUTH_STORE] ${hasAccountingRead ? "⚠️" : "✅"} Has 'accounting.read': ${hasAccountingRead}`);
-              if (normalizedUser.role.name?.toLowerCase() === "supervisor" && hasUsersRead) {
-                console.error(`[AUTH_STORE] ❌ ERROR: Supervisor should NOT have 'users.read' permission!`);
-              }
-              if (normalizedUser.role.name?.toLowerCase() === "operator" && hasAccountingRead) {
-                console.error(`[AUTH_STORE] ❌ ERROR: Operator should NOT have 'accounting.read' permission!`);
-              }
-            } else {
+          // Validar permisos críticos - solo warnings y errores
+          if (process.env.NODE_ENV === "development" && normalizedUser.role?.permissions) {
+            const hasUsersRead = normalizedUser.role.permissions.includes("users.read");
+            const hasAccountingRead = normalizedUser.role.permissions.includes("accounting.read");
+            
+            if (normalizedUser.role.name?.toLowerCase() === "supervisor" && hasUsersRead) {
+              console.error(`[AUTH_STORE] ❌ ERROR: Supervisor should NOT have 'users.read' permission!`);
+            }
+            if (normalizedUser.role.name?.toLowerCase() === "operator" && hasAccountingRead) {
+              console.error(`[AUTH_STORE] ❌ ERROR: Operator should NOT have 'accounting.read' permission!`);
+            }
+            
+            if (normalizedUser.role.permissions.length === 0) {
               console.warn(`[AUTH_STORE] ⚠️ WARNING: No permissions in login response for ${normalizedUser.email}`);
               console.warn(`[AUTH_STORE] ⚠️ This may cause issues with ACL checks in the frontend`);
             }
@@ -341,17 +326,11 @@ export const useAuthStore = create<AuthState>()(
             return refreshed;
           }
 
-          // 🔍 VERIFICACIÓN: Validar permisos en loadMe
-          if (process.env.NODE_ENV === "development") {
-            console.log(`[AUTH_STORE] 🔄 LoadMe successful for ${normalizedUser.email}`);
-            console.log(`[AUTH_STORE] 📋 Role: ${normalizedUser.role?.name}`);
-            console.log(`[AUTH_STORE] 📋 Permissions count: ${normalizedUser.role?.permissions?.length || 0}`);
-            if (normalizedUser.role?.permissions && normalizedUser.role.permissions.length > 0) {
-              const hasUsersRead = normalizedUser.role.permissions.includes("users.read");
-              console.log(`[AUTH_STORE] ${hasUsersRead ? "⚠️" : "✅"} Has 'users.read': ${hasUsersRead}`);
-              if (normalizedUser.role.name?.toLowerCase() === "supervisor" && hasUsersRead) {
-                console.error(`[AUTH_STORE] ❌ ERROR: Supervisor should NOT have 'users.read' permission!`);
-              }
+          // Validar permisos críticos - solo warnings y errores
+          if (process.env.NODE_ENV === "development" && normalizedUser.role?.permissions) {
+            const hasUsersRead = normalizedUser.role.permissions.includes("users.read");
+            if (normalizedUser.role.name?.toLowerCase() === "supervisor" && hasUsersRead) {
+              console.error(`[AUTH_STORE] ❌ ERROR: Supervisor should NOT have 'users.read' permission!`);
             }
           }
 
@@ -428,9 +407,6 @@ export const useAuthStore = create<AuthState>()(
                     return acc;
                   }, []);
                   normalizedUser.role.permissions = permissionsArray;
-                  if (process.env.NODE_ENV === "development") {
-                    console.log(`[AUTH] 🔄 Normalizado permissions de objeto a array: ${permissionsArray.length} permisos`);
-                  }
                 }
                 // Verificar que permissions es un array válido
                 if (!Array.isArray(normalizedUser.role.permissions)) {
@@ -449,23 +425,13 @@ export const useAuthStore = create<AuthState>()(
               if (state.token) {
                 state.isAuthenticated = true;
                 state.status = "authenticated" as AuthStatus;
-                if (process.env.NODE_ENV === "development") {
-                  console.log("[AUTH] status: authenticated (rehydrated from pmd-auth-storage)");
-                  console.log(`[AUTH] 📋 Permissions count: ${normalizedUser.role?.permissions?.length || 0}`);
-                }
               } else {
                 state.status = "unauthenticated" as AuthStatus;
-                if (process.env.NODE_ENV === "development") {
-                  console.log("[AUTH] status: unauthenticated (rehydration - user exists but no token)");
-                }
               }
             } else {
               state.user = null;
               state.isAuthenticated = false;
               state.status = "unauthenticated" as AuthStatus;
-              if (process.env.NODE_ENV === "development") {
-                console.log("[AUTH] status: unauthenticated (rehydration - normalization failed)");
-              }
             }
           } catch (error) {
             if (process.env.NODE_ENV === "development") {
@@ -474,9 +440,6 @@ export const useAuthStore = create<AuthState>()(
             state.user = null;
             state.isAuthenticated = false;
             state.status = "unauthenticated" as AuthStatus;
-            if (process.env.NODE_ENV === "development") {
-              console.log("[AUTH] status: unauthenticated (rehydration - error normalizing)");
-            }
           }
         } else if (typeof window !== "undefined") {
           // PRIORIDAD 2: Fallback - intentar cargar desde keys individuales solo si el estado no tiene user
@@ -508,9 +471,6 @@ export const useAuthStore = create<AuthState>()(
                       return acc;
                     }, []);
                     normalizedUser.role.permissions = permissionsArray;
-                    if (process.env.NODE_ENV === "development") {
-                      console.log(`[AUTH] 🔄 Normalizado permissions de objeto a array (from localStorage): ${permissionsArray.length} permisos`);
-                    }
                   }
                   // Verificar que permissions es un array válido
                   if (!Array.isArray(normalizedUser.role.permissions)) {
@@ -530,10 +490,6 @@ export const useAuthStore = create<AuthState>()(
                 state.refreshToken = storedRefreshToken;
                 state.isAuthenticated = true;
                 state.status = "authenticated" as AuthStatus;
-                if (process.env.NODE_ENV === "development") {
-                  console.log("[AUTH] status: authenticated (rehydrated from individual localStorage keys)");
-                  console.log(`[AUTH] 📋 Permissions count: ${normalizedUser.role?.permissions?.length || 0}`);
-                }
               } else {
                 state.status = "unauthenticated" as AuthStatus;
               }
@@ -551,9 +507,6 @@ export const useAuthStore = create<AuthState>()(
           } else if (!state.token) {
             // No user and no token - definitely unauthenticated
             state.status = "unauthenticated" as AuthStatus;
-            if (process.env.NODE_ENV === "development") {
-              console.log("[AUTH] status: unauthenticated (rehydration - no user, no token)");
-            }
           }
         } else if (!state.token) {
           // No user and no token - definitely unauthenticated

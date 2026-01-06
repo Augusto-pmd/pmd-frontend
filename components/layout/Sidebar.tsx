@@ -7,14 +7,13 @@ import { useAlertsStore } from "@/store/alertsStore";
 import { useDocumentsStore } from "@/store/documentsStore";
 import { useCashboxStore } from "@/store/cashboxStore";
 import { useCan } from "@/lib/acl";
-import { useEffect, useMemo, memo, useState } from "react";
+import { useEffect, useMemo, memo } from "react";
 import LogoPMD from "@/components/LogoPMD";
 import styles from "./Sidebar.module.css";
 import {
   LayoutDashboard,
   Building2,
   Truck,
-  Users,
   Calculator,
   Wallet,
   FileText,
@@ -67,10 +66,6 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Configuración", href: "/settings", icon: Settings, permission: "settings.read", section: "Sistema" },
 ];
 
-// 🔍 AUDITORÍA: Contador de renders del Sidebar
-let sidebarRenderCount = 0;
-let lastUserId: string | null = null;
-
 function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -82,47 +77,8 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   // El componente se re-renderiza reactivamente cuando state.user cambia
   const userFromStore = useAuthStore((state) => state.user);
   
-  // 🔍 SONDA TEMPORAL DE DIAGNÓSTICO: Leer user directamente desde localStorage
-  const [userFromStorage, setUserFromStorage] = useState<any>(null);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("pmd-auth-storage");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const storageUser = parsed?.state?.user || null;
-          if (process.env.NODE_ENV === "development") {
-            console.log("🔍 [SIDEBAR STORAGE PROBE] Raw localStorage:", stored);
-            console.log("🔍 [SIDEBAR STORAGE PROBE] Parsed state:", parsed?.state);
-            console.log("🔍 [SIDEBAR STORAGE USER]:", storageUser);
-            console.log("🔍 [SIDEBAR STORAGE USER ID]:", storageUser?.id);
-            console.log("🔍 [SIDEBAR STORAGE USER ROLE]:", storageUser?.role);
-            console.log("🔍 [SIDEBAR STORAGE USER PERMISSIONS]:", storageUser?.role?.permissions);
-          }
-          setUserFromStorage(storageUser);
-        } else {
-          if (process.env.NODE_ENV === "development") {
-            console.log("🔍 [SIDEBAR STORAGE PROBE] No hay datos en localStorage bajo 'pmd-auth-storage'");
-          }
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV === "development") {
-          console.error("🔍 [SIDEBAR STORAGE PROBE] Error al leer localStorage:", error);
-        }
-      }
-    }
-  }, []);
-  
-  // 🔍 TEMPORAL: Usar userFromStorage si existe, sino usar userFromStore
-  const user = userFromStorage || userFromStore;
-  
-  // 🔍 AUDITORÍA: Detectar re-render cuando user cambia
-  sidebarRenderCount++;
-  const currentUserId = user?.id || null;
-  const userChanged = currentUserId !== lastUserId;
-  if (userChanged) {
-    lastUserId = currentUserId;
-  }
+  // Usar user desde el store
+  const user = userFromStore;
 
   // ✅ Variable normalizada: siempre es string[]
   const permissions: string[] = user?.role?.permissions ?? [];
@@ -142,21 +98,6 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const canRoles = useCan("roles.read");
   const canSettings = useCan("settings.read");
   
-  // 🔍 LOGGING: Verificar permisos críticos en desarrollo
-  if (process.env.NODE_ENV === "development" && user) {
-    const roleName = user.role?.name?.toLowerCase() || 'unknown';
-    if (roleName === 'administration' || roleName === 'admin') {
-      console.log(`[SIDEBAR] 🔍 Administration user permissions check:`, {
-        canUsers,
-        canRoles,
-        canAudit,
-        permissions: user.role?.permissions?.length || 0,
-        hasUsersRead: user.role?.permissions?.includes('users.read'),
-        hasRolesRead: user.role?.permissions?.includes('roles.read'),
-        hasAuditRead: user.role?.permissions?.includes('audit.read'),
-      });
-    }
-  }
 
   // Hook reactivo para organizationId
   const organizationId = useAuthStore((state) => state.user?.organizationId);
@@ -230,28 +171,13 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           hasPermission = true;
       }
       
-      // 🔍 LOGGING: Verificar permisos en desarrollo
-      if (process.env.NODE_ENV === "development" && !hasPermission) {
-        console.log(`[SIDEBAR] ❌ Item "${item.label}" oculto - permiso "${item.permission}" denegado`);
-      }
-      
-      return hasPermission; // ✅ Retornar boolean, no objeto
+      return hasPermission;
     });
-    
-    // Logging solo en desarrollo
-    if (process.env.NODE_ENV === "development") {
-      console.log("🔵 [SIDEBAR] Total items visibles:", filtered.length, "de", ALL_NAV_ITEMS.length);
-      console.log("🔵 [SIDEBAR] Items visibles:", filtered.map(i => i.label));
-      console.log("🔵 [SIDEBAR] ========================================");
-    }
     
     // Fallback defensivo: asegurar que al menos Dashboard esté visible
     if (filtered.length === 0) {
       const dashboardItem = ALL_NAV_ITEMS.find(item => item.href === "/dashboard");
       if (dashboardItem) {
-        if (process.env.NODE_ENV === "development") {
-          console.log("🔵 [SIDEBAR] ⚠️ Fallback: agregando Dashboard como último recurso");
-        }
         return [dashboardItem];
       }
     }
@@ -373,10 +299,6 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                     onClick={(e) => {
                       if (!hasPermission) {
                         e.preventDefault();
-                        // Opcional: mostrar mensaje de que no tiene permisos
-                        if (process.env.NODE_ENV === "development") {
-                          console.warn(`⚠️ [SIDEBAR] Usuario intentó acceder a ${item.label} sin permisos`);
-                        }
                         return;
                       }
                       e.preventDefault();
