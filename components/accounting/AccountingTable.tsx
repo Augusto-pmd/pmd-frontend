@@ -15,6 +15,7 @@ import { Edit, Trash2, Eye, Lock } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { useAuthStore } from "@/store/authStore";
+import { useCan } from "@/lib/acl";
 
 interface AccountingTableProps {
   entries: AccountingEntry[];
@@ -33,6 +34,10 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
   const toast = useToast();
   const user = useAuthStore.getState().user;
   const isDirection = user?.role?.name === "DIRECTION" || user?.role?.name === "direction";
+  
+  // Verificar permisos
+  const canUpdate = useCan("accounting.update");
+  const canDelete = useCan("accounting.delete");
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-AR", {
@@ -184,38 +189,42 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="icon"
-                        size="sm"
-                        onClick={() => {
-                          if (canEditEntry(entry)) {
+                      {canUpdate && (
+                        <Button
+                          variant="icon"
+                          size="sm"
+                          onClick={() => {
+                            if (canEditEntry(entry)) {
+                              setSelectedEntry(entry);
+                              setIsEditModalOpen(true);
+                            } else {
+                              toast.error("No se puede editar un registro de un mes cerrado. Solo Dirección puede editar meses cerrados.");
+                            }
+                          }}
+                          disabled={!canEditEntry(entry)}
+                          title={!canEditEntry(entry) ? "No se puede editar un registro de un mes cerrado" : "Editar movimiento"}
+                          style={!canEditEntry(entry) ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                        >
+                          {!canEditEntry(entry) ? (
+                            <Lock className="w-4 h-4" />
+                          ) : (
+                            <Edit className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          variant="icon"
+                          size="sm"
+                          onClick={() => {
                             setSelectedEntry(entry);
-                            setIsEditModalOpen(true);
-                          } else {
-                            toast.error("No se puede editar un registro de un mes cerrado. Solo Dirección puede editar meses cerrados.");
-                          }
-                        }}
-                        disabled={!canEditEntry(entry)}
-                        title={!canEditEntry(entry) ? "No se puede editar un registro de un mes cerrado" : "Editar movimiento"}
-                        style={!canEditEntry(entry) ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-                      >
-                        {!canEditEntry(entry) ? (
-                          <Lock className="w-4 h-4" />
-                        ) : (
-                          <Edit className="w-4 h-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="icon"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedEntry(entry);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        style={{ color: "#FF3B30" }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                            setIsDeleteModalOpen(true);
+                          }}
+                          style={{ color: "#FF3B30" }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

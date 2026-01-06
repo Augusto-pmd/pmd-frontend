@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/Toast";
 import { parseBackendError } from "@/lib/parse-backend-error";
 import { Edit, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
 import { Supplier, UpdateSupplierData, SupplierType, FiscalCondition } from "@/lib/types/supplier";
+import { useCan } from "@/lib/acl";
 
 interface SupplierCardProps {
   supplier: Supplier;
@@ -31,8 +32,11 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   const [isRejecting, setIsRejecting] = useState(false);
   const toast = useToast();
   
-  // Verificar permisos para aprobar/rechazar
-  const canApproveReject = user?.role?.name === "ADMINISTRATION" || user?.role?.name === "DIRECTION";
+  // Verificar permisos
+  const canUpdate = useCan("suppliers.update");
+  const canDelete = useCan("suppliers.delete");
+  const canApprove = useCan("suppliers.approve");
+  const canReject = useCan("suppliers.approve"); // Reject usa el mismo permiso que approve
   
   // Obtener gastos asociados al proveedor
   const associatedExpenses = expenses?.filter(
@@ -244,7 +248,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
 
             <div className="pt-2 space-y-2">
               {/* Botones de aprobación/rechazo para proveedores provisionales */}
-              {canApproveReject && isProvisional && (
+              {canApprove && isProvisional && (
                 <div className="flex gap-2">
                   <Button
                     variant="primary"
@@ -280,24 +284,28 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
                   <Eye className="h-4 w-4" />
                   Ver
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 flex items-center justify-center gap-1"
-                  onClick={() => setIsEditModalOpen(true)}
-                >
-                  <Edit className="h-4 w-4" />
-                  Editar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Eliminar
-                </Button>
+                {canUpdate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 flex items-center justify-center gap-1"
+                    onClick={() => setIsEditModalOpen(true)}
+                  >
+                    <Edit className="h-4 w-4" />
+                    Editar
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                    onClick={() => setIsDeleteModalOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar
+                  </Button>
+                )}
               </div>
             </div>
           </div>

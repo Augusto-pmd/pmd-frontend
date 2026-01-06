@@ -19,6 +19,7 @@ import { parseBackendError } from "@/lib/parse-backend-error";
 import { Search, Filter, X, Plus, Edit, Trash2, UserCog, UserX } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { Badge } from "@/components/ui/Badge";
+import { useCan } from "@/lib/acl";
 
 function UsersContent() {
   const { users, isLoading, error, fetchUsers, deleteUser } = useUsersStore();
@@ -36,6 +37,11 @@ function UsersContent() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  
+  // Verificar permisos
+  const canCreate = useCan("users.create");
+  const canUpdate = useCan("users.update");
+  const canDelete = useCan("users.delete");
 
   useEffect(() => {
     if (organizationId) {
@@ -149,17 +155,19 @@ function UsersContent() {
               <h1 className="text-2xl font-semibold text-gray-900 mb-2">Usuarios</h1>
               <p className="text-gray-600">Gestión de usuarios del sistema PMD</p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => {
-                setSelectedUser(null);
-                setIsFormModalOpen(true);
-              }}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Nuevo Usuario
-            </Button>
+            {canCreate && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setSelectedUser(null);
+                  setIsFormModalOpen(true);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Nuevo Usuario
+              </Button>
+            )}
           </div>
         </div>
 
@@ -294,29 +302,33 @@ function UsersContent() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsFormModalOpen(true);
-                            }}
-                            className="text-gray-700 hover:text-gray-900"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsChangeRoleModalOpen(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-700"
-                            title="Cambiar rol"
-                          >
-                            <UserCog className="h-4 w-4" />
-                          </Button>
+                          {canUpdate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsFormModalOpen(true);
+                              }}
+                              className="text-gray-700 hover:text-gray-900"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canUpdate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsChangeRoleModalOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-700"
+                              title="Cambiar rol"
+                            >
+                              <UserCog className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -327,17 +339,19 @@ function UsersContent() {
                           >
                             <UserX className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

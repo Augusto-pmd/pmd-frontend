@@ -22,6 +22,7 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Plus, Info, FileText } from "lucide-react";
 import { useSWRConfig } from "swr";
 import { useRouter } from "next/navigation";
+import { useCan } from "@/lib/acl";
 
 function AccountingContent() {
   const router = useRouter();
@@ -147,14 +148,16 @@ function AccountingContent() {
                 <FileText className="h-4 w-4" />
                 Reportes
               </Button>
-              <Button
-                variant="primary"
-                onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Nuevo Movimiento
-              </Button>
+              {canCreate && (
+                <Button
+                  variant="primary"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nuevo Movimiento
+                </Button>
+              )}
             </div>
           </div>
         </div>

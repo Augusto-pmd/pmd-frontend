@@ -22,6 +22,7 @@ import { UpdateWorkData } from "@/lib/types/work";
 import { User } from "@/lib/types/user";
 import { Supplier } from "@/lib/types/supplier";
 import { ProgressIndicators } from "@/components/works/ProgressIndicators";
+import { useCan } from "@/lib/acl";
 
 function WorkDetailContent() {
   const params = useParams();
@@ -41,6 +42,10 @@ function WorkDetailContent() {
   const toast = useToast();
   const user = useAuthStore.getState().user;
   const isDirection = user?.role?.name === "DIRECTION" || user?.role?.name === "direction" || user?.role?.name === "administration" || user?.role?.name === "ADMINISTRATION";
+  
+  // Verificar permisos
+  const canUpdate = useCan("works.update");
+  const canDelete = useCan("works.delete");
 
   if (!id) return null;
 
@@ -292,10 +297,12 @@ function WorkDetailContent() {
                 {isClosing ? "Cerrando..." : "Cerrar Obra"}
               </Button>
             )}
-            <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Button>
+            {canUpdate && (
+              <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+            )}
             <Button variant="outline" onClick={() => router.push("/works")}>
               Volver a Obras
             </Button>
@@ -774,18 +781,22 @@ function WorkDetailContent() {
 
         {/* Botones de Acción */}
         <div className="flex gap-4">
-          <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar Obra
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="text-red-600 hover:text-red-700 hover:border-red-300"
-          >
-            <Archive className="h-4 w-4 mr-2" />
-            Archivar / Eliminar
-          </Button>
+          {canUpdate && (
+            <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar Obra
+            </Button>
+          )}
+          {canDelete && (
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="text-red-600 hover:text-red-700 hover:border-red-300"
+            >
+              <Archive className="h-4 w-4 mr-2" />
+              Archivar / Eliminar
+            </Button>
+          )}
         </div>
       </div>
 

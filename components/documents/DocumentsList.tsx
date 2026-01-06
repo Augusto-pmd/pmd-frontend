@@ -15,6 +15,7 @@ import { useUsers } from "@/hooks/api/users";
 import { Document } from "@/lib/types/document";
 import { Work } from "@/lib/types/work";
 import { User } from "@/lib/types/user";
+import { useCan } from "@/lib/acl";
 
 interface DocumentsListProps {
   documents: Document[];
@@ -44,6 +45,10 @@ export function DocumentsList({
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  
+  // Verificar permisos
+  const canUpdate = useCan("documents.update");
+  const canDelete = useCan("documents.delete");
 
   // Filtrar documentos
   const filteredDocuments = documents.filter((doc) => {
@@ -223,28 +228,32 @@ export function DocumentsList({
                           <Download className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedDocument(doc);
-                          setIsEditModalOpen(true);
-                        }}
-                        className="text-pmd-darkBlue hover:text-pmd-mediumBlue"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedDocument(doc);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {canUpdate && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedDocument(doc);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="text-pmd-darkBlue hover:text-pmd-mediumBlue"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedDocument(doc);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>

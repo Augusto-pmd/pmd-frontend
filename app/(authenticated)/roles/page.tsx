@@ -27,6 +27,11 @@ function RolesContent() {
   const [selectedRole, setSelectedRole] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  
+  // Verificar permisos
+  const canCreate = useCan("roles.create");
+  const canUpdate = useCan("roles.update");
+  const canDelete = useCan("roles.delete");
 
   useEffect(() => {
     if (organizationId) {
@@ -129,16 +134,18 @@ function RolesContent() {
                 Gestión de roles y permisos del sistema PMD
               </p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => {
-                setSelectedRole(null);
-                setIsFormModalOpen(true);
-              }}
-            >
-              <Plus style={{ width: "16px", height: "16px", marginRight: "8px" }} />
-              Nuevo Rol
-            </Button>
+            {canCreate && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setSelectedRole(null);
+                  setIsFormModalOpen(true);
+                }}
+              >
+                <Plus style={{ width: "16px", height: "16px", marginRight: "8px" }} />
+                Nuevo Rol
+              </Button>
+            )}
           </div>
         </div>
 
@@ -190,28 +197,32 @@ function RolesContent() {
                     </TableCell>
                     <TableCell align="right">
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
-                        <Button
-                          variant="icon"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedRole(role);
-                            setIsFormModalOpen(true);
-                          }}
-                          style={{ color: "var(--apple-blue)" }}
-                        >
-                          <Edit style={{ width: "16px", height: "16px" }} />
-                        </Button>
-                        <Button
-                          variant="icon"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedRole(role);
-                            setIsDeleteModalOpen(true);
-                          }}
-                          style={{ color: "#FF3B30" }}
-                        >
-                          <Trash2 style={{ width: "16px", height: "16px" }} />
-                        </Button>
+                        {canUpdate && (
+                          <Button
+                            variant="icon"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRole(role);
+                              setIsFormModalOpen(true);
+                            }}
+                            style={{ color: "var(--apple-blue)" }}
+                          >
+                            <Edit style={{ width: "16px", height: "16px" }} />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="icon"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRole(role);
+                              setIsDeleteModalOpen(true);
+                            }}
+                            style={{ color: "#FF3B30" }}
+                          >
+                            <Trash2 style={{ width: "16px", height: "16px" }} />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

@@ -18,6 +18,7 @@ import { Modal } from "@/components/ui/Modal";
 import { AlertForm } from "./components/AlertForm";
 import { Plus } from "lucide-react";
 import { parseBackendError } from "@/lib/parse-backend-error";
+import { useCan } from "@/lib/acl";
 
 function AlertsContent() {
   const { alerts, isLoading, error, fetchAlerts, createAlert } = useAlertsStore();
@@ -25,6 +26,9 @@ function AlertsContent() {
   const organizationId = authState.user?.organizationId;
   const { works } = useWorks();
   const { users } = useUsers();
+
+  // Verificar permisos
+  const canCreate = useCan("alerts.create");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [severityFilter, setSeverityFilter] = useState<"all" | "info" | "warning" | "critical">("all");
@@ -112,14 +116,16 @@ function AlertsContent() {
                 )}
               </p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Nueva Alerta
-            </Button>
+            {canCreate && (
+              <Button
+                variant="primary"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Nueva Alerta
+              </Button>
+            )}
           </div>
         </div>
 

@@ -17,6 +17,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useWorks } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
 import { normalizeId } from "@/lib/normalizeId";
+import { useCan } from "@/lib/acl";
 
 function DocumentsContent() {
   const { documents, isLoading, error, fetchDocuments, createDocument } = useDocumentsStore();
@@ -24,6 +25,9 @@ function DocumentsContent() {
   const organizationId = authState.user?.organizationId;
   const { works } = useWorks();
   const { users } = useUsers();
+
+  // Verificar permisos
+  const canCreate = useCan("documents.create");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,14 +100,16 @@ function DocumentsContent() {
               <h1 className="text-2xl font-semibold text-gray-900 mb-2">Documentación</h1>
               <p className="text-gray-600">Gestión de documentos por obra PMD</p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Subir Documento
-            </Button>
+            {canCreate && (
+              <Button
+                variant="primary"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Subir Documento
+              </Button>
+            )}
           </div>
         </div>
 

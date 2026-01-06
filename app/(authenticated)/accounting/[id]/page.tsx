@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/Toast";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Edit, Trash2, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useCan } from "@/lib/acl";
 
 function AccountingEntryDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -27,6 +28,10 @@ function AccountingEntryDetailContent() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  
+  // Verificar permisos
+  const canUpdate = useCan("accounting.update");
+  const canDelete = useCan("accounting.delete");
 
   // Safely extract id from params
   const id = typeof params?.id === "string" ? params.id : null;
@@ -181,10 +186,12 @@ function AccountingEntryDetailContent() {
             <p className="text-gray-600">Información completa del movimiento seleccionado</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Button>
+            {canUpdate && (
+              <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+            )}
             <Button variant="outline" onClick={() => router.push("/accounting")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
@@ -271,18 +278,22 @@ function AccountingEntryDetailContent() {
 
         {/* Botones de Acción */}
         <div className="flex gap-4">
-          <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar Movimiento
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="text-red-600 hover:text-red-700 hover:border-red-300"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Eliminar Movimiento
-          </Button>
+          {canUpdate && (
+            <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar Movimiento
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="text-red-600 hover:text-red-700 hover:border-red-300"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar Movimiento
+            </Button>
+          )}
         </div>
       </div>
 

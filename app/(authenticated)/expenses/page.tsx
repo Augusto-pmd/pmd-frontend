@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Expense, CreateExpenseData } from "@/lib/types/expense";
 import { refreshPatterns } from "@/lib/refreshData";
 import { getOperationErrorMessage } from "@/lib/errorMessages";
+import { useCan } from "@/lib/acl";
 
 function ExpensesContent() {
   const router = useRouter();
@@ -39,8 +40,11 @@ function ExpensesContent() {
   const [duplicateExpenseInfo, setDuplicateExpenseInfo] = useState<{ expenseId: string; message: string } | null>(null);
   const [forceValidate, setForceValidate] = useState(false);
 
-  // Verificar permisos para validar gastos
-  const canValidate = user?.role?.name === "ADMINISTRATION" || user?.role?.name === "DIRECTION";
+  // Verificar permisos
+  const canCreate = useCan("expenses.create");
+  const canUpdate = useCan("expenses.update");
+  const canDelete = useCan("expenses.delete");
+  const canValidate = useCan("expenses.validate");
   const isDirection = user?.role?.name === "DIRECTION";
 
   const totalExpenses = expenses?.reduce((sum: number, exp: Expense) => sum + (exp.amount || 0), 0) || 0;
@@ -328,7 +332,9 @@ function ExpensesContent() {
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Expenses – PMD Backend Integration</h1>
             <p className="text-gray-600">Track and manage all expenses</p>
           </div>
-          <Button onClick={handleCreate}>+ Crear Gasto</Button>
+          {canCreate && (
+            <Button onClick={handleCreate}>+ Crear Gasto</Button>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow-pmd p-6">

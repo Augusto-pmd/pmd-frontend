@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Plus } from "lucide-react";
 import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
 import { parseBackendError } from "@/lib/parse-backend-error";
+import { useCan } from "@/lib/acl";
 
 function SuppliersContent() {
   const { suppliers, isLoading, error, mutate } = useSuppliers();
@@ -21,6 +22,9 @@ function SuppliersContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filter, setFilter] = useState<"all" | "provisional" | "approved" | "blocked" | "rejected">("all");
   const toast = useToast();
+  
+  // Verificar permisos
+  const canCreate = useCan("suppliers.create");
 
   // Filtrar proveedores según el filtro seleccionado
   const filteredSuppliers = suppliers?.filter((supplier: Supplier) => {
@@ -87,14 +91,16 @@ function SuppliersContent() {
               <h1 className="text-2xl font-semibold text-gray-900 mb-2">Proveedores</h1>
               <p className="text-gray-600">Listado de proveedores registrados en PMD</p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Nuevo Proveedor
-            </Button>
+            {canCreate && (
+              <Button
+                variant="primary"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Nuevo Proveedor
+              </Button>
+            )}
           </div>
         </div>
 

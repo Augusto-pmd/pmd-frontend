@@ -15,6 +15,7 @@ import { Edit, Trash2, Eye, Archive, DollarSign, Lock } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 import { Work, UpdateWorkData } from "@/lib/types/work";
+import { useCan } from "@/lib/acl";
 
 interface WorksListProps {
   works: Work[];
@@ -53,7 +54,11 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   const [isClosing, setIsClosing] = useState(false);
   const toast = useToast();
   const user = useAuthStore.getState().user;
-  const isDirection = user?.role?.name === "direction" || user?.role?.name === "administration";
+  const isDirection = user?.role?.name === "direction" || user?.role?.name === "DIRECTION";
+  
+  // Verificar permisos
+  const canUpdate = useCan("works.update");
+  const canDelete = useCan("works.delete");
 
   const getWorkName = (work: Work) => {
     return (work as any).nombre || work.name || (work as any).title || "Sin nombre";
@@ -329,24 +334,28 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
                   {isClosing ? "Cerrando..." : "Cerrar"}
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 flex items-center justify-center gap-1 min-w-[80px]"
-                onClick={() => setIsEditModalOpen(true)}
-              >
-                <Edit className="h-4 w-4" />
-                Editar
-              </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                className="flex-1 flex items-center justify-center gap-1 min-w-[80px]"
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                <Archive className="h-4 w-4" />
-                Archivar
-              </Button>
+              {canUpdate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-1 min-w-[80px]"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  <Edit className="h-4 w-4" />
+                  Editar
+                </Button>
+              )}
+              {canDelete && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center gap-1 min-w-[80px]"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                >
+                  <Archive className="h-4 w-4" />
+                  Archivar
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>

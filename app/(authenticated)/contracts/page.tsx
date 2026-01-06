@@ -18,6 +18,7 @@ import { getOperationErrorMessage } from "@/lib/errorMessages";
 import { ContractStatus } from "@/lib/types/contract";
 import { Modal } from "@/components/ui/Modal";
 import { ContractForm } from "@/components/forms/ContractForm";
+import { useCan } from "@/lib/acl";
 
 function ContractsContent() {
   const router = useRouter();
@@ -29,6 +30,10 @@ function ContractsContent() {
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Verificar permisos
+  const canCreate = useCan("contracts.create");
+  const canDelete = useCan("contracts.delete");
 
   const filteredContracts = contracts?.filter((contract: any) => {
     if (filter === "all") return true;
@@ -87,7 +92,9 @@ function ContractsContent() {
             <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Contracts – PMD Backend Integration</h1>
             <p className="text-gray-600">Manage contracts and agreements</p>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>+ New Contract</Button>
+          {canCreate && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>+ New Contract</Button>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow-pmd p-6">
@@ -182,14 +189,16 @@ function ContractsContent() {
                             >
                               Ver
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDelete(contract.id)}
-                              disabled={deleteLoading === contract.id}
-                            >
-                              {deleteLoading === contract.id ? "Eliminando..." : "Eliminar"}
-                            </Button>
+                            {canDelete && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(contract.id)}
+                                disabled={deleteLoading === contract.id}
+                              >
+                                {deleteLoading === contract.id ? "Eliminando..." : "Eliminar"}
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
