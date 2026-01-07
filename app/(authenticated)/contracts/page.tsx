@@ -19,6 +19,7 @@ import { ContractStatus } from "@/lib/types/contract";
 import { Modal } from "@/components/ui/Modal";
 import { ContractForm } from "@/components/forms/ContractForm";
 import { useCan } from "@/lib/acl";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 
 function ContractsContent() {
   const router = useRouter();
@@ -30,6 +31,8 @@ function ContractsContent() {
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [contractToDelete, setContractToDelete] = useState<string | null>(null);
   
   // Verificar permisos
   const canCreate = useCan("contracts.create");
@@ -41,11 +44,17 @@ function ContractsContent() {
     return contractStatus === filter.toLowerCase();
   });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this contract?")) return;
-    setDeleteLoading(id);
+  const handleDeleteClick = (id: string) => {
+    setContractToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!contractToDelete) return;
+    setDeleteLoading(contractToDelete);
+    setShowDeleteModal(false);
     try {
-      await contractApi.delete(id);
+      await contractApi.delete(contractToDelete);
       mutate();
       await refreshPatterns.afterContractUpdate(globalMutate);
       toast.success("Contrato eliminado correctamente. Dashboard actualizado.");
@@ -54,6 +63,7 @@ function ContractsContent() {
       toast.error(errorMessage);
     } finally {
       setDeleteLoading(null);
+      setContractToDelete(null);
     }
   };
 
@@ -89,11 +99,11 @@ function ContractsContent() {
     <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Contracts – PMD Backend Integration</h1>
-            <p className="text-gray-600">Manage contracts and agreements</p>
+            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Contratos</h1>
+            <p className="text-gray-600">Gestión de contratos y acuerdos</p>
           </div>
           {canCreate && (
-            <Button onClick={() => setIsCreateModalOpen(true)}>+ New Contract</Button>
+            <Button onClick={() => setIsCreateModalOpen(true)}>+ Nuevo contrato</Button>
           )}
         </div>
 
@@ -136,73 +146,82 @@ function ContractsContent() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Contract List</h2>
+            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Listado de contratos</h2>
             {filteredContracts?.length === 0 ? (
               <EmptyState
-                title="No contracts found"
-                description="Contracts will appear here once created"
+                title="No se encontraron contratos"
+                description="Los contratos aparecerán aquí una vez creados"
               />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Contract #</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Supplier</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Start Date</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">End Date</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Value</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Número de contrato</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Proveedor</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fecha de inicio</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fecha de fin</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Valor</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {filteredContracts?.map((contract: any) => (
-                      <tr key={contract.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 font-medium">
-                          {contract.contractNumber || contract.id}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {contract.supplierName || contract.supplierId || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {contract.startDate ? new Date(contract.startDate).toLocaleDateString() : "-"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : "-"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          ${contract.value?.toFixed(2) || "0.00"}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <ContractStatusBadge 
-                            status={contract.status} 
-                            isBlocked={contract.is_blocked}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => router.push(`/contracts/${contract.id}`)}
-                            >
-                              Ver
-                            </Button>
-                            {canDelete && (
+                    {filteredContracts?.map((contract: any) => {
+                      // Extraer datos del contrato con soporte para diferentes formatos
+                      const contractNumber = contract.contractNumber || contract.contract_number || contract.number || contract.id;
+                      const supplierName = contract.supplier?.name || contract.supplier?.nombre || contract.supplierName || contract.supplier_id || "-";
+                      const startDate = contract.start_date || contract.startDate;
+                      const endDate = contract.end_date || contract.endDate;
+                      const amountTotal = Number(contract.amount_total || contract.value || 0);
+                      
+                      return (
+                        <tr key={contract.id}>
+                          <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                            {contractNumber}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {supplierName}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {startDate ? new Date(startDate).toLocaleDateString("es-AR") : "-"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {endDate ? new Date(endDate).toLocaleDateString("es-AR") : "-"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            ${amountTotal.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <ContractStatusBadge 
+                              status={contract.status} 
+                              isBlocked={contract.is_blocked}
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleDelete(contract.id)}
-                                disabled={deleteLoading === contract.id}
+                                onClick={() => router.push(`/contracts/${contract.id}`)}
                               >
-                                {deleteLoading === contract.id ? "Eliminando..." : "Eliminar"}
+                                Ver contrato
                               </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              {canDelete && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteClick(contract.id)}
+                                  disabled={deleteLoading === contract.id}
+                                >
+                                  {deleteLoading === contract.id ? "Eliminando..." : "Eliminar contrato"}
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -214,7 +233,7 @@ function ContractsContent() {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title="Nuevo Contrato"
+          title="Nuevo contrato"
           size="lg"
         >
           <ContractForm
@@ -223,6 +242,22 @@ function ContractsContent() {
             isLoading={isSubmitting}
           />
         </Modal>
+
+        {/* Modal de confirmación para eliminar contrato */}
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setContractToDelete(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          title="Eliminar contrato"
+          description="¿Estás seguro de que deseas eliminar este contrato? Esta acción no se puede deshacer."
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+          variant="danger"
+          isLoading={deleteLoading !== null}
+        />
       </div>
   );
 }

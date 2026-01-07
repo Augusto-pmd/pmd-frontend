@@ -10,6 +10,7 @@ import { validateDateRange, validatePositiveNumber, validateNonNegativeNumber } 
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { useRubrics } from "@/hooks/api/rubrics";
+import { useCan } from "@/lib/acl";
 
 interface ContractFormProps {
   initialData?: any;
@@ -20,8 +21,18 @@ interface ContractFormProps {
 
 export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: ContractFormProps) {
   const user = useAuthStore.getState().user;
-  const isDirection = user?.role?.name === "DIRECTION";
-  const isAdministration = user?.role?.name === "ADMINISTRATION" || isDirection;
+  // Usar useCan para verificar permisos de forma más confiable
+  const canUpdate = useCan("contracts.update");
+  const canCreate = useCan("contracts.create");
+  
+  // Comparar roles de forma case-insensitive como fallback
+  const userRole = user?.role?.name?.toUpperCase();
+  const isDirection = userRole === "DIRECTION";
+  const isAdministration = userRole === "ADMINISTRATION" || isDirection;
+  
+  // El usuario puede editar si tiene permisos o es Administration/Direction
+  const canEdit = canUpdate || canCreate || isAdministration;
+  
   const isCreating = !initialData;
 
   // Solo cargar datos cuando se está creando
@@ -350,7 +361,7 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
         </>
       )}
 
-      {!isAdministration && (
+      {!canEdit && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-800">
             No tienes permisos para editar contratos. Solo Administración y Dirección pueden editar contratos.
@@ -362,7 +373,7 @@ export function ContractForm({ initialData, onSubmit, onCancel, isLoading }: Con
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancelar
         </Button>
-        {isAdministration && (
+        {canEdit && (
           <Button type="submit" variant="primary" disabled={isLoading}>
             {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
           </Button>
