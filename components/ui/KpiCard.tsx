@@ -37,6 +37,8 @@ export function KpiCard({
     cursor: onClick ? "pointer" : "default",
     position: "relative",
     overflow: "hidden",
+    height: "100%",
+    minHeight: "184px",
   };
 
   const accentLineStyle: React.CSSProperties = {

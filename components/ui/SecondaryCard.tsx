@@ -36,6 +36,7 @@ export function SecondaryCard({
     transition: "all var(--apple-duration-medium) var(--apple-ease-out)",
     cursor: onClick || route ? "pointer" : "default",
     position: "relative",
+    height: "100%",
   };
 
   const content = (
