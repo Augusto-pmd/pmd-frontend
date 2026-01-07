@@ -58,6 +58,7 @@ interface AuthState {
   refreshSession: () => Promise<AuthUser | null>;
   refresh: () => Promise<AuthUser | null>;
   loadMe: () => Promise<AuthUser | null>;
+  setUser: (user: AuthUser | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -368,6 +369,28 @@ export const useAuthStore = create<AuthState>()(
             return null;
           }
         }
+      },
+
+      setUser: (user: AuthUser | null) => {
+        const normalizedUser = user ? normalizeUserWithDefaults(user) : null;
+        
+        if (normalizedUser) {
+          // Actualizar localStorage
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(normalizedUser));
+          }
+        } else {
+          // Si user es null, limpiar localStorage
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("user");
+          }
+        }
+
+        // Actualizar estado
+        set((state) => ({
+          ...state,
+          user: normalizedUser,
+        }));
       },
     }),
     {
