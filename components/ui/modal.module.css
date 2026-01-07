@@ -11,14 +11,21 @@
 
 .overlay {
   position: fixed;
-  inset: 0;
-  z-index: 50;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   animation: modalFadeIn var(--apple-duration-medium) var(--apple-ease-out);
+  overflow-y: auto;
+  padding: var(--space-md);
+  pointer-events: auto;
+  will-change: opacity;
 }
 
 .modal {
@@ -28,8 +35,7 @@
   box-shadow: var(--shadow-apple-strong);
   width: 100%;
   max-width: 560px;
-  margin: 0 var(--space-md);
-  max-height: 90vh;
+  max-height: calc(100vh - 2 * var(--space-md));
   overflow-y: auto;
   font-family: Inter, system-ui, sans-serif;
   display: flex;
@@ -37,6 +43,9 @@
   gap: var(--space-lg);
   padding: var(--space-xl);
   animation: modalFadeIn var(--apple-duration-medium) var(--apple-ease-out);
+  position: relative;
+  pointer-events: auto;
+  margin: auto;
 }
 
 .modalSmall {

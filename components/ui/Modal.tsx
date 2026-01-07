@@ -1,6 +1,7 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import styles from "./modal.module.css";
@@ -26,6 +27,35 @@ export function Modal({
   size = "md",
   className,
 }: ModalProps) {
+  // Prevenir scroll del body cuando el modal está abierto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // Prevenir cierre con Escape
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const sizeClass =
@@ -37,8 +67,21 @@ export function Modal({
       ? styles.modalLarge
       : styles.modalXLarge;
 
-  return (
-    <div className={styles.overlay}>
+  // Usar portal para renderizar fuera del árbol DOM
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const modalContent = (
+    <div 
+      className={styles.overlay}
+      onClick={(e) => {
+        // Solo cerrar si el clic es directamente en el overlay, no en sus hijos
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div
         className={cn(styles.modal, sizeClass, className)}
         onClick={(e) => e.stopPropagation()}
@@ -47,9 +90,13 @@ export function Modal({
           <h2 className={styles.title}>{title}</h2>
           {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
             className={styles.closeButton}
             aria-label="Close"
+            type="button"
           >
             <X size={20} strokeWidth={2} />
           </button>
@@ -59,4 +106,6 @@ export function Modal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
