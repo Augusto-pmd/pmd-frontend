@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { useSWRConfig } from "swr";
 import { refreshPatterns } from "@/lib/refreshData";
 import { useToast } from "@/components/ui/Toast";
-import { getOperationErrorMessage } from "@/lib/errorMessages";
+import { getOperationErrorMessage, getErrorMessage } from "@/lib/errorMessages";
 import { useCan } from "@/lib/acl";
 
 function IncomesContent() {
@@ -31,14 +31,14 @@ function IncomesContent() {
   const canUpdateIncome = useCan("incomes.update");
   const canDeleteIncome = useCan("incomes.delete");
 
-  const totalIncome = incomes?.reduce((sum: number, inc: any) => sum + (inc.amount || 0), 0) || 0;
+  const totalIncome = incomes?.reduce((sum: number, inc: any) => sum + Number(inc.amount || 0), 0) || 0;
   const thisMonth = new Date().getMonth();
   const thisYear = new Date().getFullYear();
   const thisMonthIncome =
     incomes?.filter((inc: any) => {
       const incDate = new Date(inc.date);
       return incDate.getMonth() === thisMonth && incDate.getFullYear() === thisYear;
-    }).reduce((sum: number, inc: any) => sum + (inc.amount || 0), 0) || 0;
+    }).reduce((sum: number, inc: any) => sum + Number(inc.amount || 0), 0) || 0;
 
   const handleCreate = () => {
     setEditingIncome(null);
@@ -51,7 +51,7 @@ function IncomesContent() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this income?")) return;
+    if (!confirm("¿Estás seguro de que deseas eliminar este ingreso?")) return;
     setDeleteLoading(id);
     try {
       await incomeApi.delete(id);
@@ -88,13 +88,16 @@ function IncomesContent() {
   };
 
   if (isLoading) {
-    return <LoadingState message="Loading incomes..." />;
+    return <LoadingState message="Cargando ingresos..." />;
   }
 
   if (error) {
+    // Extraer el mensaje de error de forma segura usando la función helper
+    const errorMessage = getErrorMessage(error, "Unknown error");
+    
     return (
       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-pmd">
-        Error loading incomes: {error.message || "Unknown error"}
+        Error loading incomes: {errorMessage}
       </div>
     );
   }
@@ -104,11 +107,11 @@ function IncomesContent() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Incomes – PMD Backend Integration</h1>
-            <p className="text-gray-600">Track and manage all income sources</p>
+            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Ingresos</h1>
+            <p className="text-gray-600">Rastrea y gestiona todas las fuentes de ingresos</p>
           </div>
           {canCreateIncome && (
-            <Button onClick={handleCreate}>+ Add Income</Button>
+            <Button onClick={handleCreate}>+ Agregar Ingreso</Button>
           )}
         </div>
 
@@ -116,29 +119,29 @@ function IncomesContent() {
           <div className="mb-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Total Income</p>
-                <p className="text-2xl font-bold text-green-600">${totalIncome.toFixed(2)}</p>
+                <p className="text-sm text-gray-600 mb-1">Total de Ingresos</p>
+                <p className="text-2xl font-bold text-green-600">${Number(totalIncome).toFixed(2)}</p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">This Month</p>
-                <p className="text-2xl font-bold text-green-600">${thisMonthIncome.toFixed(2)}</p>
+                <p className="text-sm text-gray-600 mb-1">Este Mes</p>
+                <p className="text-2xl font-bold text-green-600">${Number(thisMonthIncome).toFixed(2)}</p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Average per Month</p>
+                <p className="text-sm text-gray-600 mb-1">Promedio por Mes</p>
                 <p className="text-2xl font-bold text-green-600">
-                  ${incomes?.length ? (totalIncome / incomes.length).toFixed(2) : "0.00"}
+                  ${incomes?.length ? Number(totalIncome / incomes.length).toFixed(2) : "0.00"}
                 </p>
               </div>
             </div>
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Income List</h2>
+            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Lista de Ingresos</h2>
             {incomes?.length === 0 ? (
               <EmptyState
-                title="No income records found"
-                description="Create your first income record to get started"
-                action={canCreateIncome ? <Button onClick={handleCreate}>Create Income</Button> : undefined}
+                title="No se encontraron registros de ingresos"
+                description="Crea tu primer registro de ingreso para comenzar"
+                action={canCreateIncome ? <Button onClick={handleCreate}>Crear Ingreso</Button> : undefined}
               />
             ) : (
               <div className="overflow-x-auto">
@@ -186,7 +189,7 @@ function IncomesContent() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">{getTypeLabel(income.type || "")}</td>
                           <td className="px-4 py-3 text-sm text-gray-900 font-semibold text-green-600">
-                            ${income.amount?.toFixed(2) || "0.00"}
+                            ${Number(income.amount || 0).toFixed(2)}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">{income.currency || "ARS"}</td>
                           <td className="px-4 py-3 text-sm text-gray-900">{getPaymentMethodLabel(income.payment_method || "")}</td>
@@ -235,7 +238,7 @@ function IncomesContent() {
                                 onClick={() => handleDelete(income.id)}
                                 disabled={deleteLoading === income.id}
                               >
-                                {deleteLoading === income.id ? "Deleting..." : "Delete"}
+                                {deleteLoading === income.id ? "Eliminando..." : "Eliminar"}
                               </Button>
                             )}
                           </div>
@@ -256,7 +259,7 @@ function IncomesContent() {
             setIsModalOpen(false);
             setEditingIncome(null);
           }}
-          title={editingIncome ? "Edit Income" : "Create Income"}
+          title={editingIncome ? "Editar Ingreso" : "Crear Ingreso"}
         >
           <IncomeForm
             initialData={editingIncome}

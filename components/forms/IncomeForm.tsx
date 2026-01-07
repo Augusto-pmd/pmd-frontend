@@ -36,16 +36,34 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
 
   useEffect(() => {
     if (initialData) {
+      // Asegurar que amount sea un número válido
+      const amountValue = initialData.amount !== undefined && initialData.amount !== null 
+        ? Number(initialData.amount) 
+        : 0;
+      
       setFormData({
         work_id: initialData.work_id || initialData.workId || "",
-        amount: initialData.amount || 0,
+        amount: amountValue,
         currency: initialData.currency || Currency.ARS,
         type: initialData.type || IncomeType.ADVANCE,
-        date: initialData.date?.split("T")[0] || new Date().toISOString().split("T")[0],
+        date: initialData.date ? (typeof initialData.date === 'string' ? initialData.date.split("T")[0] : new Date(initialData.date).toISOString().split("T")[0]) : new Date().toISOString().split("T")[0],
         payment_method: initialData.payment_method || "",
         document_number: initialData.document_number || "",
         file_url: initialData.file_url || "",
         observations: initialData.observations || "",
+      });
+    } else {
+      // Resetear formulario cuando no hay initialData
+      setFormData({
+        work_id: "",
+        amount: 0,
+        currency: Currency.ARS,
+        type: IncomeType.ADVANCE,
+        date: new Date().toISOString().split("T")[0],
+        payment_method: "",
+        document_number: "",
+        file_url: "",
+        observations: "",
       });
     }
   }, [initialData]);
@@ -71,30 +89,34 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // Determinar si estamos editando (si hay initialData con id)
+    const isEditing = !!initialData?.id;
     e.preventDefault();
     if (!validate()) return;
     
     // Mapear datos al formato del backend
     const submitData: any = {
-      work_id: formData.work_id,
-      amount: formData.amount,
-      currency: formData.currency,
       type: formData.type,
+      amount: Number(formData.amount), // Asegurar que amount sea un número
       date: formData.date,
     };
     
-    // Campos opcionales
-    if (formData.payment_method) {
-      submitData.payment_method = formData.payment_method;
+    // Solo incluir work_id y currency si estamos creando (no editando)
+    // Nota: work_id y currency no se pueden actualizar según el backend UpdateIncomeDto
+    if (!isEditing) {
+      submitData.work_id = formData.work_id;
+      submitData.currency = formData.currency;
     }
-    if (formData.document_number) {
-      submitData.document_number = formData.document_number;
-    }
-    if (formData.file_url) {
-      submitData.file_url = formData.file_url;
-    }
-    if (formData.observations) {
-      submitData.observations = formData.observations;
+    
+    // Campos opcionales - siempre incluir para asegurar que se actualicen
+    submitData.payment_method = formData.payment_method || null;
+    submitData.document_number = formData.document_number || null;
+    submitData.file_url = formData.file_url || null;
+    submitData.observations = formData.observations || null;
+    
+    // Incluir is_validated si está presente en initialData (solo para edición)
+    if (isEditing && initialData?.is_validated !== undefined) {
+      submitData.is_validated = initialData.is_validated;
     }
     
     await onSubmit(submitData);
@@ -119,6 +141,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
         }}
         error={errors.work_id}
         required
+        disabled={!!initialData?.id} // Deshabilitar en modo edición (no se puede cambiar)
       >
         <option value="">Seleccionar obra</option>
         {works?.map((work: any) => (
@@ -146,9 +169,10 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
           type="number"
           step="0.01"
           min="0"
-          value={formData.amount}
+          value={formData.amount || ""}
           onChange={(e) => {
-            setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 });
+            const value = parseFloat(e.target.value) || 0;
+            setFormData({ ...formData, amount: value });
             if (errors.amount) setErrors({ ...errors, amount: "" });
           }}
           onBlur={() => {
@@ -180,6 +204,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
           }}
           error={errors.currency}
           required
+          disabled={!!initialData?.id} // Deshabilitar en modo edición (no se puede cambiar)
         >
           <option value={Currency.ARS}>ARS (Pesos Argentinos)</option>
           <option value={Currency.USD}>USD (Dólares)</option>

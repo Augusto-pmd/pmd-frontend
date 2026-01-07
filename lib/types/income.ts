@@ -54,10 +54,9 @@ export interface CreateIncomeData {
   observations?: string;
 }
 
-export interface UpdateIncomeData {
+export interface UpdateIncomeData extends Partial<Omit<CreateIncomeData, 'work_id' | 'currency'>> {
   type?: IncomeType;
   amount?: number;
-  currency?: Currency;
   date?: string;
   file_url?: string;
   document_number?: string;

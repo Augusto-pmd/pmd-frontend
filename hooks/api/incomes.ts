@@ -59,7 +59,7 @@ export const incomeApi = {
       }
       throw new Error("ID de ingreso no está definido");
     }
-    return apiClient.put(`/incomes/${id}`, data);
+    return apiClient.patch(`/incomes/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
