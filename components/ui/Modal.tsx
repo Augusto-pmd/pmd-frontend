@@ -38,7 +38,7 @@ export function Modal({
       : styles.modalXLarge;
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay}>
       <div
         className={cn(styles.modal, sizeClass, className)}
         onClick={(e) => e.stopPropagation()}

@@ -99,8 +99,12 @@ export function TextareaField({
   required,
   error,
   className,
+  value,
   ...props
 }: TextareaFieldProps) {
+  // Asegurar que value nunca sea null o undefined
+  const safeValue = value === null || value === undefined ? "" : value;
+  
   return (
     <FormField label={label} required={required} error={error}>
       <textarea
@@ -109,6 +113,7 @@ export function TextareaField({
           error && styles.inputError,
           className
         )}
+        value={safeValue}
         {...props}
       />
     </FormField>

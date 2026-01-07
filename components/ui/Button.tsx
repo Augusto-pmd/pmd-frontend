@@ -16,6 +16,7 @@ export function Button({
   children,
   loading = false,
   disabled,
+  style,
   ...props
 }: ButtonProps) {
   const isDisabled = disabled || loading;
@@ -83,28 +84,33 @@ export function Button({
     },
     icon: {
       ...baseStyles,
-      width: "44px",
-      height: "44px",
-      padding: 0,
+      width: "auto",
+      minWidth: "32px",
+      height: "32px",
+      padding: "6px",
       border: "1px solid var(--apple-border)",
+      backgroundColor: "transparent",
     },
   };
 
   const sizes: Record<string, React.CSSProperties> = {
     sm: {
-      padding: "0 var(--space-sm)",
+      padding: variant === "icon" ? "6px" : "0 var(--space-sm)",
       fontSize: "13px",
-      height: "48px", // Aumentado de 36px a 48px para mobile
+      height: variant === "icon" ? "32px" : "48px", // Aumentado de 36px a 48px para mobile
+      minWidth: variant === "icon" ? "32px" : "auto",
     },
     md: {
-      padding: "0 var(--space-md)",
+      padding: variant === "icon" ? "8px" : "0 var(--space-md)",
       fontSize: "14px",
-      height: "48px", // Aumentado de 44px a 48px para mobile
+      height: variant === "icon" ? "36px" : "48px", // Aumentado de 44px a 48px para mobile
+      minWidth: variant === "icon" ? "36px" : "auto",
     },
     lg: {
-      padding: "0 var(--space-lg)",
+      padding: variant === "icon" ? "10px" : "0 var(--space-lg)",
       fontSize: "15px",
-      height: "48px",
+      height: variant === "icon" ? "40px" : "48px",
+      minWidth: variant === "icon" ? "40px" : "auto",
     },
   };
 
@@ -114,26 +120,44 @@ export function Button({
     ...(isDisabled && { opacity: 0.5, cursor: "not-allowed" }),
   };
 
+  // Guardar estilos inline personalizados si existen
+  const customStyle = style || {};
+
   return (
     <button
       className={cn(className)}
-      style={combinedStyle}
+      style={{ ...combinedStyle, ...customStyle }}
       onMouseEnter={(e) => {
         if (!isDisabled) {
-          Object.assign(e.currentTarget.style, getHoverStyles(variant));
+          const hoverStyles = getHoverStyles(variant);
+          // Preservar estilos inline personalizados (especialmente color)
+          Object.assign(e.currentTarget.style, {
+            ...hoverStyles,
+            ...(customStyle.color && { color: customStyle.color }),
+          });
         }
       }}
       onMouseLeave={(e) => {
-        Object.assign(e.currentTarget.style, combinedStyle);
+        // Restaurar estilos originales incluyendo los personalizados
+        Object.assign(e.currentTarget.style, { ...combinedStyle, ...customStyle });
       }}
       onMouseDown={(e) => {
         if (!isDisabled) {
-          Object.assign(e.currentTarget.style, activeStyles);
+          // Preservar color personalizado durante el click
+          Object.assign(e.currentTarget.style, {
+            ...activeStyles,
+            ...(customStyle.color && { color: customStyle.color }),
+          });
         }
       }}
       onMouseUp={(e) => {
         if (!isDisabled) {
-          Object.assign(e.currentTarget.style, getHoverStyles(variant));
+          const hoverStyles = getHoverStyles(variant);
+          // Preservar color personalizado
+          Object.assign(e.currentTarget.style, {
+            ...hoverStyles,
+            ...(customStyle.color && { color: customStyle.color }),
+          });
         }
       }}
       onFocus={(e) => {
