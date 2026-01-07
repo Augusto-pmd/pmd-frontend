@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useWork, workApi } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
 import { useSuppliers } from "@/hooks/api/suppliers";
+import { useContracts } from "@/hooks/api/contracts";
+import { contractApi } from "@/hooks/api/contracts";
+import { workUsersApi } from "@/hooks/api/work-users";
+import { AssignUserModal } from "@/components/works/AssignUserModal";
+import { AssignSupplierModal } from "@/components/works/AssignSupplierModal";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -31,14 +36,24 @@ function WorkDetailContent() {
   const { work, isLoading, error, mutate } = useWork(id);
   const { users } = useUsers();
   const { suppliers } = useSuppliers();
+  const { contracts, mutate: mutateContracts } = useContracts();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
   const [isPostClosureModalOpen, setIsPostClosureModalOpen] = useState(false);
+  const [isAssignUserModalOpen, setIsAssignUserModalOpen] = useState(false);
+  const [isAssignSupplierModalOpen, setIsAssignSupplierModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isAllowingPostClosure, setIsAllowingPostClosure] = useState(false);
   const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
+  const [isAssigningUser, setIsAssigningUser] = useState(false);
+  const [isAssigningSupplier, setIsAssigningSupplier] = useState(false);
+  const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
+  const [isLoadingAssignedUsers, setIsLoadingAssignedUsers] = useState(false);
+  const [isUnassignUserModalOpen, setIsUnassignUserModalOpen] = useState(false);
+  const [userToUnassign, setUserToUnassign] = useState<User | null>(null);
+  const [isUnassigningUser, setIsUnassigningUser] = useState(false);
   const toast = useToast();
   const user = useAuthStore.getState().user;
   const isDirection = user?.role?.name === "DIRECTION" || user?.role?.name === "direction" || user?.role?.name === "administration" || user?.role?.name === "ADMINISTRATION";
@@ -46,6 +61,25 @@ function WorkDetailContent() {
   // Verificar permisos
   const canUpdate = useCan("works.update");
   const canDelete = useCan("works.delete");
+
+  // Cargar usuarios asignados desde el backend
+  useEffect(() => {
+    if (id) {
+      setIsLoadingAssignedUsers(true);
+      workUsersApi
+        .getAssignedUsers(id)
+        .then((users) => {
+          setAssignedUsers(users);
+        })
+        .catch((error) => {
+          console.error("Error loading assigned users:", error);
+          setAssignedUsers([]);
+        })
+        .finally(() => {
+          setIsLoadingAssignedUsers(false);
+        });
+    }
+  }, [id, isAssignUserModalOpen]);
 
   if (!id) return null;
 
@@ -261,18 +295,62 @@ function WorkDetailContent() {
     }
   };
 
-  // Obtener personal asignado a esta obra
-  const assignedEmployees = (users as User[])?.filter((emp: User) => {
-    const assignments = emp.assignments || [];
-    return assignments.some((assignment) => 
-      assignment?.workId === id || assignment?.obraId === id
-    );
-  }) || [];
+  // Handler para asignar usuario
+  const handleAssignUser = async (userId: string, role?: string) => {
+    if (!id) return;
+    setIsAssigningUser(true);
+    try {
+      await workUsersApi.assignUser(id, userId, role);
+      toast.success("Usuario asignado correctamente");
+      setIsAssignUserModalOpen(false);
+      // Recargar usuarios asignados
+      const users = await workUsersApi.getAssignedUsers(id);
+      setAssignedUsers(users);
+    } catch (error: any) {
+      toast.error(parseBackendError(error) || "Error al asignar usuario");
+    } finally {
+      setIsAssigningUser(false);
+    }
+  };
 
-  // Obtener proveedores asignados (placeholder - ajustar según backend)
-  const assignedSuppliers = (suppliers as Supplier[])?.filter((sup: Supplier) => {
-    return sup.workId === id || sup.obraId === id;
-  }) || [];
+  // Handler para asignar proveedor (crear contrato)
+  const handleAssignSupplier = async (
+    supplierId: string,
+    rubricId: string,
+    amountTotal: number,
+    currency: string
+  ) => {
+    if (!id) return;
+    setIsAssigningSupplier(true);
+    try {
+      await contractApi.create({
+        work_id: id,
+        supplier_id: supplierId,
+        rubric_id: rubricId,
+        amount_total: amountTotal,
+        currency: currency as "ARS" | "USD",
+      });
+      toast.success("Proveedor asignado correctamente");
+      setIsAssignSupplierModalOpen(false);
+      mutateContracts();
+    } catch (error: any) {
+      toast.error(parseBackendError(error) || "Error al asignar proveedor");
+    } finally {
+      setIsAssigningSupplier(false);
+    }
+  };
+
+  // Obtener proveedores asignados desde contratos
+  const assignedSuppliers = (contracts || [])
+    .filter((contract: any) => contract.work_id === id || contract.workId === id)
+    .map((contract: any) => {
+      // Buscar el proveedor en la lista de proveedores
+      const supplier = suppliers?.find(
+        (s: Supplier) => s.id === contract.supplier_id || s.id === contract.supplierId
+      );
+      return supplier;
+    })
+    .filter((supplier: Supplier | undefined) => supplier !== undefined) as Supplier[];
 
   return (
     <>
@@ -461,7 +539,8 @@ function WorkDetailContent() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Funcionalidad de asignación próximamente disponible")}
+                onClick={() => setIsAssignUserModalOpen(true)}
+                disabled={isLoadingAssignedUsers}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Asignar Personal
@@ -469,9 +548,11 @@ function WorkDetailContent() {
             </div>
           </CardHeader>
           <CardContent>
-            {assignedEmployees.length > 0 ? (
+            {isLoadingAssignedUsers ? (
+              <p className="text-gray-500">Cargando personal asignado...</p>
+            ) : assignedUsers.length > 0 ? (
               <div className="space-y-2">
-                {assignedEmployees.map((emp: User) => {
+                {assignedUsers.map((emp: User) => {
                   const nombre = emp.fullName || emp.name || "Sin nombre";
                   return (
                     <div key={emp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -479,7 +560,20 @@ function WorkDetailContent() {
                         <p className="font-medium text-gray-900">{nombre}</p>
                         {emp.email && <p className="text-sm text-gray-500">{emp.email}</p>}
                       </div>
-                      {emp.role && <Badge variant="info">{emp.role.name}</Badge>}
+                      <div className="flex items-center gap-2">
+                        {emp.role && <Badge variant="info">{emp.role.name}</Badge>}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setUserToUnassign(emp);
+                            setIsUnassignUserModalOpen(true);
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
@@ -498,7 +592,7 @@ function WorkDetailContent() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Funcionalidad de asignación próximamente disponible")}
+                onClick={() => setIsAssignSupplierModalOpen(true)}
               >
                 <Building2 className="h-4 w-4 mr-2" />
                 Asignar Proveedor
@@ -763,7 +857,7 @@ function WorkDetailContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-gray-600">Personal Asignado</p>
-                <p className="text-2xl font-bold text-blue-700">{assignedEmployees.length}</p>
+                <p className="text-2xl font-bold text-blue-700">{assignedUsers.length}</p>
               </div>
               <div className="p-4 bg-yellow-50 rounded-lg">
                 <p className="text-sm text-gray-600">Proveedores</p>
@@ -878,6 +972,51 @@ function WorkDetailContent() {
         cancelText="Cancelar"
         variant="default"
         isLoading={isAllowingPostClosure}
+      />
+
+      <AssignUserModal
+        isOpen={isAssignUserModalOpen}
+        onClose={() => setIsAssignUserModalOpen(false)}
+        onAssign={handleAssignUser}
+        assignedUserIds={assignedUsers.map((u) => u.id)}
+        isLoading={isAssigningUser}
+      />
+
+      <AssignSupplierModal
+        isOpen={isAssignSupplierModalOpen}
+        onClose={() => setIsAssignSupplierModalOpen(false)}
+        onAssign={handleAssignSupplier}
+        workId={id!}
+        isLoading={isAssigningSupplier}
+      />
+
+      <ConfirmationModal
+        isOpen={isUnassignUserModalOpen}
+        onClose={() => {
+          setIsUnassignUserModalOpen(false);
+          setUserToUnassign(null);
+        }}
+        onConfirm={async () => {
+          if (!id || !userToUnassign) return;
+          setIsUnassigningUser(true);
+          try {
+            await workUsersApi.unassignUser(id, userToUnassign.id);
+            toast.success("Usuario desasignado correctamente");
+            setAssignedUsers(assignedUsers.filter((u) => u.id !== userToUnassign.id));
+            setIsUnassignUserModalOpen(false);
+            setUserToUnassign(null);
+          } catch (error: any) {
+            toast.error(parseBackendError(error) || "Error al desasignar usuario");
+          } finally {
+            setIsUnassigningUser(false);
+          }
+        }}
+        title="Confirmar Desasignación"
+        description={`¿Estás seguro de que deseas desasignar a ${userToUnassign?.fullName || userToUnassign?.name || "este usuario"} de esta obra?`}
+        confirmText="Desasignar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={isUnassigningUser}
       />
     </>
   );
