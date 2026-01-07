@@ -166,8 +166,18 @@ api.interceptors.response.use(
     }
 
     // Handle CSRF token errors (403 Forbidden)
-    const errorMessage = error.response?.data?.message;
-    if (error.response?.status === 403 && typeof errorMessage === 'string' && errorMessage.includes("CSRF")) {
+    const errorData = error.response?.data;
+    const errorMessage = typeof errorData?.message === 'string' 
+      ? errorData.message 
+      : typeof errorData?.message === 'object' && errorData?.message?.message
+      ? errorData.message.message
+      : '';
+    const isCsrfError = error.response?.status === 403 && (
+      errorMessage.includes("CSRF") || 
+      errorMessage.includes("csrf") ||
+      errorMessage.includes("Invalid CSRF token")
+    );
+    if (isCsrfError) {
       // Try to refresh CSRF token and retry
       if (!original?._csrfRetry) {
         original._csrfRetry = true;

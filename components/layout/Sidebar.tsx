@@ -25,6 +25,7 @@ import {
   Receipt,
   FileCheck,
   TrendingUp,
+  FolderTree,
 } from "lucide-react";
 
 interface NavItem {
@@ -63,6 +64,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   // Sistema
   { label: "Usuarios", href: "/settings/users", icon: UserCog, permission: "users.read", section: "Sistema" },
   { label: "Roles", href: "/roles", icon: BookOpen, permission: "roles.read", section: "Sistema" },
+  { label: "Rúbricas", href: "/rubrics", icon: FolderTree, permission: "rubrics.read", section: "Sistema" },
   { label: "Configuración", href: "/settings", icon: Settings, permission: "settings.read", section: "Sistema" },
 ];
 
@@ -166,6 +168,10 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           break;
         case "settings.read":
           hasPermission = canSettings;
+          break;
+        case "rubrics.read":
+          // Solo Direction y Administration pueden ver rúbricas
+          hasPermission = user?.role?.name?.toLowerCase() === "direction" || user?.role?.name?.toLowerCase() === "administration";
           break;
         default:
           hasPermission = true;

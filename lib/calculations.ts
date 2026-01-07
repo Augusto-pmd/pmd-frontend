@@ -46,9 +46,9 @@ export function calculateTaxes(
 
   // If document type is C, receipt, or VAL, no perceptions/withholdings apply
   if (
-    documentType === "INVOICE_C" ||
-    documentType === "RECEIPT" ||
-    documentType === "VAL"
+    documentType === "invoice_c" ||
+    documentType === "receipt" ||
+    documentType === "val"
   ) {
     calculations.calculation_rules?.push(
       `Document type ${documentType} does not require perceptions/withholdings`,
@@ -60,7 +60,7 @@ export function calculateTaxes(
   switch (fiscalCondition) {
     case FiscalCondition.RI: // Responsable Inscripto
       // RI can have VAT perception and IIBB perception
-      if (documentType === "INVOICE_A" || documentType === "INVOICE_B") {
+      if (documentType === "invoice_a" || documentType === "invoice_b") {
         calculations.vat_perception = amount * VAT_PERCEPTION_RATE;
         calculations.iibb_perception = amount * IIBB_PERCEPTION_RATE;
         calculations.calculation_rules?.push(
@@ -85,7 +85,7 @@ export function calculateTaxes(
 
     case FiscalCondition.OTHER:
       // For "Other", apply default rates if document is A or B
-      if (documentType === "INVOICE_A" || documentType === "INVOICE_B") {
+      if (documentType === "invoice_a" || documentType === "invoice_b") {
         calculations.vat_perception = amount * VAT_PERCEPTION_RATE;
         calculations.iibb_perception = amount * IIBB_PERCEPTION_RATE;
         calculations.calculation_rules?.push(
@@ -121,16 +121,16 @@ export function getCalculationRulesExplanation(
   }
 
   if (
-    documentType === "INVOICE_C" ||
-    documentType === "RECEIPT" ||
-    documentType === "VAL"
+    documentType === "invoice_c" ||
+    documentType === "receipt" ||
+    documentType === "val"
   ) {
     return `Document type ${documentType} does not require perceptions or withholdings.`;
   }
 
   switch (fiscalCondition) {
     case FiscalCondition.RI:
-      if (documentType === "INVOICE_A" || documentType === "INVOICE_B") {
+      if (documentType === "invoice_a" || documentType === "invoice_b") {
         return `Responsable Inscripto (RI): VAT perception ${(VAT_PERCEPTION_RATE * 100).toFixed(1)}% and IIBB perception ${(IIBB_PERCEPTION_RATE * 100).toFixed(2)}% apply to invoices A and B.`;
       }
       return 'Responsable Inscripto (RI): No perceptions/withholdings apply to this document type.';
@@ -139,7 +139,7 @@ export function getCalculationRulesExplanation(
     case FiscalCondition.EXEMPT:
       return 'Exempt: No perceptions or withholdings apply.';
     case FiscalCondition.OTHER:
-      if (documentType === "INVOICE_A" || documentType === "INVOICE_B") {
+      if (documentType === "invoice_a" || documentType === "invoice_b") {
         return `Other fiscal condition: Default rates apply (VAT ${(VAT_PERCEPTION_RATE * 100).toFixed(1)}%, IIBB ${(IIBB_PERCEPTION_RATE * 100).toFixed(2)}%).`;
       }
       return 'Other fiscal condition: No perceptions/withholdings apply to this document type.';

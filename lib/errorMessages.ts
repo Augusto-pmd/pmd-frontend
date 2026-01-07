@@ -14,9 +14,14 @@ export function getErrorMessage(error: unknown, defaultMessage: string): string 
     if (axiosError.response?.data) {
       const data = axiosError.response.data;
       
-      // Check for message field
+      // Check for message field (handle nested message objects)
       if (data.message) {
-        return data.message;
+        if (typeof data.message === 'string') {
+          return data.message;
+        }
+        if (typeof data.message === 'object' && data.message.message) {
+          return typeof data.message.message === 'string' ? data.message.message : defaultMessage;
+        }
       }
       
       // Check for error field
@@ -92,6 +97,7 @@ export function getOperationErrorMessage(operation: string, error: unknown): str
     update: 'Error al actualizar el recurso. Por favor, intenta nuevamente.',
     delete: 'Error al eliminar el recurso. Por favor, intenta nuevamente.',
     validate: 'Error al validar el recurso. Por favor, intenta nuevamente.',
+    reject: 'Error al rechazar el recurso. Por favor, intenta nuevamente.',
     load: 'Error al cargar los datos. Por favor, recarga la página.',
     save: 'Error al guardar los cambios. Por favor, intenta nuevamente.',
   };

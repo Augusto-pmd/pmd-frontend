@@ -126,11 +126,16 @@ export function useCan(permission: Permission): boolean {
     
     const roleName = user?.role?.name?.toLowerCase();
     
+    // Si no hay usuario, retornar array vacío sin warnings (normal durante carga inicial)
+    if (!user) {
+      return [];
+    }
+    
     // Verificar si hay permisos en el usuario
-    if (!user?.role?.permissions) {
+    if (!user.role?.permissions) {
       if (process.env.NODE_ENV === "development") {
-        console.warn(`[ACL] ⚠️ No permissions found for user ${user?.email} (role: ${roleName})`);
-        console.warn(`[ACL] ⚠️ user.role.permissions is:`, user?.role?.permissions);
+        console.warn(`[ACL] ⚠️ No permissions found for user ${user.email} (role: ${roleName})`);
+        console.warn(`[ACL] ⚠️ user.role.permissions is:`, user.role?.permissions);
       }
       return [];
     }
@@ -156,9 +161,11 @@ export function useCan(permission: Permission): boolean {
   const hasPermission = lowerPermissions.includes(lowerPermission);
   
   // Logging para debugging (solo en desarrollo) - solo warnings y errores críticos
+  // Solo mostrar warnings si el usuario existe pero no tiene permisos (problema real)
+  // No mostrar warnings si el usuario es undefined (normal durante carga inicial)
   if (process.env.NODE_ENV === "development") {
-    if (!hasPermission && permissions.length === 0) {
-      console.warn(`[ACL] ⚠️ Permission denied: "${permission}" - No permissions available for user ${user?.email}`);
+    if (!hasPermission && permissions.length === 0 && user) {
+      console.warn(`[ACL] ⚠️ Permission denied: "${permission}" - No permissions available for user ${user.email}`);
       console.warn(`[ACL]   This may indicate that permissions were not loaded from backend correctly`);
     }
   }

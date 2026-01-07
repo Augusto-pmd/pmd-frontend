@@ -119,25 +119,59 @@ export function parseBackendError(error: unknown): string {
       return "No tiene permisos para realizar esta acción";
     }
     
-    // NestJS validation error: { statusCode: 400, message: string | string[] }
-    if (Array.isArray(data.message)) {
-      // Si es array, unir los mensajes y limpiar mensajes técnicos
-      const cleanedMessages = data.message.map((msg: string) => {
-        // Limpiar mensajes técnicos de validación
-        if (msg.includes("should not exist")) {
-          return msg.replace(/property (\w+) should not exist/i, "El campo '$1' no es válido");
-        }
-        if (msg.includes("must be one of the following values")) {
-          return msg.replace(/must be one of the following values: (.+)/i, "Debe ser uno de los siguientes valores: $1");
-        }
-        if (msg.includes("must be")) {
-          return msg.replace(/must be (.+)/i, "Debe ser $1");
-        }
-        return msg;
-      });
-      return cleanedMessages.join(". ");
+    // NestJS validation error: { statusCode: 400, message: string | string[] | { message: string } }
+    // Manejar mensaje anidado para errores 400
+    let backendMessage: string | string[] | undefined;
+    
+    if ("message" in data) {
+      const messageField = data.message;
+      
+      // Si message es un objeto anidado (estructura NestJS común en errores 400)
+      if (messageField && typeof messageField === "object" && !Array.isArray(messageField) && "message" in messageField) {
+        backendMessage = (messageField as { message: string | string[] }).message;
+      } 
+      // Si message es directamente string o array
+      else if (typeof messageField === "string" || Array.isArray(messageField)) {
+        backendMessage = messageField;
+      }
     }
     
+    // Si encontramos un mensaje, procesarlo
+    if (backendMessage) {
+      if (Array.isArray(backendMessage)) {
+        // Si es array, unir los mensajes y limpiar mensajes técnicos
+        const cleanedMessages = backendMessage.map((msg: string) => {
+          // Limpiar mensajes técnicos de validación
+          if (msg.includes("should not exist")) {
+            return msg.replace(/property (\w+) should not exist/i, "El campo '$1' no es válido");
+          }
+          if (msg.includes("must be one of the following values")) {
+            return msg.replace(/must be one of the following values: (.+)/i, "Debe ser uno de los siguientes valores: $1");
+          }
+          if (msg.includes("must be")) {
+            return msg.replace(/must be (.+)/i, "Debe ser $1");
+          }
+          return msg;
+        });
+        return cleanedMessages.join(". ");
+      }
+      
+      if (typeof backendMessage === "string" && backendMessage.trim()) {
+        // Traducir mensajes específicos de cajas
+        const translated = translateCashboxMessage(backendMessage);
+        if (translated !== backendMessage) {
+          return translated;
+        }
+        
+        // Verificar si el mensaje es un error 403 genérico
+        if (backendMessage.includes("403") || backendMessage.includes("Request failed with status code 403")) {
+          return "No tiene permisos para realizar esta acción";
+        }
+        return backendMessage;
+      }
+    }
+    
+    // Fallback: si no se encontró mensaje anidado, intentar con el campo message directo
     if (typeof data.message === "string") {
       // Verificar si el mensaje es un error 403 genérico
       if (data.message.includes("403") || data.message.includes("Request failed with status code 403")) {
@@ -261,6 +295,32 @@ function translatePermissionMessage(message: string): string {
   }
 
   // Si no hay traducción, retornar el mensaje original
+  return message;
+}
+
+/**
+ * Traduce mensajes específicos relacionados con cajas del inglés al español
+ */
+function translateCashboxMessage(message: string): string {
+  const translations: Record<string, string> = {
+    "User already has an open cashbox. Please close it before creating a new one.": "Ya tienes una caja abierta. Por favor, ciérrala antes de crear una nueva.",
+    "Cannot create movement in a closed cashbox. Please open the cashbox first.": "No se puede crear un movimiento en una caja cerrada. Por favor, abre la caja primero.",
+    "Cashbox is already closed": "La caja ya está cerrada",
+    "Cashbox is already open": "La caja ya está abierta",
+  };
+
+  // Buscar traducción exacta
+  if (translations[message]) {
+    return translations[message];
+  }
+
+  // Buscar traducción parcial
+  for (const [english, spanish] of Object.entries(translations)) {
+    if (message.includes(english)) {
+      return spanish;
+    }
+  }
+
   return message;
 }
 
