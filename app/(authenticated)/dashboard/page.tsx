@@ -75,15 +75,30 @@ function DashboardContent() {
   }, [organizationId]);
 
   // Cálculos de KPIs
-  const totalRevenue = incomes?.reduce((sum: number, inc: any) => sum + (inc.amount || 0), 0) || 0;
-  const totalExpenses = expenses?.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0) || 0;
+  const totalRevenue = (incomes?.reduce((sum: number, inc: any) => {
+    const amount = Number(inc?.amount) || 0;
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0) || 0);
+  
+  const totalExpenses = (expenses?.reduce((sum: number, exp: any) => {
+    const amount = Number(exp?.amount) || 0;
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0) || 0);
+  
   const netBalance = totalRevenue - totalExpenses;
   
   // Contabilidad
-  const accountingIngresos = entries?.filter((e: any) => e.type === "ingreso" || e.type === "income")
-    .reduce((sum: number, e: any) => sum + (e.amount || 0), 0) || 0;
-  const accountingEgresos = entries?.filter((e: any) => e.type === "egreso" || e.type === "expense")
-    .reduce((sum: number, e: any) => sum + (e.amount || 0), 0) || 0;
+  const accountingIngresos = (entries?.filter((e: any) => e.type === "ingreso" || e.type === "income")
+    .reduce((sum: number, e: any) => {
+      const amount = Number(e?.amount) || 0;
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0) || 0);
+    
+  const accountingEgresos = (entries?.filter((e: any) => e.type === "egreso" || e.type === "expense")
+    .reduce((sum: number, e: any) => {
+      const amount = Number(e?.amount) || 0;
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0) || 0);
   
   const activeContracts = contracts?.filter((c: any) => c.status === "active").length || 0;
   const pendingAlerts = alerts?.filter((a: any) => !a.read).length || 0;
@@ -181,13 +196,22 @@ function DashboardContent() {
     return <LoadingState message="Cargando panel de control…" />;
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string | null | undefined) => {
+    const numAmount = typeof amount === "number" ? amount : Number(amount) || 0;
+    if (isNaN(numAmount)) {
+      return new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: "ARS",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(0);
+    }
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(numAmount);
   };
 
   return (
@@ -203,181 +227,161 @@ function DashboardContent() {
           <CommandBar />
         </div>
 
-        {/* LAYER 2: PRIMARY KPIs - Staggered Layout */}
+        {/* LAYER 2: PRIMARY KPIs - Aligned Layout */}
         <div
           style={{
             padding: "0 0 var(--space-lg)",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: "var(--space-lg)",
+            alignItems: "stretch",
           }}
         >
-          {/* Staggered positioning using CSS Grid with manual offsets */}
           {canWorks && (
-            <div style={{ marginTop: "0px" }}>
-              <KpiCard
-                label="Obras Activas"
-                value={activeWorks}
-                subtitle={`de ${totalWorks} totales`}
-                icon={Building2}
-                sparklineData={generateSparklineData(activeWorks, 0.15)}
-                onClick={() => router.push("/works")}
-              />
-            </div>
+            <KpiCard
+              label="Obras Activas"
+              value={activeWorks}
+              subtitle={`de ${totalWorks} totales`}
+              icon={Building2}
+              sparklineData={generateSparklineData(activeWorks, 0.15)}
+              onClick={() => router.push("/works")}
+            />
           )}
           {(canAccounting || canIncomes) && (
-            <div style={{ marginTop: "8px" }}>
-              <KpiCard
-                label="Inversión Total"
-                value={formatCurrency(accountingIngresos || totalRevenue)}
-                icon={DollarSign}
-                sparklineData={generateSparklineData(accountingIngresos || totalRevenue, 0.1)}
-                onClick={() => router.push("/accounting")}
-              />
-            </div>
+            <KpiCard
+              label="Inversión Total"
+              value={formatCurrency(Math.max(0, accountingIngresos || totalRevenue || 0))}
+              subtitle="Ingresos totales"
+              icon={DollarSign}
+              sparklineData={generateSparklineData(Math.max(0, accountingIngresos || totalRevenue || 0), 0.1)}
+              onClick={() => router.push("/accounting")}
+            />
           )}
           {canAccounting && (
-            <div style={{ marginTop: "12px" }}>
-              <KpiCard
-                label="Flujo del Mes"
-                value={formatCurrency(monthlyFlow)}
-                subtitle={monthlyFlow >= 0 ? "Positivo" : "Negativo"}
-                icon={TrendingUp}
-                sparklineData={generateSparklineData(Math.abs(monthlyFlow), 0.2)}
-                trend={monthlyFlow >= 0 ? "up" : "down"}
-                onClick={() => router.push("/accounting")}
-              />
-            </div>
+            <KpiCard
+              label="Flujo del Mes"
+              value={formatCurrency(monthlyFlow)}
+              subtitle={monthlyFlow >= 0 ? "Positivo" : "Negativo"}
+              icon={TrendingUp}
+              sparklineData={generateSparklineData(Math.abs(monthlyFlow), 0.2)}
+              trend={monthlyFlow >= 0 ? "up" : "down"}
+              onClick={() => router.push("/accounting")}
+            />
           )}
           {canAlerts && (
-            <div style={{ marginTop: "6px" }}>
-              <KpiCard
-                label="Alertas Críticas"
-                value={highSeverityAlerts}
-                subtitle={pendingAlerts > 0 ? `${pendingAlerts} totales` : "Todo en orden"}
-                icon={Bell}
-                sparklineData={generateSparklineData(highSeverityAlerts, 0.3)}
-                onClick={() => router.push("/alerts")}
-              />
-            </div>
+            <KpiCard
+              label="Alertas Críticas"
+              value={highSeverityAlerts}
+              subtitle={pendingAlerts > 0 ? `${pendingAlerts} totales` : "Todo en orden"}
+              icon={Bell}
+              sparklineData={generateSparklineData(highSeverityAlerts, 0.3)}
+              onClick={() => router.push("/alerts")}
+            />
           )}
           {canUsers && (
-            <div style={{ marginTop: "4px" }}>
-              <KpiCard
-                label="Usuarios Activos"
-                value={activeUsers}
-                subtitle={`de ${totalUsers} totales`}
-                icon={Users}
-                sparklineData={generateSparklineData(activeUsers, 0.05)}
-                onClick={() => router.push("/settings/users")}
-              />
-            </div>
+            <KpiCard
+              label="Usuarios Activos"
+              value={activeUsers}
+              subtitle={`de ${totalUsers} totales`}
+              icon={Users}
+              sparklineData={generateSparklineData(activeUsers, 0.05)}
+              onClick={() => router.push("/settings/users")}
+            />
           )}
         </div>
 
-        {/* LAYER 3: SECONDARY MODULE CARDS - Staggered Grid */}
+        {/* LAYER 3: SECONDARY MODULE CARDS - Aligned Grid */}
         <div
           style={{
             padding: "0 0 var(--space-lg)",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
             gap: "var(--space-lg)",
+            alignItems: "stretch",
           }}
         >
           {canUsers && (
-            <div style={{ marginTop: "0px" }}>
-              <SecondaryCard
-                title="Usuarios"
-                description={`${activeUsers} usuarios activos`}
-                icon={Users}
-                route="/settings/users"
-                kpi={activeUsers}
-                preview={
-                  <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
-                    {totalUsers} totales
-                  </div>
-                }
-              />
-            </div>
+            <SecondaryCard
+              title="Usuarios"
+              description={`${activeUsers} usuarios activos`}
+              icon={Users}
+              route="/settings/users"
+              kpi={activeUsers}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {totalUsers} totales
+                </div>
+              }
+            />
           )}
           {canSuppliers && (
-            <div style={{ marginTop: "10px" }}>
-              <SecondaryCard
-                title="Proveedores"
-                description={`${activeSuppliers} proveedores activos`}
-                icon={Truck}
-                route="/suppliers"
-                kpi={activeSuppliers}
-                preview={
-                  <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
-                    {totalSuppliers} totales
-                  </div>
-                }
-              />
-            </div>
+            <SecondaryCard
+              title="Proveedores"
+              description={`${activeSuppliers} proveedores activos`}
+              icon={Truck}
+              route="/suppliers"
+              kpi={activeSuppliers}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {totalSuppliers} totales
+                </div>
+              }
+            />
           )}
           {canAccounting && (
-            <div style={{ marginTop: "6px" }}>
-              <SecondaryCard
-                title="Contabilidad"
-                description="Movimientos y reportes"
-                icon={Calculator}
-                route="/accounting"
-                kpi={entries?.length || 0}
-                preview={
-                  <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
-                    {formatCurrency(netBalance)} balance
-                  </div>
-                }
-              />
-            </div>
+            <SecondaryCard
+              title="Contabilidad"
+              description="Movimientos y reportes"
+              icon={Calculator}
+              route="/accounting"
+              kpi={entries?.length || 0}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {formatCurrency(netBalance)} balance
+                </div>
+              }
+            />
           )}
           {canAudit && (
-            <div style={{ marginTop: "8px" }}>
-              <SecondaryCard
-                title="Auditoría"
-                description="Registro de cambios"
-                icon={Shield}
-                route="/audit"
-                preview={
-                  <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
-                    Sistema auditado
-                  </div>
-                }
-              />
-            </div>
+            <SecondaryCard
+              title="Auditoría"
+              description="Registro de cambios"
+              icon={Shield}
+              route="/audit"
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  Sistema auditado
+                </div>
+              }
+            />
           )}
           {canCashboxes && (
-            <div style={{ marginTop: "4px" }}>
-              <SecondaryCard
-                title="Cajas"
-                description={`${openCashboxes} cajas abiertas`}
-                icon={Wallet}
-                route="/cashbox"
-                kpi={openCashboxes}
-                preview={
-                  <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
-                    {totalCashboxes} totales
-                  </div>
-                }
-              />
-            </div>
+            <SecondaryCard
+              title="Cajas"
+              description={`${openCashboxes} cajas abiertas`}
+              icon={Wallet}
+              route="/cashbox"
+              kpi={openCashboxes}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {totalCashboxes} totales
+                </div>
+              }
+            />
           )}
           {canDocuments && (
-            <div style={{ marginTop: "12px" }}>
-              <SecondaryCard
-                title="Documentos"
-                description={`${pendingDocuments} pendientes`}
-                icon={FolderOpen}
-                route="/documents"
-                kpi={totalDocuments}
-                preview={
-                  <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
-                    {pendingDocuments > 0 ? `${pendingDocuments} por revisar` : "Al día"}
-                  </div>
-                }
-              />
-            </div>
+            <SecondaryCard
+              title="Documentos"
+              description={`${pendingDocuments} pendientes`}
+              icon={FolderOpen}
+              route="/documents"
+              kpi={totalDocuments}
+              preview={
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)" }}>
+                  {pendingDocuments > 0 ? `${pendingDocuments} por revisar` : "Al día"}
+                </div>
+              }
+            />
           )}
         </div>
 
