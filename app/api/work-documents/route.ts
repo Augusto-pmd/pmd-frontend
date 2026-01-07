@@ -41,34 +41,56 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
-    const bodyText = await request.text();
-    
-    // Validar que el body no esté vacío y sea JSON válido
-    if (!bodyText || bodyText.trim() === "") {
-      return NextResponse.json(
-        { error: "Request body is required" },
-        { status: 400 }
-      );
+    const csrfToken = request.headers.get("x-csrf-token");
+    const contentType = request.headers.get("content-type") || "";
+
+    // Detectar si es FormData (multipart/form-data)
+    // axios puede eliminar el Content-Type, así que verificamos si contiene "multipart"
+    // También intentamos leer como FormData y si funciona, es FormData
+    const isFormData = contentType.includes("multipart");
+
+    let body: BodyInit;
+    const headers: HeadersInit = {
+      Authorization: authHeader ?? "",
+    };
+
+    // Agregar CSRF token si está presente
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
     }
 
-    // Verificar que sea JSON válido antes de forwardear
-    try {
-      JSON.parse(bodyText);
-    } catch (parseError) {
-      console.error("[API WORK-DOCUMENTS POST] Invalid JSON body:", bodyText);
-      return NextResponse.json(
-        { error: "Invalid JSON in request body" },
-        { status: 400 }
-      );
+    if (isFormData) {
+      // Para FormData, usar el body directamente sin parsear
+      body = await request.formData();
+      // No establecer Content-Type para FormData, dejar que fetch lo maneje automáticamente
+    } else {
+      // Para JSON, parsear y validar
+      const bodyText = await request.text();
+      
+      if (!bodyText || bodyText.trim() === "") {
+        return NextResponse.json(
+          { error: "Request body is required" },
+          { status: 400 }
+        );
+      }
+
+      try {
+        JSON.parse(bodyText);
+        headers["Content-Type"] = "application/json";
+        body = bodyText;
+      } catch (parseError) {
+        console.error("[API WORK-DOCUMENTS POST] Invalid JSON body:", bodyText);
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
+      }
     }
 
     const response = await fetch(`${BACKEND_URL}/api/work-documents`, {
       method: "POST",
-      headers: {
-        Authorization: authHeader ?? "",
-        "Content-Type": "application/json",
-      },
-      body: bodyText, // Forwardear el texto original tal cual
+      headers,
+      body,
     });
 
     const text = await response.text();
@@ -87,34 +109,70 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
-    const bodyText = await request.text();
-    
-    // Validar que el body no esté vacío y sea JSON válido
-    if (!bodyText || bodyText.trim() === "") {
-      return NextResponse.json(
-        { error: "Request body is required" },
-        { status: 400 }
-      );
+    const csrfToken = request.headers.get("x-csrf-token");
+    const contentType = request.headers.get("content-type") || "";
+
+    // Detectar si es FormData (multipart/form-data)
+    // axios puede eliminar el Content-Type, así que verificamos si contiene "multipart"
+    const isFormData = contentType.includes("multipart");
+
+    let body: BodyInit;
+    const headers: HeadersInit = {
+      Authorization: authHeader ?? "",
+    };
+
+    // Agregar CSRF token si está presente
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
     }
 
-    // Verificar que sea JSON válido antes de forwardear
-    try {
-      JSON.parse(bodyText);
-    } catch (parseError) {
-      console.error("[API WORK-DOCUMENTS PATCH] Invalid JSON body:", bodyText);
-      return NextResponse.json(
-        { error: "Invalid JSON in request body" },
-        { status: 400 }
-      );
+    // Intentar detectar FormData: si el Content-Type contiene "multipart" o si podemos leerlo como FormData
+    let isFormDataDetected = isFormData;
+    if (!isFormDataDetected) {
+      // Intentar leer como FormData para verificar (sin consumir el body)
+      try {
+        const clonedRequest = request.clone();
+        const testFormData = await clonedRequest.formData();
+        // Si llegamos aquí, es FormData
+        isFormDataDetected = true;
+      } catch {
+        // No es FormData, continuar con JSON
+        isFormDataDetected = false;
+      }
+    }
+
+    if (isFormDataDetected) {
+      // Para FormData, usar el body directamente sin parsear
+      body = await request.formData();
+      // No establecer Content-Type para FormData, dejar que fetch lo maneje automáticamente
+    } else {
+      // Para JSON, parsear y validar
+      const bodyText = await request.text();
+      
+      if (!bodyText || bodyText.trim() === "") {
+        return NextResponse.json(
+          { error: "Request body is required" },
+          { status: 400 }
+        );
+      }
+
+      try {
+        JSON.parse(bodyText);
+        headers["Content-Type"] = "application/json";
+        body = bodyText;
+      } catch (parseError) {
+        console.error("[API WORK-DOCUMENTS PATCH] Invalid JSON body:", bodyText);
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
+      }
     }
 
     const response = await fetch(`${BACKEND_URL}/api/work-documents`, {
       method: "PATCH",
-      headers: {
-        Authorization: authHeader ?? "",
-        "Content-Type": "application/json",
-      },
-      body: bodyText, // Forwardear el texto original tal cual
+      headers,
+      body,
     });
 
     const text = await response.text();

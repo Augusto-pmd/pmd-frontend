@@ -190,7 +190,7 @@ export function DocumentsList({
                     <div className="text-sm font-medium text-gray-900">{doc.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{getWorkName(doc.work_id)}</div>
+                    <div className="text-sm text-gray-600">{getWorkName(doc.workId || doc.work_id)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{doc.version || "-"}</div>
@@ -218,11 +218,44 @@ export function DocumentsList({
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      {doc.url && (
+                      {doc.url && doc.fileUrl && !doc.fileUrl.startsWith("temp://") && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(doc.url, "_blank")}
+                          onClick={async () => {
+                            try {
+                              // Si es una URL HTTP/HTTPS, abrir directamente
+                              if (doc.fileUrl?.startsWith("http://") || doc.fileUrl?.startsWith("https://")) {
+                                window.open(doc.fileUrl, "_blank");
+                              } else {
+                                // Si es un archivo local, descargar desde el endpoint proxy
+                                const response = await fetch(`/api/work-documents/${doc.id}/download`, {
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
+                                  },
+                                });
+                                
+                                if (response.ok) {
+                                  const blob = await response.blob();
+                                  const url = window.URL.createObjectURL(blob);
+                                  const a = document.createElement("a");
+                                  a.href = url;
+                                  // Obtener nombre del archivo del header Content-Disposition
+                                  const contentDisposition = response.headers.get("content-disposition");
+                                  const fileNameMatch = contentDisposition?.match(/filename="?(.+?)"?$/);
+                                  a.download = fileNameMatch ? fileNameMatch[1] : (doc.name || "documento");
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  window.URL.revokeObjectURL(url);
+                                  document.body.removeChild(a);
+                                } else {
+                                  console.error("Error al descargar archivo:", await response.text());
+                                }
+                              }
+                            } catch (error) {
+                              console.error("Error al descargar archivo:", error);
+                            }
+                          }}
                           className="text-pmd-darkBlue hover:text-pmd-mediumBlue"
                         >
                           <Download className="h-4 w-4" />

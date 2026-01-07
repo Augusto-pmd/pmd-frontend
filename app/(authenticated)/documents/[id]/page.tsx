@@ -130,10 +130,71 @@ function DocumentDetailContent() {
               <p className="text-gray-600">Información completa del documento</p>
             </div>
             <div className="flex gap-2">
-              {document.url && (
+              {document.url && document.fileUrl && !document.fileUrl.startsWith("temp://") && (
                 <Button
                   variant="outline"
-                  onClick={() => window.open(document.url, "_blank")}
+                  onClick={async () => {
+                    try {
+                      // Verificar que estamos en el cliente
+                      if (typeof window === "undefined" || typeof document === "undefined") {
+                        toast.error("Error: No se puede descargar en este contexto");
+                        return;
+                      }
+
+                      // Si es una URL HTTP/HTTPS, abrir directamente
+                      if (document.fileUrl?.startsWith("http://") || document.fileUrl?.startsWith("https://")) {
+                        window.open(document.fileUrl, "_blank");
+                      } else {
+                        // Si es un archivo local, descargar desde el endpoint proxy
+                        const token = localStorage.getItem("access_token") || "";
+                        const csrfToken = localStorage.getItem("csrf_token");
+                        
+                        const headers: HeadersInit = {
+                          Authorization: `Bearer ${token}`,
+                        };
+                        if (csrfToken) {
+                          headers["X-CSRF-Token"] = csrfToken;
+                        }
+
+                        const response = await fetch(`/api/work-documents/${document.id}/download`, {
+                          headers,
+                        });
+                        
+                        if (response.ok) {
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          
+                          // Crear elemento <a> de forma segura
+                          const linkElement = window.document.createElement("a");
+                          linkElement.href = url;
+                          
+                          // Obtener nombre del archivo del header Content-Disposition
+                          const contentDisposition = response.headers.get("content-disposition");
+                          const fileNameMatch = contentDisposition?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                          const fileName = fileNameMatch 
+                            ? fileNameMatch[1].replace(/['"]/g, '') 
+                            : (document.name || "documento");
+                          
+                          linkElement.download = fileName;
+                          linkElement.style.display = "none";
+                          
+                          window.document.body.appendChild(linkElement);
+                          linkElement.click();
+                          
+                          // Limpiar
+                          window.URL.revokeObjectURL(url);
+                          window.document.body.removeChild(linkElement);
+                        } else {
+                          const errorText = await response.text();
+                          console.error("Error al descargar archivo:", errorText);
+                          toast.error("Error al descargar el archivo");
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Error al descargar archivo:", error);
+                      toast.error("Error al descargar el archivo");
+                    }
+                  }}
                   className="flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />

@@ -59,14 +59,16 @@ export function DocumentForm({
 
   useEffect(() => {
     if (initialData) {
+      // Asegurar que todos los campos estén definidos correctamente
       setFormData({
-        workId: initialData.workId || defaultWorkId || "",
+        workId: initialData.workId || initialData.work_id || defaultWorkId || "",
         type: initialData.type || "",
-        name: initialData.name || "",
+        name: initialData.name || initialData.nombre || "",
         version: initialData.version || "",
-        status: initialData.status || "pendiente",
-        uploadedBy: initialData.uploadedBy || "",
-        notes: initialData.notes || "",
+        status: (initialData.status || "pendiente") as "aprobado" | "en revisión" | "pendiente" | "rechazado",
+        uploadedBy: initialData.uploadedBy || initialData.uploaded_by || "",
+        notes: initialData.notes || initialData.notes || "",
+        file: null,
       });
     } else if (defaultWorkId) {
       setFormData((prev: typeof formData) => ({ ...prev, workId: defaultWorkId }));
@@ -198,7 +200,7 @@ export function DocumentForm({
 
       <TextareaField
         label="Notas"
-        value={formData.notes}
+        value={formData.notes || ""}
         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         rows={3}
         placeholder="Notas adicionales sobre el documento"

@@ -41,13 +41,96 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     // Construir URL con query string de forma segura
     let url = "/work-documents";
     if (workId && workId.trim()) {
-      url = `${url}?workId=${encodeURIComponent(workId)}`;
+      url = `${url}?work_id=${encodeURIComponent(workId)}`;
     }
 
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get(url);
-      set({ documents: (data as any)?.data || data || [], isLoading: false });
+      const rawDocuments = (data as any)?.data || data || [];
+      
+      // Mapear tipos del backend al frontend
+      const typeMapReverse: Record<string, string> = {
+        "plan": "Planos",
+        "contract": "Contrato",
+        "permit": "Permisos",
+        "invoice": "Otro",
+        "receipt": "Otro",
+        "other": "Otro",
+      };
+
+      // Mapear estados del backend al frontend
+      const statusMapReverse: Record<string, string> = {
+        "pending": "pendiente",
+        "approved": "aprobado",
+        "rejected": "rechazado",
+        "draft": "pendiente",
+      };
+
+      // Normalizar documentos del backend al formato del frontend
+      const normalizedDocuments = rawDocuments.map((doc: any) => {
+        // Usar el campo name del backend si existe, sino extraerlo del file_url
+        let documentName = doc.name;
+        if (!documentName && doc.file_url) {
+          // Si es una URL temporal con formato temp://documentName|fileName o temp://documentName
+          if (doc.file_url.startsWith("temp://")) {
+            const tempContent = doc.file_url.replace("temp://", "");
+            if (tempContent.includes("|")) {
+              // Formato: documentName|fileName
+              documentName = tempContent.split("|")[0];
+            } else {
+              // Formato: documentName
+              documentName = tempContent || typeMapReverse[doc.type] || doc.type || "Documento";
+            }
+          } else {
+            // Intentar extraer nombre del archivo desde la URL real
+            const urlParts = doc.file_url.split("/");
+            const fileName = urlParts[urlParts.length - 1];
+            if (fileName && fileName !== "no-file") {
+              // Remover extensión para el nombre
+              documentName = fileName.split(".")[0] || fileName;
+            } else {
+              // Si no hay nombre válido, usar el tipo como nombre
+              documentName = typeMapReverse[doc.type] || doc.type || "Documento";
+            }
+          }
+        }
+        
+        // Si aún no hay nombre, usar un valor por defecto
+        if (!documentName) {
+          documentName = "Documento sin nombre";
+        }
+
+        // Extraer workId - puede venir de work_id o de la relación work
+        let workId = doc.work_id || doc.workId;
+        if (!workId && doc.work) {
+          workId = typeof doc.work === 'string' ? doc.work : doc.work.id;
+        }
+
+        // Extraer uploadedBy - puede venir de created_by_id o de la relación created_by
+        let uploadedBy = doc.uploaded_by || doc.uploadedBy || doc.created_by_id;
+        if (!uploadedBy && doc.created_by) {
+          uploadedBy = typeof doc.created_by === 'string' ? doc.created_by : doc.created_by.id;
+        }
+
+        return {
+          id: doc.id,
+          workId: workId,
+          type: typeMapReverse[doc.type] || doc.type || "Otro",
+          name: documentName,
+          version: doc.version || "",
+          uploadedAt: doc.created_at || doc.createdAt || doc.uploadedAt || "",
+          uploadedBy: uploadedBy || "",
+          status: statusMapReverse[doc.status] || doc.status || "pendiente",
+          url: doc.file_url || doc.fileUrl || doc.url,
+          fileUrl: doc.file_url || doc.fileUrl || doc.url,
+          notes: doc.notes || "",
+          createdAt: doc.created_at || doc.createdAt,
+          updatedAt: doc.updated_at || doc.updatedAt,
+        };
+      });
+
+      set({ documents: normalizedDocuments, isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [documentsStore] Error al obtener documentos:", error);
@@ -77,26 +160,111 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     try {
-      // Si hay un archivo, usar FormData para multipart/form-data
-      if (payload.file && payload.file instanceof File) {
-        const formData = new FormData();
-        formData.append("file", payload.file);
-        formData.append("name", payload.name);
-        formData.append("type", payload.type);
-        formData.append("workId", payload.workId);
-        if (payload.version) formData.append("version", payload.version);
-        if (payload.status) formData.append("status", payload.status);
-        if (payload.uploadedBy) formData.append("uploadedBy", payload.uploadedBy);
-        if (payload.notes) formData.append("notes", payload.notes);
+      // Mapear tipos de documento del frontend al backend
+      const typeMap: Record<string, string> = {
+        "Planos": "plan",
+        "Memoria descriptiva": "other",
+        "Memoria técnica": "other",
+        "Contrato": "contract",
+        "Permisos": "permit",
+        "Legales": "other",
+        "Especificaciones": "other",
+        "Presupuesto": "other",
+        "Otro": "other",
+      };
 
-        // Usar apiClient.post con FormData (axios maneja multipart automáticamente)
-        await apiClient.post("/work-documents", formData);
-        await get().fetchDocuments(payload.workId);
-      } else {
-        // Si no hay archivo, enviar JSON normal
-        await apiClient.post("/work-documents", payload);
-        await get().fetchDocuments(payload.workId);
+      // Mapear estados del frontend al backend
+      const statusMap: Record<string, string> = {
+        "pendiente": "pending",
+        "en revisión": "pending",
+        "aprobado": "approved",
+        "rechazado": "rejected",
+      };
+
+      const backendType = typeMap[payload.type] || "other";
+      const backendStatus = payload.status ? (statusMap[payload.status.toLowerCase()] || "draft") : "draft";
+
+      // Si hay un archivo, subirlo primero
+      let fileUrl: string | undefined;
+      let suggestedName: string | undefined;
+      if (payload.file && payload.file instanceof File) {
+        try {
+          const formData = new FormData();
+          formData.append("file", payload.file);
+          formData.append("work_id", payload.workId);
+          // Incluir el nombre del documento si se proporciona
+          if (payload.name) {
+            formData.append("name", payload.name);
+          }
+          
+          // Usar fetch directamente a la ruta proxy de Next.js (no apiClient porque duplica /api)
+          const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+          const csrfToken = typeof window !== "undefined" ? localStorage.getItem("csrf_token") : null;
+          
+          const headers: HeadersInit = {};
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+          if (csrfToken) {
+            headers["X-CSRF-Token"] = csrfToken;
+          }
+          
+          const uploadResponse = await fetch("/api/work-documents/upload", {
+            method: "POST",
+            headers,
+            body: formData,
+          });
+          
+          if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text();
+            throw new Error(`Error al subir el archivo: ${errorText}`);
+          }
+          
+          const uploadData = await uploadResponse.json();
+          fileUrl = uploadData?.file_url || uploadData?.data?.file_url;
+          suggestedName = uploadData?.suggested_name || uploadData?.data?.suggested_name;
+        } catch (uploadError) {
+          if (process.env.NODE_ENV === "development") {
+            console.error("🔴 [documentsStore] Error al subir archivo:", uploadError);
+          }
+          throw new Error("Error al subir el archivo. Por favor, intente nuevamente.");
+        }
       }
+
+      // Preparar payload para el backend
+      const backendPayload: any = {
+        work_id: payload.workId, // Cambiar workId a work_id
+        type: backendType,
+        status: backendStatus,
+      };
+
+      // Incluir name si se proporciona, o usar el sugerido del archivo
+      if (payload.name) {
+        backendPayload.name = payload.name;
+      } else if (suggestedName) {
+        backendPayload.name = suggestedName;
+      }
+
+      // Incluir created_by_id si se proporciona uploadedBy
+      if (payload.uploadedBy) {
+        backendPayload.created_by_id = payload.uploadedBy;
+      }
+
+      if (payload.version) backendPayload.version = payload.version;
+      if (payload.notes) backendPayload.notes = payload.notes;
+
+      // Usar la URL del archivo subido o una URL temporal con el nombre del documento
+      if (fileUrl) {
+        backendPayload.file_url = fileUrl;
+      } else {
+        // Si no hay archivo, usar el nombre del documento como URL temporal
+        // Formato: temp://documentName
+        const docName = payload.name || "Documento sin nombre";
+        backendPayload.file_url = `temp://${docName.substring(0, 480)}`;
+      }
+
+      await apiClient.post("/work-documents", backendPayload);
+      await get().fetchDocuments(payload.workId);
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [documentsStore] Error al crear documento:", error);
@@ -121,23 +289,105 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
 
     try {
-      // Si hay un archivo nuevo, usar FormData
-      if (payload.file && payload.file instanceof File) {
-        const formData = new FormData();
-        if (payload.name) formData.append("name", payload.name);
-        if (payload.type) formData.append("type", payload.type);
-        if (payload.workId) formData.append("workId", payload.workId);
-        if (payload.version) formData.append("version", payload.version);
-        if (payload.status) formData.append("status", payload.status);
-        if (payload.uploadedBy) formData.append("uploadedBy", payload.uploadedBy);
-        if (payload.notes) formData.append("notes", payload.notes);
-        formData.append("file", payload.file);
+      // Mapear tipos de documento del frontend al backend
+      const typeMap: Record<string, string> = {
+        "Planos": "plan",
+        "Memoria descriptiva": "other",
+        "Memoria técnica": "other",
+        "Contrato": "contract",
+        "Permisos": "permit",
+        "Legales": "other",
+        "Especificaciones": "other",
+        "Presupuesto": "other",
+        "Otro": "other",
+      };
 
-        await apiClient.put(`/work-documents/${id}`, formData);
-      } else {
-        // Si no hay archivo, enviar JSON normal
-        await apiClient.put(`/work-documents/${id}`, payload);
+      // Mapear estados del frontend al backend
+      const statusMap: Record<string, string> = {
+        "pendiente": "pending",
+        "en revisión": "pending",
+        "aprobado": "approved",
+        "rechazado": "rejected",
+      };
+
+      // Preparar payload para el backend
+      const backendPayload: any = {};
+
+      if (payload.type) {
+        backendPayload.type = typeMap[payload.type] || "other";
       }
+      if (payload.status) {
+        backendPayload.status = statusMap[payload.status.toLowerCase()] || "draft";
+      }
+      if (payload.name !== undefined) backendPayload.name = payload.name || null;
+      if (payload.uploadedBy) {
+        backendPayload.created_by_id = payload.uploadedBy;
+      }
+      if (payload.version !== undefined) backendPayload.version = payload.version || null;
+      if (payload.notes !== undefined) backendPayload.notes = payload.notes || null;
+
+      // Obtener documento actual
+      const currentDocument = get().documents.find((d) => d.id === id);
+
+      // Si hay un archivo nuevo, subirlo primero
+      if (payload.file && payload.file instanceof File) {
+        try {
+          const workId = payload.workId || currentDocument?.workId;
+          
+          if (!workId) {
+            throw new Error("No se pudo determinar la obra del documento");
+          }
+
+          const formData = new FormData();
+          formData.append("file", payload.file);
+          formData.append("work_id", workId);
+          // Incluir el nombre del documento si se proporciona
+          if (payload.name) {
+            formData.append("name", payload.name);
+          }
+          
+          // Usar fetch directamente a la ruta proxy de Next.js (no apiClient porque duplica /api)
+          const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+          const csrfToken = typeof window !== "undefined" ? localStorage.getItem("csrf_token") : null;
+          
+          const headers: HeadersInit = {};
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+          if (csrfToken) {
+            headers["X-CSRF-Token"] = csrfToken;
+          }
+          
+          const uploadResponse = await fetch("/api/work-documents/upload", {
+            method: "POST",
+            headers,
+            body: formData,
+          });
+          
+          if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text();
+            throw new Error(`Error al subir el archivo: ${errorText}`);
+          }
+          
+          const uploadData = await uploadResponse.json();
+          const fileUrl = uploadData?.file_url || uploadData?.data?.file_url;
+          if (fileUrl) {
+            backendPayload.file_url = fileUrl;
+          }
+          
+          // Si no se proporcionó name pero el servidor sugirió uno, usarlo
+          if (!payload.name && uploadResponse?.suggested_name) {
+            backendPayload.name = uploadResponse.suggested_name;
+          }
+        } catch (uploadError) {
+          if (process.env.NODE_ENV === "development") {
+            console.error("🔴 [documentsStore] Error al subir archivo:", uploadError);
+          }
+          throw new Error("Error al subir el archivo. Por favor, intente nuevamente.");
+        }
+      }
+
+      await apiClient.patch(`/work-documents/${id}`, backendPayload);
       
       // Refrescar lista (con workId si está disponible)
       await get().fetchDocuments(payload.workId);
