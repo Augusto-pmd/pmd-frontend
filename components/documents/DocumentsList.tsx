@@ -190,7 +190,7 @@ export function DocumentsList({
                     <div className="text-sm font-medium text-gray-900">{doc.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{getWorkName(doc.workId || doc.work_id)}</div>
+                    <div className="text-sm text-gray-600">{getWorkName(doc.work_id)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{doc.version || "-"}</div>
@@ -218,15 +218,15 @@ export function DocumentsList({
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      {doc.url && doc.fileUrl && !doc.fileUrl.startsWith("temp://") && (
+                      {doc.url && doc.file_url && !doc.file_url.startsWith("temp://") && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={async () => {
                             try {
                               // Si es una URL HTTP/HTTPS, abrir directamente
-                              if (doc.fileUrl?.startsWith("http://") || doc.fileUrl?.startsWith("https://")) {
-                                window.open(doc.fileUrl, "_blank");
+                              if (doc.file_url?.startsWith("http://") || doc.file_url?.startsWith("https://")) {
+                                window.open(doc.file_url, "_blank");
                               } else {
                                 // Si es un archivo local, descargar desde el endpoint proxy
                                 const response = await fetch(`/api/work-documents/${doc.id}/download`, {

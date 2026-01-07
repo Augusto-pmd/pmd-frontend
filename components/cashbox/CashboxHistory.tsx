@@ -125,7 +125,7 @@ export function CashboxHistory({ cashboxId }: CashboxHistoryProps) {
       setIsLoading(false);
       isFetchingRef.current = false;
     }
-  }, [cashboxId, page, limit, filters.type, filters.currency, filters.startDate, filters.endDate]);
+  }, [cashboxId, page, limit, filters, toast]);
 
   // Efecto para manejar cambios en filtros con debounce
   useEffect(() => {
@@ -150,7 +150,7 @@ export function CashboxHistory({ cashboxId }: CashboxHistoryProps) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [cashboxId, filters.type, filters.currency, filters.startDate, filters.endDate, fetchHistory]);
+  }, [cashboxId, filters.type, filters.currency, filters.startDate, filters.endDate, fetchHistory, page]);
 
   // Fetch inmediato cuando cambia la página o el límite (sin debounce)
   useEffect(() => {

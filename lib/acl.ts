@@ -153,7 +153,7 @@ export function useCan(permission: Permission): boolean {
     );
     
     return validPermissions;
-  }, [user?.role?.name, user?.role?.permissions, user?.email]);
+  }, [user]);
   
   // Normalizar a lowercase para comparación case-insensitive
   const lowerPermission = permission.toLowerCase();

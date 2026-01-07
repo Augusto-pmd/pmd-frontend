@@ -376,8 +376,8 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
           }
           
           // Si no se proporcionó name pero el servidor sugirió uno, usarlo
-          if (!payload.name && uploadResponse?.suggested_name) {
-            backendPayload.name = uploadResponse.suggested_name;
+          if (!payload.name && uploadData?.suggested_name) {
+            backendPayload.name = uploadData.suggested_name;
           }
         } catch (uploadError) {
           if (process.env.NODE_ENV === "development") {

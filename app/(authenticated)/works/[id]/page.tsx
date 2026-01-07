@@ -23,7 +23,7 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Edit, Archive, Trash2, UserPlus, Building2, DollarSign, TrendingUp, TrendingDown, Lock, Calendar } from "lucide-react";
 import { parseBackendError } from "@/lib/parse-backend-error";
 import { useAuthStore } from "@/store/authStore";
-import { UpdateWorkData } from "@/lib/types/work";
+import { UpdateWorkData, Currency } from "@/lib/types/work";
 import { User } from "@/lib/types/user";
 import { Supplier } from "@/lib/types/supplier";
 import { ProgressIndicators } from "@/components/works/ProgressIndicators";
@@ -328,7 +328,7 @@ function WorkDetailContent() {
         supplier_id: supplierId,
         rubric_id: rubricId,
         amount_total: amountTotal,
-        currency: currency as "ARS" | "USD",
+        currency: currency === "USD" ? Currency.USD : Currency.ARS,
       });
       toast.success("Proveedor asignado correctamente");
       setIsAssignSupplierModalOpen(false);
