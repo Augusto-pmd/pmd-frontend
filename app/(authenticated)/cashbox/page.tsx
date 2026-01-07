@@ -15,6 +15,8 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 import { CashboxForm } from "./components/CashboxForm";
 import { useToast } from "@/components/ui/Toast";
 import { useCan } from "@/lib/acl";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
+import { CashboxStatus } from "@/lib/types/cashbox";
 
 function CashboxContent() {
   const router = useRouter();
@@ -23,6 +25,9 @@ function CashboxContent() {
   const user = useAuthStore.getState().user;
   const [showForm, setShowForm] = useState(false);
   const [editingCashbox, setEditingCashbox] = useState<any>(null);
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [cashboxToClose, setCashboxToClose] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const toast = useToast();
   const organizationId = (user as any)?.organizationId || (user as any)?.organization?.id;
   
@@ -50,17 +55,25 @@ function CashboxContent() {
     return <LoadingState message="Cargando cajas..." />;
   }
 
-  const handleCloseCashbox = async (id: string) => {
-    if (!confirm("¿Estás seguro de cerrar esta caja? No se podrán agregar más movimientos.")) {
-      return;
-    }
+  const handleCloseCashboxClick = (id: string) => {
+    setCashboxToClose(id);
+    setShowCloseModal(true);
+  };
 
+  const handleConfirmClose = async () => {
+    if (!cashboxToClose) return;
+    
+    setIsClosing(true);
     try {
-      await closeCashbox(id);
+      await closeCashbox(cashboxToClose);
       toast.success("Caja cerrada correctamente");
+      setShowCloseModal(false);
+      setCashboxToClose(null);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Error al cerrar la caja";
       toast.error(errorMessage);
+    } finally {
+      setIsClosing(false);
     }
   };
 
@@ -71,9 +84,17 @@ function CashboxContent() {
   };
 
   const calculateTotalMovements = (cashbox: any) => {
-    // Esto se calculará mejor cuando tengamos los movimientos cargados
-    // Por ahora retornamos el balance si existe
-    return cashbox.balance || 0;
+    // Calcular el total sumando los movimientos de la caja
+    if (cashbox.movements && Array.isArray(cashbox.movements) && cashbox.movements.length > 0) {
+      return cashbox.movements.reduce((total: number, movement: any) => {
+        const amount = Number(movement.amount || 0);
+        // Los ingresos suman, los egresos restan
+        const isIncome = movement.type === "income" || movement.type === "ingreso" || movement.type === "refill";
+        return isIncome ? total + amount : total - amount;
+      }, Number(cashbox.opening_balance_ars || 0));
+    }
+    // Si no hay movimientos, retornar el saldo inicial
+    return Number(cashbox.opening_balance_ars || 0);
   };
 
   const formatDate = (dateString?: string) => {
@@ -191,9 +212,6 @@ function CashboxContent() {
                           Nombre de caja
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          Obra asignada
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           Fecha de apertura
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -203,7 +221,7 @@ function CashboxContent() {
                           Fecha de cierre
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          Total movimientos
+                          Saldo Actual
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           Acciones
@@ -212,7 +230,15 @@ function CashboxContent() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {cashboxes.map((cashbox) => {
-                        const isClosed = cashbox.isClosed || cashbox.closedAt;
+                        // Verificar si la caja está cerrada usando el campo status del backend
+                        // El backend usa CashboxStatus.OPEN o CashboxStatus.CLOSED
+                        const cashboxStatus = cashbox.status?.toLowerCase();
+                        const isClosed = 
+                          cashboxStatus === "closed" || 
+                          cashboxStatus === CashboxStatus.CLOSED ||
+                          cashbox.isClosed || 
+                          cashbox.closedAt ||
+                          (cashbox as any).closing_date;
                         return (
                           <tr key={cashbox.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -222,22 +248,22 @@ function CashboxContent() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">
-                                {(cashbox as any).workId ? getWorkName((cashbox as any).workId) : "-"}
+                                {formatDate(cashbox.opening_date || cashbox.createdAt || cashbox.created_at)}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">
-                                {formatDate(cashbox.createdAt)}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant={isClosed ? "default" : "success"}>
+                              <Badge 
+                                variant={isClosed ? "default" : "success"}
+                                className={isClosed ? "bg-[rgba(255,149,0,0.12)] text-[rgba(255,149,0,1)]" : ""}
+                              >
                                 {isClosed ? "Cerrada" : "Abierta"}
                               </Badge>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">
-                                {cashbox.closedAt ? formatDate(cashbox.closedAt) : "-"}
+                                {(cashbox as any).closing_date || cashbox.closedAt || (cashbox as any).closed_at 
+                                  ? formatDate((cashbox as any).closing_date || cashbox.closedAt || (cashbox as any).closed_at) 
+                                  : "-"}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -258,7 +284,7 @@ function CashboxContent() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleCloseCashbox(cashbox.id)}
+                                    onClick={() => handleCloseCashboxClick(cashbox.id)}
                                   >
                                     Cerrar
                                   </Button>
@@ -275,6 +301,21 @@ function CashboxContent() {
             )}
           </>
         )}
+
+        <ConfirmationModal
+          isOpen={showCloseModal}
+          onClose={() => {
+            setShowCloseModal(false);
+            setCashboxToClose(null);
+          }}
+          onConfirm={handleConfirmClose}
+          title="Cerrar Caja"
+          description="¿Estás seguro de cerrar esta caja? No se podrán agregar más movimientos."
+          confirmText="Cerrar Caja"
+          cancelText="Cancelar"
+          variant="danger"
+          isLoading={isClosing}
+        />
       </div>
   );
 }

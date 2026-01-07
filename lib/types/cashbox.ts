@@ -28,6 +28,7 @@ export interface Cashbox {
   created_at?: string; // Backend field
   closedAt?: string;
   closed_at?: string; // Backend field
+  closing_date?: string; // Backend field (snake_case)
   isClosed?: boolean;
   balance?: number; // Campo genérico para compatibilidad
   opening_balance_ars?: number; // Saldo inicial en ARS

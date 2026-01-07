@@ -196,6 +196,15 @@ export const cashMovementApi = {
   create: (data: CreateCashMovementData) => {
     return apiClient.post("/cash-movements", data);
   },
+  get: (id: string) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashMovementApi.get] id no está definido");
+      }
+      throw new Error("ID de movimiento no está definido");
+    }
+    return apiClient.get(`/cash-movements/${id}`);
+  },
   update: (id: string, data: UpdateCashMovementData) => {
     if (!id) {
       if (process.env.NODE_ENV === "development") {

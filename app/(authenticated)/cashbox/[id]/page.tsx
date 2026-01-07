@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useCashboxStore, CashMovement } from "@/store/cashboxStore";
+import { CashboxStatus } from "@/lib/types/cashbox";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { useWorks } from "@/hooks/api/works";
 import { useAuthStore } from "@/store/authStore";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { MovementForm } from "../components/MovementForm";
 import { useToast } from "@/components/ui/Toast";
@@ -26,6 +28,7 @@ import { refreshPatterns } from "@/lib/refreshData";
 import { cashboxApi } from "@/hooks/api/cashboxes";
 import { useCashbox } from "@/hooks/api/cashboxes";
 import { CashboxHistory } from "@/components/cashbox/CashboxHistory";
+import { useCan } from "@/lib/acl";
 
 function CashboxDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -63,11 +66,22 @@ function CashboxDetailContent() {
   const [adjustmentCurrency, setAdjustmentCurrency] = useState("ARS");
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [showDeleteMovementModal, setShowDeleteMovementModal] = useState(false);
+  const [movementToDelete, setMovementToDelete] = useState<string | null>(null);
+  const [isDeletingMovement, setIsDeletingMovement] = useState(false);
   const toast = useToast();
   const { mutate: mutateCashbox } = useCashbox(cashboxId);
   
-  // Verificar si el usuario es Direction
+  // Verificar permisos
+  // Solo DIRECTION puede eliminar movimientos según el backend
+  const canDeleteMovement = useCan("cashboxes.delete");
+  // ADMINISTRATION y DIRECTION pueden editar movimientos según el backend
+  // Verificar permiso y también el rol directamente como respaldo
+  const hasUpdatePermission = useCan("cashboxes.update");
+  const isAdministration = user?.role?.name?.toLowerCase() === "administration";
   const isDirection = user?.role?.name?.toLowerCase() === "direction";
+  const canUpdateMovement = hasUpdatePermission || isAdministration || isDirection;
+  
   const organizationId = user?.organizationId;
 
   useEffect(() => {
@@ -114,7 +128,14 @@ function CashboxDetailContent() {
     );
   }
 
-  const isClosed = cashbox.isClosed || cashbox.closedAt;
+  // Verificar si la caja está cerrada usando el campo status del backend
+  // El backend usa CashboxStatus.OPEN o CashboxStatus.CLOSED
+  const isClosed = 
+    cashbox.status === "closed" || 
+    cashbox.status === CashboxStatus.CLOSED ||
+    cashbox.isClosed || 
+    cashbox.closedAt ||
+    (cashbox as any).closing_date;
 
   // Calcular totales
   const calculateTotals = () => {
@@ -127,8 +148,9 @@ function CashboxDetailContent() {
     const facturas: CashMovement[] = [];
 
     cashboxMovements.forEach((movement) => {
-      const type = movement.type === "ingreso" || movement.type === "income" ? "ingreso" : "egreso";
-      const amount = movement.amount || 0;
+      const type = movement.type === "ingreso" || movement.type === "income" || movement.type === "refill" ? "ingreso" : "egreso";
+      // Convertir amount a número, manejando strings, null, undefined
+      const amount = Number(movement.amount) || 0;
 
       if (type === "ingreso") {
         totalIngresos += amount;
@@ -147,7 +169,8 @@ function CashboxDetailContent() {
 
     // Usar opening_balance_ars si está disponible, sino usar balance como fallback
     // El backend actualiza opening_balance_ars automáticamente cuando se crea un refuerzo
-    const saldoInicial = cashbox.opening_balance_ars ?? cashbox.balance ?? 0;
+    // Convertir a número para evitar NaN (el backend puede devolver strings para decimales)
+    const saldoInicial = Number(cashbox.opening_balance_ars) || Number(cashbox.balance) || 0;
     const saldoFinal = saldoInicial + totalIngresos - totalEgresos;
     const diferencia = saldoFinal;
 
@@ -238,22 +261,63 @@ function CashboxDetailContent() {
     }
   };
 
-  const handleDeleteMovement = async (movementId: string) => {
-    if (!confirm("¿Estás seguro de eliminar este movimiento?")) {
-      return;
-    }
+  const handleDeleteMovementClick = (movementId: string) => {
+    setMovementToDelete(movementId);
+    setShowDeleteMovementModal(true);
+  };
 
+  const handleConfirmDeleteMovement = async () => {
+    if (!movementToDelete || !cashboxId) return;
+    
+    setIsDeletingMovement(true);
     try {
-      await deleteMovement(cashboxId, movementId);
+      await deleteMovement(cashboxId, movementToDelete);
       toast.success("Movimiento eliminado");
+      setShowDeleteMovementModal(false);
+      setMovementToDelete(null);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Error al eliminar movimiento";
       toast.error(errorMessage);
+    } finally {
+      setIsDeletingMovement(false);
     }
   };
 
-  const handleEditMovement = (movement: CashMovement) => {
-    setEditingMovement(movement);
+  const handleEditMovement = async (movement: CashMovement) => {
+    try {
+      // Obtener el movimiento completo con todas sus relaciones desde el backend
+      const { cashMovementApi } = await import("@/hooks/api/cashboxes");
+      const fullMovement = await cashMovementApi.get(movement.id);
+      setEditingMovement((fullMovement as any)?.data || fullMovement);
+      setShowMovementForm(true);
+    } catch (error) {
+      // Si falla, usar el movimiento que ya tenemos (puede no tener todas las relaciones)
+      console.warn("No se pudo obtener el movimiento completo, usando datos disponibles:", error);
+      setEditingMovement(movement);
+      setShowMovementForm(true);
+    }
+  };
+
+  const handleNewMovement = async () => {
+    // Refrescar la caja antes de abrir el formulario para asegurar estado actualizado
+    await fetchCashboxes();
+    const updatedCashbox = cashboxes.find((c) => c.id === cashboxId);
+    
+    // Verificar estado usando el campo status del backend
+    const cashboxStatus = updatedCashbox?.status?.toLowerCase();
+    const isActuallyClosed = 
+      cashboxStatus === "closed" || 
+      cashboxStatus === CashboxStatus.CLOSED ||
+      updatedCashbox?.isClosed || 
+      updatedCashbox?.closedAt ||
+      (updatedCashbox as any)?.closing_date;
+    
+    if (isActuallyClosed) {
+      toast.error("No se pueden crear movimientos en una caja cerrada. Por favor, abre la caja primero.");
+      return;
+    }
+    
+    setEditingMovement(null);
     setShowMovementForm(true);
   };
 
@@ -349,10 +413,7 @@ function CashboxDetailContent() {
                 <>
                   <Button
                     variant="primary"
-                    onClick={() => {
-                      setEditingMovement(null);
-                      setShowMovementForm(true);
-                    }}
+                    onClick={handleNewMovement}
                   >
                     Nuevo movimiento
                   </Button>
@@ -1180,7 +1241,7 @@ function CashboxDetailContent() {
                         <th style={{ padding: "14px 16px", textAlign: "left", font: "var(--font-label)", color: "var(--apple-text-secondary)" }}>
                           Notas
                         </th>
-                        {!isClosed && (
+                        {!isClosed && (canUpdateMovement || canDeleteMovement) && (
                           <th style={{ padding: "14px 16px", textAlign: "left", font: "var(--font-label)", color: "var(--apple-text-secondary)" }}>
                             Acciones
                           </th>
@@ -1218,35 +1279,62 @@ function CashboxDetailContent() {
                               {isIncome ? "+" : "-"} {formatCurrency(Math.abs(movement.amount || 0))}
                             </td>
                             <td style={{ padding: "12px 16px", font: "var(--font-body)", color: "var(--apple-text-primary)" }}>
-                              {movement.invoiceNumber ? `#${movement.invoiceNumber}` : "-"}
+                              {(() => {
+                                // Obtener número de documento del expense relacionado
+                                const expense = (movement as any).expense;
+                                const docNumber = expense?.document_number || expense?.documentNumber || movement.invoiceNumber;
+                                return docNumber ? `#${docNumber}` : "-";
+                              })()}
                             </td>
                             <td style={{ padding: "12px 16px", font: "var(--font-body)", color: "var(--apple-text-primary)" }}>
-                              {getSupplierName(movement.supplierId)}
+                              {(() => {
+                                // Obtener proveedor del expense relacionado
+                                const expense = (movement as any).expense;
+                                const supplierId = expense?.supplier_id || expense?.supplierId || expense?.supplier?.id || movement.supplierId;
+                                return getSupplierName(supplierId);
+                              })()}
                             </td>
                             <td style={{ padding: "12px 16px", font: "var(--font-body)", color: "var(--apple-text-primary)" }}>
-                              {getWorkName(movement.workId)}
+                              {(() => {
+                                // Obtener obra del expense relacionado
+                                const expense = (movement as any).expense;
+                                const workId = expense?.work_id || expense?.workId || expense?.work?.id || movement.workId;
+                                return getWorkName(workId);
+                              })()}
                             </td>
                             <td style={{ padding: "12px 16px", font: "var(--font-body)", color: "var(--apple-text-secondary)", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {movement.notes || movement.description || "-"}
+                              {(() => {
+                                let notes = movement.notes || movement.description || "";
+                                // Si es un ingreso, remover la parte de "Responsable: ..." de las notas
+                                if (isIncome && notes) {
+                                  // Formato: "Responsable: [nombre] | [observaciones]" o "Responsable: [nombre]"
+                                  notes = notes.replace(/Responsable:\s*[^|]+\s*\|\s*/, "").replace(/Responsable:\s*[^|]+/, "").trim();
+                                }
+                                return notes || "-";
+                              })()}
                             </td>
-                            {!isClosed && (
+                            {!isClosed && (canUpdateMovement || canDeleteMovement) && (
                               <td style={{ padding: "12px 16px" }}>
                                 <div style={{ display: "flex", gap: "var(--space-xs)" }}>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEditMovement(movement)}
-                                  >
-                                    Editar
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteMovement(movement.id)}
-                                    style={{ color: "rgba(255, 59, 48, 1)" }}
-                                  >
-                                    Eliminar
-                                  </Button>
+                                  {canUpdateMovement && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditMovement(movement)}
+                                    >
+                                      Editar
+                                    </Button>
+                                  )}
+                                  {canDeleteMovement && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteMovementClick(movement.id)}
+                                      style={{ color: "rgba(255, 59, 48, 1)" }}
+                                    >
+                                      Eliminar
+                                    </Button>
+                                  )}
                                 </div>
                               </td>
                             )}
@@ -1263,6 +1351,22 @@ function CashboxDetailContent() {
 
         {/* Historial detallado */}
         <CashboxHistory cashboxId={cashboxId} />
+
+        {/* Modal de confirmación para eliminar movimiento */}
+        <ConfirmationModal
+          isOpen={showDeleteMovementModal}
+          onClose={() => {
+            setShowDeleteMovementModal(false);
+            setMovementToDelete(null);
+          }}
+          onConfirm={handleConfirmDeleteMovement}
+          title="Eliminar Movimiento"
+          description="¿Estás seguro de eliminar este movimiento? Esta acción no se puede deshacer."
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+          variant="danger"
+          isLoading={isDeletingMovement}
+        />
       </div>
   );
 }

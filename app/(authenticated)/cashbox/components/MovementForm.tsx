@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useCashboxStore, CashMovement } from "@/store/cashboxStore";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { useWorks } from "@/hooks/api/works";
+import { useRubrics } from "@/hooks/api/rubrics";
+import { expenseApi } from "@/hooks/api/expenses";
+import { CreateExpenseData, UpdateExpenseData } from "@/lib/types/expense";
+import { Currency } from "@/lib/types/work";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
@@ -30,7 +34,7 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [supplierId, setSupplierId] = useState(normalizeId(initialData?.supplierId));
   const [workId, setWorkId] = useState(normalizeId(initialData?.workId));
-  const [category, setCategory] = useState(initialData?.category || "");
+  const [rubricId, setRubricId] = useState(initialData?.category || "");
   const [date, setDate] = useState(
     initialData?.date ? new Date(initialData.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
   );
@@ -43,16 +47,125 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
   const { createMovement, updateMovement } = useCashboxStore();
   const { suppliers, isLoading: suppliersLoading } = useSuppliers();
   const { works, isLoading: worksLoading } = useWorks();
+  const { rubrics, isLoading: rubricsLoading } = useRubrics();
   const toast = useToast();
 
-  // Resetear documentType cuando cambia movementType
+  // Actualizar estados cuando cambia initialData (para edición)
   useEffect(() => {
-    if (movementType === "ingreso") {
+    if (initialData) {
+      // Determinar tipo de movimiento
+      const isIncome = initialData.type === "ingreso" || initialData.type === "income" || initialData.type === "refill";
+      setMovementType(isIncome ? "ingreso" : "egreso");
+      
+      // Extraer datos del movimiento base
+      setAmount(initialData.amount?.toString() || "");
+      setDate(
+        initialData.date
+          ? new Date(initialData.date).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0]
+      );
+      setNotes(initialData.notes || initialData.description || "");
+      
+      // Si es un egreso y tiene expense relacionado, extraer datos de ahí
+      if (!isIncome) {
+        const expense = (initialData as any).expense;
+        
+        if (expense) {
+          // Mapear document_type a typeDocument
+          // El backend usa: invoice_a, invoice_b, invoice_c, receipt, val
+          // El frontend usa: factura, comprobante
+          let docType: "factura" | "comprobante" | null = null;
+          if (expense.document_type) {
+            if (expense.document_type === "invoice_a" || expense.document_type === "invoice_b" || expense.document_type === "invoice_c") {
+              docType = "factura";
+            } else if (expense.document_type === "receipt" || expense.document_type === "val") {
+              docType = "comprobante";
+            }
+          }
+          setDocumentType(docType);
+          
+          // Extraer datos del expense
+          setSupplierId(normalizeId(expense.supplier_id || expense.supplierId || expense.supplier?.id));
+          setWorkId(normalizeId(expense.work_id || expense.workId || expense.work?.id));
+          setInvoiceNumber(expense.document_number || expense.documentNumber || "");
+          setRubricId(normalizeId(expense.rubric_id || expense.rubric?.id || ""));
+        } else {
+          // Si no hay expense, usar datos directos del movimiento como fallback
+          setDocumentType(initialData.typeDocument || null);
+          setSupplierId(normalizeId(initialData.supplierId));
+          setWorkId(normalizeId(initialData.workId));
+          setInvoiceNumber(initialData.invoiceNumber || "");
+          setRubricId(normalizeId(initialData.category || ""));
+        }
+      } else {
+        // Si es ingreso, resetear campos de egreso
+        setDocumentType(null);
+        setSupplierId("");
+        setWorkId("");
+        setInvoiceNumber("");
+        setRubricId("");
+      }
+      
+      // Si es un ingreso, extraer el responsable de la descripción o del income
+      if (isIncome) {
+        const income = (initialData as any).income;
+        let responsibleValue = "";
+        
+        // Intentar extraer de la descripción del movimiento (formato: "Responsable: [nombre] | [notas]")
+        const description = initialData.description || initialData.notes || "";
+        const responsibleMatch = description.match(/Responsable:\s*([^|]+)/);
+        if (responsibleMatch) {
+          responsibleValue = responsibleMatch[1].trim();
+        }
+        
+        // Si no está en la descripción, intentar del income (aunque no tiene ese campo normalmente)
+        if (!responsibleValue && income) {
+          responsibleValue = income.responsible || income.delivered_by || income.deliveredBy || "";
+        }
+        
+        // Si tampoco está en income, usar el campo directo (fallback)
+        if (!responsibleValue) {
+          responsibleValue = initialData.responsible || "";
+        }
+        
+        setResponsible(responsibleValue);
+        
+        // Extraer las notas sin el responsable si está presente
+        if (responsibleMatch) {
+          const notesWithoutResponsible = description.replace(/Responsable:\s*[^|]+\s*\|\s*/, "").replace(/Responsable:\s*[^|]+/, "").trim();
+          if (notesWithoutResponsible) {
+            setNotes(notesWithoutResponsible);
+          }
+        } else if (description && !responsibleMatch) {
+          setNotes(description);
+        }
+      } else {
+        setResponsible("");
+      }
+    } else {
+      // Resetear formulario cuando no hay initialData (nuevo movimiento)
+      setMovementType("egreso");
+      setDocumentType(null);
+      setAmount("");
+      setSupplierId("");
+      setWorkId("");
+      setRubricId("");
+      setDate(new Date().toISOString().split("T")[0]);
+      setNotes("");
+      setInvoiceNumber("");
+      setResponsible("");
+    }
+    setErrors({});
+  }, [initialData]);
+
+  // Resetear documentType cuando cambia movementType (solo si no hay initialData)
+  useEffect(() => {
+    if (movementType === "ingreso" && !initialData) {
       setDocumentType(null);
       setInvoiceNumber("");
       setSupplierId("");
     }
-  }, [movementType]);
+  }, [movementType, initialData]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -74,7 +187,20 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
         newErrors.supplierId = "El proveedor es obligatorio para facturas";
       }
       if (!workId || workId.trim() === "") {
-        newErrors.workId = "La obra es obligatoria para facturas";
+        newErrors.workId = "La obra es obligatoria";
+      }
+      if (!rubricId || rubricId.trim() === "") {
+        newErrors.rubricId = "La rúbrica es obligatoria";
+      }
+    }
+
+    // Validaciones para Egreso con Comprobante
+    if (movementType === "egreso" && documentType === "comprobante") {
+      if (!workId || workId.trim() === "") {
+        newErrors.workId = "La obra es obligatoria";
+      }
+      if (!rubricId || rubricId.trim() === "") {
+        newErrors.rubricId = "La rúbrica es obligatoria";
       }
     }
 
@@ -92,6 +218,77 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
 
     setIsSubmitting(true);
     try {
+      let expenseId: string | undefined = undefined;
+
+      // Si es un egreso con datos de factura/comprobante, crear o actualizar el Expense
+      // El backend requiere work_id siempre, así que solo creamos expense si tenemos workId y rubricId
+      if (movementType === "egreso" && documentType && workId && rubricId) {
+        // Mapear documentType del frontend al enum del backend
+        let backendDocumentType: "invoice_a" | "invoice_b" | "invoice_c" | "receipt" | "val";
+        if (documentType === "factura") {
+          // Por defecto usar invoice_a, pero podríamos permitir seleccionar el tipo
+          backendDocumentType = "invoice_a";
+        } else {
+          backendDocumentType = "receipt";
+        }
+
+        const expensePayload: CreateExpenseData = {
+          work_id: normalizeId(workId),
+          rubric_id: normalizeId(rubricId),
+          amount: parseFloat(amount),
+          currency: Currency.ARS,
+          purchase_date: new Date(date).toISOString().split("T")[0],
+          document_type: backendDocumentType,
+          observations: notes.trim() || undefined,
+        };
+
+        // Agregar supplier_id si está presente (requerido para facturas, opcional para comprobantes)
+        if (supplierId && supplierId.trim() !== "") {
+          expensePayload.supplier_id = normalizeId(supplierId);
+        }
+
+        // Agregar document_number si es factura
+        if (documentType === "factura" && invoiceNumber && invoiceNumber.trim() !== "") {
+          expensePayload.document_number = invoiceNumber.trim();
+        }
+
+        if (initialData?.id) {
+          // Si estamos editando y ya tiene un expense, actualizarlo
+          const existingExpense = (initialData as any).expense;
+          if (existingExpense?.id) {
+            // Para actualizar, no incluir work_id ni currency (no se pueden actualizar)
+            const updatePayload: UpdateExpenseData = {
+              rubric_id: normalizeId(rubricId),
+              amount: parseFloat(amount),
+              purchase_date: new Date(date).toISOString().split("T")[0],
+              document_type: backendDocumentType,
+              observations: notes.trim() || undefined,
+            };
+
+            // Agregar supplier_id si está presente
+            if (supplierId && supplierId.trim() !== "") {
+              updatePayload.supplier_id = normalizeId(supplierId);
+            }
+
+            // Agregar document_number si es factura
+            if (documentType === "factura" && invoiceNumber && invoiceNumber.trim() !== "") {
+              updatePayload.document_number = invoiceNumber.trim();
+            }
+
+            await expenseApi.update(existingExpense.id, updatePayload);
+            expenseId = existingExpense.id;
+          } else {
+            // Si no tiene expense, crear uno nuevo
+            const newExpense = await expenseApi.create(expensePayload);
+            expenseId = (newExpense as any)?.id || (newExpense as any)?.data?.id;
+          }
+        } else {
+          // Crear nuevo expense
+          const newExpense = await expenseApi.create(expensePayload);
+          expenseId = (newExpense as any)?.id || (newExpense as any)?.data?.id;
+        }
+      }
+
       // Construir payload exacto según CreateCashMovementDto del backend
       const payload: any = {
         cashbox_id: cashboxId, // required, UUID
@@ -102,19 +299,26 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
       };
 
       // Campos opcionales
-      if (notes.trim()) payload.description = notes.trim();
-
-      // Campos específicos para Egreso (expense)
-      if (movementType === "egreso") {
-        // Si hay expense_id, agregarlo
-        // Si hay income_id, agregarlo (aunque no debería haberlo en egreso)
-        // El backend maneja expense_id e income_id según el tipo
+      // Para refuerzos (ingresos), incluir el responsable en la descripción si está presente
+      if (movementType === "ingreso") {
+        let descriptionParts: string[] = [];
+        if (responsible && responsible.trim()) {
+          descriptionParts.push(`Responsable: ${responsible.trim()}`);
+        }
+        if (notes.trim()) {
+          descriptionParts.push(notes.trim());
+        }
+        if (descriptionParts.length > 0) {
+          payload.description = descriptionParts.join(" | ");
+        }
+      } else {
+        // Para egresos, solo usar las notas
+        if (notes.trim()) payload.description = notes.trim();
       }
 
-      // Campos específicos para Ingreso (income)
-      if (movementType === "ingreso") {
-        // Si hay income_id, agregarlo
-        // Si hay expense_id, agregarlo (aunque no debería haberlo en ingreso)
+      // Asociar expense_id si se creó/actualizó un expense
+      if (expenseId) {
+        payload.expense_id = expenseId;
       }
 
       if (initialData?.id) {
@@ -238,8 +442,8 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
             </FormField>
           )}
 
-          {/* Obra (obligatoria para Factura) */}
-          {movementType === "egreso" && documentType === "factura" && (
+          {/* Obra (obligatoria para Factura y Comprobante) */}
+          {movementType === "egreso" && documentType && (
             <FormField label="Obra" required error={errors.workId}>
               <Select
                 value={workId}
@@ -269,15 +473,24 @@ export function MovementForm({ cashboxId, onSuccess, onCancel, initialData }: Mo
             </FormField>
           )}
 
-          {/* Categoría */}
-          <FormField label="Categoría">
-            <Input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Ej: Materiales, Servicios, etc."
-            />
-          </FormField>
+          {/* Categoría/Rúbrica (solo para Egreso) */}
+          {movementType === "egreso" && documentType && (
+            <FormField label="Rúbrica/Categoría" required>
+              <Select
+                value={rubricId}
+                onChange={(e) => setRubricId(e.target.value)}
+                disabled={rubricsLoading}
+                required
+              >
+                <option value="">Seleccionar rúbrica</option>
+                {rubrics?.map((rubric: any) => (
+                  <option key={rubric.id} value={normalizeId(rubric.id)}>
+                    {rubric.name || rubric.code || `Rúbrica ${rubric.id.slice(0, 8)}`}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+          )}
 
           {/* Observaciones/Notas */}
           <FormField label={movementType === "ingreso" ? "Observaciones (opcional)" : "Notas"}>

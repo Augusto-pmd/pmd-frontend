@@ -273,7 +273,8 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
       if (payload.expense_id !== undefined) movementPayload.expense_id = payload.expense_id;
       if (payload.income_id !== undefined) movementPayload.income_id = payload.income_id;
       
-      await apiClient.put(`/cash-movements/${id}`, movementPayload);
+      // Usar PATCH en lugar de PUT (el backend usa @Patch)
+      await apiClient.patch(`/cash-movements/${id}`, movementPayload);
       await get().fetchMovements(cashboxId);
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {

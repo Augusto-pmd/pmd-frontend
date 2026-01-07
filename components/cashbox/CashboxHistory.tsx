@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { cashboxApi } from "@/hooks/api/cashboxes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -55,9 +55,23 @@ export function CashboxHistory({ cashboxId }: CashboxHistoryProps) {
     endDate: "",
   });
   const toast = useToast();
+  const isFetchingRef = useRef(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFetchParamsRef = useRef<string>("");
 
   const fetchHistory = useCallback(async () => {
-    if (!cashboxId) return;
+    if (!cashboxId || isFetchingRef.current) return;
+    
+    // Crear una clave única para esta petición basada en los parámetros
+    const fetchKey = JSON.stringify({ cashboxId, page, limit, filters });
+    
+    // Si los parámetros no han cambiado, no hacer la petición
+    if (lastFetchParamsRef.current === fetchKey) {
+      return;
+    }
+    
+    isFetchingRef.current = true;
+    lastFetchParamsRef.current = fetchKey;
     setIsLoading(true);
     try {
       const response = await cashboxApi.getHistory(cashboxId, {
@@ -68,18 +82,84 @@ export function CashboxHistory({ cashboxId }: CashboxHistoryProps) {
         ...(filters.startDate && { startDate: filters.startDate }),
         ...(filters.endDate && { endDate: filters.endDate }),
       }) as any;
-      setHistory((response?.data || response) as HistoryResponse);
+      
+      // El backend devuelve directamente el objeto con data, total, page, limit, summary
+      // No está envuelto en otro objeto data
+      const historyData = response?.data || response;
+      
+      // Verificar que tenga la estructura esperada
+      if (historyData && (Array.isArray(historyData.data) || historyData.total !== undefined)) {
+        setHistory(historyData as HistoryResponse);
+      } else {
+        // Si la respuesta no tiene la estructura esperada, intentar construirla
+        if (Array.isArray(historyData)) {
+          setHistory({
+            data: historyData,
+            total: historyData.length,
+            page: 1,
+            limit: historyData.length,
+            summary: {
+              totalRefills: 0,
+              totalExpenses: 0,
+              totalIncomes: 0,
+              totalRefillsAmount: 0,
+              totalExpensesAmount: 0,
+              totalIncomesAmount: 0,
+            },
+          });
+        } else {
+          setHistory(null);
+        }
+      }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Error al cargar historial";
-      toast.error(errorMessage);
+      // Solo mostrar error si no es un error 429 (Too Many Requests)
+      if (error?.response?.status !== 429) {
+        const errorMessage = error?.response?.data?.message || error?.message || "Error al cargar historial";
+        toast.error(errorMessage);
+      }
+      // No limpiar history en caso de error 429 para mantener los datos anteriores
+      if (error?.response?.status !== 429) {
+        setHistory(null);
+      }
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [cashboxId, page, limit, filters.type, filters.currency, filters.startDate, filters.endDate, toast]);
+  }, [cashboxId, page, limit, filters.type, filters.currency, filters.startDate, filters.endDate]);
 
+  // Efecto para manejar cambios en filtros con debounce
   useEffect(() => {
+    // Limpiar timer anterior
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Resetear página cuando cambian los filtros (excepto en el primer render)
+    if (page !== 1) {
+      setPage(1);
+      return;
+    }
+    
+    // Debounce de 500ms para filtros
+    debounceTimerRef.current = setTimeout(() => {
+      fetchHistory();
+    }, 500);
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [cashboxId, filters.type, filters.currency, filters.startDate, filters.endDate, fetchHistory]);
+
+  // Fetch inmediato cuando cambia la página o el límite (sin debounce)
+  useEffect(() => {
+    // Evitar fetch en el primer render si ya se ejecutó el efecto de filtros
+    if (page === 1 && debounceTimerRef.current) {
+      return;
+    }
     fetchHistory();
-  }, [fetchHistory]);
+  }, [page, limit, fetchHistory]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -293,7 +373,25 @@ export function CashboxHistory({ cashboxId }: CashboxHistoryProps) {
                           {isIncome ? "+" : "-"} {formatCurrency(item.amount, item.currency)}
                         </td>
                         <td style={{ padding: "12px 16px", font: "var(--font-body)", color: "var(--apple-text-secondary)", maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {item.description || "-"}
+                          {(() => {
+                            let descriptionText = item.description || "-";
+                            if (descriptionText !== "-") {
+                              // Remover "Responsable: [name] | " de la descripción para movimientos de ingreso
+                              if (isIncome) {
+                                const responsibleMatch = descriptionText.match(/Responsable:\s*[^|]+\s*\|\s*(.*)/);
+                                if (responsibleMatch && responsibleMatch[1]) {
+                                  descriptionText = responsibleMatch[1].trim();
+                                } else {
+                                  // Si solo hay "Responsable: [name]" sin otras notas
+                                  const onlyResponsibleMatch = descriptionText.match(/Responsable:\s*[^|]+/);
+                                  if (onlyResponsibleMatch && onlyResponsibleMatch[0] === descriptionText.trim()) {
+                                    descriptionText = "-"; // Mostrar como vacío si solo hay responsable
+                                  }
+                                }
+                              }
+                            }
+                            return descriptionText;
+                          })()}
                         </td>
                       </tr>
                     );
