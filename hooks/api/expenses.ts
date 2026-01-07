@@ -63,7 +63,8 @@ export const expenseApi = {
       }
       throw new Error("ID de gasto no está definido");
     }
-    return apiClient.put<Expense>(`/expenses/${id}`, data);
+    // El backend usa PATCH, no PUT
+    return apiClient.patch<Expense>(`/expenses/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {
@@ -81,7 +82,8 @@ export const expenseApi = {
       }
       throw new Error("ID de gasto no está definido");
     }
-    return apiClient.patch<Expense>(`/expenses/${id}/validate`, {
+    // El backend usa POST, no PATCH
+    return apiClient.post<Expense>(`/expenses/${id}/validate`, {
       state,
       observations,
     });

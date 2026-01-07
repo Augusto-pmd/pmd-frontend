@@ -92,6 +92,18 @@ function ExpenseDetailContent() {
     }).format(amount);
   };
 
+  const formatDocumentType = (docType?: string) => {
+    if (!docType) return "-";
+    const typeMap: Record<string, string> = {
+      invoice_a: "Factura A",
+      invoice_b: "Factura B",
+      invoice_c: "Factura C",
+      receipt: "Recibo",
+      val: "VAL",
+    };
+    return typeMap[docType.toLowerCase()] || docType;
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "No especificada";
     try {
@@ -212,7 +224,7 @@ function ExpenseDetailContent() {
             {renderField("Monto", expense.amount, formatCurrency)}
             {renderField("Fecha de compra", expense.purchase_date || expense.date, formatDate)}
             {renderField("Categoría", expense.category)}
-            {renderField("Tipo de documento", expense.document_type)}
+            {renderField("Tipo de documento", formatDocumentType(expense.document_type))}
             {renderField("Número de documento", expense.document_number)}
             {renderField("Moneda", expense.currency)}
             {renderField("Observaciones", expense.observations)}
@@ -257,7 +269,7 @@ function ExpenseDetailContent() {
           )}
           
           {/* Sección especial para VAL generado automáticamente */}
-          {expense.document_type === "VAL" && expense.document_number && (
+          {expense.document_type === "val" && expense.document_number && (
             <div className="pt-4 border-t border-gray-200">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">

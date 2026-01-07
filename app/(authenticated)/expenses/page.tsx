@@ -47,14 +47,20 @@ function ExpensesContent() {
   const canValidate = useCan("expenses.validate");
   const isDirection = user?.role?.name === "DIRECTION";
 
-  const totalExpenses = expenses?.reduce((sum: number, exp: Expense) => sum + (exp.amount || 0), 0) || 0;
+  const totalExpenses = expenses?.reduce((sum: number, exp: Expense) => {
+    const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(String(exp.amount || 0)) || 0;
+    return sum + amount;
+  }, 0) || 0;
   const thisMonth = new Date().getMonth();
   const thisYear = new Date().getFullYear();
   const thisMonthExpenses =
     expenses?.filter((exp: Expense) => {
       const expDate = new Date(exp.date || exp.purchase_date);
       return expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear;
-    }).reduce((sum: number, exp: Expense) => sum + (exp.amount || 0), 0) || 0;
+    }).reduce((sum: number, exp: Expense) => {
+      const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(String(exp.amount || 0)) || 0;
+      return sum + amount;
+    }, 0) || 0;
 
   const handleCreate = () => {
     setEditingExpense(null);
@@ -329,8 +335,8 @@ function ExpensesContent() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Expenses – PMD Backend Integration</h1>
-            <p className="text-gray-600">Track and manage all expenses</p>
+            <h1 className="text-3xl font-bold text-pmd-darkBlue mb-2">Gastos</h1>
+            <p className="text-gray-600">Rastrea y gestiona todos los gastos</p>
           </div>
           {canCreate && (
             <Button onClick={handleCreate}>+ Crear Gasto</Button>
@@ -341,29 +347,29 @@ function ExpensesContent() {
           <div className="mb-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Total Expenses</p>
-                <p className="text-2xl font-bold text-pmd-darkBlue">${totalExpenses.toFixed(2)}</p>
+                <p className="text-sm text-gray-600 mb-1">Total de gastos</p>
+                <p className="text-2xl font-bold text-pmd-darkBlue">${(Number(totalExpenses) || 0).toFixed(2)}</p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">This Month</p>
-                <p className="text-2xl font-bold text-pmd-darkBlue">${thisMonthExpenses.toFixed(2)}</p>
+                <p className="text-sm text-gray-600 mb-1">Este mes</p>
+                <p className="text-2xl font-bold text-pmd-darkBlue">${(Number(thisMonthExpenses) || 0).toFixed(2)}</p>
               </div>
               <div className="bg-gray-50 rounded-pmd p-4">
-                <p className="text-sm text-gray-600 mb-1">Average per Month</p>
+                <p className="text-sm text-gray-600 mb-1">Promedio por mes</p>
                 <p className="text-2xl font-bold text-pmd-darkBlue">
-                  ${expenses?.length ? (totalExpenses / expenses.length).toFixed(2) : "0.00"}
+                  ${expenses?.length ? (Number(totalExpenses) / expenses.length || 0).toFixed(2) : "0.00"}
                 </p>
               </div>
             </div>
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Expense List</h2>
+            <h2 className="text-lg font-semibold text-pmd-darkBlue mb-4">Listado de gastos</h2>
             {expenses?.length === 0 ? (
               <EmptyState
-                title="No expenses found"
-                description="Create your first expense to get started"
-                action={<Button onClick={handleCreate}>Create Expense</Button>}
+                title="No se encontraron gastos"
+                description="Crea tu primer gasto para comenzar"
+                action={<Button onClick={handleCreate}>Crear gasto</Button>}
               />
             ) : (
               <div className="overflow-x-auto">
@@ -397,10 +403,10 @@ function ExpensesContent() {
                           <td className="px-4 py-3 text-sm text-gray-900">{expense.description || "-"}</td>
                           <td className="px-4 py-3 text-sm text-gray-900">{expense.category || "-"}</td>
                           <td className="px-4 py-3 text-sm text-gray-900 font-semibold">
-                            ${expense.amount?.toFixed(2) || "0.00"}
+                            ${(Number(expense.amount) || 0).toFixed(2)}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">
-                            {expense.document_type === "VAL" && expense.document_number ? (
+                            {expense.document_type === "val" && expense.document_number ? (
                               <Badge variant="info" className="font-mono">
                                 {expense.document_number}
                               </Badge>
@@ -553,7 +559,7 @@ function ExpensesContent() {
                 <div className="bg-gray-50 p-3 rounded-md mb-4">
                   <p className="text-sm font-medium">{editingExpense.description || "Sin descripción"}</p>
                   <p className="text-sm text-gray-600">
-                    Monto: ${editingExpense.amount?.toFixed(2) || "0.00"}
+                    Monto: ${Number(editingExpense.amount || 0).toFixed(2)}
                   </p>
                   {editingExpense.document_number && (
                     <p className="text-sm text-gray-600">
@@ -695,7 +701,7 @@ function ExpensesContent() {
                 <div className="bg-gray-50 p-3 rounded-md mb-4">
                   <p className="text-sm font-medium">{editingExpense.description || "Sin descripción"}</p>
                   <p className="text-sm text-gray-600">
-                    Monto: ${editingExpense.amount?.toFixed(2) || "0.00"}
+                    Monto: ${Number(editingExpense.amount || 0).toFixed(2)}
                   </p>
                 </div>
               )}

@@ -5,14 +5,11 @@
 
 export type ExpenseState = "pending" | "validated" | "observed" | "annulled" | "rejected";
 export type DocumentType = 
-  | "INVOICE_A" 
-  | "INVOICE_B" 
-  | "INVOICE_C" 
-  | "CREDIT_NOTE" 
-  | "DEBIT_NOTE" 
-  | "VAL"
-  | "RECEIPT"
-  | "OTHER";
+  | "invoice_a" 
+  | "invoice_b" 
+  | "invoice_c" 
+  | "receipt"
+  | "val";
 import { Currency } from "./work";
 
 export interface Expense {

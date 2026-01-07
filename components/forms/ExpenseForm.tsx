@@ -38,7 +38,7 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
     amount: 0,
     currency: "ARS" as Currency,
     purchase_date: new Date().toISOString().split("T")[0],
-    document_type: "INVOICE_A" as DocumentType,
+    document_type: "invoice_a" as DocumentType,
     document_number: "",
     file_url: "",
     observations: "",
@@ -195,7 +195,7 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
         amount: initialData.amount || 0,
         currency: initialData.currency || "ARS",
         purchase_date: purchaseDate,
-        document_type: initialData.document_type || "INVOICE_A",
+        document_type: initialData.document_type || "invoice_a",
         document_number: initialData.document_number || "",
         file_url: initialData.file_url || "",
         observations: initialData.observations || "",
@@ -218,12 +218,12 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
     if (!formData.rubric_id) {
       newErrors.rubric_id = "El rubro es requerido";
     }
-    if (formData.document_type !== "VAL" && !formData.supplier_id) {
+    if (formData.document_type !== "val" && !formData.supplier_id) {
       newErrors.supplier_id = "El proveedor es requerido (excepto para VAL)";
     }
     
     // Validate that selected supplier is not blocked
-    if (formData.document_type !== "VAL" && formData.supplier_id && isSelectedSupplierBlocked) {
+    if (formData.document_type !== "val" && formData.supplier_id && isSelectedSupplierBlocked) {
       newErrors.supplier_id = "No se puede crear un gasto con un proveedor bloqueado. Por favor, seleccione otro proveedor o contacte a Dirección para desbloquearlo.";
     }
     
@@ -360,8 +360,8 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
             });
           }}
           error={errors.supplier_id}
-          required={formData.document_type !== "VAL"}
-          disabled={formData.document_type === "VAL"}
+          required={formData.document_type !== "val"}
+          disabled={formData.document_type === "val"}
         >
           <option value="">Seleccionar proveedor</option>
           {availableSuppliers.map((supplier) => (
@@ -372,7 +372,7 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
         </Select>
         
         {/* Mensaje de advertencia si el proveedor seleccionado está bloqueado (caso edge: si se carga desde initialData) */}
-        {isSelectedSupplierBlocked && formData.document_type !== "VAL" && (
+        {isSelectedSupplierBlocked && formData.document_type !== "val" && (
           <div className="col-span-2 bg-red-50 border border-red-200 rounded-lg p-3">
             <div className="flex items-start gap-2">
               <Info className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
@@ -403,14 +403,11 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
           }}
           required
         >
-          <option value="INVOICE_A">Factura A</option>
-          <option value="INVOICE_B">Factura B</option>
-          <option value="INVOICE_C">Factura C</option>
-          <option value="VAL">VAL</option>
-          <option value="RECEIPT">Recibo</option>
-          <option value="CREDIT_NOTE">Nota de Crédito</option>
-          <option value="DEBIT_NOTE">Nota de Débito</option>
-          <option value="OTHER">Otro</option>
+          <option value="invoice_a">Factura A</option>
+          <option value="invoice_b">Factura B</option>
+          <option value="invoice_c">Factura C</option>
+          <option value="receipt">Recibo</option>
+          <option value="val">VAL</option>
         </Select>
       </div>
 
@@ -470,7 +467,7 @@ export function ExpenseForm({ initialData, onSubmit, onCancel, isLoading }: Expe
           value={formData.document_number ?? undefined}
           onChange={(e) => setFormData({ ...formData, document_number: e.target.value })}
           placeholder="Ej: 0001-00001234"
-          disabled={formData.document_type === "VAL"}
+          disabled={formData.document_type === "val"}
         />
       </div>
 
