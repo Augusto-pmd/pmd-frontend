@@ -77,7 +77,8 @@ export const supplierApi = {
       }
       throw new Error("ID de proveedor no está definido");
     }
-    return apiClient.patch(`/suppliers/${id}/approve`, {});
+    // El backend usa POST, no PATCH
+    return apiClient.post(`/suppliers/${id}/approve`, {});
   },
   reject: (id: string) => {
     if (!id) {
@@ -86,7 +87,8 @@ export const supplierApi = {
       }
       throw new Error("ID de proveedor no está definido");
     }
-    return apiClient.patch(`/suppliers/${id}/reject`, {});
+    // El backend usa POST, no PATCH
+    return apiClient.post(`/suppliers/${id}/reject`, {});
   },
 };
 

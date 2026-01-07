@@ -15,6 +15,7 @@ import { parseBackendError } from "@/lib/parse-backend-error";
 import { Edit, Trash2, Eye, CheckCircle, XCircle } from "lucide-react";
 import { Supplier, UpdateSupplierData, SupplierType, FiscalCondition } from "@/lib/types/supplier";
 import { useCan } from "@/lib/acl";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 
 interface SupplierCardProps {
   supplier: Supplier;
@@ -30,6 +31,8 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
   const toast = useToast();
   
   // Verificar permisos
@@ -151,12 +154,13 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
     }
   };
 
-  const handleApprove = async () => {
-    if (!confirm(`¿Estás seguro de aprobar el proveedor "${getSupplierName()}"?`)) {
-      return;
-    }
-    
+  const handleApproveClick = () => {
+    setShowApproveModal(true);
+  };
+
+  const handleConfirmApprove = async () => {
     setIsApproving(true);
+    setShowApproveModal(false);
     try {
       await supplierApi.approve(supplier.id);
       await onRefresh?.();
@@ -172,12 +176,13 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
     }
   };
 
-  const handleReject = async () => {
-    if (!confirm(`¿Estás seguro de rechazar el proveedor "${getSupplierName()}"? Se enviará una alerta al operador que lo creó.`)) {
-      return;
-    }
-    
+  const handleRejectClick = () => {
+    setShowRejectModal(true);
+  };
+
+  const handleConfirmReject = async () => {
     setIsRejecting(true);
+    setShowRejectModal(false);
     try {
       await supplierApi.reject(supplier.id);
       await onRefresh?.();
@@ -254,7 +259,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
                     variant="primary"
                     size="sm"
                     className="flex-1 flex items-center justify-center gap-1"
-                    onClick={handleApprove}
+                    onClick={handleApproveClick}
                     disabled={isApproving || isRejecting}
                   >
                     <CheckCircle className="h-4 w-4" />
@@ -264,7 +269,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
                     variant="outline"
                     size="sm"
                     className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
-                    onClick={handleReject}
+                    onClick={handleRejectClick}
                     disabled={isApproving || isRejecting}
                   >
                     <XCircle className="h-4 w-4" />
@@ -377,6 +382,32 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
           </div>
         </div>
       </Modal>
+
+      {/* Modal de confirmación para aprobar proveedor */}
+      <ConfirmationModal
+        isOpen={showApproveModal}
+        onClose={() => setShowApproveModal(false)}
+        onConfirm={handleConfirmApprove}
+        title="Aprobar proveedor"
+        description={`¿Estás seguro de aprobar el proveedor "${getSupplierName()}"?`}
+        confirmText="Aprobar"
+        cancelText="Cancelar"
+        variant="default"
+        isLoading={isApproving}
+      />
+
+      {/* Modal de confirmación para rechazar proveedor */}
+      <ConfirmationModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={handleConfirmReject}
+        title="Rechazar proveedor"
+        description={`¿Estás seguro de rechazar el proveedor "${getSupplierName()}"? Se enviará una alerta al operador que lo creó.`}
+        confirmText="Rechazar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={isRejecting}
+      />
     </>
   );
 }

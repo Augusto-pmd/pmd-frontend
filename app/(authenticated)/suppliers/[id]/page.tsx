@@ -14,6 +14,7 @@ import { BotonVolver } from "@/components/ui/BotonVolver";
 import { useToast } from "@/components/ui/Toast";
 import { AlertCircle, Unlock, FileText, CheckCircle, XCircle } from "lucide-react";
 import { SupplierType, FiscalCondition } from "@/lib/types/supplier";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 
 function SupplierDetailContent() {
   const params = useParams();
@@ -22,6 +23,9 @@ function SupplierDetailContent() {
   const toast = useToast();
   const { alerts, fetchAlerts } = useAlertsStore();
   const [isUnblocking, setIsUnblocking] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showUnblockModal, setShowUnblockModal] = useState(false);
 
   const id =
     typeof params?.id === "string"
@@ -119,14 +123,16 @@ function SupplierDetailContent() {
   };
 
   // Función para desbloquear proveedor (solo Direction)
-  const handleUnblock = async () => {
+  const handleUnblockClick = () => {
+    if (!id || !isDirection) return;
+    setShowUnblockModal(true);
+  };
+
+  const handleConfirmUnblock = async () => {
     if (!id || !isDirection) return;
     
-    if (!confirm("¿Estás seguro de desbloquear este proveedor? Asegúrate de que el ART esté actualizado.")) {
-      return;
-    }
-
     setIsUnblocking(true);
+    setShowUnblockModal(false);
     try {
       await supplierApi.update(id, { status: "APPROVED" as any });
       await mutate();
@@ -140,14 +146,16 @@ function SupplierDetailContent() {
   };
 
   // Función para aprobar proveedor
-  const handleApprove = async () => {
+  const handleApproveClick = () => {
     if (!id || !canApproveReject) return;
-    
-    if (!confirm(`¿Estás seguro de aprobar el proveedor "${getSupplierName()}"?`)) {
-      return;
-    }
+    setShowApproveModal(true);
+  };
+
+  const handleConfirmApprove = async () => {
+    if (!id || !canApproveReject) return;
 
     setIsApproving(true);
+    setShowApproveModal(false);
     try {
       await supplierApi.approve(id);
       await mutate();
@@ -161,14 +169,16 @@ function SupplierDetailContent() {
   };
 
   // Función para rechazar proveedor
-  const handleReject = async () => {
+  const handleRejectClick = () => {
     if (!id || !canApproveReject) return;
-    
-    if (!confirm(`¿Estás seguro de rechazar el proveedor "${getSupplierName()}"? Se enviará una alerta al operador que lo creó.`)) {
-      return;
-    }
+    setShowRejectModal(true);
+  };
+
+  const handleConfirmReject = async () => {
+    if (!id || !canApproveReject) return;
 
     setIsRejecting(true);
+    setShowRejectModal(false);
     try {
       await supplierApi.reject(id);
       await mutate();
@@ -255,7 +265,7 @@ function SupplierDetailContent() {
               <>
                 <Button
                   variant="primary"
-                  onClick={handleApprove}
+                  onClick={handleApproveClick}
                   disabled={isApproving || isRejecting}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -263,7 +273,7 @@ function SupplierDetailContent() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={handleReject}
+                  onClick={handleRejectClick}
                   disabled={isApproving || isRejecting}
                   style={{ borderColor: "rgba(255, 59, 48, 1)", color: "rgba(255, 59, 48, 1)" }}
                 >
@@ -310,7 +320,7 @@ function SupplierDetailContent() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={handleUnblock}
+                        onClick={handleUnblockClick}
                         disabled={isUnblocking}
                         style={{ borderColor: "rgba(255, 59, 48, 1)", color: "rgba(255, 59, 48, 1)" }}
                       >
@@ -491,6 +501,45 @@ function SupplierDetailContent() {
             </CardContent>
           </Card>
         )}
+
+        {/* Modal de confirmación para rechazar proveedor */}
+        <ConfirmationModal
+          isOpen={showRejectModal}
+          onClose={() => setShowRejectModal(false)}
+          onConfirm={handleConfirmReject}
+          title="Rechazar proveedor"
+          description={`¿Estás seguro de rechazar el proveedor "${getSupplierName()}"? Se enviará una alerta al operador que lo creó.`}
+          confirmText="Rechazar"
+          cancelText="Cancelar"
+          variant="danger"
+          isLoading={isRejecting}
+        />
+
+        {/* Modal de confirmación para aprobar proveedor */}
+        <ConfirmationModal
+          isOpen={showApproveModal}
+          onClose={() => setShowApproveModal(false)}
+          onConfirm={handleConfirmApprove}
+          title="Aprobar proveedor"
+          description={`¿Estás seguro de aprobar el proveedor "${getSupplierName()}"?`}
+          confirmText="Aprobar"
+          cancelText="Cancelar"
+          variant="default"
+          isLoading={isApproving}
+        />
+
+        {/* Modal de confirmación para desbloquear proveedor */}
+        <ConfirmationModal
+          isOpen={showUnblockModal}
+          onClose={() => setShowUnblockModal(false)}
+          onConfirm={handleConfirmUnblock}
+          title="Desbloquear proveedor"
+          description="¿Estás seguro de desbloquear este proveedor? Asegúrate de que el ART esté actualizado."
+          confirmText="Desbloquear"
+          cancelText="Cancelar"
+          variant="default"
+          isLoading={isUnblocking}
+        />
       </div>
   );
 }
