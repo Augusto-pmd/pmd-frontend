@@ -89,7 +89,16 @@ function AuditContent() {
   const users = Array.from(
     new Set(
       logs
-        .map((log) => log.userName || log.user || log.user_id)
+        .map((log) => {
+          // Extraer el nombre del usuario de manera segura
+          if (log.user && typeof log.user === 'object') {
+            return (log.user as any).fullName || (log.user as any).name || (log.user as any).email || log.user_id || "";
+          } else if (typeof log.user === 'string') {
+            return log.user;
+          } else {
+            return log.userName || log.user_id || "";
+          }
+        })
         .filter(Boolean)
     )
   ) as string[];

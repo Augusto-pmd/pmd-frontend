@@ -56,14 +56,38 @@ export function AuditList({
       const query = searchQuery.toLowerCase();
       const matchesAction = log.action?.toLowerCase().includes(query);
       const matchesModule = log.module?.toLowerCase().includes(query);
-      const matchesUser = log.user?.toLowerCase().includes(query) || log.userName?.toLowerCase().includes(query);
+      
+      // Extraer el nombre del usuario de manera segura
+      let userName = "";
+      if (log.user && typeof log.user === 'object') {
+        userName = (log.user as any).fullName || (log.user as any).name || (log.user as any).email || "";
+      } else if (typeof log.user === 'string') {
+        userName = log.user;
+      } else {
+        userName = log.userName || "";
+      }
+      
+      const matchesUser = userName?.toLowerCase().includes(query);
       const matchesDetails = log.details?.toLowerCase().includes(query);
       if (!matchesAction && !matchesModule && !matchesUser && !matchesDetails) return false;
     }
 
     if (moduleFilter !== "all" && log.module !== moduleFilter) return false;
 
-    if (userFilter !== "all" && log.user !== userFilter && log.userId !== userFilter && log.user_id !== userFilter) return false;
+    if (userFilter !== "all") {
+      // Extraer el nombre del usuario de manera segura para comparar
+      let userName = "";
+      if (log.user && typeof log.user === 'object') {
+        userName = (log.user as any).fullName || (log.user as any).name || (log.user as any).email || log.user_id || "";
+      } else if (typeof log.user === 'string') {
+        userName = log.user;
+      } else {
+        userName = log.userName || log.user_id || "";
+      }
+      
+      const userId = log.userId || log.user_id;
+      if (userName !== userFilter && userId !== userFilter && log.user_id !== userFilter) return false;
+    }
 
     if (actionFilter !== "all" && log.action !== actionFilter) return false;
 
@@ -198,11 +222,27 @@ export function AuditList({
                     <User className="w-4 h-4" style={{ color: "var(--apple-text-secondary)", flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--apple-text-primary)" }}>
-                        {log.userName || log.user}
+                        {(() => {
+                          // Si log.user es un objeto (relación cargada desde el backend), extraer el nombre
+                          if (log.user && typeof log.user === 'object') {
+                            return (log.user as any).fullName || (log.user as any).name || (log.user as any).email || log.user_id || "-";
+                          }
+                          // Si es un string, usarlo directamente
+                          return log.userName || log.user || log.user_id || "-";
+                        })()}
                       </div>
-                      {log.userId && log.userId !== log.user && (
-                        <div style={{ fontSize: "12px", color: "var(--apple-text-secondary)" }}>{log.userId}</div>
-                      )}
+                      {(() => {
+                        const userId = log.userId || log.user_id;
+                        const userName = typeof log.user === 'object' 
+                          ? ((log.user as any).fullName || (log.user as any).name || (log.user as any).email)
+                          : (log.userName || log.user);
+                        if (userId && userId !== userName) {
+                          return (
+                            <div style={{ fontSize: "12px", color: "var(--apple-text-secondary)" }}>{userId}</div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                 </TableCell>

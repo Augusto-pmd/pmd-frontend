@@ -100,11 +100,27 @@ function AuditDetailContent() {
                   <div>
                     <p className="text-sm text-gray-500">Usuario</p>
                     <p className="text-base font-medium text-gray-900">
-                      {log.userName || log.user}
+                      {(() => {
+                        // Si log.user es un objeto (relación cargada desde el backend), extraer el nombre
+                        if (log.user && typeof log.user === 'object') {
+                          return (log.user as any).fullName || (log.user as any).name || (log.user as any).email || log.user_id || "-";
+                        }
+                        // Si es un string, usarlo directamente
+                        return log.userName || log.user || log.user_id || "-";
+                      })()}
                     </p>
-                    {log.userId && log.userId !== log.user && (
-                      <p className="text-xs text-gray-500 mt-1">ID: {log.userId}</p>
-                    )}
+                    {(() => {
+                      const userId = log.userId || log.user_id;
+                      const userName = typeof log.user === 'object' 
+                        ? ((log.user as any).fullName || (log.user as any).name || (log.user as any).email)
+                        : (log.userName || log.user);
+                      if (userId && userId !== userName) {
+                        return (
+                          <p className="text-xs text-gray-500 mt-1">ID: {userId}</p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
 
