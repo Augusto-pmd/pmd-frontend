@@ -20,6 +20,7 @@ interface RolesState {
   error: string | null;
 
   fetchRoles: () => Promise<void>;
+  fetchRoleById: (id: string) => Promise<Role | null>;
   fetchPermissions: () => Promise<void>;
   createRole: (payload: Partial<Role>) => Promise<void>;
   updateRole: (id: string, payload: Partial<Role>) => Promise<void>;
@@ -36,7 +37,24 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/roles");
-      set({ roles: (data as any)?.data || data || [], isLoading: false });
+      const rolesData = (data as any)?.data || data || [];
+      
+      // Normalizar roles para asegurar que permissions es siempre un array
+      const normalizedRoles = Array.isArray(rolesData)
+        ? rolesData.map((role: any) => ({
+            ...role,
+            permissions: Array.isArray(role.permissions) 
+              ? role.permissions 
+              : (role.permissions && typeof role.permissions === 'object' 
+                  ? Object.keys(role.permissions).filter(
+                      (key) => role.permissions[key] === true || role.permissions[key] === 'true'
+                    )
+                  : []),
+            userCount: role.userCount !== undefined ? Number(role.userCount) : (role.cantidadUsuarios !== undefined ? Number(role.cantidadUsuarios) : 0),
+          }))
+        : [];
+      
+      set({ roles: normalizedRoles, isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [rolesStore] Error al obtener roles:", error);
@@ -46,34 +64,65 @@ export const useRolesStore = create<RolesState>((set, get) => ({
     }
   },
 
-  async fetchPermissions() {
-    // Intentar obtener permisos desde el backend
-    // Si el backend no tiene endpoint de permisos, usar lista estándar
+  async fetchRoleById(id: string): Promise<Role | null> {
     try {
-      const data = await apiClient.get("/permissions");
-      const permissions = (data as any)?.data || data || [];
-      if (Array.isArray(permissions) && permissions.length > 0) {
-        set({ permissions });
-        return;
+      const data = await apiClient.get(`/roles/${id}`);
+      const roleData = (data as any)?.data || data;
+      
+      if (!roleData) {
+        return null;
       }
+
+      // Normalizar permisos
+      let permissionsArray: string[] = [];
+      if (roleData.permissions) {
+        if (Array.isArray(roleData.permissions)) {
+          permissionsArray = roleData.permissions.filter((p: any) => typeof p === "string");
+        } else if (typeof roleData.permissions === 'object') {
+          permissionsArray = Object.keys(roleData.permissions).filter(
+            (key) => roleData.permissions[key] === true || roleData.permissions[key] === 'true'
+          );
+        }
+      }
+
+      return {
+        id: roleData.id,
+        name: roleData.name,
+        description: roleData.description,
+        permissions: permissionsArray,
+        createdAt: roleData.createdAt || roleData.created_at,
+        updatedAt: roleData.updatedAt || roleData.updated_at,
+        userCount: roleData.userCount || roleData.cantidadUsuarios || 0,
+      };
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
-        console.warn("⚠️ [rolesStore] No se pudo obtener permisos del backend, usando lista estándar");
+        console.error("🔴 [rolesStore] Error al obtener rol por ID:", error);
       }
+      return null;
     }
+  },
 
-    // Lista estándar de permisos si el backend no los provee
+  async fetchPermissions() {
+    // El backend no tiene endpoint /permissions genérico
+    // Los permisos vienen con cada rol en /roles
+    // Usamos lista estándar de permisos disponibles para el formulario
     const standardPermissions = [
       "works.read", "works.create", "works.update", "works.delete", "works.manage",
       "suppliers.read", "suppliers.create", "suppliers.update", "suppliers.delete", "suppliers.manage",
       "documents.read", "documents.create", "documents.update", "documents.delete", "documents.manage",
       "accounting.read", "accounting.create", "accounting.update", "accounting.delete", "accounting.manage",
-      "cashbox.read", "cashbox.create", "cashbox.update", "cashbox.delete", "cashbox.manage",
+      "cashboxes.read", "cashboxes.create", "cashboxes.update", "cashboxes.delete", "cashboxes.close", "cashboxes.approve",
       "alerts.read", "alerts.create", "alerts.update", "alerts.delete", "alerts.manage",
       "audit.read", "audit.delete", "audit.manage",
       "settings.read", "settings.update", "settings.manage",
       "users.read", "users.create", "users.update", "users.delete", "users.manage",
       "roles.read", "roles.create", "roles.update", "roles.delete", "roles.manage",
+      "expenses.read", "expenses.create", "expenses.update", "expenses.delete", "expenses.validate",
+      "contracts.read", "contracts.create", "contracts.update", "contracts.delete",
+      "incomes.read", "incomes.create", "incomes.update", "incomes.delete",
+      "reports.read",
+      "schedule.read", "schedule.create", "schedule.update", "schedule.delete",
+      "dashboard.read",
     ];
     set({ permissions: standardPermissions });
   },
@@ -111,7 +160,11 @@ export const useRolesStore = create<RolesState>((set, get) => ({
       const response = await apiClient.post("/roles", rolePayload);
       
       // Registrar en auditoría
-      await logCreate("roles", "Role", (response as any)?.data?.id || "unknown", `Se creó el rol ${rolePayload.name}`);
+      // Registrar en auditoría (solo si hay un ID válido)
+      const roleId = (response as any)?.data?.id || (response as any)?.id;
+      if (roleId) {
+        await logCreate("roles", "Role", roleId, `Se creó el rol ${rolePayload.name}`);
+      }
       
       await get().fetchRoles();
     } catch (error: unknown) {

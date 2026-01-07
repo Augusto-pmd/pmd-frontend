@@ -30,7 +30,33 @@ export function RoleForm({ initialData, onSubmit, onCancel, isLoading }: RoleFor
     if (initialData) {
       setName(initialData.name || "");
       setDescription(initialData.description || "");
-      setSelectedPermissions(initialData.permissions || []);
+      
+      // Asegurar que permissions sea siempre un array
+      let permissionsArray: string[] = [];
+      
+      if (initialData.permissions) {
+        if (Array.isArray(initialData.permissions)) {
+          // Si ya es un array, usarlo directamente
+          permissionsArray = initialData.permissions.filter((p: any) => typeof p === "string");
+        } else if (typeof initialData.permissions === 'object') {
+          // Si es un objeto Record<string, any>, convertir a array (solo los que son true)
+          permissionsArray = Object.keys(initialData.permissions).filter(
+            (key) => initialData.permissions[key] === true || initialData.permissions[key] === 'true'
+          );
+        }
+      }
+      
+      if (process.env.NODE_ENV === "development") {
+        console.log("🔵 [RoleForm] initialData:", initialData);
+        console.log("🔵 [RoleForm] permissionsArray:", permissionsArray);
+      }
+      
+      setSelectedPermissions(permissionsArray);
+    } else {
+      // Resetear formulario cuando no hay initialData (creación nueva)
+      setName("");
+      setDescription("");
+      setSelectedPermissions([]);
     }
   }, [initialData]);
 

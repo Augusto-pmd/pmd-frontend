@@ -19,7 +19,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useCan } from "@/lib/acl";
 
 function RolesContent() {
-  const { roles, isLoading, error, fetchRoles, createRole, updateRole, deleteRole } = useRolesStore();
+  const { roles, isLoading, error, fetchRoles, fetchRoleById, createRole, updateRole, deleteRole } = useRolesStore();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
 
@@ -27,6 +27,7 @@ function RolesContent() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingRole, setIsLoadingRole] = useState(false);
   const toast = useToast();
   
   // Verificar permisos
@@ -202,11 +203,32 @@ function RolesContent() {
                           <Button
                             variant="icon"
                             size="sm"
-                            onClick={() => {
-                              setSelectedRole(role);
-                              setIsFormModalOpen(true);
+                            onClick={async () => {
+                              setIsLoadingRole(true);
+                              try {
+                                // Obtener el rol completo desde el backend para asegurar que tenga los permisos
+                                const fullRole = await fetchRoleById(role.id);
+                                if (fullRole) {
+                                  setSelectedRole(fullRole);
+                                  setIsFormModalOpen(true);
+                                } else {
+                                  // Si falla, usar el rol del listado como fallback
+                                  setSelectedRole(role);
+                                  setIsFormModalOpen(true);
+                                }
+                              } catch (err) {
+                                if (process.env.NODE_ENV === "development") {
+                                  console.error("Error al cargar rol:", err);
+                                }
+                                // Fallback al rol del listado
+                                setSelectedRole(role);
+                                setIsFormModalOpen(true);
+                              } finally {
+                                setIsLoadingRole(false);
+                              }
                             }}
                             style={{ color: "var(--apple-blue)" }}
+                            disabled={isLoadingRole}
                           >
                             <Edit style={{ width: "16px", height: "16px" }} />
                           </Button>
