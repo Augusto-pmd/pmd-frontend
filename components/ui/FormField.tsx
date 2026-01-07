@@ -69,12 +69,17 @@ export function SelectField({
   error,
   options,
   className,
+  value,
   ...props
 }: SelectFieldProps) {
+  // Asegurar que value nunca sea null o undefined
+  const safeValue = value === null || value === undefined ? "" : value;
+  
   return (
     <FormField label={label} required={required} error={error}>
       <select
         className={cn(styles.select, error && styles.inputError, className)}
+        value={safeValue}
         {...props}
       >
         {options.map((option) => (

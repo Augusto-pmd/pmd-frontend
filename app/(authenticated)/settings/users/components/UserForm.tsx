@@ -34,7 +34,16 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       setFormData({
         fullName: user.fullName || "",
         email: user.email || "",
-        roleId: normalizeId(user.roleId),
+        roleId: normalizeId(user.roleId) || "",
+        password: "",
+        confirmPassword: "",
+      });
+    } else {
+      // Resetear formulario cuando no hay usuario (creación nueva)
+      setFormData({
+        fullName: "",
+        email: "",
+        roleId: "",
         password: "",
         confirmPassword: "",
       });
@@ -141,10 +150,14 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     }
   };
 
-  const roleOptions = roles.map((role: any) => {
-    const roleName = role.name || role.nombre || role.id;
-    return { value: normalizeId(role.id), label: roleName };
-  });
+  // Preparar opciones de roles, agregando una opción vacía por defecto cuando se crea un usuario nuevo
+  const roleOptions = [
+    ...(!user ? [{ value: "", label: "Seleccionar rol" }] : []),
+    ...roles.map((role: any) => {
+      const roleName = role.name || role.nombre || role.id;
+      return { value: normalizeId(role.id), label: roleName };
+    }),
+  ];
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>

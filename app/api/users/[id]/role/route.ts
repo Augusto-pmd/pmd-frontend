@@ -56,12 +56,25 @@ export async function PATCH(
     }
 
     // Verificar que sea JSON válido antes de forwardear
+    let body: any;
     try {
-      JSON.parse(bodyText);
+      body = JSON.parse(bodyText);
     } catch (parseError) {
       console.error("[API USERS ROLE PATCH] Invalid JSON body:", bodyText);
       return NextResponse.json(
         { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+
+    // Mapear roleId (camelCase) a role_id (snake_case) que espera el backend
+    const backendPayload: { role_id: string } = {
+      role_id: body.role_id || body.roleId || "",
+    };
+
+    if (!backendPayload.role_id) {
+      return NextResponse.json(
+        { error: "role_id or roleId is required" },
         { status: 400 }
       );
     }
@@ -72,7 +85,7 @@ export async function PATCH(
         Authorization: authHeader ?? "",
         "Content-Type": "application/json",
       },
-      body: bodyText, // Forwardear el texto original tal cual
+      body: JSON.stringify(backendPayload), // Enviar con el formato correcto
     });
 
     const text = await response.text();

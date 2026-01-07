@@ -13,10 +13,9 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { UserForm } from "./components/UserForm";
-import { ChangeRoleModal } from "./components/ChangeRoleModal";
 import { useToast } from "@/components/ui/Toast";
 import { parseBackendError } from "@/lib/parse-backend-error";
-import { Search, Filter, X, Plus, Edit, Trash2, UserCog, UserX } from "lucide-react";
+import { Search, Filter, X, Plus, Edit, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { Badge } from "@/components/ui/Badge";
 import { useCan } from "@/lib/acl";
@@ -32,7 +31,6 @@ function UsersContent() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [showFilters, setShowFilters] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,28 +120,6 @@ function UsersContent() {
     }
   };
 
-  const handleToggleStatus = async (user: { id: string }) => {
-    setIsSubmitting(true);
-    try {
-      // isActive no existe en el backend - todos los usuarios son activos
-      // if (user.isActive) {
-      //   await deactivateUser(user.id);
-      //   toast.success("Usuario desactivado correctamente");
-      // } else {
-      //   await activateUser(user.id);
-      //   toast.success("Usuario activado correctamente");
-      // }
-      toast.info("El estado de usuario no está disponible en el backend");
-    } catch (err: unknown) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Error al cambiar estado:", err);
-      }
-      const errorMessage = parseBackendError(err);
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <>
@@ -315,30 +291,6 @@ function UsersContent() {
                               <Edit className="h-4 w-4" />
                             </Button>
                           )}
-                          {canUpdate && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setIsChangeRoleModalOpen(true);
-                              }}
-                              className="text-blue-600 hover:text-blue-700"
-                              title="Cambiar rol"
-                            >
-                              <UserCog className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleToggleStatus(user)}
-                            disabled={true}
-                            className="text-gray-400 hover:text-gray-500"
-                            title="Estado no disponible en backend"
-                          >
-                            <UserX className="h-4 w-4" />
-                          </Button>
                           {canDelete && (
                             <Button
                               variant="ghost"
@@ -386,19 +338,6 @@ function UsersContent() {
           />
         </Modal>
 
-        <ChangeRoleModal
-          isOpen={isChangeRoleModalOpen}
-          onClose={() => {
-            setIsChangeRoleModalOpen(false);
-            setSelectedUser(null);
-          }}
-          user={selectedUser}
-          onSuccess={() => {
-            setIsChangeRoleModalOpen(false);
-            setSelectedUser(null);
-            fetchUsers();
-          }}
-        />
 
         {selectedUser && (
           <Modal

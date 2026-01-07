@@ -49,7 +49,7 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       const data = await apiClient.get("/users");
       const rawUsers = (data as any)?.data || data || [];
       
-      // Normalizar IDs de usuarios y roles
+      // Normalizar IDs de usuarios y roles, y mapear campos de snake_case a camelCase
       const normalizedUsers = rawUsers.map((user: Record<string, unknown>) => ({
         ...user,
         id: normalizeId(user.id),
@@ -58,6 +58,10 @@ export const useUsersStore = create<UsersState>((set, get) => ({
           ...(user.role as any),
           id: normalizeId((user.role as any).id),
         } : undefined,
+        // Mapear created_at a createdAt
+        createdAt: user.created_at || user.createdAt || undefined,
+        // Mapear updated_at a updatedAt
+        updatedAt: user.updated_at || user.updatedAt || undefined,
       }));
       
       set({ users: normalizedUsers, isLoading: false });
@@ -102,16 +106,17 @@ export const useUsersStore = create<UsersState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO del backend
+      // El backend espera: name (no fullName), role_id (no roleId)
       const userPayload: {
-        fullName: string;
+        name: string;
         email: string;
         password: string;
-        roleId: string;
+        role_id: string;
       } = {
-        fullName: payload.fullName.trim(),
+        name: payload.fullName.trim(),
         email: payload.email.trim().toLowerCase(),
         password: payload.password,
-        roleId: payload.roleId,
+        role_id: payload.roleId,
       };
 
       // NO agregar campos que no existen en el backend DTO
@@ -119,8 +124,11 @@ export const useUsersStore = create<UsersState>((set, get) => ({
 
       const response = await apiClient.post("/users", userPayload);
       
-      // Registrar en auditoría
-      await logCreate("users", "User", (response as any)?.data?.id || "unknown", `Se creó el usuario ${userPayload.fullName}`);
+      // Registrar en auditoría (solo si hay un ID válido)
+      const userId = (response as any)?.data?.id || (response as any)?.id;
+      if (userId) {
+        await logCreate("users", "User", userId, `Se creó el usuario ${userPayload.name}`);
+      }
       
       await get().fetchUsers();
     } catch (error: unknown) {
@@ -165,25 +173,34 @@ export const useUsersStore = create<UsersState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO del backend
+      // El backend espera: name (no fullName), role_id (no roleId)
       const userPayload: {
-        fullName?: string;
+        name?: string;
         email?: string;
         password?: string;
-        roleId?: string | null;
+        role_id?: string;
       } = {};
 
-      // Solo enviar campos que existen en UpdateUserDto del backend
-      if (payload.fullName) userPayload.fullName = payload.fullName.trim();
+      // Mapear de camelCase del frontend a snake_case del backend
+      if (payload.fullName) userPayload.name = payload.fullName.trim();
       if (payload.email) userPayload.email = payload.email.trim().toLowerCase();
       if (payload.password) userPayload.password = payload.password;
-      if (payload.roleId !== undefined) userPayload.roleId = payload.roleId || null;
+      if (payload.roleId !== undefined && payload.roleId !== null) {
+        userPayload.role_id = payload.roleId;
+      }
       // NO enviar: phone, position, notes, isActive, organizationId
 
-      const response = await apiClient.put(`/users/${id}`, userPayload);
+      const response = await apiClient.patch(`/users/${id}`, userPayload);
       
       // Registrar en auditoría
-      const afterState = { ...beforeState, ...userPayload };
-      await logUpdate("users", "User", id, beforeState, afterState, `Se actualizó el usuario ${userPayload.fullName || currentUser?.fullName || id}`);
+      // Mapear de vuelta a camelCase para auditoría
+      const afterState = { 
+        ...beforeState, 
+        fullName: userPayload.name || beforeState?.fullName,
+        roleId: userPayload.role_id || beforeState?.roleId,
+        email: userPayload.email || beforeState?.email
+      };
+      await logUpdate("users", "User", id, beforeState, afterState, `Se actualizó el usuario ${userPayload.name || currentUser?.fullName || id}`);
       
       await get().fetchUsers();
     } catch (error: unknown) {
