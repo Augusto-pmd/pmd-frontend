@@ -58,6 +58,13 @@ function CashboxContent() {
   // ✅ CRÍTICO: Todos los hooks deben llamarse ANTES de cualquier return condicional
   // Mover useCan antes de los early returns para cumplir con las reglas de hooks de React
   const canCreateCashbox = useCan("cashboxes.create");
+  const canCloseCashbox = useCan("cashboxes.close");
+  const canUpdateCashbox = useCan("cashboxes.update");
+  const canManageCashboxes = useCan("cashboxes.manage");
+  
+  // Para cerrar cajas, se necesita cashboxes.close
+  // Para abrir cajas cerradas, se necesita cashboxes.update o cashboxes.manage
+  const canOpenCashbox = canUpdateCashbox || canManageCashboxes;
 
   useEffect(() => {
     if (organizationId) {
@@ -334,7 +341,7 @@ function CashboxContent() {
                                 >
                                   Ver
                                 </Button>
-                                {!isClosed ? (
+                                {!isClosed && canCloseCashbox && (
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -342,7 +349,8 @@ function CashboxContent() {
                                   >
                                     Cerrar
                                   </Button>
-                                ) : (
+                                )}
+                                {isClosed && canOpenCashbox && (
                                   <Button
                                     variant="outline"
                                     size="sm"

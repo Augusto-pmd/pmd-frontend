@@ -50,7 +50,45 @@ export function CashboxForm({ onSuccess, onCancel }: CashboxFormProps) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error al guardar caja:", error);
       }
-      const errorMessage = parseBackendError(error) || "Error al guardar la caja";
+      
+      // Verificar si el error es porque ya existe una caja abierta
+      let errorMessage = parseBackendError(error) || "Error al guardar la caja";
+      
+      // Detectar específicamente el error de caja ya abierta (400 con mensaje específico)
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response?: { status?: number; data?: unknown } };
+        if (axiosError.response?.status === 400) {
+          const responseData = axiosError.response.data;
+          if (responseData && typeof responseData === "object") {
+            const data = responseData as Record<string, unknown>;
+            let backendMessage: string | string[] | undefined;
+            
+            // Extraer mensaje anidado de NestJS
+            if ("message" in data) {
+              const messageField = data.message;
+              if (messageField && typeof messageField === "object" && !Array.isArray(messageField) && "message" in messageField) {
+                backendMessage = (messageField as { message: string | string[] }).message;
+              } else if (typeof messageField === "string" || Array.isArray(messageField)) {
+                backendMessage = messageField;
+              }
+            }
+            
+            // Si el mensaje contiene información sobre caja abierta, usar mensaje específico
+            if (backendMessage) {
+              const messageStr = Array.isArray(backendMessage) ? backendMessage.join(" ") : backendMessage;
+              if (
+                messageStr.includes("open cashbox") ||
+                messageStr.includes("caja abierta") ||
+                messageStr.includes("already has") ||
+                messageStr.toLowerCase().includes("user already has")
+              ) {
+                errorMessage = "Ya tienes una caja abierta. Por favor, ciérrala antes de crear una nueva.";
+              }
+            }
+          }
+        }
+      }
+      
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

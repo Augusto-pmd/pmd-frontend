@@ -93,11 +93,19 @@ function CashboxDetailContent() {
   // Solo DIRECTION puede eliminar movimientos según el backend
   const canDeleteMovement = useCan("cashboxes.delete");
   // ADMINISTRATION y DIRECTION pueden editar movimientos según el backend
-  // Verificar permiso y también el rol directamente como respaldo
-  const hasUpdatePermission = useCan("cashboxes.update");
-  const isAdministration = user?.role?.name?.toLowerCase() === "administration";
+  // Verificar permiso específico para actualizar cajas/movimientos
+  const canUpdateCashbox = useCan("cashboxes.update");
+  const canManageCashbox = useCan("cashboxes.manage");
+  const canUpdateMovement = canUpdateCashbox || canManageCashbox;
+  
+  // Para crear movimientos, se necesita cashboxes.update o cashboxes.manage
+  const canCreateMovement = canUpdateCashbox || canManageCashbox;
+  
+  // Para cerrar cajas, se necesita cashboxes.close
+  const canCloseCashbox = useCan("cashboxes.close");
+  
+  // Verificar si el usuario es DIRECTION (para acciones administrativas específicas)
   const isDirection = user?.role?.name?.toLowerCase() === "direction";
-  const canUpdateMovement = hasUpdatePermission || isAdministration || isDirection;
   
   const organizationId = user?.organizationId;
 
@@ -428,15 +436,19 @@ function CashboxDetailContent() {
             <div style={{ display: "flex", gap: "var(--space-sm)" }}>
               {!isClosed && (
                 <>
-                  <Button
-                    variant="primary"
-                    onClick={handleNewMovement}
-                  >
-                    Nuevo movimiento
-                  </Button>
-                  <Button variant="outline" onClick={handleCloseCashbox}>
-                    Cerrar caja
-                  </Button>
+                  {canCreateMovement && (
+                    <Button
+                      variant="primary"
+                      onClick={handleNewMovement}
+                    >
+                      Nuevo movimiento
+                    </Button>
+                  )}
+                  {canCloseCashbox && (
+                    <Button variant="outline" onClick={handleCloseCashbox}>
+                      Cerrar caja
+                    </Button>
+                  )}
                 </>
               )}
             </div>
