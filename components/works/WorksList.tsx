@@ -55,10 +55,17 @@ function WorkCard({ work, onRefresh }: { work: Work; onRefresh?: () => void }) {
   const toast = useToast();
   const user = useAuthStore.getState().user;
   const isDirection = user?.role?.name === "direction" || user?.role?.name === "DIRECTION";
+  const isSupervisor = user?.role?.name?.toLowerCase() === "supervisor";
   
   // Verificar permisos
-  const canUpdate = useCan("works.update");
-  const canDelete = useCan("works.delete");
+  const canUpdateWork = useCan("works.update");
+  const canManageWorks = useCan("works.manage");
+  const canDeleteWork = useCan("works.delete");
+  
+  // Para editar, se necesita works.update o works.manage, pero NO para Supervisor
+  const canUpdate = (canUpdateWork || canManageWorks) && !isSupervisor;
+  // Para eliminar, se necesita works.delete o works.manage
+  const canDelete = canDeleteWork || canManageWorks;
 
   const getWorkName = (work: Work) => {
     return (work as any).nombre || work.name || (work as any).title || "Sin nombre";
