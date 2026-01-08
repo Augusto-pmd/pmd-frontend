@@ -89,6 +89,15 @@ export const cashboxApi = {
     }
     return apiClient.post(`/cashboxes/${id}/close`, data);
   },
+  open: (id: string) => {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxApi.open] id no está definido");
+      }
+      throw new Error("ID de caja no está definido");
+    }
+    return apiClient.post(`/cashboxes/${id}/open`, {});
+  },
   requestExplanation: (id: string, data: { message: string }) => {
     if (!id) {
       if (process.env.NODE_ENV === "development") {

@@ -25,6 +25,7 @@ interface CashboxState {
   createCashbox: (payload: Partial<Cashbox>) => Promise<void>;
   updateCashbox: (id: string, payload: Partial<Cashbox>) => Promise<void>;
   closeCashbox: (id: string, closingData?: { closing_balance_ars: number; closing_balance_usd?: number }) => Promise<void>;
+  openCashbox: (id: string) => Promise<void>;
   fetchMovements: (cashboxId: string) => Promise<void>;
   createMovement: (cashboxId: string, payload: Partial<CashMovement>) => Promise<void>;
   updateMovement: (cashboxId: string, id: string, payload: Partial<CashMovement>) => Promise<void>;
@@ -136,6 +137,26 @@ export const useCashboxStore = create<CashboxState>((set, get) => ({
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [cashboxStore] Error al cerrar caja:", error);
+      }
+      throw error;
+    }
+  },
+
+  async openCashbox(id) {
+    if (!id) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("❗ [cashboxStore] id no está definido");
+      }
+      throw new Error("ID de caja no está definido");
+    }
+
+    try {
+      const { cashboxApi } = await import("@/hooks/api/cashboxes");
+      await cashboxApi.open(id);
+      await get().fetchCashboxes();
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("🔴 [cashboxStore] Error al abrir caja:", error);
       }
       throw error;
     }

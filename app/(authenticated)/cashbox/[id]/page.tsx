@@ -30,6 +30,23 @@ import { useCashbox } from "@/hooks/api/cashboxes";
 import { CashboxHistory } from "@/components/cashbox/CashboxHistory";
 import { useCan } from "@/lib/acl";
 
+// Helper function to extract error message from axios error
+function getErrorMessage(error: any, defaultMessage: string): string {
+  if (error?.response?.data?.message) {
+    const msg = error.response.data.message;
+    // If message is an object with nested message, extract it
+    if (typeof msg === 'object' && msg !== null && 'message' in msg) {
+      return msg.message as string;
+    } else if (typeof msg === 'string') {
+      return msg;
+    }
+  }
+  if (error?.message && typeof error.message === 'string') {
+    return error.message;
+  }
+  return defaultMessage;
+}
+
 function CashboxDetailContent() {
   // All hooks must be called unconditionally at the top
   const params = useParams();
@@ -863,8 +880,7 @@ function CashboxDetailContent() {
                   mutateCashbox();
                   await refreshPatterns.afterCashboxClosure(globalMutate);
                 } catch (error: any) {
-                  const errorMessage = error?.response?.data?.message || error?.message || "Error al agregar refuerzo";
-                  toast.error(errorMessage);
+                  toast.error(getErrorMessage(error, "Error al agregar refuerzo"));
                 } finally {
                   setIsRefilling(false);
                 }
@@ -972,7 +988,19 @@ function CashboxDetailContent() {
                   fetchAlerts();
                   await refreshPatterns.afterCashboxClosure(globalMutate);
                 } catch (error: any) {
-                  const errorMessage = error?.response?.data?.message || error?.message || "Error al solicitar explicación";
+                  // Handle nested error message structure
+                  let errorMessage = "Error al solicitar explicación";
+                  if (error?.response?.data?.message) {
+                    const msg = error.response.data.message;
+                    // If message is an object with nested message, extract it
+                    if (typeof msg === 'object' && msg.message) {
+                      errorMessage = msg.message;
+                    } else if (typeof msg === 'string') {
+                      errorMessage = msg;
+                    }
+                  } else if (error?.message) {
+                    errorMessage = error.message;
+                  }
                   toast.error(errorMessage);
                 } finally {
                   setIsRequestingExplanation(false);
@@ -1044,8 +1072,7 @@ function CashboxDetailContent() {
                   mutateCashbox();
                   await refreshPatterns.afterCashboxClosure(globalMutate);
                 } catch (error: any) {
-                  const errorMessage = error?.response?.data?.message || error?.message || "Error al rechazar diferencia";
-                  toast.error(errorMessage);
+                  toast.error(getErrorMessage(error, "Error al rechazar diferencia"));
                 } finally {
                   setIsRejecting(false);
                 }
@@ -1125,8 +1152,7 @@ function CashboxDetailContent() {
                   mutateCashbox();
                   await refreshPatterns.afterCashboxClosure(globalMutate);
                 } catch (error: any) {
-                  const errorMessage = error?.response?.data?.message || error?.message || "Error al realizar ajuste manual";
-                  toast.error(errorMessage);
+                  toast.error(getErrorMessage(error, "Error al realizar ajuste manual"));
                 } finally {
                   setIsAdjusting(false);
                 }

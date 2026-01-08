@@ -16,18 +16,42 @@ import { CashboxForm } from "./components/CashboxForm";
 import { useToast } from "@/components/ui/Toast";
 import { useCan } from "@/lib/acl";
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
+import { Modal } from "@/components/ui/Modal";
+import { FormField } from "@/components/ui/FormField";
+import { Input } from "@/components/ui/Input";
 import { CashboxStatus } from "@/lib/types/cashbox";
+
+// Helper function to extract error message from axios error
+function getErrorMessage(error: any, defaultMessage: string): string {
+  if (error?.response?.data?.message) {
+    const msg = error.response.data.message;
+    // If message is an object with nested message, extract it
+    if (typeof msg === 'object' && msg !== null && 'message' in msg) {
+      return msg.message as string;
+    } else if (typeof msg === 'string') {
+      return msg;
+    }
+  }
+  if (error?.message && typeof error.message === 'string') {
+    return error.message;
+  }
+  return defaultMessage;
+}
 
 function CashboxContent() {
   const router = useRouter();
-  const { cashboxes, isLoading, error, fetchCashboxes, closeCashbox } = useCashboxStore();
+  const { cashboxes, isLoading, error, fetchCashboxes, closeCashbox, openCashbox } = useCashboxStore();
   const { works } = useWorks();
   const user = useAuthStore.getState().user;
   const [showForm, setShowForm] = useState(false);
   const [editingCashbox, setEditingCashbox] = useState<any>(null);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [cashboxToClose, setCashboxToClose] = useState<string | null>(null);
+  const [cashboxToCloseData, setCashboxToCloseData] = useState<any>(null);
+  const [closingBalanceArs, setClosingBalanceArs] = useState("");
+  const [closingBalanceUsd, setClosingBalanceUsd] = useState("");
   const [isClosing, setIsClosing] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
   const toast = useToast();
   const organizationId = (user as any)?.organizationId || (user as any)?.organization?.id;
   
@@ -56,19 +80,49 @@ function CashboxContent() {
   }
 
   const handleCloseCashboxClick = (id: string) => {
+    const cashbox = cashboxes.find((c) => c.id === id);
     setCashboxToClose(id);
+    setCashboxToCloseData(cashbox);
+    setClosingBalanceArs("");
+    setClosingBalanceUsd("");
     setShowCloseModal(true);
+  };
+
+  const handleOpenCashboxClick = async (id: string) => {
+    setIsOpening(true);
+    try {
+      await openCashbox(id);
+      toast.success("Caja abierta correctamente");
+      fetchCashboxes();
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, "Error al abrir la caja"));
+    } finally {
+      setIsOpening(false);
+    }
   };
 
   const handleConfirmClose = async () => {
     if (!cashboxToClose) return;
     
+    // Validar que se haya ingresado el saldo de cierre ARS
+    if (!closingBalanceArs || parseFloat(closingBalanceArs) < 0) {
+      toast.error("El saldo de cierre ARS es obligatorio y debe ser mayor o igual a 0");
+      return;
+    }
+    
     setIsClosing(true);
     try {
-      await closeCashbox(cashboxToClose);
+      await closeCashbox(cashboxToClose, {
+        closing_balance_ars: parseFloat(closingBalanceArs),
+        closing_balance_usd: closingBalanceUsd ? parseFloat(closingBalanceUsd) : undefined,
+      });
       toast.success("Caja cerrada correctamente");
       setShowCloseModal(false);
       setCashboxToClose(null);
+      setCashboxToCloseData(null);
+      setClosingBalanceArs("");
+      setClosingBalanceUsd("");
+      fetchCashboxes();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Error al cerrar la caja";
       toast.error(errorMessage);
@@ -280,13 +334,22 @@ function CashboxContent() {
                                 >
                                   Ver
                                 </Button>
-                                {!isClosed && (
+                                {!isClosed ? (
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleCloseCashboxClick(cashbox.id)}
                                   >
                                     Cerrar
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleOpenCashboxClick(cashbox.id)}
+                                    disabled={isOpening}
+                                  >
+                                    {isOpening ? "Abriendo..." : "Abrir"}
                                   </Button>
                                 )}
                               </div>
@@ -302,20 +365,85 @@ function CashboxContent() {
           </>
         )}
 
-        <ConfirmationModal
-          isOpen={showCloseModal}
-          onClose={() => {
-            setShowCloseModal(false);
-            setCashboxToClose(null);
-          }}
-          onConfirm={handleConfirmClose}
-          title="Cerrar Caja"
-          description="¿Estás seguro de cerrar esta caja? No se podrán agregar más movimientos."
-          confirmText="Cerrar Caja"
-          cancelText="Cancelar"
-          variant="danger"
-          isLoading={isClosing}
-        />
+        {showCloseModal && cashboxToCloseData && (
+          <Modal
+            isOpen={showCloseModal}
+            onClose={() => {
+              setShowCloseModal(false);
+              setCashboxToClose(null);
+              setCashboxToCloseData(null);
+              setClosingBalanceArs("");
+              setClosingBalanceUsd("");
+            }}
+            title="Cerrar Caja"
+            subtitle="Ingrese el saldo real contado físicamente en la caja"
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+              <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)", marginBottom: "var(--space-sm)" }}>
+                Una vez cerrada, no se podrán agregar más movimientos a esta caja.
+              </div>
+              
+              <FormField 
+                label="Saldo de Cierre Real (ARS) *" 
+                required
+                error={!closingBalanceArs || parseFloat(closingBalanceArs) < 0 ? "Debe ingresar el saldo real de cierre (mayor o igual a 0)" : undefined}
+              >
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={closingBalanceArs}
+                  onChange={(e) => setClosingBalanceArs(e.target.value)}
+                  placeholder="0.00"
+                  required
+                />
+                <div style={{ font: "var(--font-caption)", color: "var(--apple-text-secondary)", marginTop: "var(--space-xs)" }}>
+                  Saldo actual calculado: ${calculateTotalMovements(cashboxToCloseData).toFixed(2)}
+                </div>
+              </FormField>
+              
+              {(cashboxToCloseData.opening_balance_usd && Number(cashboxToCloseData.opening_balance_usd) > 0) && (
+                <FormField 
+                  label="Saldo de Cierre Real (USD)" 
+                  required={false}
+                >
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={closingBalanceUsd}
+                    onChange={(e) => setClosingBalanceUsd(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </FormField>
+              )}
+
+              <div style={{ display: "flex", gap: "var(--space-sm)", paddingTop: "var(--space-md)" }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowCloseModal(false);
+                    setCashboxToClose(null);
+                    setCashboxToCloseData(null);
+                    setClosingBalanceArs("");
+                    setClosingBalanceUsd("");
+                  }}
+                  disabled={isClosing}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleConfirmClose}
+                  loading={isClosing}
+                  disabled={!closingBalanceArs || parseFloat(closingBalanceArs) < 0}
+                >
+                  {isClosing ? "Cerrando..." : "Cerrar Caja"}
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
       </div>
   );
 }
