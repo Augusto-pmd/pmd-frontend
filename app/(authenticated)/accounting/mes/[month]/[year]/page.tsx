@@ -212,7 +212,7 @@ function AccountingMonthContent() {
                 <div className="flex items-center gap-2 mb-1.5">
                   <Icon className="h-3.5 w-3.5 text-gray-500" />
                   <div className="text-xs font-semibold text-gray-700 capitalize">
-                    {objKey.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                    {objKey.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
                   </div>
                 </div>
                 <div className="text-gray-900 ml-5 text-sm">
@@ -437,7 +437,7 @@ function AccountingMonthContent() {
                               <Icon className="h-5 w-5" />
                             </div>
                             <h3 className="text-base font-bold text-gray-800 capitalize flex-1">
-                              {key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                              {key.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
                             </h3>
                             {isObject && (
                               <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">

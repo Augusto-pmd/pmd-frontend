@@ -98,7 +98,7 @@ export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryF
       const today = new Date().toISOString().split("T")[0];
       setDate(today);
     }
-  }, [initialData]);
+  }, [initialData, rubrics]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
