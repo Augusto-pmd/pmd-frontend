@@ -16,6 +16,7 @@ import { parseBackendError } from "@/lib/parse-backend-error";
 import { Edit, Trash2, Download, FileText, Building2, User, Calendar, Tag } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { DocumentForm } from "../components/DocumentForm";
+import { useCan } from "@/lib/acl";
 
 function DocumentDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -28,6 +29,16 @@ function DocumentDetailContent() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  
+  // Verificar permisos
+  const canUpdateDocument = useCan("documents.update");
+  const canDeleteDocument = useCan("documents.delete");
+  const canManageDocuments = useCan("documents.manage");
+  
+  // Para editar, se necesita documents.update o documents.manage
+  const canEdit = canUpdateDocument || canManageDocuments;
+  // Para eliminar, se necesita documents.delete o documents.manage
+  const canDelete = canDeleteDocument || canManageDocuments;
 
   useEffect(() => {
     fetchDocuments();
@@ -201,22 +212,26 @@ function DocumentDetailContent() {
                   Descargar
                 </Button>
               )}
-              <Button
-                variant="outline"
-                onClick={() => setIsEditModalOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Editar
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteModalOpen(true)}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
-              >
-                <Trash2 className="h-4 w-4" />
-                Eliminar
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  Editar
+                </Button>
+              )}
+              {canDelete && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </Button>
+              )}
             </div>
           </div>
         </div>

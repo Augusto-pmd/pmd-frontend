@@ -47,8 +47,14 @@ export function DocumentsList({
   const toast = useToast();
   
   // Verificar permisos
-  const canUpdate = useCan("documents.update");
-  const canDelete = useCan("documents.delete");
+  const canUpdateDocument = useCan("documents.update");
+  const canDeleteDocument = useCan("documents.delete");
+  const canManageDocuments = useCan("documents.manage");
+  
+  // Para editar, se necesita documents.update o documents.manage
+  const canUpdate = canUpdateDocument || canManageDocuments;
+  // Para eliminar, se necesita documents.delete o documents.manage
+  const canDelete = canDeleteDocument || canManageDocuments;
 
   // Filtrar documentos
   const filteredDocuments = documents.filter((doc) => {
