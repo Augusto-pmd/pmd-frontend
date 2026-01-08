@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useDocumentsStore } from "@/store/documentsStore";
+import { useDocumentsStore, Document } from "@/store/documentsStore";
 import { useWorks } from "@/hooks/api/works";
+import { useContracts } from "@/hooks/api/contracts";
+import { ContractStatus } from "@/lib/types/contract";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { DocumentsList } from "@/components/documents/DocumentsList";
 import { BotonVolver } from "@/components/ui/BotonVolver";
@@ -21,6 +23,7 @@ function WorkDocumentsContent() {
   const router = useRouter();
   const workId = typeof params?.id === 'string' ? params.id : null;
   const { documents, isLoading, error, fetchDocuments, createDocument } = useDocumentsStore();
+  const { contracts, isLoading: isLoadingContracts } = useContracts();
   const { works } = useWorks();
   const authState = useAuthStore.getState();
   const organizationId = authState.user?.organizationId;
@@ -62,12 +65,145 @@ function WorkDocumentsContent() {
     }
   };
 
-  // Filtrar documentos de esta obra
-  const workDocuments = documents.filter((doc) => doc.workId === workId);
+  // Filtrar documentos de esta obra y asegurar que tengan work_id
+  const workDocuments = documents
+    .filter((doc) => doc.workId === workId)
+    .map((doc) => ({
+      ...doc,
+      work_id: doc.workId || (doc as any).work_id, // Asegurar que work_id esté presente
+    }));
 
-  // Obtener tipos únicos de documentos
+  // NOTA: Los contratos NO se muestran en esta página de documentos
+  // Los contratos tienen su propia sección y no deben aparecer como documentos de la obra
+  // Si en el futuro se necesita mostrar contratos aquí, descomentar el código siguiente:
+  /*
+  // Filtrar contratos de esta obra y convertirlos al formato Document
+  // IMPORTANTE: Solo incluir contratos que realmente tengan work_id coincidente
+  const workContracts = (contracts || [])
+    .filter((contract: any) => {
+      if (!contract || !contract.id) return false;
+      
+      // Normalizar work_id - puede venir en diferentes formatos
+      // NO usar fallback a workId de la URL, solo usar el work_id real del contrato
+      const contractWorkId = contract.work_id || contract.workId || contract.work?.id;
+      
+      // Log detallado para debugging
+      if (process.env.NODE_ENV === "development") {
+        console.log("🔍 [WorkDocuments] Analizando contrato:", {
+          contractId: contract.id,
+          contractWorkId: contractWorkId,
+          workIdFromURL: workId,
+          contractWorkIdType: typeof contractWorkId,
+          workIdType: typeof workId,
+          contract: contract
+        });
+      }
+      
+      // Si no hay work_id en el contrato, excluirlo (no debe mostrarse)
+      if (!contractWorkId) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("⚠️ [WorkDocuments] Contrato sin work_id encontrado:", contract.id);
+        }
+        return false;
+      }
+      
+      // Comparar como strings para asegurar coincidencia exacta
+      const contractWorkIdStr = String(contractWorkId).toLowerCase().trim();
+      const workIdStr = String(workId).toLowerCase().trim();
+      const matches = contractWorkIdStr === workIdStr;
+      
+      if (process.env.NODE_ENV === "development") {
+        if (matches) {
+          console.log("✅ [WorkDocuments] Contrato COINCIDE con esta obra:", {
+            contractId: contract.id,
+            contractWorkId: contractWorkId,
+            workId: workId,
+            contractWorkIdStr,
+            workIdStr
+          });
+        } else {
+          console.log("❌ [WorkDocuments] Contrato NO coincide con esta obra:", {
+            contractId: contract.id,
+            contractWorkId: contractWorkId,
+            workId: workId,
+            contractWorkIdStr,
+            workIdStr
+          });
+        }
+      }
+      
+      return matches;
+    })
+    .map((contract: any): Document => {
+      // Mapear estado del contrato al formato de documento
+      // Manejar tanto valores del enum como strings del backend
+      const contractStatus = contract.status?.toLowerCase?.() || contract.status || "";
+      let status: "aprobado" | "en revisión" | "pendiente" | "rechazado" = "pendiente";
+      
+      if (contractStatus === ContractStatus.APPROVED || contractStatus === "approved") {
+        status = "aprobado";
+      } else if (contractStatus === ContractStatus.PENDING || contractStatus === "pending") {
+        status = "pendiente";
+      } else if (
+        contractStatus === ContractStatus.ACTIVE || contractStatus === "active" ||
+        contractStatus === ContractStatus.LOW_BALANCE || contractStatus === "low_balance"
+      ) {
+        status = "aprobado"; // Contratos activos se consideran aprobados
+      }
+
+      // Obtener nombre del contrato desde supplier o usar un nombre por defecto
+      const supplierName = contract.supplier?.name || 
+                          contract.supplier?.nombre || 
+                          contract.supplier?.fullName ||
+                          contract.supplier_id ||
+                          "Proveedor";
+      const contractName = `Contrato - ${supplierName}`;
+
+      // Obtener work_id real del contrato (ya validado en el filter)
+      const contractWorkId = contract.work_id || contract.workId || contract.work?.id;
+      
+      return {
+        id: contract.id,
+        workId: contractWorkId,
+        work_id: contractWorkId, // Agregar también work_id para compatibilidad con DocumentsList
+        type: "Contrato",
+        name: contractName,
+        version: "",
+        uploadedAt: contract.created_at || contract.createdAt || contract.updated_at || contract.updatedAt || "",
+        uploadedBy: contract.created_by_id || contract.created_by?.id || "",
+        status: status,
+        url: contract.file_url || contract.fileUrl,
+        fileUrl: contract.file_url || contract.fileUrl,
+        createdAt: contract.created_at || contract.createdAt,
+        updatedAt: contract.updated_at || contract.updatedAt,
+      };
+    });
+  */
+  
+  // Por ahora, solo mostrar documentos reales (work-documents), no contratos
+  const workContracts: Document[] = [];
+
+  // Combinar documentos y contratos (por ahora solo documentos)
+  const allDocuments = [...workDocuments, ...workContracts];
+
+  // Debug: Log para verificar que los contratos se están obteniendo
+  if (process.env.NODE_ENV === "development") {
+    console.log("🔵 [WorkDocuments] ========== RESUMEN ==========");
+    console.log("🔵 [WorkDocuments] workId de la URL:", workId);
+    console.log("🔵 [WorkDocuments] contracts totales obtenidos:", contracts.length);
+    console.log("🔵 [WorkDocuments] workContracts filtrados:", workContracts.length);
+    console.log("🔵 [WorkDocuments] workDocuments filtrados:", workDocuments.length);
+    console.log("🔵 [WorkDocuments] allDocuments totales:", allDocuments.length);
+    console.log("🔵 [WorkDocuments] Todos los contratos obtenidos:", contracts);
+    if (workContracts.length > 0) {
+      console.log("🔵 [WorkDocuments] Contratos que pasaron el filtro:", workContracts);
+    }
+    console.log("🔵 [WorkDocuments] =============================");
+  }
+
+  // Obtener tipos únicos de documentos (incluyendo "Contrato")
   const documentTypes = Array.from(
-    new Set(workDocuments.map((doc) => doc.type).filter(Boolean))
+    new Set(allDocuments.map((doc) => doc.type).filter(Boolean))
   ) as string[];
 
   if (!organizationId) {
@@ -79,7 +215,7 @@ function WorkDocumentsContent() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingContracts) {
     return (
       <LoadingState message="Cargando documentos de la obra…" />
     );
@@ -178,8 +314,11 @@ function WorkDocumentsContent() {
         </div>
 
         <DocumentsList
-          documents={workDocuments as any}
-          onRefresh={() => fetchDocuments(workId)}
+          documents={allDocuments as any}
+          onRefresh={() => {
+            fetchDocuments(workId);
+            // Los contratos se refrescan automáticamente con SWR
+          }}
           typeFilter={typeFilter}
           statusFilter={statusFilter}
           workFilter={workId}
