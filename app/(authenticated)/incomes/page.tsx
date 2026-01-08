@@ -15,6 +15,7 @@ import { refreshPatterns } from "@/lib/refreshData";
 import { useToast } from "@/components/ui/Toast";
 import { getOperationErrorMessage, getErrorMessage } from "@/lib/errorMessages";
 import { useCan } from "@/lib/acl";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 
 function IncomesContent() {
   const router = useRouter();
@@ -25,6 +26,8 @@ function IncomesContent() {
   const [editingIncome, setEditingIncome] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [isValidationModalOpen, setIsValidationModalOpen] = useState(false);
+  const [incomeToValidate, setIncomeToValidate] = useState<any>(null);
   
   // Verificar permisos para crear/editar/eliminar ingresos
   const canCreateIncome = useCan("incomes.create");
@@ -63,6 +66,32 @@ function IncomesContent() {
       toast.error(errorMessage);
     } finally {
       setDeleteLoading(null);
+    }
+  };
+
+  const handleToggleValidationClick = (income: any) => {
+    setIncomeToValidate(income);
+    setIsValidationModalOpen(true);
+  };
+
+  const handleConfirmValidation = async () => {
+    if (!incomeToValidate) return;
+    
+    const newValidationStatus = !incomeToValidate.is_validated;
+    setDeleteLoading(incomeToValidate.id);
+    setIsValidationModalOpen(false);
+    
+    try {
+      await incomeApi.update(incomeToValidate.id, { is_validated: newValidationStatus });
+      mutate();
+      await refreshPatterns.afterIncomeUpdate(globalMutate);
+      toast.success(`Ingreso ${newValidationStatus ? "validado" : "invalidado"} correctamente. Dashboard actualizado.`);
+    } catch (error: unknown) {
+      const errorMessage = getOperationErrorMessage("update", error);
+      toast.error(errorMessage);
+    } finally {
+      setDeleteLoading(null);
+      setIncomeToValidate(null);
     }
   };
 
@@ -223,13 +252,28 @@ function IncomesContent() {
                               Ver
                             </Button>
                             {canUpdateIncome && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEdit(income)}
-                              >
-                                Edit
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEdit(income)}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={income.is_validated ? "outline" : "primary"}
+                                  onClick={() => handleToggleValidationClick(income)}
+                                  disabled={deleteLoading === income.id}
+                                  title={income.is_validated ? "Invalidar ingreso" : "Validar ingreso"}
+                                >
+                                  {deleteLoading === income.id 
+                                    ? "..." 
+                                    : income.is_validated 
+                                    ? "Invalidar" 
+                                    : "Validar"}
+                                </Button>
+                              </>
                             )}
                             {canDeleteIncome && (
                               <Button
@@ -271,6 +315,24 @@ function IncomesContent() {
             isLoading={isSubmitting}
           />
         </Modal>
+
+        <ConfirmationModal
+          isOpen={isValidationModalOpen}
+          onClose={() => {
+            setIsValidationModalOpen(false);
+            setIncomeToValidate(null);
+          }}
+          onConfirm={handleConfirmValidation}
+          title={incomeToValidate?.is_validated ? "Invalidar Ingreso" : "Validar Ingreso"}
+          description={
+            incomeToValidate?.is_validated
+              ? "¿Estás seguro de que deseas invalidar este ingreso? Esto actualizará los totales de la obra."
+              : "¿Estás seguro de que deseas validar este ingreso? Esto actualizará los totales de la obra."
+          }
+          confirmText={incomeToValidate?.is_validated ? "Invalidar" : "Validar"}
+          cancelText="Cancelar"
+          isLoading={deleteLoading === incomeToValidate?.id}
+        />
       </div>
     </>
   );

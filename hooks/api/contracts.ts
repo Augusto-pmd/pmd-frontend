@@ -26,19 +26,26 @@ export function useContracts() {
 export function useContract(id: string | null) {
   const { token } = useAuthStore();
   
+  const fetcher = async () => {
+    if (!id) {
+      return null;
+    }
+    return apiClient.get(`/contracts/${id}`);
+  };
+  
+  // Siempre llamar useSWR, pero con key null si no hay id o token
+  const { data, error, isLoading, mutate } = useSWR(
+    token && id ? `contracts/${id}` : null,
+    fetcher
+  );
+
+  // Si no hay id, retornar valores por defecto
   if (!id) {
     if (process.env.NODE_ENV === "development") {
       console.warn("❗ [useContract] id no está definido");
     }
     return { contract: null, error: null, isLoading: false, mutate: async () => {} };
   }
-  
-  const { data, error, isLoading, mutate } = useSWR(
-    token && id ? `contracts/${id}` : null,
-    () => {
-      return apiClient.get(`/contracts/${id}`);
-    }
-  );
 
   return {
     contract: ((data as any)?.data || data) as Contract | null,
