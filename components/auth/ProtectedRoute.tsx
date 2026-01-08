@@ -150,10 +150,8 @@ export function ProtectedRoute({
   const hasToken = token || localToken;
   
   // --- Guard: Si no hay token → mostrar loading (en servidor también para evitar hydration mismatch) ---
+  // La redirección se maneja en el useEffect, no aquí durante el render
   if (!hasToken) {
-    if (typeof window !== "undefined") {
-      router.replace(redirectTo);
-    }
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />
@@ -172,10 +170,8 @@ export function ProtectedRoute({
 
   // --- Guard: Si no está autenticado Y no hay token → mostrar loading/redirect ---
   // Solo redirigir si realmente no hay token
+  // La redirección se maneja en el useEffect, no aquí durante el render
   if (!isAuthenticated && !hasToken) {
-    if (typeof window !== "undefined") {
-      router.replace(redirectTo);
-    }
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loading size="lg" />
