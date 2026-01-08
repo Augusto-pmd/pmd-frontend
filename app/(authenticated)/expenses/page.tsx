@@ -3,6 +3,9 @@
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useExpenses, expenseApi } from "@/hooks/api/expenses";
 import { useContracts } from "@/hooks/api/contracts";
+import { useSuppliers } from "@/hooks/api/suppliers";
+import { useWorks } from "@/hooks/api/works";
+import { useRubrics } from "@/hooks/api/rubrics";
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -23,6 +26,9 @@ function ExpensesContent() {
   const router = useRouter();
   const { expenses, isLoading, error, mutate } = useExpenses();
   const { contracts } = useContracts();
+  const { suppliers } = useSuppliers();
+  const { works } = useWorks();
+  const { rubrics } = useRubrics();
   const { mutate: globalMutate } = useSWRConfig();
   const user = useAuthStore.getState().user;
   const toast = useToast();
@@ -224,6 +230,55 @@ function ExpensesContent() {
     return (contract as any)?.contract_number || (contract as any)?.number || `Contrato ${contractId.slice(0, 8)}`;
   };
 
+  const getExpenseDescription = (expense: Expense): string => {
+    const parts: string[] = [];
+    
+    // Obtener nombre del proveedor (prioridad: relación del backend > hook)
+    let supplierName: string | null = null;
+    if ((expense as any).supplier) {
+      supplierName = (expense as any).supplier.name || (expense as any).supplier.nombre || null;
+    }
+    if (!supplierName && expense.supplier_id) {
+      const supplier = suppliers?.find((s: any) => s.id === expense.supplier_id);
+      supplierName = supplier?.name || supplier?.nombre || null;
+    }
+    if (supplierName) {
+      parts.push(supplierName);
+    }
+    
+    // Agregar número de documento si existe
+    if (expense.document_number) {
+      parts.push(`Doc: ${expense.document_number}`);
+    }
+    
+    // Si hay observaciones, agregarlas al final
+    if (expense.observations) {
+      parts.push(expense.observations);
+    }
+    
+    return parts.length > 0 ? parts.join(" - ") : "-";
+  };
+
+  const getExpenseCategory = (expense: Expense): string => {
+    // Prioridad: relación del backend > category field > hook
+    if ((expense as any).rubric) {
+      return (expense as any).rubric.name || (expense as any).rubric.nombre || "-";
+    }
+    
+    if (expense.category) {
+      return expense.category;
+    }
+    
+    if (expense.rubric_id) {
+      const rubric = rubrics?.find((r: any) => r.id === expense.rubric_id);
+      if (rubric) {
+        return rubric.name || rubric.nombre || "-";
+      }
+    }
+    
+    return "-";
+  };
+
   const getStateBadgeVariant = (state?: string) => {
     if (!state) return "default";
     const stateLower = state.toLowerCase();
@@ -400,13 +455,13 @@ function ExpensesContent() {
                               ? new Date(expense.date || expense.purchase_date).toLocaleDateString("es-ES")
                               : "-"}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{expense.description || "-"}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{expense.category || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{getExpenseDescription(expense)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{getExpenseCategory(expense)}</td>
                           <td className="px-4 py-3 text-sm text-gray-900 font-semibold">
                             ${(Number(expense.amount) || 0).toFixed(2)}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">
-                            {expense.document_type === "val" && expense.document_number ? (
+                            {expense.document_number ? (
                               <Badge variant="info" className="font-mono">
                                 {expense.document_number}
                               </Badge>

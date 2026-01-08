@@ -27,22 +27,27 @@ export function useExpenses() {
 export function useExpense(id: string | null) {
   const { token } = useAuthStore();
   
+  const fetcher = async (): Promise<Expense | null> => {
+    if (!id) {
+      return null;
+    }
+    const response = await apiClient.get<Expense>(`/expenses/${id}`);
+    return (response as any)?.data || response;
+  };
+  
+  // Siempre llamar useSWR, pero con key null si no hay id o token
+  const { data, error, isLoading, mutate } = useSWR<Expense>(
+    token && id ? `expenses/${id}` : null,
+    fetcher
+  );
+
+  // Si no hay id, retornar valores por defecto
   if (!id) {
     if (process.env.NODE_ENV === "development") {
       console.warn("❗ [useExpense] id no está definido");
     }
     return { expense: null, error: null, isLoading: false, mutate: async () => {} };
   }
-  
-  const fetcher = async (): Promise<Expense> => {
-    const response = await apiClient.get<Expense>(`/expenses/${id}`);
-    return (response as any)?.data || response;
-  };
-  
-  const { data, error, isLoading, mutate } = useSWR<Expense>(
-    token && id ? `expenses/${id}` : null,
-    fetcher
-  );
 
   return {
     expense: data || null,
