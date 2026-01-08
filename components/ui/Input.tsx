@@ -50,7 +50,6 @@ export function Input({ label, error, className, value, ...props }: InputProps) 
         className={cn(className)}
         style={inputStyle}
         placeholder={props.placeholder || ""}
-        value={normalizedValue}
         onFocus={(e) => {
           if (!error) {
             Object.assign(e.currentTarget.style, { ...inputStyle, ...focusStyle });
