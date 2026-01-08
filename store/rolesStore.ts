@@ -196,19 +196,34 @@ export const useRolesStore = create<RolesState>((set, get) => ({
 
     try {
       // Construir payload exacto según DTO
+      // El backend espera permissions como Record<string, any> (objeto), no array
       const rolePayload: {
         name?: string;
         description?: string;
-        permissions?: string[];
+        permissions?: Record<string, any>;
       } = {};
 
       if (payload.name) rolePayload.name = payload.name.trim();
       if (payload.description !== undefined) rolePayload.description = payload.description?.trim() || undefined;
+      
+      // Convertir array de permisos a objeto: ["users.create", "users.read"] -> { "users.create": true, "users.read": true }
       if (payload.permissions !== undefined) {
-        rolePayload.permissions = Array.isArray(payload.permissions) ? payload.permissions : [];
+        if (Array.isArray(payload.permissions)) {
+          // Convertir array a objeto plano
+          const permissionsObj: Record<string, boolean> = {};
+          payload.permissions.forEach((permission: string) => {
+            if (typeof permission === 'string' && permission.trim()) {
+              permissionsObj[permission.trim()] = true;
+            }
+          });
+          rolePayload.permissions = permissionsObj;
+        } else if (typeof payload.permissions === 'object' && payload.permissions !== null && !Array.isArray(payload.permissions)) {
+          // Si ya es un objeto, usarlo directamente
+          rolePayload.permissions = payload.permissions as Record<string, any>;
+        }
       }
 
-      const response = await apiClient.put(`/roles/${id}`, rolePayload);
+      const response = await apiClient.patch(`/roles/${id}`, rolePayload);
       
       // Registrar en auditoría
       const afterState = { ...beforeState, ...rolePayload };
