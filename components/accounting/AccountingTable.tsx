@@ -14,6 +14,7 @@ import { parseBackendError } from "@/lib/parse-backend-error";
 import { Edit, Trash2, Eye, Lock } from "lucide-react";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
+import { useRubrics } from "@/hooks/api/rubrics";
 import { useAuthStore } from "@/store/authStore";
 import { useCan } from "@/lib/acl";
 
@@ -26,6 +27,7 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
   const router = useRouter();
   const { works } = useWorks();
   const { suppliers } = useSuppliers();
+  const { rubrics } = useRubrics();
   const { updateEntry, deleteEntry } = useAccountingStore();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -60,31 +62,60 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
     }
   };
 
-  const getWorkName = (workId?: string) => {
+  const getWorkName = (entry: AccountingEntry) => {
+    // Primero intentar obtener de la relación cargada desde el backend
+    if ((entry as any).work?.nombre) return (entry as any).work.nombre;
+    if ((entry as any).work?.name) return (entry as any).work.name;
+    if ((entry as any).work?.title) return (entry as any).work.title;
+    
+    // Si no hay relación, buscar por ID
+    const workId = entry.workId || entry.obraId || (entry as any).work_id;
     if (!workId) return "-";
     const work = works?.find((w: any) => w.id === workId);
     if (!work) return "-";
     return work.nombre || work.name || work.title || "-";
   };
 
-  const getSupplierName = (supplierId?: string) => {
+  const getSupplierName = (entry: AccountingEntry) => {
+    // Primero intentar obtener de la relación cargada desde el backend
+    if ((entry as any).supplier?.nombre) return (entry as any).supplier.nombre;
+    if ((entry as any).supplier?.name) return (entry as any).supplier.name;
+    
+    // Si no hay relación, buscar por ID
+    const supplierId = entry.supplierId || entry.proveedorId || (entry as any).supplier_id;
     if (!supplierId) return "-";
     const supplier = suppliers?.find((s: any) => s.id === supplierId);
     if (!supplier) return "-";
     return supplier.nombre || supplier.name || "-";
   };
 
+  const getCategory = (entry: AccountingEntry) => {
+    // Intentar obtener de la relación expense -> rubric cargada desde el backend
+    if ((entry as any).expense?.rubric?.name) return (entry as any).expense.rubric.name;
+    if ((entry as any).expense?.rubric?.nombre) return (entry as any).expense.rubric.nombre;
+    
+    // Si hay expense con rubric_id pero no la relación cargada, buscar la rúbrica
+    if ((entry as any).expense?.rubric_id) {
+      const rubricId = (entry as any).expense.rubric_id;
+      const rubric = rubrics?.find((r: any) => r.id === rubricId);
+      if (rubric?.name) return rubric.name;
+    }
+    
+    // Si no hay relación, usar el campo directo (aunque el backend no lo guarda)
+    return entry.category || entry.categoria || "-";
+  };
+
   const getTypeLabel = (type: string) => {
     const typeLower = type?.toLowerCase() || "";
-    if (typeLower === "ingreso" || typeLower === "income") return "Ingreso";
-    if (typeLower === "egreso" || typeLower === "expense") return "Egreso";
+    if (typeLower === "ingreso" || typeLower === "income" || typeLower === "fiscal") return "Ingreso";
+    if (typeLower === "egreso" || typeLower === "expense" || typeLower === "cash") return "Egreso";
     return type || "-";
   };
 
   const getTypeVariant = (type: string) => {
     const typeLower = type?.toLowerCase() || "";
-    if (typeLower === "ingreso" || typeLower === "income") return "success";
-    if (typeLower === "egreso" || typeLower === "expense") return "error";
+    if (typeLower === "ingreso" || typeLower === "income" || typeLower === "fiscal") return "success";
+    if (typeLower === "egreso" || typeLower === "expense" || typeLower === "cash") return "error";
     return "default";
   };
 
@@ -162,20 +193,20 @@ export function AccountingTable({ entries, onRefresh }: AccountingTableProps) {
             ) : (
               entries.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell>{formatDate(entry.date || entry.fecha)}</TableCell>
-                  <TableCell>{getWorkName(entry.workId || entry.obraId || undefined)}</TableCell>
-                  <TableCell>{getSupplierName(entry.supplierId || entry.proveedorId || undefined)}</TableCell>
+                  <TableCell>{formatDate(entry.date || entry.fecha || (entry as any).date)}</TableCell>
+                  <TableCell>{getWorkName(entry)}</TableCell>
+                  <TableCell>{getSupplierName(entry)}</TableCell>
                   <TableCell>
-                    <Badge variant={getTypeVariant(entry.type || entry.tipo || "")}>
-                      {getTypeLabel(entry.type || entry.tipo || "")}
+                    <Badge variant={getTypeVariant(entry.type || entry.tipo || (entry as any).accounting_type || "")}>
+                      {getTypeLabel(entry.type || entry.tipo || (entry as any).accounting_type || "")}
                     </Badge>
                   </TableCell>
                   <TableCell align="right" style={{ fontWeight: 500 }}>
-                    {formatCurrency(entry.amount || entry.monto || 0)}
+                    {formatCurrency(entry.amount || entry.monto || (entry as any).amount || 0)}
                   </TableCell>
-                  <TableCell>{entry.category || entry.categoria || "-"}</TableCell>
+                  <TableCell>{getCategory(entry)}</TableCell>
                   <TableCell style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {entry.notes || entry.notas || entry.description || entry.descripcion || "-"}
+                    {entry.notes || entry.notas || entry.description || entry.descripcion || (entry as any).description || "-"}
                   </TableCell>
                   <TableCell align="right">
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>

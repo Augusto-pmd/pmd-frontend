@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAccountingStore, AccountingEntry } from "@/store/accountingStore";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
+import { useRubrics } from "@/hooks/api/rubrics";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -24,6 +25,7 @@ function AccountingEntryDetailContent() {
   const { entries, isLoading, fetchEntries, updateEntry, deleteEntry } = useAccountingStore();
   const { works } = useWorks();
   const { suppliers } = useSuppliers();
+  const { rubrics } = useRubrics();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,31 +81,60 @@ function AccountingEntryDetailContent() {
     }
   };
 
-  const getWorkName = (workId?: string) => {
+  const getWorkName = (entry: AccountingEntry) => {
+    // Primero intentar obtener de la relación cargada desde el backend
+    if ((entry as any).work?.nombre) return (entry as any).work.nombre;
+    if ((entry as any).work?.name) return (entry as any).work.name;
+    if ((entry as any).work?.title) return (entry as any).work.title;
+    
+    // Si no hay relación, buscar por ID
+    const workId = entry.workId || entry.obraId || (entry as any).work_id;
     if (!workId) return "No asignada";
     const work = works?.find((w: any) => w.id === workId);
     if (!work) return "Obra no encontrada";
     return work.nombre || work.name || work.title || "Sin nombre";
   };
 
-  const getSupplierName = (supplierId?: string) => {
+  const getSupplierName = (entry: AccountingEntry) => {
+    // Primero intentar obtener de la relación cargada desde el backend
+    if ((entry as any).supplier?.nombre) return (entry as any).supplier.nombre;
+    if ((entry as any).supplier?.name) return (entry as any).supplier.name;
+    
+    // Si no hay relación, buscar por ID
+    const supplierId = entry.supplierId || entry.proveedorId || (entry as any).supplier_id;
     if (!supplierId) return "No asignado";
     const supplier = suppliers?.find((s: any) => s.id === supplierId);
     if (!supplier) return "Proveedor no encontrado";
     return supplier.nombre || supplier.name || "Sin nombre";
   };
 
+  const getCategory = (entry: AccountingEntry) => {
+    // Intentar obtener de la relación expense -> rubric cargada desde el backend
+    if ((entry as any).expense?.rubric?.name) return (entry as any).expense.rubric.name;
+    if ((entry as any).expense?.rubric?.nombre) return (entry as any).expense.rubric.nombre;
+    
+    // Si hay expense con rubric_id pero no la relación cargada, buscar la rúbrica
+    if ((entry as any).expense?.rubric_id) {
+      const rubricId = (entry as any).expense.rubric_id;
+      const rubric = rubrics?.find((r: any) => r.id === rubricId);
+      if (rubric?.name) return rubric.name;
+    }
+    
+    // Si no hay relación, usar el campo directo (aunque el backend no lo guarda)
+    return entry.category || entry.categoria || "-";
+  };
+
   const getTypeLabel = (type: string) => {
     const typeLower = type?.toLowerCase() || "";
-    if (typeLower === "ingreso" || typeLower === "income") return "Ingreso";
-    if (typeLower === "egreso" || typeLower === "expense") return "Egreso";
+    if (typeLower === "ingreso" || typeLower === "income" || typeLower === "fiscal") return "Ingreso";
+    if (typeLower === "egreso" || typeLower === "expense" || typeLower === "cash") return "Egreso";
     return type || "-";
   };
 
   const getTypeVariant = (type: string) => {
     const typeLower = type?.toLowerCase() || "";
-    if (typeLower === "ingreso" || typeLower === "income") return "success";
-    if (typeLower === "egreso" || typeLower === "expense") return "error";
+    if (typeLower === "ingreso" || typeLower === "income" || typeLower === "fiscal") return "success";
+    if (typeLower === "egreso" || typeLower === "expense" || typeLower === "cash") return "error";
     return "default";
   };
 
@@ -164,12 +195,14 @@ function AccountingEntryDetailContent() {
     );
   }
 
-  const renderField = (label: string, value: any, formatter?: (val: any) => string) => {
-    if (!value) return null;
+  const renderField = (label: string, value: any, formatter?: (val: any) => string, defaultValue: string = "-") => {
+    const displayValue = value !== null && value !== undefined && value !== "" 
+      ? (formatter ? formatter(value) : String(value))
+      : defaultValue;
     return (
       <div>
         <h3 className="text-sm font-semibold text-gray-700 mb-2">{label}</h3>
-        <p className="text-gray-900">{formatter ? formatter(value) : String(value)}</p>
+        <p className="text-gray-900">{displayValue}</p>
       </div>
     );
   };
@@ -203,30 +236,28 @@ function AccountingEntryDetailContent() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">Información del Movimiento</CardTitle>
-              <Badge variant={getTypeVariant(entry.type || entry.tipo || "")}>
-                {getTypeLabel(entry.type || entry.tipo || "")}
+              <Badge variant={getTypeVariant(entry.type || entry.tipo || (entry as any).accounting_type || "")}>
+                {getTypeLabel(entry.type || entry.tipo || (entry as any).accounting_type || "")}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderField("Fecha", entry.date || entry.fecha, formatDate)}
-              {renderField("Monto", entry.amount || entry.monto, formatCurrency)}
-              {renderField("Categoría", entry.category || entry.categoria)}
-              {renderField("Obra", getWorkName(entry.workId || entry.obraId))}
-              {renderField("Proveedor", getSupplierName(entry.supplierId || entry.proveedorId))}
-              {entry.createdAt && renderField("Fecha de creación", entry.createdAt, formatDate)}
-              {entry.updatedAt && renderField("Última actualización", entry.updatedAt, formatDate)}
+              {renderField("Fecha", entry.date || entry.fecha || (entry as any).date, formatDate, "No especificada")}
+              {renderField("Monto", entry.amount || entry.monto || (entry as any).amount, formatCurrency, "$ 0,00")}
+              {renderField("Categoría", getCategory(entry), undefined, "-")}
+              {renderField("Obra", getWorkName(entry), undefined, "No asignada")}
+              {renderField("Proveedor", getSupplierName(entry), undefined, "No asignado")}
+              {renderField("Fecha de creación", entry.createdAt || (entry as any).created_at, formatDate, "-")}
+              {renderField("Última actualización", entry.updatedAt || (entry as any).updated_at, formatDate, "-")}
             </div>
 
-            {(entry.notes || entry.notas || entry.description || entry.descripcion) && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Notas / Descripción</h3>
-                <p className="text-gray-900">
-                  {entry.notes || entry.notas || entry.description || entry.descripcion}
-                </p>
-              </div>
-            )}
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Notas / Descripción</h3>
+              <p className="text-gray-900">
+                {entry.notes || entry.notas || entry.description || entry.descripcion || (entry as any).description || "-"}
+              </p>
+            </div>
 
             {entry.id && (
               <div className="pt-4 border-t border-gray-200">
@@ -239,17 +270,17 @@ function AccountingEntryDetailContent() {
 
         {/* Vínculos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {entry.workId || entry.obraId ? (
+          {(entry.workId || entry.obraId || (entry as any).work_id) ? (
             <Card>
               <CardHeader>
                 <CardTitle>Obra Relacionada</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-900 mb-4">{getWorkName(entry.workId || entry.obraId)}</p>
+                <p className="text-gray-900 mb-4">{getWorkName(entry)}</p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/works/${entry.workId || entry.obraId}`)}
+                  onClick={() => router.push(`/works/${entry.workId || entry.obraId || (entry as any).work_id}`)}
                 >
                   Ver Obra
                 </Button>
@@ -257,17 +288,17 @@ function AccountingEntryDetailContent() {
             </Card>
           ) : null}
 
-          {entry.supplierId || entry.proveedorId ? (
+          {(entry.supplierId || entry.proveedorId || (entry as any).supplier_id) ? (
             <Card>
               <CardHeader>
                 <CardTitle>Proveedor Relacionado</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-900 mb-4">{getSupplierName(entry.supplierId || entry.proveedorId)}</p>
+                <p className="text-gray-900 mb-4">{getSupplierName(entry)}</p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/suppliers/${entry.supplierId || entry.proveedorId}`)}
+                  onClick={() => router.push(`/suppliers/${entry.supplierId || entry.proveedorId || (entry as any).supplier_id}`)}
                 >
                   Ver Proveedor
                 </Button>

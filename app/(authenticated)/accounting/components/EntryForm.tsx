@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { FormField, InputField, SelectField, TextareaField } from "@/components/ui/FormField";
 import { useWorks } from "@/hooks/api/works";
 import { useSuppliers } from "@/hooks/api/suppliers";
+import { useRubrics } from "@/hooks/api/rubrics";
 import { normalizeId } from "@/lib/normalizeId";
 
 interface EntryFormProps {
@@ -17,6 +18,7 @@ interface EntryFormProps {
 export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryFormProps) {
   const { works, isLoading: worksLoading } = useWorks();
   const { suppliers, isLoading: suppliersLoading } = useSuppliers();
+  const { rubrics } = useRubrics();
   
   const [date, setDate] = useState("");
   const [type, setType] = useState<"ingreso" | "egreso" | "income" | "expense">("egreso");
@@ -30,17 +32,67 @@ export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryF
 
   useEffect(() => {
     if (initialData) {
-      // Normalizar datos del backend
-      const fecha = initialData.date || initialData.fecha || "";
+      // Normalizar datos del backend - buscar en múltiples formatos
+      const fecha = initialData.date || initialData.fecha || initialData.date || "";
       setDate(fecha.split("T")[0] || "");
-      setWorkId(normalizeId(initialData.workId || initialData.obraId));
-      setSupplierId(normalizeId(initialData.supplierId || initialData.proveedorId));
-      const tipo = initialData.type || initialData.tipo || "egreso";
-      setType(tipo === "ingreso" ? "income" : tipo === "egreso" ? "expense" : tipo);
-      setAmount((initialData.amount || initialData.monto || 0).toString());
-      setCategory(initialData.category || initialData.categoria || "");
-      setNotes(initialData.notes || initialData.notas || initialData.description || initialData.descripcion || "");
-      setInvoiceNumber(initialData.invoiceNumber || "");
+      
+      // Obtener workId de múltiples fuentes
+      const workIdValue = initialData.workId || initialData.obraId || initialData.work_id || 
+                         (initialData.work?.id) || "";
+      setWorkId(normalizeId(workIdValue));
+      
+      // Obtener supplierId de múltiples fuentes
+      const supplierIdValue = initialData.supplierId || initialData.proveedorId || initialData.supplier_id || 
+                              (initialData.supplier?.id) || "";
+      setSupplierId(normalizeId(supplierIdValue));
+      
+      // Obtener tipo de múltiples fuentes
+      const tipo = initialData.type || initialData.tipo || initialData.accounting_type || "egreso";
+      // Convertir tipos del backend a formato del formulario
+      let tipoFormatted = tipo;
+      if (tipo === "ingreso" || tipo === "income" || tipo === "fiscal") {
+        tipoFormatted = "ingreso";
+      } else if (tipo === "egreso" || tipo === "expense") {
+        tipoFormatted = "egreso";
+      }
+      setType(tipoFormatted as "ingreso" | "egreso");
+      
+      // Obtener monto de múltiples fuentes
+      const montoValue = initialData.amount || initialData.monto || initialData.amount || 0;
+      setAmount(montoValue.toString());
+      
+      // Obtener categoría de múltiples fuentes, incluyendo relación expense -> rubric
+      let categoriaValue = initialData.category || initialData.categoria || "";
+      // Intentar obtener desde expense.rubric cargado desde el backend
+      if (!categoriaValue && (initialData as any).expense?.rubric?.name) {
+        categoriaValue = (initialData as any).expense.rubric.name;
+      }
+      if (!categoriaValue && (initialData as any).expense?.rubric?.nombre) {
+        categoriaValue = (initialData as any).expense.rubric.nombre;
+      }
+      // Si hay expense_id y rubric_id, buscar la rúbrica
+      if (!categoriaValue && (initialData as any).expense_id) {
+        const expenseId = (initialData as any).expense_id;
+        // Si el expense tiene rubric_id, buscar la rúbrica
+        if ((initialData as any).expense?.rubric_id) {
+          const rubricId = (initialData as any).expense.rubric_id;
+          const rubric = rubrics?.find((r: any) => r.id === rubricId);
+          if (rubric?.name) {
+            categoriaValue = rubric.name;
+          }
+        }
+      }
+      setCategory(categoriaValue);
+      
+      // Obtener notas/descripción de múltiples fuentes
+      const notasValue = initialData.notes || initialData.notas || 
+                        initialData.description || initialData.descripcion || "";
+      setNotes(notasValue);
+      
+      // Obtener número de factura de múltiples fuentes
+      const invoiceValue = initialData.invoiceNumber || initialData.invoice_number || 
+                          initialData.document_number || "";
+      setInvoiceNumber(invoiceValue);
     } else {
       // Establecer fecha por defecto a hoy
       const today = new Date().toISOString().split("T")[0];
@@ -81,28 +133,43 @@ export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryF
       return;
     }
 
-    // Preparar payload exacto según DTO del backend
+    // Extraer mes y año de la fecha
+    const dateObj = new Date(date);
+    const month = dateObj.getMonth() + 1; // getMonth() retorna 0-11
+    const year = dateObj.getFullYear();
+
+    // Mapear tipo del formulario al accounting_type del backend
+    // El backend usa 'fiscal' para ingresos y 'cash' para egresos
+    const accountingType = 
+      type === "ingreso" || type === "income" 
+        ? "fiscal" 
+        : type === "egreso" || type === "expense"
+        ? "cash"
+        : "cash"; // Por defecto cash (egreso)
+
+    // Preparar payload exacto según DTO del backend (snake_case)
     const payload: any = {
       date: date,
-      type: type === "ingreso" ? "income" : type === "egreso" ? "expense" : type,
-      workId: workId || undefined,
+      month: month,
+      year: year,
+      accounting_type: accountingType,
+      work_id: workId || undefined,
       amount: parseFloat(amount),
-      category: category.trim() || undefined,
-      notes: notes.trim() || undefined,
+      currency: "ARS", // Por defecto ARS, el backend requiere este campo
       description: notes.trim() || undefined,
     };
 
     // Agregar proveedor si está seleccionado
     if (supplierId && supplierId.trim() !== "") {
-      payload.supplierId = supplierId;
+      payload.supplier_id = supplierId;
     }
 
     // Agregar número de factura si está presente
     if (invoiceNumber && invoiceNumber.trim() !== "") {
-      payload.invoiceNumber = invoiceNumber.trim();
+      payload.document_number = invoiceNumber.trim();
     }
 
-    // Limpiar campos undefined
+    // Limpiar campos undefined o vacíos
     Object.keys(payload).forEach((key) => {
       if (payload[key] === undefined || payload[key] === "") {
         delete payload[key];
@@ -117,16 +184,13 @@ export function EntryForm({ initialData, onSubmit, onCancel, isLoading }: EntryF
     { value: "ingreso", label: "Ingreso" },
   ];
 
+  // Usar rúbricas del backend en lugar de categorías hardcodeadas
   const categoryOptions = [
     { value: "", label: "Seleccionar categoría" },
-    { value: "materiales", label: "Materiales" },
-    { value: "mano-de-obra", label: "Mano de obra" },
-    { value: "honorarios", label: "Honorarios" },
-    { value: "impuestos", label: "Impuestos" },
-    { value: "servicios", label: "Servicios" },
-    { value: "alquileres", label: "Alquileres" },
-    { value: "combustible", label: "Combustible" },
-    { value: "otros", label: "Otros" },
+    ...(rubrics?.map((rubric: any) => ({
+      value: rubric.name || rubric.nombre || "",
+      label: rubric.name || rubric.nombre || `Rubro ${rubric.id.slice(0, 8)}`,
+    })) || []),
   ];
 
   const workOptions = [

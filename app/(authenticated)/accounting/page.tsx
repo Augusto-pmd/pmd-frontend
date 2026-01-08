@@ -120,14 +120,64 @@ function AccountingContent() {
     );
   }
 
-  // Extraer datos del objeto accounting
+  // Calcular totales desde los entries del store
+  // El backend usa accounting_type: 'fiscal' para ingresos y 'cash' para egresos
+  // También puede venir como type: 'ingreso'/'egreso' o 'income'/'expense'
+  const calcularIngresos = () => {
+    if (!entries || entries.length === 0) return 0;
+    return entries
+      .filter((e: any) => {
+        const type = e.accounting_type || e.type || e.tipo || "";
+        const typeLower = type.toLowerCase();
+        return typeLower === "fiscal" || typeLower === "ingreso" || typeLower === "income";
+      })
+      .reduce((sum: number, e: any) => {
+        // Convertir amount a número de forma segura
+        const rawAmount = e.amount ?? e.monto ?? 0;
+        const amount = typeof rawAmount === "string" ? parseFloat(rawAmount) : Number(rawAmount);
+        
+        // Validar que amount sea un número válido
+        if (isNaN(amount) || !isFinite(amount)) {
+          return sum;
+        }
+        
+        // Si la moneda es USD, convertir a ARS (asumiendo tasa 1:1 por ahora)
+        const currency = e.currency || e.moneda || "ARS";
+        return sum + (currency === "USD" ? amount * 1 : amount); // TODO: usar tasa de cambio real
+      }, 0);
+  };
+
+  const calcularEgresos = () => {
+    if (!entries || entries.length === 0) return 0;
+    return entries
+      .filter((e: any) => {
+        const type = e.accounting_type || e.type || e.tipo || "";
+        const typeLower = type.toLowerCase();
+        return typeLower === "cash" || typeLower === "egreso" || typeLower === "expense";
+      })
+      .reduce((sum: number, e: any) => {
+        // Convertir amount a número de forma segura
+        const rawAmount = e.amount ?? e.monto ?? 0;
+        const amount = typeof rawAmount === "string" ? parseFloat(rawAmount) : Number(rawAmount);
+        
+        // Validar que amount sea un número válido
+        if (isNaN(amount) || !isFinite(amount)) {
+          return sum;
+        }
+        
+        const currency = e.currency || e.moneda || "ARS";
+        return sum + (currency === "USD" ? amount * 1 : amount); // TODO: usar tasa de cambio real
+      }, 0);
+  };
+
+  const ingresos = calcularIngresos();
+  const egresos = calcularEgresos();
+  const saldo = ingresos - egresos;
+
+  // Extraer cierres del objeto accounting si existe
   const accountingData = accounting && typeof accounting === "object" && !Array.isArray(accounting)
     ? accounting
     : {};
-
-  const ingresos = accountingData.ingresos || accountingData.totalIngresos || accountingData.totalAssets;
-  const egresos = accountingData.egresos || accountingData.totalEgresos || accountingData.totalLiabilities;
-  const saldo = accountingData.saldo || accountingData.netWorth;
   const cierres = accountingData.cierres || accountingData.monthlyClosures || [];
 
   return (
@@ -167,9 +217,6 @@ function AccountingContent() {
           ingresos={ingresos}
           egresos={egresos}
           saldo={saldo}
-          totalAssets={accountingData.totalAssets}
-          totalLiabilities={accountingData.totalLiabilities}
-          netWorth={accountingData.netWorth}
         />
 
         <CierresMensuales cierres={Array.isArray(cierres) ? cierres : []} />

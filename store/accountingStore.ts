@@ -84,17 +84,17 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
       throw new Error("Payload no está definido");
     }
 
-    // Validar campos obligatorios
+    // Validar campos obligatorios (el backend espera snake_case)
     if (!payload.date) {
       throw new Error("La fecha es obligatoria");
     }
     if (!payload.amount || payload.amount <= 0) {
       throw new Error("El monto debe ser mayor a 0");
     }
-    if (!payload.workId) {
+    if (!payload.work_id) {
       throw new Error("La obra es obligatoria");
     }
-    if (!payload.type) {
+    if (!payload.accounting_type) {
       throw new Error("El tipo de movimiento es obligatorio");
     }
 
@@ -130,7 +130,8 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
     }
 
     try {
-      await apiClient.put(`/accounting/${id}`, payload);
+      // El backend usa PATCH, no PUT
+      await apiClient.patch(`/accounting/${id}`, payload);
       await get().fetchEntries();
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {

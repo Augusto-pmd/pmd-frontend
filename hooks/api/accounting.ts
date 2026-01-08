@@ -213,16 +213,23 @@ export function useAccountingPerceptions(params?: { month?: number; year?: numbe
 export function useAccountingRecordByExpense(expenseId: string | null) {
   const { token } = useAuthStore();
   
+  const fetcher = async () => {
+    if (!expenseId) {
+      return null;
+    }
+    return apiClient.get(`/accounting?expense_id=${expenseId}`);
+  };
+  
+  // Siempre llamar useSWR, pero con key null si no hay expenseId o token
+  const { data, error, isLoading, mutate } = useSWR(
+    token && expenseId ? `accounting/expense/${expenseId}` : null,
+    fetcher
+  );
+
+  // Si no hay expenseId, retornar valores por defecto
   if (!expenseId) {
     return { record: null, error: null, isLoading: false, mutate: async () => {} };
   }
-  
-  const { data, error, isLoading, mutate } = useSWR(
-    token && expenseId ? `accounting/expense/${expenseId}` : null,
-    () => {
-      return apiClient.get(`/accounting?expense_id=${expenseId}`);
-    }
-  );
 
   // El backend devuelve una lista, tomamos el primer registro si existe
   const records = (data as any)?.data || data || [];
