@@ -6,7 +6,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-export function Input({ label, error, className, ...props }: InputProps) {
+export function Input({ label, error, className, value, ...props }: InputProps) {
   const inputStyle: React.CSSProperties = {
     height: "42px",
     backgroundColor: "var(--apple-surface)",
@@ -34,6 +34,10 @@ export function Input({ label, error, className, ...props }: InputProps) {
     boxShadow: "0 0 0 3px rgba(0,122,255,0.25)",
   };
 
+  // Normalizar value: convertir null/undefined a cadena vacía
+  // Siempre usar un valor definido para mantener el input controlado
+  const normalizedValue = value === null || value === undefined ? "" : String(value);
+
   return (
     <div className="w-full">
       {label && (
@@ -46,6 +50,7 @@ export function Input({ label, error, className, ...props }: InputProps) {
         className={cn(className)}
         style={inputStyle}
         placeholder={props.placeholder || ""}
+        value={normalizedValue}
         onFocus={(e) => {
           if (!error) {
             Object.assign(e.currentTarget.style, { ...inputStyle, ...focusStyle });
@@ -55,6 +60,7 @@ export function Input({ label, error, className, ...props }: InputProps) {
           Object.assign(e.currentTarget.style, inputStyle);
         }}
         {...props}
+        value={normalizedValue} // Asegurar que value siempre esté definido, sobrescribiendo el que viene en props
       />
       {error && (
         <p style={{ marginTop: "6px", fontSize: "13px", color: "#FF3B30" }}>

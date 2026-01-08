@@ -19,53 +19,63 @@ interface IncomeFormProps {
 
 export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: IncomeFormProps) {
   const { works } = useWorks();
-  const [formData, setFormData] = useState({
-    work_id: "",
-    amount: 0,
-    currency: Currency.ARS,
-    type: IncomeType.ADVANCE,
-    date: new Date().toISOString().split("T")[0],
-    payment_method: "",
-    document_number: "",
-    file_url: "",
-    observations: "",
-    ...initialData,
-  });
+  
+  // Función helper para obtener datos iniciales del formulario
+  // Asegura que todos los valores estén siempre definidos para mantener inputs controlados
+  const getInitialFormData = (data?: any) => {
+    const defaults = {
+      work_id: "",
+      amount: 0,
+      currency: Currency.ARS,
+      type: IncomeType.ADVANCE,
+      date: new Date().toISOString().split("T")[0],
+      payment_method: "",
+      document_number: "",
+      file_url: "",
+      observations: "",
+    };
+    
+    if (!data) return defaults;
+    
+    // Filtrar undefined/null de initialData para evitar valores no controlados
+    const sanitizedData: any = {};
+    Object.keys(data).forEach((key) => {
+      const value = data[key];
+      if (value !== undefined && value !== null) {
+        sanitizedData[key] = value;
+      }
+    });
+    
+    return {
+      ...defaults,
+      ...sanitizedData,
+      // Asegurar valores específicos siempre definidos
+      work_id: sanitizedData.work_id || sanitizedData.workId || "",
+      amount: sanitizedData.amount !== undefined && sanitizedData.amount !== null 
+        ? Number(sanitizedData.amount) 
+        : 0,
+      currency: sanitizedData.currency || Currency.ARS,
+      type: sanitizedData.type || IncomeType.ADVANCE,
+      date: sanitizedData.date 
+        ? (typeof sanitizedData.date === 'string' 
+          ? sanitizedData.date.split("T")[0] 
+          : new Date(sanitizedData.date).toISOString().split("T")[0]) 
+        : new Date().toISOString().split("T")[0],
+      payment_method: sanitizedData.payment_method ?? "",
+      document_number: sanitizedData.document_number ?? "",
+      file_url: sanitizedData.file_url ?? "",
+      observations: sanitizedData.observations ?? "",
+    };
+  };
+  
+  const [formData, setFormData] = useState(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (initialData) {
-      // Asegurar que amount sea un número válido
-      const amountValue = initialData.amount !== undefined && initialData.amount !== null 
-        ? Number(initialData.amount) 
-        : 0;
-      
-      setFormData({
-        work_id: initialData.work_id || initialData.workId || "",
-        amount: amountValue,
-        currency: initialData.currency || Currency.ARS,
-        type: initialData.type || IncomeType.ADVANCE,
-        date: initialData.date ? (typeof initialData.date === 'string' ? initialData.date.split("T")[0] : new Date(initialData.date).toISOString().split("T")[0]) : new Date().toISOString().split("T")[0],
-        payment_method: initialData.payment_method || "",
-        document_number: initialData.document_number || "",
-        file_url: initialData.file_url || "",
-        observations: initialData.observations || "",
-      });
-    } else {
-      // Resetear formulario cuando no hay initialData
-      setFormData({
-        work_id: "",
-        amount: 0,
-        currency: Currency.ARS,
-        type: IncomeType.ADVANCE,
-        date: new Date().toISOString().split("T")[0],
-        payment_method: "",
-        document_number: "",
-        file_url: "",
-        observations: "",
-      });
-    }
+    // Usar la función helper para asegurar valores siempre definidos
+    const newFormData = getInitialFormData(initialData);
+    setFormData(newFormData);
   }, [initialData]);
 
   const validate = () => {
@@ -126,7 +136,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
     <form onSubmit={handleSubmit} className="space-y-4">
       <Select
         label="Obra"
-        value={formData.work_id}
+        value={formData.work_id || ""}
         onChange={(e) => {
           setFormData({ ...formData, work_id: e.target.value });
           if (errors.work_id) setErrors({ ...errors, work_id: "" });
@@ -152,7 +162,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
       </Select>
       <Select
         label="Tipo de ingreso"
-        value={formData.type}
+        value={formData.type || IncomeType.ADVANCE}
         onChange={(e) => setFormData({ ...formData, type: e.target.value as IncomeType })}
         required
       >
@@ -189,7 +199,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
         />
         <Select
           label="Moneda"
-          value={formData.currency}
+          value={formData.currency || Currency.ARS}
           onChange={(e) => {
             setFormData({ ...formData, currency: e.target.value as Currency });
             if (errors.currency) setErrors({ ...errors, currency: "" });
@@ -213,7 +223,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
       <Input
         label="Fecha"
         type="date"
-        value={formData.date}
+        value={formData.date || new Date().toISOString().split("T")[0]}
         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
         required
       />
@@ -230,18 +240,18 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
       </Select>
       <Input
         label="Número de documento"
-        value={formData.document_number}
+        value={formData.document_number || ""}
         onChange={(e) => setFormData({ ...formData, document_number: e.target.value })}
       />
       <Input
         label="URL del archivo"
         type="url"
-        value={formData.file_url}
+        value={formData.file_url || ""}
         onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
       />
       <Textarea
         label="Observaciones"
-        value={formData.observations}
+        value={formData.observations || ""}
         onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
         rows={4}
       />

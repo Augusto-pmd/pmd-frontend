@@ -25,7 +25,9 @@ export function Button({
     fontWeight: 500,
     borderRadius: "var(--radius-lg)",
     height: "44px",
-    border: "1px solid rgba(0,0,0,0.15)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(0,0,0,0.15)",
     backgroundColor: "var(--apple-surface)",
     color: "var(--apple-text-primary)",
     transition: "background-color var(--apple-duration-fast) var(--apple-ease), border-color var(--apple-duration-fast) var(--apple-ease), box-shadow var(--apple-duration-fast) var(--apple-ease), transform var(--apple-duration-fast) var(--apple-ease)",
@@ -78,7 +80,9 @@ export function Button({
     },
     ghost: {
       ...baseStyles,
-      border: "none",
+      borderWidth: "0",
+      borderStyle: "none",
+      borderColor: "transparent",
       backgroundColor: "transparent",
       color: "var(--apple-blue)",
     },
@@ -88,7 +92,9 @@ export function Button({
       minWidth: "32px",
       height: "32px",
       padding: "6px",
-      border: "1px solid var(--apple-border)",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: "var(--apple-border)",
       backgroundColor: "transparent",
     },
   };
@@ -120,8 +126,37 @@ export function Button({
     ...(isDisabled && { opacity: 0.5, cursor: "not-allowed" }),
   };
 
-  // Guardar estilos inline personalizados si existen
-  const customStyle = style || {};
+  // Normalizar estilos inline personalizados: convertir border shorthand a propiedades no shorthand
+  const normalizeCustomStyle = (customStyle: React.CSSProperties): React.CSSProperties => {
+    if (!customStyle) return {};
+    
+    const normalized: any = { ...customStyle };
+    
+    // Si hay una propiedad border shorthand, convertirla a propiedades no shorthand
+    if ('border' in normalized && typeof normalized.border === 'string') {
+      const borderValue = normalized.border;
+      // Intentar parsear border shorthand (ej: "1px solid red")
+      const parts = borderValue.trim().split(/\s+/);
+      
+      if (parts.length >= 1) {
+        normalized.borderWidth = parts[0];
+      }
+      if (parts.length >= 2) {
+        normalized.borderStyle = parts[1];
+      }
+      if (parts.length >= 3) {
+        normalized.borderColor = parts.slice(2).join(' ');
+      }
+      
+      // Eliminar la propiedad shorthand para evitar conflictos
+      delete normalized.border;
+    }
+    
+    return normalized as React.CSSProperties;
+  };
+
+  // Guardar estilos inline personalizados si existen, normalizados
+  const customStyle = normalizeCustomStyle(style || {});
 
   return (
     <button
@@ -131,33 +166,53 @@ export function Button({
         if (!isDisabled) {
           const hoverStyles = getHoverStyles(variant);
           // Preservar estilos inline personalizados (especialmente color)
-          Object.assign(e.currentTarget.style, {
+          // Usar propiedades no shorthand para evitar conflictos
+          const styleUpdate: React.CSSProperties = {
             ...hoverStyles,
             ...(customStyle.color && { color: customStyle.color }),
-          });
+          };
+          // Asegurar que borderWidth, borderStyle, borderColor estén presentes
+          if (combinedStyle.borderWidth) styleUpdate.borderWidth = combinedStyle.borderWidth;
+          if (combinedStyle.borderStyle) styleUpdate.borderStyle = combinedStyle.borderStyle;
+          if (combinedStyle.borderColor) styleUpdate.borderColor = combinedStyle.borderColor;
+          Object.assign(e.currentTarget.style, styleUpdate);
         }
       }}
       onMouseLeave={(e) => {
         // Restaurar estilos originales incluyendo los personalizados
-        Object.assign(e.currentTarget.style, { ...combinedStyle, ...customStyle });
+        // Usar propiedades no shorthand para evitar conflictos
+        const styleToRestore: React.CSSProperties = { ...combinedStyle, ...customStyle };
+        Object.assign(e.currentTarget.style, styleToRestore);
       }}
       onMouseDown={(e) => {
         if (!isDisabled) {
           // Preservar color personalizado durante el click
-          Object.assign(e.currentTarget.style, {
+          // Usar propiedades no shorthand para evitar conflictos
+          const styleUpdate: React.CSSProperties = {
             ...activeStyles,
             ...(customStyle.color && { color: customStyle.color }),
-          });
+          };
+          // Asegurar que borderWidth, borderStyle, borderColor estén presentes
+          if (combinedStyle.borderWidth) styleUpdate.borderWidth = combinedStyle.borderWidth;
+          if (combinedStyle.borderStyle) styleUpdate.borderStyle = combinedStyle.borderStyle;
+          if (combinedStyle.borderColor) styleUpdate.borderColor = combinedStyle.borderColor;
+          Object.assign(e.currentTarget.style, styleUpdate);
         }
       }}
       onMouseUp={(e) => {
         if (!isDisabled) {
           const hoverStyles = getHoverStyles(variant);
           // Preservar color personalizado
-          Object.assign(e.currentTarget.style, {
+          // Usar propiedades no shorthand para evitar conflictos
+          const styleUpdate: React.CSSProperties = {
             ...hoverStyles,
             ...(customStyle.color && { color: customStyle.color }),
-          });
+          };
+          // Asegurar que borderWidth, borderStyle, borderColor estén presentes
+          if (combinedStyle.borderWidth) styleUpdate.borderWidth = combinedStyle.borderWidth;
+          if (combinedStyle.borderStyle) styleUpdate.borderStyle = combinedStyle.borderStyle;
+          if (combinedStyle.borderColor) styleUpdate.borderColor = combinedStyle.borderColor;
+          Object.assign(e.currentTarget.style, styleUpdate);
         }
       }}
       onFocus={(e) => {
