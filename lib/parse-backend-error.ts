@@ -153,11 +153,14 @@ export function parseBackendError(error: unknown): string {
           }
           return msg;
         });
-        return cleanedMessages.join(". ");
+        const joinedMessage = cleanedMessages.join(". ");
+        // Traducir mensajes específicos de cajas
+        const translated = translateCashboxMessage(joinedMessage);
+        return translated !== joinedMessage ? translated : joinedMessage;
       }
       
       if (typeof backendMessage === "string" && backendMessage.trim()) {
-        // Traducir mensajes específicos de cajas
+        // Traducir mensajes específicos de cajas PRIMERO (antes de otros checks)
         const translated = translateCashboxMessage(backendMessage);
         if (translated !== backendMessage) {
           return translated;
