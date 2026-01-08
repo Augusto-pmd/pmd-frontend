@@ -30,6 +30,7 @@ import { useUsers } from "@/hooks/api/users";
 import { useWorkDocuments } from "@/hooks/api/workDocuments";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { AlertActions } from "./AlertActions";
+import { useCan } from "@/lib/acl";
 
 interface AlertsListProps {
   alerts: Alert[];
@@ -64,6 +65,11 @@ export function AlertsList({
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  
+  // Verificar permisos
+  const canDeleteAlert = useCan("alerts.delete");
+  const canManageAlerts = useCan("alerts.manage");
+  const canDelete = canDeleteAlert || canManageAlerts;
 
   // Filtrar alertas
   const filteredAlerts = alerts.filter((alert) => {
@@ -419,17 +425,19 @@ export function AlertsList({
                           <Check className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedAlert(alert);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAlert(alert);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>

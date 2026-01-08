@@ -17,6 +17,7 @@ import { Check, Trash2, Bell, Building2, User, Calendar, Tag, AlertTriangle, Use
 import { Modal } from "@/components/ui/Modal";
 import { AlertActions } from "@/components/alerts/AlertActions";
 import { useAlert } from "@/hooks/api/alerts";
+import { useCan } from "@/lib/acl";
 
 function AlertDetailContent() {
   // All hooks must be called unconditionally at the top
@@ -28,6 +29,11 @@ function AlertDetailContent() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  
+  // Verificar permisos
+  const canDeleteAlert = useCan("alerts.delete");
+  const canManageAlerts = useCan("alerts.manage");
+  const canDelete = canDeleteAlert || canManageAlerts;
 
   // Safely extract alertId from params
   const alertId = typeof params?.id === "string" ? params.id : null;
@@ -153,14 +159,16 @@ function AlertDetailContent() {
                   Marcar como leída
                 </Button>
               )}
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteModalOpen(true)}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
-              >
-                <Trash2 className="h-4 w-4" />
-                Eliminar
-              </Button>
+              {canDelete && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </Button>
+              )}
             </div>
           </div>
         </div>
