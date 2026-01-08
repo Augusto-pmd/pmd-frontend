@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-
 import { getBackendUrl } from "@/lib/env";
 
 const BACKEND_URL = getBackendUrl();
@@ -10,7 +9,7 @@ export async function GET(
 ) {
   try {
     const authHeader = request.headers.get("authorization");
-    const response = await fetch(`${BACKEND_URL}/api/roles/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/rubrics/${params.id}`, {
       method: "GET",
       headers: {
         Authorization: authHeader ?? "",
@@ -19,9 +18,9 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[API ROLES GET BY ID ERROR]", errorText);
+      console.error("[API RUBRICS GET BY ID ERROR]", errorText);
       return NextResponse.json(
-        { error: "Error al obtener el rol", message: errorText },
+        { error: "Error al obtener la rúbrica", message: errorText },
         { status: response.status }
       );
     }
@@ -31,9 +30,9 @@ export async function GET(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API ROLES GET BY ID ERROR]", error);
+    console.error("[API RUBRICS GET BY ID ERROR]", error);
     return NextResponse.json(
-      { error: "Role fetch failed" },
+      { error: "Rubric fetch failed" },
       { status: 500 }
     );
   }
@@ -45,6 +44,7 @@ export async function PATCH(
 ) {
   try {
     const authHeader = request.headers.get("authorization");
+    const csrfToken = request.headers.get("x-csrf-token");
     const bodyText = await request.text();
     
     // Validar que el body no esté vacío y sea JSON válido
@@ -59,14 +59,13 @@ export async function PATCH(
     try {
       JSON.parse(bodyText);
     } catch (parseError) {
-      console.error("[API ROLES PATCH] Invalid JSON body:", bodyText);
+      console.error("[API RUBRICS PATCH] Invalid JSON body:", bodyText);
       return NextResponse.json(
         { error: "Invalid JSON in request body" },
         { status: 400 }
       );
     }
 
-    const csrfToken = request.headers.get("x-csrf-token");
     const headers: HeadersInit = {
       Authorization: authHeader ?? "",
       "Content-Type": "application/json",
@@ -77,22 +76,22 @@ export async function PATCH(
       headers["X-CSRF-Token"] = csrfToken;
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/roles/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/rubrics/${params.id}`, {
       method: "PATCH",
       headers,
-      body: bodyText, // Forwardear el texto original tal cual
+      body: bodyText,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[API ROLES PATCH ERROR]", {
+      console.error("[API RUBRICS PATCH ERROR]", {
         status: response.status,
         statusText: response.statusText,
-        url: `${BACKEND_URL}/api/roles/${params.id}`,
+        url: `${BACKEND_URL}/api/rubrics/${params.id}`,
         error: errorText,
       });
       return NextResponse.json(
-        { error: "Error al actualizar el rol", message: errorText },
+        { error: "Error al actualizar la rúbrica", message: errorText },
         { status: response.status }
       );
     }
@@ -102,9 +101,9 @@ export async function PATCH(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API ROLES PATCH ERROR]", error);
+    console.error("[API RUBRICS PATCH ERROR]", error);
     return NextResponse.json(
-      { error: "Role update failed" },
+      { error: "Rubric update failed" },
       { status: 500 }
     );
   }
@@ -116,24 +115,40 @@ export async function DELETE(
 ) {
   try {
     const authHeader = request.headers.get("authorization");
+    const csrfToken = request.headers.get("x-csrf-token");
 
-    const response = await fetch(`${BACKEND_URL}/api/roles/${params.id}`, {
+    const headers: HeadersInit = {
+      Authorization: authHeader ?? "",
+    };
+
+    // Agregar CSRF token si está presente
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/rubrics/${params.id}`, {
       method: "DELETE",
-      headers: {
-        Authorization: authHeader ?? "",
-      },
+      headers,
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[API RUBRICS DELETE ERROR]", errorText);
+      return NextResponse.json(
+        { error: "Error al eliminar la rúbrica", message: errorText },
+        { status: response.status }
+      );
+    }
 
     const text = await response.text();
     const data = text ? JSON.parse(text) : {};
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API ROLES DELETE ERROR]", error);
+    console.error("[API RUBRICS DELETE ERROR]", error);
     return NextResponse.json(
-      { error: "Role delete failed" },
+      { error: "Rubric delete failed" },
       { status: 500 }
     );
   }
 }
-

@@ -56,7 +56,7 @@ export const rubricApi = {
       }
       throw new Error("ID de rubro no está definido");
     }
-    return apiClient.put(`/rubrics/${id}`, data);
+    return apiClient.patch(`/rubrics/${id}`, data);
   },
   delete: (id: string) => {
     if (!id) {

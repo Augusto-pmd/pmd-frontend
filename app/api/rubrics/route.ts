@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
-
 import { getBackendUrl } from "@/lib/env";
 
 const BACKEND_URL = getBackendUrl();
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
-    const response = await fetch(`${BACKEND_URL}/api/roles/${params.id}`, {
+
+    const response = await fetch(`${BACKEND_URL}/api/rubrics`, {
       method: "GET",
       headers: {
         Authorization: authHeader ?? "",
@@ -19,32 +16,30 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[API ROLES GET BY ID ERROR]", errorText);
+      console.error("[API RUBRICS GET ERROR]", errorText);
       return NextResponse.json(
-        { error: "Error al obtener el rol", message: errorText },
+        { error: "Error al obtener las rúbricas", message: errorText },
         { status: response.status }
       );
     }
 
     const text = await response.text();
-    const data = text ? JSON.parse(text) : {};
+    const data = text ? JSON.parse(text) : [];
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API ROLES GET BY ID ERROR]", error);
+    console.error("[API RUBRICS GET ERROR]", error);
     return NextResponse.json(
-      { error: "Role fetch failed" },
+      { error: "Rubrics fetch failed" },
       { status: 500 }
     );
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
+    const csrfToken = request.headers.get("x-csrf-token");
     const bodyText = await request.text();
     
     // Validar que el body no esté vacío y sea JSON válido
@@ -59,14 +54,13 @@ export async function PATCH(
     try {
       JSON.parse(bodyText);
     } catch (parseError) {
-      console.error("[API ROLES PATCH] Invalid JSON body:", bodyText);
+      console.error("[API RUBRICS POST] Invalid JSON body:", bodyText);
       return NextResponse.json(
         { error: "Invalid JSON in request body" },
         { status: 400 }
       );
     }
 
-    const csrfToken = request.headers.get("x-csrf-token");
     const headers: HeadersInit = {
       Authorization: authHeader ?? "",
       "Content-Type": "application/json",
@@ -77,22 +71,22 @@ export async function PATCH(
       headers["X-CSRF-Token"] = csrfToken;
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/roles/${params.id}`, {
-      method: "PATCH",
+    const response = await fetch(`${BACKEND_URL}/api/rubrics`, {
+      method: "POST",
       headers,
-      body: bodyText, // Forwardear el texto original tal cual
+      body: bodyText,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[API ROLES PATCH ERROR]", {
+      console.error("[API RUBRICS POST ERROR]", {
         status: response.status,
         statusText: response.statusText,
-        url: `${BACKEND_URL}/api/roles/${params.id}`,
+        url: `${BACKEND_URL}/api/rubrics`,
         error: errorText,
       });
       return NextResponse.json(
-        { error: "Error al actualizar el rol", message: errorText },
+        { error: "Error al crear la rúbrica", message: errorText },
         { status: response.status }
       );
     }
@@ -102,38 +96,10 @@ export async function PATCH(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("[API ROLES PATCH ERROR]", error);
+    console.error("[API RUBRICS POST ERROR]", error);
     return NextResponse.json(
-      { error: "Role update failed" },
+      { error: "Rubric create failed" },
       { status: 500 }
     );
   }
 }
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const authHeader = request.headers.get("authorization");
-
-    const response = await fetch(`${BACKEND_URL}/api/roles/${params.id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: authHeader ?? "",
-      },
-    });
-
-    const text = await response.text();
-    const data = text ? JSON.parse(text) : {};
-
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error("[API ROLES DELETE ERROR]", error);
-    return NextResponse.json(
-      { error: "Role delete failed" },
-      { status: 500 }
-    );
-  }
-}
-
