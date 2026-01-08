@@ -6,8 +6,8 @@ import { Expense, CreateExpenseData, UpdateExpenseData } from "@/lib/types/expen
 export function useExpenses() {
   const { token } = useAuthStore();
   
-  const fetcher = async (): Promise<Expense[]> => {
-    const response = await apiClient.get<Expense[]>("/expenses");
+  const fetcher = async (key: string): Promise<Expense[]> => {
+    const response = await apiClient.get<Expense[]>(key);
     return (response as any)?.data || response || [];
   };
   
@@ -27,18 +27,16 @@ export function useExpenses() {
 export function useExpense(id: string | null) {
   const { token } = useAuthStore();
   
-  const fetcher = async (): Promise<Expense | null> => {
-    if (!id) {
-      return null;
-    }
-    const response = await apiClient.get<Expense>(`/expenses/${id}`);
-    return (response as any)?.data || response;
-  };
-  
   // Siempre llamar useSWR, pero con key null si no hay id o token
   const { data, error, isLoading, mutate } = useSWR<Expense>(
     token && id ? `expenses/${id}` : null,
-    fetcher
+    async (key: string) => {
+      if (!id) {
+        return null;
+      }
+      const response = await apiClient.get<Expense>(key);
+      return (response as any)?.data || response;
+    }
   );
 
   // Si no hay id, retornar valores por defecto

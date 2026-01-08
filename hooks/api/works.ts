@@ -6,8 +6,8 @@ import { Work, CreateWorkData, UpdateWorkData } from "@/lib/types/work";
 export function useWorks() {
   const { token } = useAuthStore();
   
-  const fetcher = async (): Promise<Work[]> => {
-    const response = await apiClient.get<Work[]>("/works");
+  const fetcher = async (key: string): Promise<Work[]> => {
+    const response = await apiClient.get<Work[]>(key);
     return (response as any)?.data || response || [];
   };
   
@@ -34,8 +34,8 @@ export function useWork(id: string | null) {
     return { work: null, error: null, isLoading: false, mutate: async () => {} };
   }
   
-  const fetcher = async (): Promise<Work> => {
-    const response = await apiClient.get<Work>(`/works/${id}`);
+  const fetcher = async (key: string): Promise<Work> => {
+    const response = await apiClient.get<Work>(key);
     return (response as any)?.data || response;
   };
   

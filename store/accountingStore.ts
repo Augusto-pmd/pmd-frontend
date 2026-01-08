@@ -91,10 +91,10 @@ export const useAccountingStore = create<AccountingState>((set, get) => ({
     if (!payload.amount || payload.amount <= 0) {
       throw new Error("El monto debe ser mayor a 0");
     }
-    if (!payload.work_id) {
+    if (!payload.workId && !(payload as any).work_id) {
       throw new Error("La obra es obligatoria");
     }
-    if (!payload.accounting_type) {
+    if (!payload.type && !(payload as any).accounting_type) {
       throw new Error("El tipo de movimiento es obligatorio");
     }
 
