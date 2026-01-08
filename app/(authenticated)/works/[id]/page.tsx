@@ -57,10 +57,30 @@ function WorkDetailContent() {
   const toast = useToast();
   const user = useAuthStore.getState().user;
   const isDirection = user?.role?.name === "DIRECTION" || user?.role?.name === "direction" || user?.role?.name === "administration" || user?.role?.name === "ADMINISTRATION";
+  const isSupervisor = user?.role?.name?.toLowerCase() === "supervisor";
   
   // Verificar permisos
-  const canUpdate = useCan("works.update");
-  const canDelete = useCan("works.delete");
+  const canUpdateWork = useCan("works.update");
+  const canManageWorks = useCan("works.manage");
+  const canDeleteWork = useCan("works.delete");
+  
+  // Para editar, se necesita works.update o works.manage, pero NO para Supervisor
+  const canUpdate = (canUpdateWork || canManageWorks) && !isSupervisor;
+  const canDelete = canDeleteWork || canManageWorks;
+  const canManage = canManageWorks;
+  
+  // Para asignar/eliminar personal, se necesita works.update o works.manage
+  const canManageWorkUsers = canUpdate || canManage;
+  
+  // Para asignar proveedores (crear contratos), se necesita contracts.create o contracts.manage
+  const canCreateContract = useCan("contracts.create");
+  const canManageContracts = useCan("contracts.manage");
+  const canAssignSupplier = canCreateContract || canManageContracts;
+  
+  // Para ver contabilidad, se necesita accounting.read o accounting.manage
+  const canReadAccounting = useCan("accounting.read");
+  const canManageAccounting = useCan("accounting.manage");
+  const canViewAccounting = canReadAccounting || canManageAccounting;
 
   // Cargar usuarios asignados desde el backend
   useEffect(() => {
@@ -536,15 +556,17 @@ function WorkDetailContent() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Personal Asignado</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsAssignUserModalOpen(true)}
-                disabled={isLoadingAssignedUsers}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Asignar Personal
-              </Button>
+              {canManageWorkUsers && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAssignUserModalOpen(true)}
+                  disabled={isLoadingAssignedUsers}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Asignar Personal
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -562,17 +584,19 @@ function WorkDetailContent() {
                       </div>
                       <div className="flex items-center gap-2">
                         {emp.role && <Badge variant="info">{emp.role.name}</Badge>}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setUserToUnassign(emp);
-                            setIsUnassignUserModalOpen(true);
-                          }}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canManageWorkUsers && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setUserToUnassign(emp);
+                              setIsUnassignUserModalOpen(true);
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
@@ -589,14 +613,16 @@ function WorkDetailContent() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Proveedores Asignados</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsAssignSupplierModalOpen(true)}
-              >
-                <Building2 className="h-4 w-4 mr-2" />
-                Asignar Proveedor
-              </Button>
+              {canAssignSupplier && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAssignSupplierModalOpen(true)}
+                >
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Asignar Proveedor
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -685,26 +711,30 @@ function WorkDetailContent() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Contabilidad de la Obra</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push(`/accounting?workId=${id}`)}
-              >
-                Ver movimientos
-              </Button>
+              {canViewAccounting && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/accounting?workId=${id}`)}
+                >
+                  Ver movimientos
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-gray-500 text-sm mb-4">
               Revisa los movimientos contables relacionados con esta obra
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push(`/accounting?workId=${id}`)}
-            >
-              Ver Contabilidad
-            </Button>
+            {canViewAccounting && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/accounting?workId=${id}`)}
+              >
+                Ver Contabilidad
+              </Button>
+            )}
           </CardContent>
         </Card>
 
