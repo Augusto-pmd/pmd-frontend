@@ -296,21 +296,12 @@ export function AlertsList({
                   Mensaje
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Obra
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Personal
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Documento
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Severidad
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Fecha
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                   Estado
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -376,15 +367,6 @@ export function AlertsList({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{getWorkName(alert.workId)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{getUserName((alert as any).personId)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{getDocumentName((alert as any).documentId)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     <Badge variant={getSeverityVariant(alert.severity || "info")}>
                       {getSeverityLabel(alert.severity || "info")}
                     </Badge>
@@ -394,9 +376,9 @@ export function AlertsList({
                       {new Date((alert as any).date || alert.createdAt || new Date()).toLocaleDateString("es-AR")}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-2 py-4 whitespace-nowrap w-32">
                     <div className="space-y-1">
-                      <Badge variant={alert.read ? "default" : "info"}>
+                      <Badge variant={alert.read ? "default" : "info"} className="text-xs">
                         {alert.read ? "Leída" : "No leída"}
                       </Badge>
                       {(alert as any).status && (
@@ -405,27 +387,12 @@ export function AlertsList({
                             (alert as any).status === "resolved" ? "success" :
                             (alert as any).status === "in_review" ? "info" :
                             "warning"
-                          }>
+                          } className="text-xs">
                             {(alert as any).status === "open" ? "Abierta" :
                              (alert as any).status === "in_review" ? "En Revisión" :
                              (alert as any).status === "resolved" ? "Resuelta" :
                              (alert as any).status}
                           </Badge>
-                        </div>
-                      )}
-                      {(alert as any).assigned_to && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Asignada a: {(alert as any).assigned_to.name || (alert as any).assigned_to.id}
-                        </div>
-                      )}
-                      {(alert as any).resolved_by && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Resuelta por: {(alert as any).resolved_by.name || (alert as any).resolved_by.id}
-                          {(alert as any).resolved_at && (
-                            <span className="ml-1">
-                              ({new Date((alert as any).resolved_at).toLocaleDateString("es-AR")})
-                            </span>
-                          )}
                         </div>
                       )}
                     </div>

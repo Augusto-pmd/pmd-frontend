@@ -14,8 +14,17 @@ export function useAlerts() {
     fetcher
   );
 
+  const rawAlerts = (data as any)?.data || data || [];
+  // Normalizar datos del backend: convertir is_read a read
+  const normalizedAlerts = Array.isArray(rawAlerts) 
+    ? rawAlerts.map((alert: any) => ({
+        ...alert,
+        read: alert.is_read !== undefined ? alert.is_read : alert.read || false,
+      }))
+    : rawAlerts;
+
   return {
-    alerts: (data as any)?.data || data || [],
+    alerts: normalizedAlerts,
     error,
     isLoading,
     mutate,
@@ -39,8 +48,15 @@ export function useAlert(id: string | null) {
     }
   );
 
+  const rawAlert = (data as any)?.data || data;
+  // Normalizar datos del backend: convertir is_read a read
+  const normalizedAlert = rawAlert ? {
+    ...rawAlert,
+    read: rawAlert.is_read !== undefined ? rawAlert.is_read : rawAlert.read || false,
+  } : null;
+
   return {
-    alert: (data as any)?.data || data,
+    alert: normalizedAlert,
     error,
     isLoading,
     mutate,
@@ -57,9 +73,18 @@ export function useUnreadAlerts() {
     }
   );
 
+  const rawUnreadAlerts = (data as any)?.data || data || [];
+  // Normalizar datos del backend: convertir is_read a read
+  const normalizedUnreadAlerts = Array.isArray(rawUnreadAlerts)
+    ? rawUnreadAlerts.map((alert: any) => ({
+        ...alert,
+        read: alert.is_read !== undefined ? alert.is_read : alert.read || false,
+      }))
+    : rawUnreadAlerts;
+
   return {
-    unreadAlerts: (data as any)?.data || data || [],
-    unreadCount: Array.isArray((data as any)?.data || data) ? ((data as any)?.data || data).length : 0,
+    unreadAlerts: normalizedUnreadAlerts,
+    unreadCount: Array.isArray(normalizedUnreadAlerts) ? normalizedUnreadAlerts.length : 0,
     error,
     isLoading,
     mutate,

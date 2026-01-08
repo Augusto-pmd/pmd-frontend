@@ -47,7 +47,13 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const data = await apiClient.get("/alerts");
-      set({ alerts: (data as any)?.data || data || [], isLoading: false });
+      const rawAlerts = (data as any)?.data || data || [];
+      // Normalizar datos del backend: convertir is_read a read
+      const normalizedAlerts = rawAlerts.map((alert: any) => ({
+        ...alert,
+        read: alert.is_read !== undefined ? alert.is_read : alert.read || false,
+      }));
+      set({ alerts: normalizedAlerts, isLoading: false });
     } catch (error: unknown) {
       if (process.env.NODE_ENV === "development") {
         console.error("🔴 [alertsStore] Error al obtener alertas:", error);
