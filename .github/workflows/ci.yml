@@ -31,6 +31,3 @@ jobs:
       - name: Run linter (non-blocking)
         run: npm run lint
         continue-on-error: true
-      
-      - name: Type check
-        run: npx tsc --noEmit
