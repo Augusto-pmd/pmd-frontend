@@ -12,7 +12,7 @@ on:
 
 jobs:
   validate:
-    name: Validate Code
+    name: CI / validate
     runs-on: ubuntu-latest
 
     steps:
