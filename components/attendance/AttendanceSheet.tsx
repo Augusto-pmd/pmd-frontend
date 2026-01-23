@@ -133,7 +133,7 @@ export function AttendanceSheet({
       } else if (existing) {
         // Update existing
         await attendanceApi.update(existing.id, {
-          status,
+          status: status ?? undefined,
           late_hours: lateHours || undefined,
         });
         toast.success("Asistencia actualizada");

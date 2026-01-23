@@ -169,7 +169,7 @@ function AttendanceContent() {
         <CardContent className="p-4 bg-blue-50 border-blue-200">
           <p className="text-sm text-blue-800">
             <strong>Nota:</strong> Para ver y editar la planilla semanal completa,
-            haz clic en "Ver Planilla Semanal" o navega a la semana específica.
+            haz clic en &quot;Ver Planilla Semanal&quot; o navega a la semana específica.
             La planilla permite hacer clic en cada celda para cambiar el estado
             de asistencia (Presente → Ausente → Tarde → Sin registro).
           </p>

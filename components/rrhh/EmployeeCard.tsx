@@ -186,7 +186,7 @@ export function EmployeeCard({ employee, onRefresh }: EmployeeCardProps) {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDelete}
         title="Eliminar Empleado"
-        message={`¿Estás seguro de que deseas eliminar a ${getEmployeeName()}? Esta acción no se puede deshacer.`}
+        description={`¿Estás seguro de que deseas eliminar a ${getEmployeeName()}? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         variant="danger"

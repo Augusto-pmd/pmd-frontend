@@ -154,7 +154,7 @@ function WeeklyAttendanceContent({ date }: { date: string }) {
             <p>
               <strong>Instrucciones:</strong> Haz clic en cada celda para cambiar
               el estado de asistencia. El ciclo es: Sin registro → Presente →
-              Ausente → Tarde → Sin registro. Si seleccionas "Tarde", se abrirá
+              Ausente → Tarde → Sin registro. Si seleccionas &quot;Tarde&quot;, se abrirá
               un modal para ingresar las horas de tardanza.
             </p>
           </div>
