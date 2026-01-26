@@ -107,12 +107,27 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
     address?: string;
   } = {
     name: (typeof form.nombre === "string" ? form.nombre : typeof form.name === "string" ? form.name : "").trim(),
-    cuit: typeof form.cuit === "string" ? form.cuit.trim() : undefined,
-    email: typeof form.email === "string" ? form.email.trim() : undefined,
+    // ⚠️ Importante: en el backend @IsOptional NO ignora strings vacíos.
+    // Si enviamos "" en campos con validaciones extra (email/cuit), puede causar 400.
+    cuit: typeof form.cuit === "string" ? form.cuit.trim() || undefined : undefined,
+    email: typeof form.email === "string" ? form.email.trim() || undefined : undefined,
     phone: (typeof form.telefono === "string" ? form.telefono : typeof form.phone === "string" ? form.phone : undefined)?.trim() || undefined,
     contact: (typeof form.contacto === "string" ? form.contacto : typeof form.contactName === "string" ? form.contactName : typeof form.contact === "string" ? form.contact : undefined)?.trim() || undefined,
-    category: typeof form.category === "string" ? form.category.trim() : undefined,
-    status: (form.existstatus || form.status) as "provisional" | "approved" | "blocked" | "rejected" | undefined,
+    category: typeof form.category === "string" ? form.category.trim() || undefined : undefined,
+    status: (() => {
+      const raw =
+        typeof (form as any).existstatus === "string"
+          ? (form as any).existstatus
+          : typeof (form as any).status === "string"
+          ? (form as any).status
+          : undefined;
+      const normalized = typeof raw === "string" ? raw.trim() : "";
+      if (!normalized) return undefined;
+      if (normalized === "provisional" || normalized === "approved" || normalized === "blocked" || normalized === "rejected") {
+        return normalized;
+      }
+      return undefined;
+    })(),
     address: (typeof form.direccion === "string" ? form.direccion : typeof form.address === "string" ? form.address : undefined)?.trim() || undefined,
   };
 
