@@ -47,16 +47,11 @@ function getAttendanceForDate(
   date: string
 ): Attendance | null {
   const result = attendance.find((a) => {
-    // Normalize date comparison - handle both string and Date formats
-    let attendanceDate: string;
-    if (a.date instanceof Date) {
-      attendanceDate = formatDate(a.date);
-    } else if (typeof a.date === 'string') {
-      // Handle ISO date strings (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ)
-      attendanceDate = a.date.split('T')[0];
-    } else {
-      return false;
-    }
+    // Normalize date comparison - handle ISO date strings (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ)
+    // The date field is typed as string, so we only need to handle string formats
+    const attendanceDate = typeof a.date === 'string' 
+      ? a.date.split('T')[0]  // Extract YYYY-MM-DD from ISO string if needed
+      : String(a.date || '').split('T')[0];
     
     // Normalize employee_id comparison (handle both string and potential UUID formats)
     const attendanceEmployeeId = String(a.employee_id || '');
@@ -70,6 +65,7 @@ function getAttendanceForDate(
         attendanceDate,
         searchDate: date,
         employeeId: attendanceEmployeeId,
+        rawDate: a.date,
       });
     }
     
